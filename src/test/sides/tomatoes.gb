@@ -1,0 +1,208 @@
+#side Tomatoes
+#author Zacechawa
+#color f11
+
+;Attack of all the tomatoes. Not just the red ones! MWAHAHAHA!
+#seed 1 2 1 2
+#type Green Tomato
+#color 0f0
+#decoration 0f0 circle
+#hardware
+  constructor .5
+  solar-cells .5
+  processor 25
+  armor 100
+  engine .05
+  energy 1 0
+;hardware
+#code
+#vector average-velocity
+#var bullets
+#vector dest
+position world-height / 0.5 > 
+if world-height else 1 then swap world-width / 0.5 > 
+if world-width else 1 then swap dest!
+do
+  shot-collision if
+    position 2 1 send 
+	position 0.5 random-bool if world-height - abs else swap world-width - abs swap then dest!
+  then
+  4 messages if 0 bullets!
+	do
+	  4 receive drop position dist rrot rect-to-polar nip polar-to-rect position radius shot-radius .1 + + in-range if
+	    average-velocity + average-velocity!
+		1 bullets + bullets!
+	  else
+	    2drop
+	  then
+	4 messages while-loop
+	bullets if
+     average-velocity bullets / average-velocity!
+	 bullets 1 - if
+	  average-velocity engine-velocity!
+	 else
+	  average-velocity 0.5 random-bool if swap negate swap else negate then engine-velocity!
+	 then
+	 engine-velocity position v+ dest!
+	then
+  then
+  enemy-collision if position 2 2 send then
+  constructor-type nif
+    1 constructor-type!
+    0.25 3 balance-type
+	0.5 2 balance-type
+  then
+  autoconstruct
+  position dest 4 in-range if 0 engine-power! else dest seek-location then
+forever
+;code
+;type
+#type Red Tomato
+#color f00
+#decoration f00 circle
+#hardware
+  eater 4
+  engine .16
+  constructor 3.1
+  energy 100 40
+  food-sensor 10
+  processor 40
+  armor 100
+;hardware
+#code
+#vector average-velocity
+#var bullets
+#vector dest
+0 world-width random 0 world-height random dest!
+do
+  constructor-type nif
+    1 constructor-type!
+    0.25 3 balance-type
+	0.5 2 balance-type
+  then
+  autoconstruct
+  75 periodic-food-sensor drop
+  food-found if
+    food-position dest!
+    shot-collision if dest 0.5 random-bool if world-height - abs else swap world-width - abs swap then dest! position 2 1 send then
+	enemy-collision if position 2 2 send then
+	4 messages if 0 bullets!
+	 do
+	  4 receive drop position dist rrot rect-to-polar nip polar-to-rect position radius shot-radius .1 + + in-range if
+	    average-velocity + average-velocity!
+		1 bullets + bullets!
+	  else
+	    2drop
+	  then
+	 4 messages while-loop
+	 bullets 0 > if
+      average-velocity bullets / average-velocity!
+	  bullets 1 - if
+	   average-velocity engine-velocity!
+	  else
+	   average-velocity 0.5 random-bool if swap negate swap else negate then engine-velocity!
+	  then
+	  engine-velocity position v+ dest!
+	 then
+	then
+    dest seek-location
+  else
+    shot-collision if dest 0.5 random-bool if world-height - abs else swap world-width - abs swap then dest! position 2 1 send then
+	enemy-collision if position 2 2 send then
+	4 messages if 0 bullets!
+	 do
+	  4 receive drop position dist rrot rect-to-polar nip polar-to-rect position radius shot-radius .1 + + in-range if
+	    average-velocity + average-velocity!
+		1 bullets + bullets!
+	  else
+	    2drop
+	  then
+	 4 messages while-loop
+	 bullets if
+      average-velocity bullets / average-velocity!
+	  bullets 1 - if
+	   average-velocity engine-velocity!
+	  else
+	   average-velocity 0.5 random-bool if swap negate swap else negate then engine-velocity!
+	  then
+	  engine-velocity unitize position v+ dest!
+	 then
+	then
+    dest seek-location
+	position dest 4 in-range if 0 world-width random 0 world-height random dest! then
+  then
+forever
+;code
+;type
+#type Rotten Tomato
+#color 333
+#decoration 333 x
+#hardware
+  blaster 10 10 15
+  solar-cells .15
+  processor 10
+  robot-sensor 10
+  shot-sensor 3 2
+  engine .16
+  energy 200 200
+  armor 100
+;hardware
+#code
+#vector average-velocity
+#vector dest
+#var is-performing 0
+#var bullets
+0 world-width random 0 world-height random dest!
+1 shot-sensor-sees-friendly!
+1 shot-sensor-sees-enemy!
+do
+  sync
+  energy 100 > is-performing and nif 0 engine-power! do sync energy 100 < while-loop then
+  energy 150 > shot-collision or if 1 is-performing! then
+  is-performing if
+   1 messages if 1 receive drop dest! else 3 messages if 3 receive drop dest! else 2 messages if 2 receive drop dest! then then then
+   blaster-reload-time periodic-robot-sensor drop
+   robot-found if
+    robot-position robot-velocity seek-moving-location
+	robot-position position blaster-range robot-radius + radius - in-range if robot-position robot-velocity lead-blaster then
+	robot-position dest!
+	1 is-performing!
+   else
+	energy 5 > if
+      dest seek-location
+	  position dest 3 in-range if 0 world-width random 0 world-height random dest! then
+	else 0 engine-power! 0 is-performing! then
+   then
+  then
+   55 periodic-shot-sensor drop
+   shot-found if
+   do
+    shot-type 3 <> shot-type 5 <> and shot-distance 2 > and if
+	 shot-velocity shot-velocity shot-position 6 4 send
+     shot-position position dist shot-velocity rect-to-polar nip polar-to-rect position radius shot-radius + .1 + in-range if
+	  shot-velocity average-velocity + average-velocity!
+	  bullets 1 + bullets!
+	 then
+    then
+    next-shot
+   while-loop
+   bullets if
+    average-velocity bullets / average-velocity!
+    bullets 1 - if
+     average-velocity engine-velocity!
+    else
+     average-velocity 0.5 random-bool if swap negate swap else negate then engine-velocity!
+    then
+	1 is-performing!
+    engine-velocity unitize position v+ dest!
+    then
+   else
+	is-performing energy 5 < and nif
+	  dest seek-location
+	  position dest 3 in-range if 0 world-width random 0 world-height random dest! then
+	else 0 engine-power! 0 is-performing! then
+   then
+forever
+;code
+;type
+#end 

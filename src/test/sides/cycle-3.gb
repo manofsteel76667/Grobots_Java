@@ -1,0 +1,80 @@
+#side Cycle
+#author Devon
+
+Moves in circles for defense. Shoots things.
+
+Originally moved in a figure-eight, but that's not
+as good a defense as circling.
+
+(20020409) minor fixes
+
+#color 008
+
+#type wheel
+#color 000
+
+#hardware
+  processor 12
+  engine .15 ;c 150
+  energy 100 0
+  constructor .37
+  solar-cells .4
+;defense
+  armor 150
+  repair-rate .1
+;offense
+  robot-sensor 15
+  blaster 20 16 50
+
+#code
+
+#start
+#var increment .25
+  0 1 random-int .5 - 2 * .15 .20 random * increment!
+#var dir ;current direction
+  random-angle dir!
+
+#var next-scan 0
+#const scan-interval 100
+
+  max-repair-rate repair-rate! ;leave on
+do
+  spin^
+  gestate^
+  time next-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      shoot^
+      time blaster-reload-time + next-scan!
+      engine-max-power engine-power!
+    else
+      armor max-armor < engine-max-power 0 ifev engine-power!
+      time scan-interval + next-scan!
+    then
+  else
+    sync
+  then
+forever
+
+spin:
+  increment dir + dir!
+  1 dir polar-to-rect engine-velocity!
+return
+
+gestate:
+  energy 40 > if
+    constructor-type nif
+      1 constructor-type!
+    then
+    constructor-max-rate constructor-rate!
+  else
+    0.1 constructor-rate!
+  then
+return
+
+shoot:
+  robot-velocity velocity v- robot-distance blaster-speed / .8 * vs*
+  robot-position v+ position v- angle fire-blaster
+return
+
+#end

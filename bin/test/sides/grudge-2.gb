@@ -1,0 +1,67 @@
+#side Grudge
+#author Devon
+12, 15 November 2002
+
+Keeps track of which other sides are hostile.
+A cell's side is considered hostile if either:
+1) it looks like it's going to get too close
+2) we see it shortly after one of our cells was hurt
+
+#color 9cf
+
+Protocol:
+Address 100 holds last time someone was hit.
+Addresses that are side IDs hold true if the side is hostile.
+(Actually they hold the time the side was declared hostile.)
+
+(20021120) Slightly shorter range and more growth.
+(20021120) Reduced angry time after being hurt.
+
+#type Unforgiving
+#color 33c
+
+#hardware
+  solar-cells .4
+  constructor .4
+  energy 40 0
+  armor 150
+  grenades 30 18 40
+  robot-sensor 18
+  radio write read
+  processor 12
+#code
+
+#var next-scan
+#var last-armor
+
+do
+  constructor-type nif 1 constructor-type! then
+  energy 35 > constructor-max-rate 0 ifev constructor-rate!
+  time next-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      robot-side read shoot& ifg
+      100 read 60 + time >= hostile& ifg
+      robot-velocity position robot-position v- unitize dot 90 * robot-distance + 9 <
+        hostile& ifg
+      ignore& jump
+    hostile:
+      time robot-side write
+    shoot:
+      robot-velocity velocity v- 2dup robot-distance grenades-speed / vs* robot-position v+
+      position dist grenades-speed / vs* robot-position v+
+      position v- rect-to-polar fire-grenade
+    ignore:
+      time grenades-reload-time + next-scan!
+    else
+      time 60 80 random-int + next-scan!
+    then
+    armor last-armor < if
+      time 100 write
+    then
+    armor last-armor!
+  then
+  sync
+forever
+
+#end

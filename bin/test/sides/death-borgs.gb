@@ -1,0 +1,91 @@
+#side Death Borgs
+#author Zacechawa
+#color 0000ff
+#seed 1 1 1
+#code
+#vector dest
+  new-dest:
+    0 world-width random 0 world-height random dest!
+  return
+#vector target-position
+#vector target-velocity
+#var target-value
+  select-target:
+    do
+	  robot-reloading 1000 0 ifev robot-mass 10 * + robot-bomb + dup target-value > if 
+	    target-value!
+		robot-position target-position! 
+		robot-velocity target-velocity!
+	  else
+    	drop
+	  then
+	  next-robot
+	while-loop
+  return
+;code
+#type Spawn
+#color 0000ff
+#decoration ff0000 cross
+#hardware
+  engine .05
+  solar-cells .8
+  constructor 1
+  food-sensor 5
+  armor 200
+  processor 10
+  energy 50 1
+  eater 1
+;type
+#code
+do
+  constructor-type nif
+    1 type-population 4 < if
+	  1 constructor-type!
+    else
+      .9 random-bool 1 + constructor-type!
+    then
+  then
+  autoconstruct
+  100 periodic-food-sensor drop
+  food-found if
+    food-position seek-location
+  else
+    new-dest^
+	dest seek-location
+  then
+forever
+;code
+;type
+#type Missle
+#color ff0000
+#decoration 000000 x
+#hardware
+  engine .2
+  solar-cells .05
+  armor 200
+  processor 10
+  robot-sensor 20
+  energy 20 1
+  bomb 1000
+;hardware
+#code
+new-dest^
+do
+  75 periodic-robot-sensor if
+   robot-found if
+    select-target^
+	target-position seek-location
+   else energy 5 > if
+    dest seek-location
+	position dest 5 in-range new-dest& ifc
+   else
+    0 engine-power!
+   then then
+  then
+  3 robot-distance >= if
+    die
+  then
+forever
+;code
+;type
+#end 

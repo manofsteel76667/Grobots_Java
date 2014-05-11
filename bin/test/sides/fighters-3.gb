@@ -1,0 +1,113 @@
+#side Fighters
+#author Devon
+#date 16 Feb 2002
+#color 999
+
+Defends itself with small blaster users.
+Could have multiple primary types (algae and gatherers?)
+
+How does it decide whether to make fighters?
+
+(20020410) fixes for changes
+(20021002) Fix for communications renaming. Switched to messages.
+
+#type algae
+#color 0f0
+
+#hardware
+  processor 5
+  energy 20 5
+  solar-cells .4
+  constructor .4
+  
+  armor 100
+
+#code
+
+do
+	constructor-type nif
+		1 2 random-int constructor-type!
+	then
+	energy 10 > if
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+forever
+
+#type fighter
+#color f0d
+
+Communicates, to help find targets.
+
+(20021003) Cut repair rate in half and increased solar cells, to reduce starvation.
+
+#hardware
+  processor 20
+  engine .07
+  
+  solar-cells .15   ;c 270
+  energy 100 30
+  
+  armor 150
+  repair-rate .1   ;c 75
+  
+  robot-sensor 15 1
+  blaster 15 3 15
+  radio send receive
+
+#code
+
+do
+	energy 10 > if
+		scan^
+	else
+		0 engine-power!
+	then
+	sync
+forever
+
+#var next-scan 0
+#const scan-interval 53
+#const fighting-range 2
+
+scan:
+	time next-scan < ifr
+	fire-robot-sensor sync
+	robot-found if
+		energy 20 > if
+			robot-position robot-velocity robot-distance blaster-speed / vs* v+
+				position v-
+			robot-distance fighting-range > if
+				engine-max-power engine-power!
+				2dup engine-velocity!
+			else
+				0 engine-power!
+			then
+			robot-distance blaster-range < if
+				angle fire-blaster
+			else
+				2drop
+			then
+		then
+		robot-position 2 1 send
+		time blaster-reload-time + next-scan!
+	else
+		;use radio
+		0 engine-power!
+		1 messages if
+			energy 40 > if
+				1 receive drop position v-
+				2dup norm fighting-range > if
+					engine-max-power engine-power!
+					2dup engine-velocity!
+				then
+				2drop
+			then
+		then
+		time scan-interval + next-scan!
+	then
+return
+
+#end
+

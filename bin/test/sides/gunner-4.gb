@@ -1,0 +1,46 @@
+#side Gunner 4
+#author Warren
+March 1 2002, based on an old hardcoded side.
+#color c0f
+
+(Devon 20020409) Fixed for changes (removed focus, sensor cooldown)
+(Devon 20030716) Ignore shielded targets.
+(Devon 20040105) More reluctant to shoot nearby shielded targets.
+
+#type Gunner
+#color d00
+#hardware
+processor 5
+constructor 0.399
+energy 40 0
+solar-cells 0.4
+armor 200
+
+robot-sensor 20 5
+grenades 50 20 50
+
+#code
+
+#const scan-interval 70
+
+do
+	1 constructor-type!
+	energy max-energy 10 - < 0 constructor-max-rate ifev constructor-rate!
+	time robot-sensor-time scan-interval + < grenades-cooldown or nif
+		fire-robot-sensor sync
+		robot-found if
+			do
+				robot-shield-fraction 1 robot-distance grenades-range / 0.5 * - > if
+					robot-position robot-velocity robot-distance grenades-speed / 0.8 *
+						vs* v+ position v-
+						rect-to-polar fire-grenade
+					done-shooting& jump
+				then
+			next-robot while-loop
+		done-shooting:
+		then
+	else
+		sync
+	then
+forever
+#end

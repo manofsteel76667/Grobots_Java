@@ -1,0 +1,102 @@
+#side Ring of Fire
+#author Devon
+12 November 2002
+
+Autotrophs with blaster-using defenders that avoid friendly fire.
+
+#color f60
+
+#type core
+#color 0c9
+#hardware
+  processor 2
+  energy 5 0
+  solar-cells .5
+  constructor .5
+  armor 30
+#code
+constructor-max-rate constructor-rate!
+do
+  constructor-type nif
+    0 2 random-int 1 max constructor-type!
+  then
+forever
+
+#type ring
+#color 000
+
+(20030602) Uses vread/vwrite.
+           Separate fighting mode; keep distance from enemies.
+
+#hardware
+  processor 10
+  radio read write
+  robot-sensor 16
+  
+  blaster 20 16 20
+  armor 200
+  repair-rate .04
+  
+  engine .03
+  energy 100 0
+  solar-cells .15
+  
+#code
+
+;mem:
+;2,3: home
+
+#vector post
+#var dir
+#const fighting-distance 14
+
+pick-post:
+  1 type-population sqrt 4 + 2 type-population max
+  dir
+  polar-to-rect 2 vread v+ post!
+return
+
+#start
+  0 world-width random 0 world-height random position v- angle dir!
+2 read if
+  2 vread 5 vs* position v+ 6 vs/
+else
+  position
+then 2 vwrite
+
+idle:
+do
+  pick-post
+  post seek-location
+  time robot-sensor-time 45 + >= if energy blaster-firing-cost > and-if
+    fire-robot-sensor sync
+    robot-found if
+      shoot^
+      fighting& jump
+    then
+  then
+  energy 25 > max-repair-rate 0 ifev repair-rate!
+  sync
+forever
+
+fighting:
+do
+  position robot-position v- unitize fighting-distance vs* robot-position v+
+    robot-velocity seek-moving-location
+  blaster-cooldown nif
+    fire-robot-sensor sync
+    robot-found idle& nifg
+    shoot^
+  then
+  energy 25 > max-repair-rate 0 ifev repair-rate!
+energy blaster-firing-cost > while-loop
+idle& jump
+
+shoot:
+  robot-velocity velocity v- 2dup robot-distance blaster-speed / vs* robot-position v+
+  position dist blaster-speed / vs* robot-position v+
+  position v- angle fire-blaster
+return
+
+
+#end

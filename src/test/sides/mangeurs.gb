@@ -1,0 +1,94 @@
+#side Mangeurs
+#color 81F
+#Author Szeety (szeety@hotmail.com)
+
+English
+One of my first bots.
+It was firstly based on the tutorial about eating
+and it becomes more and more complex with the time
+with a system of food hashing which, I have to say,
+have not been inspired by the way it's done on Frog Celestial.
+
+The next thing to do on it is to add a weapon or a figther type
+and may be to add a type of algue a bit like Simple-1 which is my immediate competitor XD.
+
+Français (Eh, I'm a Quebecker (French-Canadian) so I think it's quite justified to say it in french too..)
+Il s'agit d'un de mes premiers robots.
+Au départ, je me suis basé sur l'exemple "Eating" du didacticiel du site
+et il est devenu de plus en plus complexe avec le temps
+avec un système d'alimentation plus intelligent
+(malgré qu'il pourrait sûrement l'être encore beaucoup plus).
+Je doit dire que le système que j'ai conçu n'est nullement inspiré de celui présent sur Frog Celestial
+(que je n'ai même pas pris la peine de comprendre encore :p) ).
+
+La prochaine étape à faire est d'y ajouter une arme ou un combattant à part
+et peut-être de rajouter un type d'algue un peu comme Simple-1 qui est mon compétiteur immédiat XD.
+
+#date september 8th 2006 ; Working but there is still some bugs (2 on one food).
+#date 8 septembre 2006   ; Fonctionne, mais il ne fonctionne pas encore correctement.
+#date october 2006       ; Bug solved and I don't know why, but it works! :p).
+#date mi-octobre 2006    ; J'ai réglé mon bogue, mais sans savoir comment!
+#date november 17th 2006 ; Calibrating the type so it act two times better than before.
+#date 17 novembre 2006   ; Tests et calibrage ce qui fait qu'il fonctionne deux fois mieux maintenant.
+#type Discuteur
+#color 000
+#hardware
+  engine 0.1
+  solar-cells 0.5
+  constructor 2
+  eater 1.5
+  energy 5 0
+  food-sensor 10
+  processor 30
+  armor 50
+#code
+#var àmoi     ;Says if the bot is seeking the food : Indique si il recherche la nourriture
+#var envoi    ;Says if there is a message to send  : Indique si il y a un message à envoyer
+#var mdist    ;Distance from message : Donnée Distance du message
+#vector mfood ;Food from message     : Donnée Nourriture du message
+#vector food  ;Actual food           : Nourriture Actuelle
+do
+1 constructor-type!
+energy max-energy / 0.5 - 4 * constructor-rate! ;Kind of Autoconstruct of my own : Sorte d'Autoconstruct de mon cru
+
+59 periodic-food-sensor if
+ food-found if
+  food-position food dist 0 > if
+   food-position food!
+   1 envoi!
+   1 àmoi!
+  then
+ else
+  0 àmoi!
+ then
+then
+
+àmoi if
+ do 1 messages while
+  1 receive drop mdist! mfood! ;Receiving the message (the id goes to the next if) : Réception du message (l'id va au prochain if)
+  id <> if
+   mfood food dist 0 = if
+    mdist position mfood dist < if
+     0 àmoi!
+    else
+     1 envoi!
+    then
+   then
+  then
+ loop
+else
+ 1 clear-messages
+then
+
+àmoi if ;An other if of àmoi because it could change when reading the messages : Un autre if d'àmoi vu qu'àmoi a pu changer
+ food seek-location
+ envoi if
+  id food position food dist 4 1 send
+  0 envoi!
+ then
+else
+ 0 engine-power!
+ 0 envoi!
+then
+forever
+#end

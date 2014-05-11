@@ -1,0 +1,1064 @@
+#side Walled City 2
+#author Warren
+#date Started 2006 03 23
+#color f5f
+#seed 2 3 1 4 3 1 3 1 4 2 3
+
+A colony that moves around, favoring food and corners and avoiding enemies.
+Has various types in concentric circles inspired by Business Cycle.
+
+Types:
+Fighter
+Pregnant
+Gatherer
+Solar
+Missile
+
+ToDo:
+* Make fight or not decision consistant and clean
+
+Changes from walled-city 1 to walled city 2
+* Seed includes solar outlets
+* Builds missiles when populuous
+* Fighters eat food
+* Gatherers stop sitting at home syphoning when down to half energy, since by the time they get out of range they're usually empty anyway.
+* Sundry hardware tweaks of questionable value
+
+#code
+;;;;;;;; Shared code block ;;;;;;;;;;;;;
+;;;;;message-passing channels
+#const DANGER_CHANNEL 1
+#const HUNGRY_CHANNEL 7
+
+
+;;;;; shared memory
+#const CENTER_MOVE_VOTE 1 ;vec
+#const CENTER_UPDATE_TIME 3
+#const COLONY_CENTER 5 ;vec
+
+#const FOOD_PLENTY_VOTE 15
+#const FOOD_PLENTY_TIME 16
+#const FOOD_PLENTY 17
+
+;101-300 are food claims
+#const FOOD_CLAIM_BASE 101
+#const NUM_FOOD_CLAIMS 100
+#const FOOD_CLAIM_SIZE 2
+
+;301-400 are missile claims
+#const NUM_ROBOT_CLAIMS 100
+#const ROBOT_CLAIM_BASE 301
+
+;robot types
+#const FIGHTER_TYPE 1
+#const PREGNANT_TYPE 2
+#const GATHERER_TYPE 3
+#const SOLAR_TYPE 4
+#const MISSILE_TYPE 5
+
+;shot type constants (need to match grobots source code)
+#const FF_SHOT 5 ;forcefield
+#const SYPHON_SHOT 3 ;the friendly sort of syphon
+
+;;;; global vars
+#vector center
+#vector tv ;temporary vector
+#var pregnant-radius
+#var wall-radius
+#var solar-radius
+#var food-plenty
+
+;;;;;code 
+
+set-see-friends:
+if
+	0 1 ;first is enemies, second is friends
+else
+	1 0
+then 
+	robot-sensor-sees-friends! robot-sensor-sees-enemies!
+return
+
+rotate-ninety: ;clockwise
+	negate swap return
+
+4dup: tv! 2dup tv 2swap tv return
+
+;The adjust-circle function uses the robot sensor and engine to bring this robot into a circle
+; with other robots of its type. Far from perfect.
+#var circle-adjust-time 0
+#var left-cosine 
+#var right-cosine
+#var left-vel ;angular velocity
+#var right-vel
+#vector self-vec
+#const ADJUST_CIRCLE_PERIOD 50
+
+#vector desired-position
+
+#var relocating-mode 0
+#var relocating-angle
+adjust-circle: ; radius -> ()
+	relocating-mode nif
+	wall-collision friendly-collision 3 >= or and-if
+		1 relocating-mode!
+		world-size 2 vs/ position v- angle -1 1 random + relocating-angle!
+	then
+relocating-mode if
+	relocating-angle polar-to-rect center v+ desired-position!
+	desired-position position 2 in-range if
+		0 relocating-mode!
+	then
+else
+	time circle-adjust-time ADJUST_CIRCLE_PERIOD + > if
+		time circle-adjust-time!
+		1 set-see-friends^
+		0 robot-sensor-focus-distance!
+		fire-robot-sensor sync
+		position center v- self-vec!
+		robot-sensor-range 2 / self-vec norm 1 max /
+		;stack: sin of half the angle we can see
+		1.3 * ;fudge factor to make no one seen seem a bit out of range
+		1 min arcsin 2 * 
+		cos
+		 dup left-cosine! right-cosine!
+;consider walls
+		self-vec unitize 15 vs* rotate-ninety^
+		2dup position v+ restrict-location-zero^ center v- unitize self-vec unitize dot left-cosine max left-cosine!
+		vnegate position v+ restrict-location-zero^ center v- unitize self-vec unitize dot right-cosine max right-cosine!
+
+		0 0 right-vel! left-vel!
+		robot-found if
+			do
+				type robot-type = if
+				position center v- unitize robot-position center v- unitize 4dup^ cross
+				0 < if
+					;bot right of us.
+					dot ;now stack is: radius parameter, cosine of angle between us and them
+					dup right-cosine > if
+						right-cosine!
+						robot-position center v- 2dup norm 1 max square vs/ robot-velocity cross right-vel!
+					else drop then
+				else
+					;left of us
+					dot
+					dup left-cosine > if
+						left-cosine!
+						robot-position center v- 2dup norm 1 max square vs/ robot-velocity cross left-vel!
+					else drop then
+				then
+				then ;our type?
+			next-robot while-loop
+		then
+		;now seek balance. radius parameter is still on the stack!
+		dup 2 / self-vec norm < if
+			left-cosine arccos right-cosine arccos - 5 /
+		;	position center v- 2dup norm 1 max square vs/ engine-velocity cross 0.8 *
+		;	left-vel right-vel + 0.1 * + ADJUST_CIRCLE_PERIOD * + ;follow neighbors
+			 position center v- angle +
+		else
+		;radius is very small, so pay attention to it first
+			position center v- angle
+		then
+		;stack: dist, angle from center to seek
+		polar-to-rect center v+ desired-position! 
+	else
+		drop
+	then ;time to scan or not
+then ;relocating-mode or not
+desired-position position v- tv!
+tv 0.03 vs* engine-velocity!
+tv norm 5 > shot-found and if engine-max-power else 
+ tv norm 0.2 > mass 800 / *
+then engine-power! ;max power is 0.02 for std size cell. Allows gatherers to push us around.
+;;		desired-position seek-location
+return
+
+general-talk:
+	FOOD_PLENTY read food-plenty!
+	COLONY_CENTER vread center!
+	SOLAR_TYPE type-population 4 * 2pi / solar-radius!
+	PREGNANT_TYPE type-population 4 * 2pi /
+	SOLAR_TYPE type-population 3 0 ifev solar-radius + max pregnant-radius!
+	FIGHTER_TYPE type-population 6 * 2pi / pregnant-radius 2 + max wall-radius!
+	wall-radius 2 / pregnant-radius max pregnant-radius!
+	pregnant-radius 7 - solar-radius max solar-radius!
+return
+
+restrict-location: ;x y -> x y
+world-height 5 - min 5 max swap
+world-width 5 - min 5 max swap return
+
+restrict-location-zero: 
+world-height 0 - min 0 max swap
+world-width 0 - min 0 max swap return
+
+
+;returns distance to nearest wall
+wall-distance: ; -> dist
+	position min
+	world-size position v- min
+	min return
+
+cry-if-hurt: ; -- was-hurt
+	#var last-armor
+	armor last-armor < if
+		position 2 DANGER_CHANNEL send
+		1
+	else
+		0
+	then
+	armor last-armor!
+return ;returns 1 or 0
+
+;Feeding
+#vector hungry-position
+#var hungry-time -999
+#var hungry-energy-wanted 10
+#vector hungry-velocity
+#vector current-hungry-position 50 50
+
+calc-chp:
+	hungry-position hungry-velocity time hungry-time - 40 min vs* v+ current-hungry-position!
+return
+
+#var num-cries
+feed-hungry:
+	
+		HUNGRY_CHANNEL messages 5 - 0 max 0 random-int HUNGRY_CHANNEL skip-messages
+		0 num-cries!
+		do
+			num-cries 5 < if
+				HUNGRY_CHANNEL receive
+				num-cries 1 + num-cries!
+			else 
+				0 ;already listened a lot
+			then
+		while
+			;stack: energy time vx vy x y 
+			2dup position syphon-range in-range
+			current-hungry-position position syphon-range in-range not or
+			time hungry-time 100 + > or
+			if
+ 				hungry-position! hungry-velocity!
+				hungry-time! hungry-energy-wanted!
+				calc-chp^
+			else
+				2drop 2drop 2drop
+			then
+		loop
+	current-hungry-position position syphon-range in-range if
+	energy max-energy 0.1 * > and-if
+		syphon-max-rate negate syphon-rate!
+		current-hungry-position position v- hungry-velocity velocity v- 5 vs* v+ 
+			rect-to-polar syphon-direction! syphon-distance!
+	else
+		0 syphon-rate!
+	then
+return
+
+;based vaguely on tutorial food-hashing code from Frog Celestial
+#var food-hash
+#var food-y
+claim-food:
+;#const FOOD_CLAIM_BASE 1
+;#const NUM_FOOD_CLAIMS 100
+;first time, then y
+	food-position food-y! world-width /
+	;stack: between 0 and 1
+	NUM_FOOD_CLAIMS * floor
+	;stack: probably between 0 inclusive and NUM_FOOD_CLAIMS exclusive
+	0 max NUM_FOOD_CLAIMS 1 - min FOOD_CLAIM_SIZE * FOOD_CLAIM_BASE + food-hash!
+	food-hash sync read
+	dup 0 > swap time 400 - > and if
+		;valid time claim already
+		0 ;TODO: check y
+	else
+		;claim expired
+		time food-hash write food-y food-hash 1 + write
+		1
+	then
+return
+
+
+;;;;;; END Shared code ;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Wall ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Spiked Wall
+
+A short-range blaster-weilding fighter. Also has weak grenades for no good reason.
+
+;#decoration 000 cross
+#color f00
+#hardware
+energy 460 80
+armor 350
+processor 34
+radio send receive
+engine 0.18
+solar-cells 0.009
+
+robot-sensor 8 6
+shot-sensor 6.9 3
+food-sensor 6.5 2
+eater 0.5
+
+repair-rate 0.12
+
+grenades 4 7 19
+
+blaster 38 5 19
+
+#code
+#vector danger-position
+#var danger-time -1000
+recent-danger: ;-- bool
+time danger-time 50 + <
+return
+
+#const BIG_BOMB 103.52 ;if a robot has more than this size bomb, treat it as a missile.
+#var hash
+#var claimed-robot -1
+;Volunteer to be the robot that stops the incoming missile
+claim-robot: ; -- bool
+robot-bomb BIG_BOMB < if 1 return then
+robot-side 7 * robot-type 5 * robot-id + + NUM_ROBOT_CLAIMS mod ROBOT_CLAIM_BASE + hash!
+hash claimed-robot = if ;already claimed
+	sync
+hash read 40 + time > and-if ;has our claim expired?
+	time hash write
+	1 return
+then
+sync
+hash read 50 + time < if
+	time hash write 
+	hash claimed-robot!
+	1 return
+else
+	0 return
+then
+  
+targetable-robot-found: ;returns 1 if an ok target is found, 0 otherwise. Leaves robot cursor on target.
+robot-found if
+  do
+    robot-shield-fraction 0.3 > if
+    claim-robot^ and-if
+		1 return
+    then
+  next-robot while-loop
+then
+0 return
+
+;;; the fight-willingness function is in progress and currently unused.
+#const BEGIN_FIGHTING_WILL 1.5
+#const END_FIGHTING_WILL 0.5
+#var fw_dist
+#var fw_danger
+;parameters: is it shooting? distance from center to object 
+fight-willingness: ; bool num -- num
+fw_dist! fw_danger!
+fw_dist wall-radius 10 + < fw_danger and if
+	5 ;under attack, always defend home
+else
+	fw_danger if
+		wall-radius fw_dist / 1 min ;0.2 for 5 wall-radius away, 1 for inside colony
+	else
+	then
+	fw_danger 2 1 ifev + 
+	energy max-energy / armor max-armor / * sqrt ;geometric mean of armor and energy
+	*
+then
+return ;returns willingness, greater is more willing
+
+
+#var last-cry-time
+#var fighting 0
+
+#var meal-time
+#vector meal-position
+#var have-meal
+
+#var tti ;time to intercept
+#vector intercept-delta ;for noff
+#vector relative-shot-vel
+#var enemy-dist
+#vector enemy-pos
+#var enemy-time
+#vector enemy-vel
+#var enemy-radius
+#var robot-scan-time
+#var bomb-squad 0
+
+;Some things, such as engine control and weapon firing, don't want to wait 10+ frames
+; for the main loop to finish. So this is called every 4 frames or so.
+#var fast-loop-time -10
+fast-loop:
+	time fast-loop-time!
+	energy max-energy / 0.06 > if
+	robot-scan-time fighting 14 30 ifev + 
+	time < and-if ;If fighting, jump the gun so we don't waste time
+		0 set-see-friends^
+		0 robot-sensor-focus-distance!
+
+		do
+			blaster-cooldown 3 >=
+			;will sync at least twice: once to fire sensor to see enemy, a second time to look for friends
+			; Computing will also take several frames
+			;don't care if grenades aren't ready
+		while
+			sync
+		loop
+
+		fire-robot-sensor sync
+		time robot-scan-time! ;sensor also used for other things so robot-sensor-time won't do
+		targetable-robot-found if
+			robot-position robot-velocity lead-grenade
+			robot-bomb robot-reloading or energy max-energy / 0.4 > and
+			 center position wall-radius 13 + in-range or if
+				robot-position robot-velocity 28 vs* v+ danger-position!
+				time danger-time!
+				1 fighting!
+			then
+
+			;do noff
+			robot-bomb BIG_BOMB >= bomb-squad!
+			robot-distance enemy-dist!
+			robot-position enemy-pos!
+			robot-velocity enemy-vel!
+			robot-sensor-time enemy-time!
+			robot-radius enemy-radius!
+
+			blaster-speed
+			robot-position position v- unitize
+			robot-velocity velocity v- dot 
+			;stack: blaster-speed, fleeing speed
+			- blaster-speed 0.1 * max ;Don't let the velocity correction go crazy
+			;stack: blaster closing speed
+			robot-distance radius - swap / 
+			;stack: tti
+			tti!
+			tti blaster-lifetime <= if
+				robot-velocity velocity v-
+				tti vs* intercept-delta! ;what to add to their position to make a straight shot work
+				1 set-see-friends^
+				robot-position position v- 0.5 vs* rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+				intercept-delta robot-position v+ position v- unitize blaster-speed vs* relative-shot-vel! 
+				fire-robot-sensor sync
+				robot-found if
+					do
+						robot-position enemy-pos position v+ 0.5 vs* enemy-dist 0.5 * in-range Fire& nifg
+						;friend is near line of fire.
+					;determine if friend might be hit
+						robot-velocity velocity v- relative-shot-vel v- unitize
+						robot-position position v- cross robot-radius 3 + < NoFire& ifg
+					next-robot while-loop
+				then
+			Fire:
+				intercept-delta enemy-pos v+ position v- angle fire-blaster
+			NoFire:
+			then
+;Try grenade a second time, in case it wasn't quite reloaded last time
+	;;		robot-position robot-velocity lead-grenade 
+		else
+			fire-shot-sensor sync
+			shot-found if
+				do
+					shot-velocity or if ;ignores explosions
+					shot-type FF_SHOT <> shot-type SYPHON_SHOT <> and 
+					center shot-position wall-radius 8 + in-range or and-if
+						shot-position shot-velocity unitize -10 vs* v+ danger-position!
+						time danger-time!
+						energy max-energy / 0.4 > center position wall-radius 4 + in-range or if
+							1 fighting!
+						then
+					then
+				next-shot while-loop
+			then
+		then
+		
+	then
+
+	fighting if
+			enemy-time 30 + time > if
+				bomb-squad if
+
+					enemy-pos center v- rect-to-polar swap radius robot-radius + 0.3 - - swap polar-to-rect
+					center v+
+				;stack: place to be
+#vector desired-ev
+					position v- rect-to-polar swap 0.1 * 0.2 min swap polar-to-rect
+					enemy-vel 0.75 vs* v+ 2dup desired-ev! engine-velocity!
+				else
+					enemy-pos enemy-vel time enemy-time - vs* v+ ;stack: cur enemy pos
+					position v- rect-to-polar swap blaster-range 2.5 - - 0.06 * swap polar-to-rect
+				;move to be 0.8 closer than our blaster range
+ 					enemy-vel 0.95 vs* v+ engine-velocity!
+#vector requested-vel ;debug printf
+					engine-velocity requested-vel!
+				then
+				engine-max-power engine-power!
+			else
+				danger-position seek-location
+			then
+	then
+return
+
+#start
+position desired-position!
+Begin-normaling:
+
+do
+;#var time1
+;time time1!
+	fast-loop^
+	general-talk^
+	cry-if-hurt^ drop
+;#var time2
+;time time2!
+
+	energy max-energy / 0.2 > max-repair-rate 0 ifev repair-rate!
+	
+	armor max-armor / 0.5 > 0.8 0.55 ifev 
+	have-meal if 0.5 * then
+	max-energy * energy > if
+	time last-cry-time - 37 > and-if
+	velocity norm 0.15 < energy max-energy / 0.4 < or and-if
+		max-energy energy - time velocity position 6 HUNGRY_CHANNEL send
+		time last-cry-time!
+	then
+
+;#var time3
+;time time3!
+	fast-loop^
+
+
+	fighting if
+
+		energy max-energy / armor max-armor / min 0.25 > position center wall-radius 8 + in-range or if
+		time danger-time 50 + < 
+		time danger-time 400 + < 
+		danger-position position 1 in-range not and or and-if
+			DANGER_CHANNEL clear-messages ;already have a target, so why listen for other cries?
+		else 0 fighting! then
+	else
+		have-meal if
+			meal-position position radius in-range
+			time meal-time 200 + > or eaten not and if
+				0 have-meal!
+			then
+		then
+		have-meal nif
+			time food-sensor-time if food-sensor-time else -100 then
+				energy 10 < 500 60 ifev
+			 + > if
+			energy max-energy / 0.9 < and-if
+			center position wall-radius 4 + in-range and-if
+				fire-food-sensor sync
+				food-found if
+					Food-check-loop:
+					food-velocity norm nif
+					claim-food^ and-if
+						food-position meal-position!
+						time meal-time!
+						1 have-meal!
+					else
+						next-food Food-check-loop& ifg
+					then
+				then ;food-found
+			then
+		then
+
+		have-meal if
+			meal-position position v- rect-to-polar swap 0.05 * 0.1 min swap polar-to-rect engine-velocity!
+			meal-position position radius in-range 0 engine-max-power 0.5 * ifev engine-power!
+		else
+			;wait in the circle
+			wall-radius adjust-circle^
+		then
+	then
+
+	fast-loop^ ;adjust-circle can take a long time
+
+	fighting nif
+		energy max-energy / 0.4 > if
+			do
+				DANGER_CHANNEL receive
+			while
+				;stack: position of danger
+				danger-position!
+				danger-position center wall-radius 8 + in-range
+				danger-position position 10 energy max-energy / 15 * + in-range or if
+					time danger-time!
+					1 fighting!
+				then
+			loop
+		else
+			DANGER_CHANNEL clear-messages
+		then
+	then
+
+forever
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Constructor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Pregnant
+#decoration 000 circle
+#color 0f0
+#hardware
+energy 600 0.1
+armor 180
+processor 10
+radio send receive
+engine 0.027
+
+constructor 2.6
+solar-cells 0.03
+repair-rate 0.06
+
+robot-sensor 6 4
+
+#code
+#var last-birth-time -1
+#var baby-cost
+
+select-type:
+	;first, check to see if fighters are needed
+	population 0.28 * FIGHTER_TYPE type-population 0 1 random-int + > if
+		FIGHTER_TYPE 
+	else
+		;second check to see if we're overflowing
+		baby-cost time last-birth-time - /
+		;stack: average power consumption
+#var power-consumption
+		dup power-consumption!
+		constructor-max-rate 0.8 * > if
+			PREGNANT_TYPE	
+		else
+	;third, make missiles if populous
+			population 20 > if
+			0.4 random-bool and-if
+				MISSILE_TYPE
+			else
+	;third, make gatherers or solars based on whether the gatherers are happy
+				food-plenty 0.39 < GATHERER_TYPE type-population and
+				SOLAR_TYPE GATHERER_TYPE ifev
+			then
+		then
+	then constructor-type!
+
+	constructor-remaining baby-cost! ;;;hack
+	time last-birth-time!
+return
+
+#start
+	position desired-position!
+	time 20 < if
+		position COLONY_CENTER vwrite
+	then
+
+
+	constructor-type if
+	;;seeded with fetus
+		time last-birth-time!
+		constructor-remaining baby-cost! ;;;hack
+	then
+#var last-cry-time -999
+
+do
+	general-talk^
+	pregnant-radius adjust-circle^
+	cry-if-hurt^ drop ;ignore return value
+
+	time last-cry-time - 
+	max-energy max-energy energy - 1 + / ;stack: delta_t, max / (1 + max - current)
+	61 * >
+	velocity norm 0.12 < and if
+		max-energy energy - time velocity position 6 HUNGRY_CHANNEL send
+		time last-cry-time!
+	then
+	max-repair-rate repair-rate!
+
+	constructor-type nif
+		select-type^
+	then
+	max-energy 0.03 * energy < constructor-max-rate 0 ifev constructor-rate!
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Gatherer ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Gatherer
+#decoration 000 cross
+#color 00f
+#hardware
+energy 600 20
+armor 111
+processor 20
+radio send receive
+engine 0.04
+
+eater 2.4
+solar-cells 0.01
+repair-rate 0.03
+food-sensor 8 3
+shot-sensor 4 2
+
+syphon 2.4 9
+
+#code
+#var have-meal 0
+#var meal-time
+#vector meal-position 0 0
+#vector wander-dest
+#var homesick 0
+#var running-away 0
+#var last-danger-time -200
+#vector last-danger-position
+
+
+#var status 2
+#const VOTED 1
+#const UPDATED 2
+#vector run-away-debug
+#vector get-food-debug
+vote:
+	time 100 mod 20 < if
+	status UPDATED = and-if
+		;time to vote
+		time last-danger-time 180 + < if
+			last-danger-position center v- unitize -8 vs*
+		else
+			meal-position or if
+				;have ever seen a food
+				meal-position center v- unitize 3 vs*
+			else
+				;neither eating nor running away. Move colony towards center of world to get us food
+				world-size 2 vs/ center v- unitize 0.1 vs*
+			then
+		then
+
+		have-meal 1 0 ifev
+		;stack is: movement-vote food-vote
+		sync
+		FOOD_PLENTY_VOTE read + FOOD_PLENTY_VOTE write
+		CENTER_MOVE_VOTE vread v+ CENTER_MOVE_VOTE vwrite
+		VOTED status!
+	then
+
+	time 100 mod 30 > if
+	time 100 mod 50 < and-if
+	status VOTED = and-if
+ 		time 50 - CENTER_UPDATE_TIME
+		;stack: time-50, CENTER_UPDATE_TIME
+		sync
+		read > if
+			time CENTER_UPDATE_TIME write
+			;now we can take our time computing, since the time has already been written. If we die, center is delayed
+			; by 100 frames; no big deal.
+			CENTER_MOVE_VOTE vread 
+			GATHERER_TYPE type-population 10 max vs/  ;10 max keeps us from moving so quickly when population is small
+		;vector with length about 1
+			2dup get-food-debug!
+			center world-size 2 vs/ v- 
+			signum swap signum swap
+			 0.15 vs*  2dup run-away-debug! v+ ;run away from center. length 0.1 * sqrt(2) = 0.14
+			rect-to-polar swap 2 min swap polar-to-rect
+			COLONY_CENTER vread v+
+			restrict-location^
+			COLONY_CENTER vwrite
+			0 0 CENTER_MOVE_VOTE vwrite
+		then
+		time 50 - FOOD_PLENTY_TIME
+		sync
+		read > if
+			time FOOD_PLENTY_TIME write
+			FOOD_PLENTY_VOTE read GATHERER_TYPE type-population /
+			FOOD_PLENTY read + 2 / FOOD_PLENTY write
+			0 FOOD_PLENTY_VOTE write
+		then
+
+		UPDATED status!
+	then
+return
+
+#const edge-space 4
+;this subroutine copied from eventually 12 (via Untouchable 4)
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+
+new-wander-loc:
+0.4 random-bool if
+	center wall-radius 1.2 * 10 + random-angle polar-to-rect v+ restrict-location^
+else
+	random-edge-position center v- rect-to-polar swap wall-radius 1.2 * 13 + min swap
+	polar-to-rect center v+
+then
+ wander-dest!
+return
+
+run-away:
+		new-wander-loc^
+		0 have-meal!
+		1 running-away!
+		time last-danger-time!
+		position last-danger-position!
+
+return
+
+#start
+new-wander-loc^
+do
+;#var begin-loop-time
+;	time begin-loop-time!
+	vote^
+	general-talk^
+	energy max-energy / 0.2 > max-repair-rate 0 ifev repair-rate!
+	
+	time shot-sensor-time 30 + > energy max-energy / 0.1 > and if
+		fire-shot-sensor sync
+		shot-found if
+			run-away^
+		then
+	then
+	cry-if-hurt^ if
+		run-away^
+	then
+;#var time2
+;	time time2!
+
+	;; feed-hungry and general-talk are really slow, so food seeking is in the code 2 places.
+	have-meal if
+		meal-position seek-location
+	then
+
+	feed-hungry^ ;this takes about 5 frames!
+;#var time3
+;	time time3!
+
+homesick running-away or nif
+	have-meal if
+		meal-position position radius in-range
+		time meal-time 200 + > or eaten not and if
+			0 have-meal!
+		then
+	then
+	have-meal nif
+		time food-sensor-time 
+			energy 10 < 150 30 ifev
+		 + > if
+			fire-food-sensor sync
+			food-found if
+				Food-check-loop:
+				food-velocity norm nif
+				claim-food^ and-if
+					food-position meal-position!
+					time meal-time!
+					1 have-meal!
+				else
+					next-food Food-check-loop& ifg
+				then
+			then ;food-found
+		then
+	then
+
+	have-meal if
+		meal-position seek-location
+	else
+		wander-dest position 2 in-range 
+		center wander-dest wall-radius 30 + in-range not or if
+			new-wander-loc^
+		then
+		energy 5 < if
+			0 engine-power!
+		else
+			wander-dest position v- unitize 0.07 vs* engine-velocity! engine-max-power engine-power!
+		then
+	then
+	energy max-energy / 
+	have-meal 0.95 0.7 ifev > if
+		1 homesick!
+		0 have-meal!
+		0.5 random-bool if
+			new-wander-loc^ ;to avoid the useless gliding colony problem
+			;meal-position wander-dest! ;last place we found food is good place to wander to
+		then
+	then
+else ;eat or not
+
+homesick if
+	hungry-position position syphon-range 0.8 * in-range if
+		0 engine-power!
+	else
+		hungry-position center wall-radius 10 + in-range 
+		if hungry-position else center then seek-location
+	then
+	energy max-energy / 0.5 < if
+		0 homesick! ; ok to do this prematurely, since we'll continue to syphon
+	then
+
+then
+
+running-away if
+	center position 4 in-range if
+		0 running-away!
+	then
+	center seek-location
+then
+then ;eat or not
+
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Solar Outlet
+#decoration 000 cross
+#color 0ff
+
+Based on untouchable 3's solar outlet.
+
+#hardware
+
+processor 15 ;big CPU to process hungry calls
+armor 80
+energy 150 0
+constructor 0.3 ;emergency anti-overflow use only
+engine 0.023
+
+radio receive
+
+solar-cells 0.4
+robot-sensor 4 3
+syphon 0.55 8
+
+#code
+
+#start
+
+do
+	general-talk^
+	solar-radius adjust-circle^
+	cry-if-hurt^ drop
+    	feed-hungry^
+
+	PREGNANT_TYPE constructor-type!
+	energy max-energy / 0.8 > constructor-max-rate 0 ifev constructor-rate!
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Missile ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Boom
+
+#decoration fcc dot
+#color f00
+#hardware
+energy 300 300
+armor 280
+processor 30
+radio send receive
+engine 0.18
+
+robot-sensor 11 12
+shot-sensor 6 2
+
+bomb 1100
+
+#code
+#vector danger-position
+#var danger-time -1000
+recent-danger: ;-- bool
+time danger-time 50 + <
+return
+  
+#var exploring 1
+#var expected-damage 0
+#var max-expected-damage
+#vector wander-loc
+#var total-mass-seen
+
+targetable-robot-found: ;returns 1 if an ok target is found, 0 otherwise. Leaves robot cursor on target.
+robot-found if
+  do
+    robot-shield-fraction 0.3 > if
+		1 return
+    then
+  next-robot while-loop
+then
+0 return
+
+#const edge-space 4
+;this subroutine copied from eventually 12 (via Untouchable 4 and Walled City)
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+new-wander-loc:
+	random-edge-position^ wander-loc!
+return
+
+#vector robots-center
+#var importance
+#var max-expected-damage-time
+#const EXPL_RADIUS 6
+#start
+new-wander-loc^
+
+do
+	time robot-sensor-time exploring 40 15 ifev + > if
+		fire-robot-sensor sync
+		robot-found if
+			0 0 robots-center!
+			0 expected-damage!
+			0 importance!
+			0 ;mass - leave on stack
+			do
+				robot-mass +
+				1 robot-distance EXPL_RADIUS / - 0 max robot-mass * expected-damage + expected-damage!
+				robot-position 
+				robot-mass robot-distance EXPL_RADIUS < 1 0.1 ifev *
+				;stack: mass-accum, robot-position, robot-importance
+				dup importance + importance!
+				vs* robots-center v+ robots-center!
+			next-robot while-loop
+			total-mass-seen!
+			robots-center importance vs/ robots-center!
+
+			energy max-energy / armor max-armor / min
+			exploring 120 80 ifev * total-mass-seen < if
+				0 exploring!
+			else
+				1 exploring!
+			then
+			
+			expected-damage 35 > if
+			max-expected-damage 0.8 * expected-damage >
+			time max-expected-damage-time 200 + > or and-if
+				die sync
+			then
+			max-expected-damage expected-damage  < if
+				expected-damage max-expected-damage!
+				time  max-expected-damage-time!
+			then
+		then
+	then
+	exploring if
+		wander-loc position 5 in-range if new-wander-loc^ then
+		wander-loc position v- unitize 0.15 vs* engine-velocity!
+	else
+		robots-center seek-location
+		;0.3 robot-direction-overall polar-to-rect engine-velocity!
+		;;TODO: this is a terrible place to go towards.
+	then
+	engine-max-power engine-power!
+	sync sync  ;save CPU
+forever
+
+#end

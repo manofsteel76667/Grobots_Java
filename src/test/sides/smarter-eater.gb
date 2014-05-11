@@ -1,0 +1,111 @@
+#side    Smarter Eater
+#author    Analog Kid
+#date    May 6 2004
+
+Smarter Eater is a modified version of Simple Eater with sensors for finding
+food.  It only wanders randomly when it detects no food.
+
+Simple Eater is a modified version of Simple Mover which gets its energy by
+eating instead of via solar cells.
+
+(Simple Eater change log)
+(20030717) Version 2 tweaks eating speed and energy storage to increase chances of
+survival and adds armor while allowing up to 10 cells in the initial seed.
+
+(20040208) Version 3 adds reproduction capabilities.
+(20040211) Changed found-food "backing up" loop so that it will actually get
+to the reproduction loop.  Can reproduce now but doesn't stop on food as well
+and sometimes gets stuck along edges and in corners.
+
+#color    f80                    ; orange
+
+#type    eater
+#color    f44                    ; pink?
+
+#hardware
+    processor    20
+    energy        400    50
+;;    solar-cells    .1005        ; solar cells perfectly balance power usage (.1 for engine and .0005 for processor)
+    engine        .05
+    eater        2.38        ; eat up to 2.38 energy per frame
+    constructor    2.0
+    food-sensor 5.0
+    armor        40
+    
+#code
+#start    init
+
+#var    count        0
+#var    last-time    0
+#const    sensor-rate    30        ; number of frames inbetween firing food sensors
+#const    change-rate    30        ; value of count to move before changing direction
+
+init:
+    -1 1 engine-velocity!                            ; set initial direction towards northwest
+    find-food^
+    
+do
+    ;eaten 0 > if found-food^ then                    ; if we ate something let's stop and eat some more!
+    time dup last-time - sensor-rate >= if            ; every sensor-rate frames or so
+        last-time!
+        find-food^                                     ; check sensors
+    else drop
+    then
+    engine-max-power engine-power!
+    count 1 + dup count!
+    change-rate = if change-direction^ 0 count! then ; change our direction of movement once in awhile
+    sync
+forever
+
+find-food:
+    fire-food-sensor
+    food-found if                                     ; detected food,
+        do    food-collision 0 =
+        while 
+            food-position seek-location             ; seek its position
+            sync
+            fire-food-sensor                        ; continue checking for food though
+            food-found not if return then            ; and cancel seek if we wander away
+        loop
+        0 engine-power!
+        eat-and-reproduce^
+    then
+    return
+    
+change-direction:
+    1.0 random-angle polar-to-rect engine-velocity!    ; change to random direction with magnitude 1.0
+    return
+
+found-food:
+    0 engine-power!                                    ; stop and
+    reverse-direction^
+    sync                                            ; wait until next frame
+    do    eaten 0 =                                    ; if we passed the food already
+    while                                            ; then back up!
+        engine-max-power 5 / engine-power!
+        sync       
+    loop
+    0 engine-power! sync
+    ;eaten 0 = if found-food& jump then                ; repeat until we stop on the food
+    
+eat-and-reproduce:
+    do    eaten 0 = until reproduce^ sync loop        ; eat & reproduce until nothing is left
+    0 constructor-rate!
+    engine-max-power engine-power!
+    return                                            ; look for more food
+    
+reverse-direction:
+    engine-velocity vnegate engine-velocity!
+    return
+
+reproduce:
+    energy 390 >= if                                ; only reproduce if near max energy
+        1 constructor-type!
+        constructor-max-rate constructor-rate!
+    else
+        0 constructor-rate!
+    then
+    constructor-progress constructor-remaining vprint
+    return
+    
+#end

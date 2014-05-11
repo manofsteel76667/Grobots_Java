@@ -1,0 +1,142 @@
+#side Ring of Fire 3
+#author Devon
+12 November 2002
+
+Autotrophs with blaster-using defenders that avoid friendly fire.
+This was a silly decorative side at first, but has become semi-serious.
+
+#color f60
+
+#type core
+#color 0c9
+
+(20030716) Slightly smaller.
+
+#hardware
+  processor 2
+  energy 5 0
+  solar-cells .4
+  constructor .4
+  armor 30
+#code
+constructor-max-rate constructor-rate!
+do
+  constructor-type nif
+    0 2 random-int 1 max constructor-type!
+  then
+forever
+
+#type ring
+#color 000
+
+(20030602) Uses vread/vwrite.
+           Separate fighting mode; keep distance from enemies.
+(20030716) Friendly fire avoidance.
+           Don't give up fighting when out of energy.
+
+#hardware
+  processor 25
+  radio read write
+  robot-sensor 16 8
+  
+  blaster 20 16 20
+  armor 200
+  repair-rate .04
+  
+  engine .03
+  energy 100 0
+  solar-cells .15
+  
+#code
+
+;mem:
+;2,3: home
+
+#vector post
+#var dir
+#const fighting-distance 14
+
+pick-post:
+  1 type-population sqrt 4 + 2 type-population max
+  dir
+  polar-to-rect 2 vread v+ post!
+return
+
+#start
+  0 world-width random 0 world-height random position v- angle dir!
+2 read if
+  2 vread 5 vs* position v+ 6 vs/
+else
+  position
+then 2 vwrite
+
+idle:
+do
+  pick-post
+  post seek-location
+  time robot-sensor-time 45 + >= if energy blaster-firing-cost > and-if
+    fire-robot-sensor sync
+    robot-found if
+      record-target^
+      shoot^
+      fighting& jump
+    then
+  then
+  energy 25 > max-repair-rate 0 ifev repair-rate!
+  sync
+forever
+
+#vector target-position
+#vector target-velocity
+#var target-distance
+
+fighting:
+do
+  position target-position v- unitize fighting-distance vs* target-position v+
+    target-velocity seek-moving-location
+  time robot-sensor-time blaster-reload-time + >= if
+    fire-robot-sensor sync
+    robot-found idle& nifg
+    record-target^
+    energy blaster-firing-cost > shoot& ifc
+  then
+  energy 25 > max-repair-rate 0 ifev repair-rate!
+forever
+
+record-target:
+  robot-position target-position!
+  robot-velocity target-velocity!
+  robot-distance target-distance!
+return
+
+#var blast-direction
+#vector blast-velocity
+
+shoot:
+  target-velocity velocity v- 2dup target-distance blaster-speed / vs* target-position v+
+  position dist blaster-speed / vs* target-position v+
+  position v- angle blast-direction!
+  velocity blaster-speed blast-direction polar-to-rect v+ blast-velocity!
+;look for friends
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+  target-distance 2 / robot-sensor-focus-distance!
+  blast-direction robot-sensor-focus-direction!
+  fire-robot-sensor sync
+  1 robot-sensor-sees-enemies!
+  0 robot-sensor-sees-friends!
+  0 robot-sensor-focus-distance!
+;anybody in the way?
+  robot-found if
+    do
+      robot-position position v- 2dup
+      blast-velocity robot-velocity v- unitize dot dup radius > swap target-distance < and
+      rrot blast-velocity robot-velocity v- unitize cross abs robot-radius .2 + < and ifr
+    next-robot while-loop
+  then
+;shoot
+  blast-direction fire-blaster
+return
+
+
+#end

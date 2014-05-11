@@ -1,0 +1,507 @@
+#side Commune + 2
+#author Devon/Warren
+
+Commune plus with anti-missile code in revenges. Modified by Warren.
+Not as missile-proof as a force-field user, but a lot better than ordinary commune.
+
+#color ddd
+#seed 3 2 1 2 1 3 4 2 1 2 4
+
+Types
+----------
+1: Revenge
+2: Sustenance
+3: pregnant
+4: solar outlet
+
+
+(20030102) Merged channels 3 and 4.
+(WJS 20040107) Added solar outlet type
+
+Upgrades 2006 0328
+* Revenges have anti-missile mode
+* Uses shared code
+* Uses lead-blaster
+
+Channel 2 contains places with lots of food.
+Channel 3 contains positions and energies of hungry cells.
+Channel 5 contains targets (sometimes imaginary).
+
+#code
+#const food-plenty-channel 2
+#const food-request-channel 3
+#const target-channel 5
+
+#const NUM_ROBOT_CLAIMS 100
+#const ROBOT_CLAIM_BASE 1
+
+#type Revenge
+#color c00
+#decoration 000 cross
+
+(20030102) Better combat movement.
+           Renamed call-for-help to call-for-food.
+           More frequent calls.
+           Better choice of whether to fight.
+           Less frequent scans, to save energy.
+           Now checks channel 5 after a failed chase.
+(20030105) Reduced unnecessary blaster range.
+           Now using seek-moving-location.
+           go-home no longer uses random target near home.
+(20030418) Bigger repairer, smaller blaster.
+           Go-home uses reduced engine power to save energy.
+(WJS 20040107) Ignores shielded targets
+
+#hardware
+  engine .13
+  energy 250 10
+  repair-rate .1
+  armor 350
+  blaster 20 1 10
+  robot-sensor 10
+  shot-sensor 7
+  processor 13
+  radio send receive
+#code
+
+#vector home
+#vector target
+#var next-call
+#vector callpos
+
+autorepair:
+  energy 100 > max-repair-rate 0 ifev repair-rate!
+return
+
+call-for-food:
+  speed ifr
+  time next-call < position callpos radius in-range and ifr
+  position energy 3 food-request-channel send
+  time 200 + next-call!
+  position callpos!
+return
+
+#const BIG_BOMB 103.52 ;if a robot has more than this size bomb, treat it as a missile.
+#var hash
+#var claimed-robot -1
+;Volunteer to be the robot that stops the incoming missile
+claim-robot: ; -- bool
+robot-bomb BIG_BOMB < if 1 return then
+robot-side 7 * robot-type 5 * robot-id + + NUM_ROBOT_CLAIMS mod ROBOT_CLAIM_BASE + hash!
+hash claimed-robot = if ;already claimed
+	sync
+hash read 40 + time > and-if ;has our claim expired?
+	time hash write
+	1 return
+then
+sync
+hash read 50 + time < if
+	time hash write 
+	hash claimed-robot!
+	1 return
+else
+	0 return
+then
+
+
+targetable-robot-found: ;returns 1 if an ok target is found, 0 otherwise. Leaves robot cursor on target.
+robot-found if
+  do
+    robot-shield-fraction 0.3 > if
+    claim-robot^ and-if
+		1 return
+    then
+  next-robot while-loop
+then
+0 return
+
+
+#start
+position home!
+idle& jump
+
+hungry:
+  0 engine-power!
+  0 repair-rate!
+  call-for-food
+do
+  sync sync sync sync sync sync sync sync sync sync
+  sync sync sync sync sync sync sync sync sync sync
+  call-for-food
+energy 120 < while-loop
+  5 clear-messages
+
+idle:
+  0 engine-power!
+do
+  autorepair
+  time robot-sensor-time 20 + >= if
+    fire-robot-sensor sync
+    targetable-robot-found robot-shield-fraction 0.6 > and fight& ifg
+  then
+  time shot-sensor-time 12 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  target-channel messages if energy armor min 150 > and-if
+    target-channel receive drop target!
+    chase& jump
+  then
+  energy 220 < call-for-food& ifc
+  sync
+energy 70 > while-loop
+hungry& jump
+
+chase-shot:
+  shot-position shot-velocity unitize -20 vs* v+ target!
+  target 2 5 send
+chase:
+do
+  target seek-location
+  autorepair
+  time robot-sensor-time 18 + >= if
+    fire-robot-sensor sync
+    targetable-robot-found fight& ifg
+  then
+  time shot-sensor-time 12 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  energy armor min 70 < retreat& ifg
+target position 2 in-range until-loop
+  target-channel  messages 1 - target-channel  clear-messages
+  target-channel  receive go-home& nifg
+  target!
+chase& jump
+
+fight:
+  robot-bomb BIG_BOMB < if
+  	robot-position 2 target-channel send
+  then
+do
+  robot-bomb BIG_BOMB > if
+		robot-position home v- rect-to-polar swap radius robot-radius + 0.3 - - swap polar-to-rect
+		home v+
+		;stack: place to be
+#vector desired-ev
+		position v- rect-to-polar swap 0.1 * 0.2 min swap polar-to-rect
+		robot-velocity 0.75 vs* v+ 2dup desired-ev! engine-velocity!
+		engine-max-power engine-power!
+  else
+	robot-position robot-velocity seek-moving-location
+  then
+  autorepair
+  time robot-sensor-time blaster-reload-time + >= if
+    fire-robot-sensor sync
+    targetable-robot-found go-home& nifg
+    robot-distance blaster-range radius robot-radius + + < if
+    		robot-direction fire-blaster
+    then
+  then
+energy armor min 30 > while-loop
+retreat& jump
+
+retreat:
+  target-channel clear-messages
+do
+  energy 10 < hungry& ifg
+  home seek-location
+  autorepair
+home position 7 in-range until-loop
+idle& jump
+
+go-home:
+  target-channel clear-messages
+do
+  energy 10 < hungry& ifg
+  home seek-location
+  .05 engine-power!
+  autorepair
+  time robot-sensor-time 25 + >= if
+    fire-robot-sensor sync
+    targetable-robot-found fight& ifg
+  then
+  time shot-sensor-time 12 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  target-channel messages if energy armor min 100 > and-if
+    target-channel receive drop target!
+    chase& jump
+  then
+home position 8 in-range until-loop
+idle& jump
+
+
+#type Sustenance
+#decoration 000 cross
+#color 0c0
+
+(20021129) Now wanders when no food seen.
+(20021201) Now turns syphon on before reaching destination, for accidental feeding.
+           Now turns off shield when out of energy.
+(20030102) Now prefers closer and hungrier cells.
+(20030105) Now announce food-position-overall instead of own position.
+(20030329) Call for food when starving.
+(20030428) More energy storage.
+(20030627) More initial energy, to avoid embarrassing early starvation.
+(20030721) Fixed for syphon renaming and re-aiming.
+           Removed useless shield.
+
+#hardware
+  syphon 2
+  energy 500 25
+  eater 2
+  engine .03
+  armor 150
+  repair-rate .05
+  
+  food-sensor 10
+  shot-sensor 8
+  processor 10
+  radio receive send
+#code
+
+#vector home
+#vector dest   ;location
+#var last-armor
+#vector food-save
+#var last-food-announce
+#var next-call
+#vector callpos
+
+autorepair:
+  armor energy < max-repair-rate 0 ifev repair-rate!
+return
+
+#start
+  position home!
+
+eat:
+  0 syphon-rate!
+  armor last-armor!
+  fire-food-sensor sync
+do
+  autorepair
+  food-found if
+    food-position seek-location
+    food-found food-energy 100 - * 1000 > if time last-food-announce 150 + >= and-if
+      food-position-overall 2 2 send
+      time last-food-announce!
+    then
+  else
+    energy 150 > full& ifg
+    food-save and if food-save position 5 in-range not and-if
+      food-save seek-location
+    else 2 messages if
+      2 messages 1 - 2 skip-messages
+      2 receive drop food-save!
+      food-save seek-location
+    else
+      0 world-width random 0 world-height random food-save!
+    then then
+    energy 5 < hungry& ifg
+  then
+  time food-sensor-time food-found 50 150 ifev + > eaten not and if
+    fire-food-sensor sync
+  then
+  armor last-armor < if
+    position 2 target-channel send   ;call for help
+    armor 100 < run& ifg
+  then
+  armor last-armor!
+energy eaten 490 250 ifev > until-loop
+food-found if food-position else 0 0 then food-save!
+full& jump
+
+hungry:
+  0 engine-power!
+  0 syphon-rate!
+  0 repair-rate!
+  position callpos!
+do
+  speed nif
+  time next-call < position callpos radius in-range nand and-if
+    position energy 3 food-request-channel send
+    time 250 + next-call!
+    position callpos!
+  then
+  sync sync sync sync sync sync sync sync sync sync
+  sync sync sync sync sync sync sync sync sync sync
+energy 25 < while-loop
+eat& jump
+
+run:
+do
+  autorepair
+  home seek-location
+home position 7 in-range until-loop
+eat& jump
+
+#var cur-energy
+#var best-energy
+#vector cur-pos
+;dest is best-pos
+
+full:
+  0 syphon-rate!
+do
+  autorepair
+  food-request-channel messages if
+    infinity best-energy!
+    home dest!
+    3 receive drop
+    do
+      cur-energy! cur-pos!
+      cur-energy cur-pos position dist 10 * + cur-energy!
+      cur-energy best-energy < if
+        cur-energy best-energy!
+        cur-pos dest!
+      then
+      dest seek-location
+    food-request-channel receive while-loop
+    best-energy infinity < feed& ifg
+  then
+  home seek-location
+energy 60 > while-loop
+eat& jump
+
+feed:
+  syphon-max-rate negate syphon-rate!
+do
+  position dest v- unitize dest v+ seek-location
+  dest position 1.5 in-range if
+    dest position v- rect-to-polar syphon-direction! syphon-distance!
+    sync
+    syphoned -1.5 > if energy 150 > full& eat& ifeg then
+  else
+    0.5 radius + syphon-distance!
+    dest position v- angle syphon-direction!
+  then
+energy 25 > while-loop
+eat& jump
+
+#type Pregnant
+#decoration 000 cross
+#color fc0
+
+(20021129) Smaller constructor, more energy storage, and don't call for food unless almost empty.
+(20030102) Now call on ch 3, with (false) energy.
+(20030105) Slightly reduced solar cells.
+           Build fewer Sustenances and more Pregnants.
+           More frequent calls.
+(20030204) No longer refuses to build Revenges when it hasn't got any. :)
+(WJS 20040107) More constructor, less solar cells, and more energy storage
+    New baby selection algorithm
+
+#hardware
+  solar-cells .25
+  energy 700 0
+  constructor 1
+  radio send
+  processor 3
+  armor 100
+#code
+#var next-call
+#const revenge-type 1
+#const sustenance-type 2
+#const pregnant-type 3
+#const solar-type 4
+
+new-baby:
+  energy 300 > if
+	  pregnant-type type-population population 0.25 * < if
+	  0.8 random-bool and-if
+	    pregnant-type
+	  else
+	    sustenance-type type-population population 0.2 * 8 min < if
+	    0.4 random-bool and-if
+	      sustenance-type
+	    else
+	      revenge-type type-population population 0.3 * 14 min < if
+	      0.8 random-bool and-if
+	        revenge-type
+	      else
+	        0.5 random-bool revenge-type pregnant-type ifev
+	      then
+	    then
+	  then
+  else
+	  sustenance-type type-population population 0.4 * 10 min < if
+	  0.7 random-bool and-if
+	    sustenance-type
+	  else
+	    pregnant-type type-population population 0.1 * < if
+	    0.4 random-bool and-if
+	      pregnant-type
+	    else
+	      revenge-type type-population population 0.2 * 14 min < if
+	      0.8 random-bool and-if
+	        revenge-type
+	      else
+	        0.2 random-bool sustenance-type solar-type ifev
+	      then
+	    then
+	  then
+  then
+  
+ constructor-type!
+return
+
+#start
+  constructor-max-rate constructor-rate!
+do
+  constructor-type new-baby& nifc
+  time next-call >= if speed not and-if energy 300 < and-if
+    position energy 100 + 3 food-request-channel send
+    time 150 + next-call!
+  then
+  sync
+forever
+
+#type Solar Outlet
+#author Warren
+#color 00c
+#hardware
+
+processor 6
+armor 40
+energy 150 0
+
+radio receive
+
+solar-cells 0.4
+
+syphon 0.6 12
+
+#code
+#start
+do
+    empty-energy^
+forever
+
+#vector friend-position
+#var friend-energy
+
+empty-energy:
+    energy max-energy / 0.05 > if
+        food-request-channel messages 5 > if
+            0 food-request-channel messages 2 - random-int food-request-channel skip-messages
+        then
+      Next-Friend:
+        food-request-channel receive if
+            friend-energy! friend-position!
+        then
+        
+        friend-position position dist syphon-range < if
+            friend-position position v- rect-to-polar syphon-direction! syphon-distance!
+            syphon-max-rate negate syphon-rate!
+        else
+            food-request-channel messages next-friend& ifg
+       then
+    else
+        0 syphon-rate!
+    then
+return
+
+#end

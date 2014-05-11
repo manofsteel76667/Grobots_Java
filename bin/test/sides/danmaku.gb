@@ -1,0 +1,85 @@
+#side Danmaku
+#color A8F
+#seed 1
+
+#type Raymoo
+#color F00
+#hardware
+  processor 100
+  engine 0.2
+  energy 600 100
+  eater 2
+  food-sensor 20 2
+  robot-sensor 20
+  blaster 9 20 3
+  armor 200
+  repair-rate 0.05
+  constructor 1.8
+#code
+#var frequency 30
+#var normal-frequency 30
+#var rapid-frequency 10
+#vector ignorefood 0 0
+#vector wander
+do
+  eaten if
+    food-position seek-location
+  else
+    food-found if
+      food-position ignorefood 1 in-range if
+        next-food if
+          food-position seek-location
+        else
+          wander position 2 in-range if
+            0 world-width random 0 world-height random wander!
+          then
+          wander seek-location
+        then
+      else
+        food-position seek-location
+      then
+      50 periodic-food-sensor drop
+    else
+      wander position 2 in-range if
+        0 world-width random 0 world-height random wander!
+      then
+      wander seek-location
+      500 periodic-food-sensor drop
+    then
+  then
+ 
+  frequency periodic-robot-sensor drop
+ 
+  robot-found if
+    0 robot-sensor-sees-friends!
+    robot-side side = if
+      robot-energy energy < if
+        food-position ignorefood!
+      then
+    else
+      rapid-frequency frequency!
+      robot-position robot-velocity lead-blaster
+      ;robot-position position v- rect-to-polar pi + swap 500 + swap polar-to-rect engine-velocity! engine-max-power engine-power!
+    then
+  else
+    normal-frequency frequency!
+    1 robot-sensor-sees-friends!
+  then
+ 
+  armor max-armor < if
+    max-repair-rate repair-rate!
+  else
+    0 repair-rate!
+  then
+ 
+  constructor-type nif
+    1 constructor-type!
+  then
+ 
+  normal-frequency frequency = if
+    energy 50 - max-energy / constructor-max-rate * constructor-rate!
+  else
+    0 constructor-rate!
+  then
+forever
+#end

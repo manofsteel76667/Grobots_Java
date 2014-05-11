@@ -1,0 +1,1065 @@
+#side Ocean Front
+#author Matt Burkholder
+#date 20 Feb 2004
+
+
+#seed 1 2 1 3 3 1 1
+#color 0CC 
+
+
+#type Barnicles
+#color bf0 
+#hardware 
+processor 15 10
+solar-cells .01
+eater 0.8  
+energy 200 50 
+armor 100 
+food-sensor 7 3 
+force-field 0.05 7
+repair-rate 0.075
+syphon 0.6 7
+constructor 0.7 
+robot-sensor 6.5 1
+blaster 10 6.5 30
+radio send read write
+
+
+#code 
+
+#const speed-factor 12
+#const edge-space 10
+#const Address-Offset 100
+#const time-offset 100
+#const velocity-factor 4
+#const num-types 4
+
+#var field-distance
+#var field-step
+#var field-speed
+#var food-sensor-now
+#var robot-sensor-now
+#var syphon-now
+#var syphon-angle
+#var LastArmor
+#var LastCount
+#var LastHome
+#var piEight
+#var Home-Address
+#var World-Cols
+#var World-Rows
+#var Search-Reach
+#var Search-Width
+
+#vector Home
+
+ do time id 10 * < while-loop
+ Search-Home^
+ pi 4 / piEight!
+ 1 syphon-angle!
+	do 
+  Construct^
+  Move-Syphon^
+  Shoot^
+    do 
+       Traffic-Control^
+       Construct^
+       Move-Syphon^
+       Shoot^
+    force-field-power speed or while-loop
+    time food-sensor-now < eaten or Get-Food& nifc
+    Armor LastArmor < enemy-collision or if
+       position 2 3 send then
+    Armor LastArmor! 
+	forever 
+
+Move: 
+	position velocity velocity-factor vs* v+ v- rect-to-polar
+	force-field-angle!
+	dup radius 0.4 * > swap force-field-max-power * mass * radius 50 * / 0 ifev force-field-power! 
+	0 force-field-distance!
+return
+
+Traffic-Control:
+   home position v- 2dup abs 5 > if
+       abs 5 > if ;both coors are different
+           2dup * 0 > if ;travel verticle in new coords
+              Tilt-Coords^ 0 > if  7.5 5 else 2.5 -5 then
+              position Tilt-Coords^ swap 10 / floor 10 * swap v+
+              Straight-Coords^ Move^ drop
+           else   ;travel horizontal in new coords
+               Tilt-Coords^ drop 0 > if 5 7.5 else -5 2.5 then
+               Position Tilt-Coords^ 10 / floor 10 * v+
+               Straight-Coords^ Move^
+            then
+       else ;only verticle is different
+            ;signum -2.5 10 rot vs* position swap 10 / round 10 * swap v+ Move^ drop
+            0 > if 7.5 5 else 2.5 -5 then position swap 10 / floor 10 * swap v+ Move^ drop
+       then
+   else     
+        abs 5 > if  ;only horizontal is different
+            ;drop signum 10 2.5 rot vs* position 10 / round 10 * v+ Move^
+            drop 0 > if 5 7.5 else -5 2.5 then position 10 / floor 10 * v+ Move^
+         else  ;both are in square
+           2drop home Move^
+         then
+   then
+return
+
+Tilt-Coords:
+   2 sqrt vs/ rect-to-polar piEight + polar-to-rect
+return
+
+Straight-Coords:
+   rect-to-polar piEight - polar-to-rect 2 sqrt vs*
+return
+
+Get-Food:
+     fire-food-sensor sync 
+    food-found if do
+       force-field-max-power food-mass 1 + sqrt / speed-factor * field-speed!
+       field-speed 3 / field-step!
+       food-distance .1 + field-distance!
+       food-direction pi + force-field-angle!
+       food-direction force-field-direction!
+       field-distance dup force-field-distance!
+       do radius force-field-radius + > while
+          force-field-max-power force-field-power!
+          field-distance force-field-distance!
+          field-distance field-step - dup field-distance!
+          field-step 1.3 * field-speed min field-step!
+          Construct^ Move-Syphon^ Shoot^
+       loop
+       sync sync sync sync sync sync
+       0 force-field-power!
+    next-food while-loop
+  else
+    time 100 + food-sensor-now!
+  then
+return 
+
+
+Construct:
+   energy 50 > constructor-max-rate 0 ifev constructor-rate!
+   energy 10 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+   constructor-type nif
+      num-types Search-Reach!
+      Do 
+        Search-Reach type-population Search-Reach store 
+        Search-Reach 1 - dup Search-Reach!
+      While-loop
+      World-Cols Search-Reach! Do
+         World-Rows Search-Width! Do
+           Search-Reach 10 * Search-Width + 
+           Dup Address-Offset + read time > if
+              200 + read dup dup if load 1 + swap store 
+              else 2drop then
+           else drop then
+           Search-Width dup 1 - Search-Width!
+         While-loop
+         Search-Reach dup 1 - Search-Reach!
+         Move-Syphon^
+      While-loop
+      1 load 1 type-population <= if
+        1 constructor-type!
+      else 3 load 1 load sqrt 2 * floor < if 
+        3 constructor-type! Sync
+      celse 4 load 1 load 10 / 3 min < if
+        4 constructor-type! Sync
+      celse 2 load 1 load sqrt 1 - dup * < if
+        2 constructor-type! Sync
+      celse 1 constructor-type! Sync
+      then 
+      constructor-type Home-Address 100 + write       
+    then
+return
+
+Move-Syphon:
+  time syphon-now < ifr
+  syphon-angle 2 + syphon-angle!
+  syphon-angle piEight * syphon-direction!
+  7 syphon-distance!
+  max-energy 2 / energy - max-energy 2 / / syphon-max-rate * syphon-rate!
+  time 50 + syphon-now!
+  time time-offset + Home-Address write
+return
+
+Shoot:
+  Time robot-sensor-now < blaster-cooldown or ifr
+  Fire-robot-sensor sync
+  Robot-found if
+     Robot-velocity velocity v- robot-distance blaster-speed / vs* 
+     Robot-position v+ position v- rect-to-polar
+     Swap blaster-range < if fire-blaster else drop then
+  Else
+     Time 50 + robot-sensor-now!
+  Then
+return
+
+Search-Home:
+  World-Width 10 / floor 1 - World-Cols!
+  World-Height 10 / floor 1 - World-Rows!
+  0 Search-Reach!
+  position World-Height 2 / < if 
+     World-Width 2 / < Search00& Search09& ifec
+  else
+    World-Width 2 / < Search90& Search99& ifec
+  then
+   ;do anything that should be done for all cases
+return
+
+Check-Address:
+       dup Address-OffSet + read time < if
+          dup Address-OffSet + dup  ;three copies on stack one raw and two address
+          Home-Address! time time-offset + swap write ;store address and write claim
+          Address-to-Location^ home!  ;set coordinates of home
+          rdrop ;drop the top item on the return stack (call to this function), so loop will terminate
+       else drop then  
+return
+
+Address-to-Location:
+   dup 10 mod 10 * 5 + swap 10 / floor 10 * 5 + 
+return
+
+Search00:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          0 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+          0 Search-Reach 11 * + Search-Width - Check-Address^
+       else
+          0 Search-Reach 11 * + Search-Width - Check-Address^
+          0 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search09:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          9 Search-Reach 9 * + Search-Width + Check-Address^
+          9 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+       else
+          9 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+          9 Search-Reach 9 * + Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search90:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          90 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+          90 Search-Reach 9 * - Search-Width - Check-Address^
+       else
+          90 Search-Reach 9 * - Search-Width - Check-Address^
+          90 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search99:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+       else
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+
+
+#type Phytoplankton
+#color bf0 
+#hardware 
+processor 10
+solar-cells .2
+energy 200 50 
+armor 100 
+engine 0.05
+repair-rate 0.075
+syphon 0.3 7 
+radio send read write
+
+
+
+#code 
+
+#const speed-factor 12
+#const edge-space 10
+#const Address-Offset 00
+#const time-offset 100
+#const velocity-factor 4
+
+#var field-distance
+#var field-step
+#var field-speed
+#var food-sensor-now
+#var syphon-now
+#var syphon-angle
+#var LastArmor
+#var LastCount
+#var LastHome
+#var piEight
+#var Home-Address
+
+#vector Home
+ 
+ do time id 10 * < while-loop
+ Search-Home^
+ pi 4 / piEight!
+ 1 syphon-angle!
+	do 
+  Construct^
+  Move-Syphon^
+    do 
+       Traffic-Control^
+       Construct^
+       Move-Syphon^
+    engine-power speed or while-loop
+    Armor LastArmor < enemy-collision or if
+       position 2 3 send then
+    Armor LastArmor! 
+	forever 
+
+Move: 
+   seek-location
+return
+
+Traffic-Control:
+   home position v- 2dup abs 5 > if
+       abs 5 > if ;both coors are different
+           2dup * 0 > if ;travel verticle in new coords
+              Tilt-Coords^ 0 > if  7.5 5 else 2.5 -5 then
+              position Tilt-Coords^ swap 10 / floor 10 * swap v+
+              Straight-Coords^ Move^ drop
+           else   ;travel horizontal in new coords
+               Tilt-Coords^ drop 0 > if 5 7.5 else -5 2.5 then
+               Position Tilt-Coords^ 10 / floor 10 * v+
+               Straight-Coords^ Move^
+            then
+       else ;only verticle is different
+            signum -2.5 5 rot vs* position swap 10 / round 10 * swap v+ Move^ drop
+            ;0 > if 7.5 5 else 2.5 -5 then position swap 10 / floor 10 * swap v+ Move^ drop
+       then
+   else     
+        abs 5 > if  ;only horizontal is different
+            drop signum 5 -2.5 rot vs* position 10 / round 10 * v+ Move^
+            ;drop 0 > if 5 7.5 else -5 2.5 then position 10 / floor 10 * v+ Move^
+         else  ;both are in square
+           2drop home Move^
+         then
+   then
+return
+
+Tilt-Coords:
+   2 sqrt vs/ rect-to-polar piEight + polar-to-rect
+return
+
+Straight-Coords:
+   rect-to-polar piEight - polar-to-rect 2 sqrt vs*
+return
+
+Construct:
+   energy 10 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+return
+
+Move-Syphon:
+  time syphon-now < ifr
+  syphon-angle 2 + syphon-angle!
+  syphon-angle piEight * syphon-direction!
+  7 syphon-distance!
+  max-energy 2 / energy - max-energy 2 / / syphon-max-rate * syphon-rate!
+  time 50 + syphon-now!
+  time time-offset + Home-Address write
+return
+
+#var World-Cols
+#var World-Rows
+#var Search-Reach
+#var Search-Width
+
+
+Search-Home:
+  World-Width 10 / floor 2 - World-Cols!
+  World-Height 10 / floor 2 - World-Rows!
+  0 Search-Reach!
+  position World-Height 2 / < if 
+     World-Width 2 / < Search00& Search09& ifec
+  else
+    World-Width 2 / < Search90& Search99& ifec
+  then
+   ;do anything that should be done for all cases
+return
+
+Check-Address:
+       dup Address-OffSet + read time < if
+          dup Address-OffSet + dup  ;three copies on stack one raw and two address
+          Home-Address! time time-offset + swap write ;store address and write claim
+          Address-to-Location^ home!  ;set coordinates of home
+          rdrop ;drop the top item on the return stack (call to this function), so loop will terminate
+       else drop then  
+return
+
+Address-to-Location:
+   dup 10 mod 10 * swap 10 / floor 10 *
+return
+
+Search00:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          11 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+          11 Search-Reach 11 * + Search-Width - Check-Address^
+       else
+          11 Search-Reach 11 * + Search-Width - Check-Address^
+          11 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search09:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          19 Search-Reach 9 * + Search-Width + Check-Address^
+          19 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+       else
+          19 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+          19 Search-Reach 9 * + Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search90:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          91 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+          91 Search-Reach 9 * - Search-Width - Check-Address^
+       else
+          91 Search-Reach 9 * - Search-Width - Check-Address^
+          91 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search99:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+       else
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+
+;Fighter type
+
+#type Baracuda
+#color 059
+
+#hardware
+processor 20
+energy 500 50
+eater 1.0
+solar-cells 0.001
+armor 200
+engine 0.08
+repair-rate 0.2
+food-sensor 6
+robot-sensor 12 5
+shot-sensor 5
+;for both weapons
+grenades 10 9 10
+blaster 10 9 10
+radio send receive read write
+
+
+#code
+
+#var food-sensor-now
+#var robot-sensor-now
+#var shot-sensor-time
+#var side-population
+#var high-population
+#var food-scan-distance
+#var robot-scan-distance
+#var Damage-Time
+#var Last-Armor
+#var World-Radius
+#var shot-firing-delay
+#var No-Shots
+#var syphon-angle
+#var syphon-now
+#var piEight
+#var Home-Address
+
+#vector Dest 
+#vector Target
+#vector Target-Velocity
+#vector Home
+#vector Center
+
+#const min-construct-energy 400
+#const min-scan-energy 20
+#const min-fight-energy 200
+#const min-help-energy 450
+#const Home-Channel 1
+#const Target-Channel 2
+#const time-offset 100
+#const Address-Offset 300
+#const Bump-Offset 100
+
+
+ Armor Last-Armor!
+ position Home! 
+ pi 4 / piEight!
+ World-width 2 / world-height 2 / Center!
+ Center min 5 - World-Radius!
+ position target!
+ Food-sensor-range 0.7 * food-scan-distance!
+ robot-sensor-range 0.6 * robot-scan-distance!
+ Initial-Construct^
+ Do Time id 10 * < while-loop
+ Search-Home^
+ 
+Feed: 
+   0 engine-power!
+     Do
+          Construct^
+          Repair^
+          Scan-Robots^
+          Scan-Food^
+          Traffic-Control^
+          Scan-Shots^
+          Check-Comms^
+          Check-Damage^
+     forever
+
+Check-Damage:
+     Armor Last-Armor < if
+          position Home side-population 2.5 * 10 max in-range if
+               time robot-sensor-now!
+               time 350 + Damage-Time!
+          else
+               home position v- 0.5 vs* position v+ dest!
+     then then 
+     armor Last-Armor!
+return
+
+Transmit:
+          target 2 Target-Channel send 
+return
+
+Check-Comms:
+    Target-Channel receive energy min-help-energy > and if
+        target! stack dropn
+    else
+        stack dropn return
+    then
+
+Track:
+    target seek-location sync sync
+    do
+       time robot-sensor-now > if
+          fire-robot-sensor sync
+          robot-found if
+             robot-position target! 
+                     Transmit^ Attack& jump
+          else
+             fire-shot-sensor sync
+             shot-found  if 
+                shot-position shot-velocity unitize -15 vs* v+ target!
+       then then 
+           time 10 + robot-sensor-now! then
+       target seek-location
+    target position 5 in-range energy min-fight-energy < or until-loop
+    0 food-sensor-now!
+return 
+
+Attack:
+     0 constructor-rate!
+     0 shot-firing-delay!
+     0 No-Shots!
+     do 
+          ;grenades-cooldown shot-firing-delay <= if
+          blaster-cooldown shot-firing-delay <= if
+               fire-robot-sensor sync robot-found nifr
+               do 
+                    robot-shield-fraction 0.95 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop 
+               ;grenades-cooldown shot-firing-delay <= if
+               blaster-cooldown shot-firing-delay <= if
+                   do
+                      robot-shield-fraction 0.3 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop then
+
+               robot-scan-distance robot-sensor-focus-distance!
+               home position v- angle robot-sensor-focus-direction!
+
+               Robot-position 2dup position v- unitize 
+               blaster-range 0.9 * vs* v- target!
+               Position center robot-position center dist World-Radius max in-range if 
+                    robot-velocity target-velocity!
+               Else
+                    Tangent^ target-velocity!
+               then
+          then
+          target target-velocity seek-moving-location
+        Repair^
+     energy 20 < No-Shots 10 > or until-loop
+     0 food-sensor-now!
+     energy 20 < if Home dest! then
+     0 robot-sensor-focus-distance!
+Return
+
+Check-Next-Bot:
+     Next-robot dup not No-Shots + No-Shots! return
+
+Fire-Shot: ;dual
+     robot-position position v- 2dup
+     robot-velocity robot-distance grenades-speed / vs* v+ 
+     norm grenades-speed / robot-velocity velocity v- rot vs* v+
+     rect-to-polar over grenades-range > if
+         2drop 0 return then
+     do grenades-cooldown while-loop
+     dup fire-blaster fire-grenade
+     time robot-sensor-time - shot-firing-delay! 
+     0 No-Shots!
+0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+Fight-While-Eating: 
+     0 shot-firing-delay!
+     Do
+          Repair^
+          Scan-Food^
+          Seek-Dest^
+          blaster-cooldown shot-firing-delay <=
+          energy robot-sensor-firing-cost blaster-firing-cost + 5 + >
+          time robot-sensor-now > and and if
+               fire-robot-sensor sync robot-found nifr
+               do 
+                    robot-shield-fraction 0.3 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop 
+               robot-distance robot-sensor-focus-distance!
+               Robot-direction robot-sensor-focus-direction!
+          Then
+     energy min-fight-energy < while-loop
+return
+  
+
+Initial-Construct:
+     ;constructor-type nif 1 constructor-type! then
+return
+
+
+Construct: 
+  0 2 type-population 3 type-population + dup high-population!
+  1 type-population + side-population!
+  time syphon-now < ifr
+  time 50 + syphon-now!
+  Home-Address Bump-Offset + read time > Search-Home& ifc
+  time time-offset + Home-Address Address-Offset + write
+  speed eaten or wall-collision not and nif
+    time food-sensor-now! then
+return
+
+Repair:
+     armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+Return
+
+
+Scan-Robots:
+     time robot-sensor-now < energy min-scan-energy < or ifr
+     fire-robot-sensor sync
+     robot-found if do
+        robot-shield-fraction 0.3 > if
+            robot-position target!  Transmit^
+            energy min-fight-energy > Attack& Fight-While-Eating& ifeg
+        then
+     next-robot while-loop then 
+     time 50 + robot-sensor-now!
+return 
+
+Scan-Food:
+     time food-sensor-now < energy food-sensor-firing-cost < or eaten or ifr 
+     energy max-energy 20 - > if Home dest! Return then
+     Home position  v- rect-to-polar food-sensor-focus-direction!
+     Food-scan-distance min food-sensor-focus-distance!
+     fire-food-sensor sync
+     food-found if
+       food-position location-to-address^ Home-Address = if
+       food-position dest!
+       Time-limit food-sensor-now!
+     else 
+          time 50 + food-sensor-now!  
+          Home dest!  Then
+     Else
+       Time 50 + food-sensor-now!
+       Home dest!
+   then
+Return
+
+
+Scan-Shots:
+   time Damage-Time > energy min-scan-energy < or ifr
+   fire-shot-sensor sync
+   shot-found if
+          shot-position shot-velocity unitize -15 vs* v+ target! 
+          Transmit^ 
+          Energy min-fight-energy > Track& ifg
+     then
+return
+
+
+Tangent2:
+     Center position v- unitize negate 2dup
+     Target position v- dot 0 > if vnegate then
+Return
+
+Tangent:
+     Target position v- unitize negate 2dup
+     Center position v- dot 0 < if vnegate then
+Return
+
+Seek-Dest:
+   Position location-to-address^ Bump-Offset + read time > Traffic-Control& Move& ifec
+Return
+
+Move:
+   Dest seek-location
+return
+
+
+Traffic-Control:
+   dest position v- 2dup abs 5 > if
+       abs 5 > if ;both coors are different
+           2dup * 0 > if ;travel verticle in new coords
+              Tilt-Coords^ 0 > if  7.5 5 else 2.5 -5 then
+              position Tilt-Coords^ swap 10 / floor 10 * swap v+
+              Straight-Coords^ seek-location drop
+           else   ;travel horizontal in new coords
+               Tilt-Coords^ drop 0 > if 5 7.5 else -5 2.5 then
+               Position Tilt-Coords^ 10 / floor 10 * v+
+               Straight-Coords^ seek-location
+            then
+       else ;only verticle is different
+            ;signum -2.5 5 rot vs* position swap 10 / round 10 * swap v+ seek-location drop
+            0 > if 7.5 5 else 2.5 -5 then position swap 10 / floor 10 * swap v+ seek-location drop
+       then
+   else     
+      abs 5 > if  ;only horizontal is different
+      ;drop signum 5 -2.5 rot vs* position 10 / round 10 * v+ seek-location 
+      drop 0 > if 5 7.5 else -5 2.5 then position 10 / floor 10 * v+ seek-location
+ else  ;both are in square
+           2drop dest seek-location
+         then
+   then
+return
+
+Tilt-Coords:
+   2 sqrt vs/ rect-to-polar piEight + polar-to-rect
+return
+
+Straight-Coords:
+   rect-to-polar piEight - polar-to-rect 2 sqrt vs*
+return 
+
+
+#var World-Cols
+#var World-Rows
+#var Search-Reach
+#var Search-Width
+
+
+Search-Home:
+  World-Width 10 / floor 1 - World-Cols!
+  World-Height 10 / floor 1 - World-Rows!
+  0 Search-Reach!
+  position World-Height 2 / < if 
+     World-Width 2 / < Search00& Search09& ifec
+  else
+    World-Width 2 / < Search90& Search99& ifec
+  then
+   ;do anything that should be done for all cases
+return
+
+Check-Address:
+ Home-Address!
+ Home-Address Address-OffSet + read time <
+ Home-Address Bump-Offset + read time < and if
+   time time-offset + Home-Address Address-Offset + write ;write claim
+   Home-Address Address-to-Location^ home!  ;set coordinates of home
+   rdrop ;drop the top item on the return stack (call to this function), so loop will terminate
+ then  
+return
+
+Address-to-Location:
+   dup 10 mod 10 * 5 + swap 10 / floor 10 * 5 + 
+return
+
+Location-to-Address: 2dup vprint
+   10 / floor 10 * swap 10 / floor + dup print
+return
+
+Search00:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          0 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+          0 Search-Reach 11 * + Search-Width - Check-Address^
+       else
+          0 Search-Reach 11 * + Search-Width - Check-Address^
+          0 Search-Reach 11 * + Search-Width 10 * - Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search09:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          9 Search-Reach 9 * + Search-Width + Check-Address^
+          9 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+       else
+          9 Search-Reach 9 * + Search-Width 10 * - Check-Address^
+          9 Search-Reach 9 * + Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search90:
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position negate world-height + > if 
+          90 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+          90 Search-Reach 9 * - Search-Width - Check-Address^
+       else
+          90 Search-Reach 9 * - Search-Width - Check-Address^
+          90 Search-Reach 9 * - Search-Width 10 * + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return   
+
+Search99: 
+  do
+    Search-Reach Search-Width!
+    do Search-Width  0 >= while
+       position > if
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+       else
+          99 Search-Reach 11 * - Search-Width 10 * + Check-Address^
+          99 Search-Reach 11 * - Search-Width + Check-Address^
+       then
+       Search-Width 1 - Search-Width!
+    loop
+    Search-Reach 1 + Search-Reach!
+  Search-Reach World-Cols World-Rows min <= while-loop
+  ;do anything that should be done for unsuccessful searches
+return
+
+#type Albatross
+#color 0FF
+
+#hardware
+Processor 25
+energy 100 100
+armor 100
+engine 0.10
+grenades 0.1 50 2
+repair-rate 0.05
+eater 1.0
+food-sensor 10
+radio read write
+
+#code
+
+#const Address-Offset 100
+
+#vector center
+#vector Corner
+#vector Goal
+#vector Food
+
+#var food-sensor-now
+#var piEight
+
+pi 4 / piEight!
+world-width 2 / world-height 2 / center!
+position See-Corner^ Corner!
+Random-Corner^
+Food-Sensor-Range 0.6 * Food-sensor-focus-distance!
+1 food-sensor-now!
+
+Do 
+   energy grenades-firing-cost < grenades-cooldown or 
+   Corner position center min 15 - in-range or nif
+      grenades-range random-angle fire-grenade
+   then
+   Goal Position 15 in-range Random-Corner& ifc
+   Position dup 10 mod - swap 10 / floor + dup print
+   address-offset + read time > if Traffic-Control^ 
+   else 
+     Food position radius in-range eaten or Coast& Normal-Movement& ifec   
+   then
+forever
+
+Feed:
+   do
+      Food Seek-Location
+      armor max-armor < energy 10 > and max-repair-rate 0 ifev repair-rate!
+   Food position radius in-range not eaten or energy 50 < and while-loop
+Return
+
+
+
+Coast:
+      Energy 5 < Feed& ifc
+      Goal Food!
+      Time 15 + food-sensor-now!
+      Engine-max-power 0.3 * engine-power!
+return
+
+Normal-Movement:
+      Food Position velocity 5 vs* v+ v- unitize engine-velocity!
+      Food Position 4 in-range 0.4 1 ifev engine-max-power * engine-power!   
+      armor max-armor < energy 10 > and max-repair-rate 0 ifev repair-rate!
+      time food-sensor-now > food-sensor-now and if
+        Goal position v- angle food-sensor-focus-direction!
+        fire-food-sensor sync
+        food-found if
+           food-position position v- goal position v- dot 0 > if
+               food-position Food!
+               0 food-sensor-now!
+           else
+               time 50 + food-sensor-now!
+               Goal Food!
+           then
+         else
+            time 50 + food-sensor-now!
+            Goal Food!
+         Then
+       then
+return
+   
+
+Random-Corner:
+  1 World-Width random-int 1 World-Height random-int See-Corner^ Goal!
+  do Corner Goal 10 in-range while
+      1 World-Width random-int 1 World-Height random-int See-Corner^ Goal!
+  loop
+return
+
+See-Corner:
+center rot > if
+   < if 15 15 
+   else World-Width 15 - 15  then
+else
+   < if 15 World-Height 15 -
+   else World-Width 15 - World-Height 15 -
+then then
+return
+
+Traffic-Control:
+   Goal position v- 2dup abs 5 > if
+       abs 5 > if ;both coors are different
+           2dup * 0 > if ;travel verticle in new coords
+              Tilt-Coords^ 0 > if  7.5 5 else 2.5 -5 then
+              position Tilt-Coords^ swap 10 / floor 10 * swap v+
+              Straight-Coords^ Seek-Location drop
+           else   ;travel horizontal in new coords
+               Tilt-Coords^ drop 0 > if 5 7.5 else -5 2.5 then
+               Position Tilt-Coords^ 10 / floor 10 * v+
+               Straight-Coords^ Seek-Location
+            then
+       else ;only verticle is different
+          0 > if 7.5 5 else 2.5 -5 then position swap 10 / floor 10 *
+          swap v+ Seek-Location drop
+       then
+   else     
+     abs 5 > if  ;only horizontal is different
+       drop 0 > if 5 7.5 else -5 2.5 then position 10 / floor 10 * 
+       v+ Seek-Location
+     else  ;both are in square
+        2drop Goal Seek-Location
+    then
+   then
+return
+
+Tilt-Coords:
+   2 sqrt vs/ rect-to-polar piEight + polar-to-rect
+return
+
+Straight-Coords:
+   rect-to-polar piEight - polar-to-rect 2 sqrt vs*
+return
+
+
+#end 

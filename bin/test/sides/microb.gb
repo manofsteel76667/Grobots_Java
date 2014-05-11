@@ -1,0 +1,172 @@
+#side Microb
+#Author Matt Burkholder
+#date Started Oct 5 2002
+
+Very small cells
+This is my attempt to beat the Missile/autotrophe bots with economics.
+The idea is that these bots are so small that its not worth the cost
+of the missile to blow them up.  It kind of works.
+
+It is also pure plagarism.  The gatherer type is fool the hardware cut in half.
+
+#color FFF
+#type Crud
+#color 00F
+#hardware
+energy 300 50
+armor 60
+processor 8
+
+constructor 0.8 
+eater 1.0 
+engine 0.06 
+solar-cells 0.01 
+
+food-sensor 7
+;robot-sensor 7
+;shot-sensor 10
+
+#code
+#var begin-moving-time
+#start
+0.1
+BeginWandering: ;on stack: speed
+ random-angle polar-to-rect engine-velocity!
+ time begin-moving-time!
+do
+ energy 30 speed 100 * - < 0 engine-max-power ifev engine-power!
+ food-sensor-time 30 + time < time 5 < or energy 20 > and if
+  random-angle food-sensor-focus-direction!
+  0 5 random food-sensor-focus-distance!
+  fire-food-sensor sync
+  food-found BeginFoodCharge& ifg
+ then
+ construct^
+ defend^
+ 0.1 speed 0.08 < time begin-moving-time 10 + > and BeginWandering& ifg drop ;must have bumped something
+forever
+
+BeginFoodCharge:
+ time begin-moving-time!
+do
+ food-position position v- 0.06 vs* engine-velocity!
+ engine-max-power engine-power!
+ construct^
+ defend^
+ food-position position v- norm radius 0.05 + < BeginEating& ifg
+ 0.15
+ time begin-moving-time - dup 100 > swap 30 > speed 0.03 < and or BeginWandering& ifg drop ;must be something in way
+forever
+
+BeginEating:
+ 0 0 engine-velocity!
+ engine-max-power 0.1 * engine-power! ;try and sit still
+ sync ;wait to get in position
+do
+ construct^
+ defend^
+ 0.1 eaten BeginWandering& nifg drop
+forever
+
+BeginRunning:
+1.0 BeginWandering& jump
+do
+
+forever
+
+Construct:
+ constructor-type nif 
+			1 2 random-int constructor-type! then
+ energy 250 < 0 constructor-max-rate ifev constructor-rate!
+return
+
+#var last-armor 0
+defend:
+ energy 25 > if
+  armor armor 50 < 1 1.05 ifev * last-armor < if
+   rdrop armor last-armor! BeginRunning& jump
+  then
+ then
+ armor last-armor!
+return
+
+;I included a very small autotrophe.  It appears that a side need an autotrophe 
+;to produce enough biomass to compete.
+
+#type Ooze
+#color 0F0
+#hardware
+energy 1 1
+armor 60
+processor 1
+
+constructor 0.1 
+solar-cells 0.1 
+
+;food-sensor 7
+;robot-sensor 7
+;shot-sensor 10
+
+#code
+constructor-max-rate constructor-rate!
+do
+		constructor-type nif
+				1 2 random-int constructor-type! then
+forever
+
+
+;I also added this type that would latch onto enemies and syphon energy.
+;I really had it in mind for Tactical's.  It will also cause them to 
+;blow them selves up.  Appears to be a failure, mostly just get killed.
+;They like rats and algae
+
+;#type Goo
+;#color F00
+;#hardware
+;processor 8
+;armor 60
+;energy 50 50
+;constructor 0.6
+;syphon 0.6
+;solar-cells 0.01
+;engine 0.03
+;robot-sensor 7
+
+
+;#code
+;#var robot-sensor-now 0
+;#vector target
+;#const robot-sensor-time 30
+
+;Random-Target^
+;syphon-range syphon-distance!
+;do
+	;	time robot-sensor-now > if
+	;			fire-robot-sensor sync
+	;			robot-found if
+ ;     robot-position target!
+ ;     time 5 + robot-sensor-now!
+	;					robot-direction syphon-direction!
+ ;     syphon-max-rate syphon-rate!
+ ;   else
+	;			  time robot-sensor-time + robot-sensor-now!
+ ;     0 syphon-rate!
+ ;   then
+ ; then
+ ; enemy-collision nif
+ ;   target seek-location 
+ ; else
+ ;   0 engine-power!
+ ; then
+ ; energy 45 > constructor-max-rate 0 ifev constructor-rate!
+ ; constructor-type nif 1 3 random-int constructor-type! then
+ ; speed enemy-collision or not Random-Target& ifc
+;forever
+
+;Random-Target:
+;  0 9 random-int 10 * 5 +
+;  0 1 random-int 5 95 ifev
+;  0 1 random-int if swap then
+;  target! return 
+
+#end

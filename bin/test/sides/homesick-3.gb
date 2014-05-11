@@ -1,0 +1,91 @@
+#side Homesick
+A basic, two-type randomized plant.
+#author Warren
+
+(Devon 20021024) Various upgrades.
+(Devon 20021024) Now using *-sensor-time in both types.
+
+#color 2a3
+
+#type Gatherer
+#color 4c4
+A gatherer. Tries to stay near birthplace.
+
+(Devon 20021024) Home is now a vector var.
+
+#hardware
+	processor 10
+	energy 300 40
+	armor 150
+
+	engine 0.07
+
+	constructor 1
+	eater 2
+	food-sensor 15
+#code
+#vector home
+
+position 0 8 random random-angle polar-to-rect v+ home!
+do
+	constructor-type nif
+		0 2 random-int if
+			2 constructor-type! ;2/3rd chance of being a defender
+		else
+			1 constructor-type! ;1/3rd chance of being a gatherer
+		then
+	then
+	energy 50 > constructor-max-rate 0 ifev constructor-rate!
+	;scan for food and move to it
+	time food-sensor-time 50 + > if	
+		home position v- 0.5 vs* rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-food-sensor sync
+	then
+	food-found if
+		food-position seek-location	
+	else
+		0 engine-power!
+	then
+forever
+
+#type Defender
+Was once similar to Flyswatter.
+
+(Devon 20021024) Removed useless target-[xy] and shot-arrive-time.
+(Devon 20021024) Now leads shots.
+(Devon 20021024) Reduced solar cells and weapon to save cost (and mass).
+(Devon 20021024) Removed useless energy storage.
+
+#color f05
+#hardware
+	processor 10
+	energy 40 10
+	armor 250
+
+	solar-cells 0.4 ;cost 720
+	constructor 0.4
+
+	grenades 40 23 50
+	robot-sensor 23
+#code
+
+do
+	constructor-type nif
+		0 1 random-int if
+			1 constructor-type! ;half chance of being a gatherer
+		else
+			2 constructor-type! ;half chance of being a defender
+		then
+	then
+	energy 30 > constructor-max-rate 0 ifev constructor-rate!
+
+	time robot-sensor-time 50 + > grenades-cooldown not and if
+		fire-robot-sensor sync
+		robot-found energy 20 > and if
+			robot-velocity robot-distance grenades-speed / vs* robot-position v+
+			position v- rect-to-polar fire-grenade
+		then
+	then
+forever
+
+#end

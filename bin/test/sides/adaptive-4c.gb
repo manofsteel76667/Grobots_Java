@@ -1,0 +1,891 @@
+#side Adaptive 4.0c
+#author Matt Burkholder
+#date 10 March 2006
+
+more solar brain
+more builder brain
+longer 2 constructor cheap
+variable builder cheap
+4 for personal protect
+simple read food
+time = safetime for 1 D
+Feed-ID and in Change food if
+
+#color FFF
+
+#seed 2 1 4 1 3 4 1
+
+#code
+
+#const Limit 500
+
+#var Feed-Loop
+#var Feed-ID
+#var Feed-Time
+#var Feed-Prefer
+#var Feed-Type
+#var Food-Sensor-Time
+#var Read-Loop
+#var Last-Used
+#var First-Empty
+#var Food-Drift
+#var Stack-Watch
+#var Feed-Dist
+
+#vector Feed-Position
+#vector My-Food
+
+
+
+Read-Requests:
+	2 Feed-Loop!
+	do Feed-Loop while
+		time Feed-Time > Feed-Type Feed-Prefer < Feed-Loop Feed-Type > Feed-Loop messages and and or if
+			0 Feed-ID!
+			997 Feed-Dist!
+			0 Feed-Type!
+		then
+
+		Feed-Loop messages Feed-Loop 2 * type-population - Feed-Loop skip-messages
+		
+		do Feed-Loop messages while 
+			Feed-Loop receive if
+				dup Feed-ID = if 
+					swap 2over position dist * Feed-Dist!
+					Feed-ID! Feed-Position!
+					Feed-Position min 0 > Feed-Loop 0 ifev Feed-Type!
+				else		
+					swap 2over position dist dup syphon-range < rrot * tuck Feed-Dist < and if
+						Feed-Dist! Feed-ID! Feed-Position!
+						Feed-Loop Feed-Type!
+						time 100 + Feed-Time!
+					then
+				then
+				stack dropn
+			then
+
+			Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+			energy 2 > Feed-ID and syphon-max-rate negate 0 ifev syphon-rate!
+			armor max-armor < max-repair-rate 0 ifev repair-rate!
+			My-Food seek-location
+	 	loop
+	 	Feed-Type Feed-Prefer = ifr
+	 	Feed-Loop 1 - Feed-Loop!
+	 loop
+return
+
+
+Scan-Food:
+	Stack Stack-Watch!
+	time Food-Sensor-Time < ifr
+	time 50 + Food-Sensor-Time!
+        200 Last-Used! 
+	fire-food-sensor sync
+	Food-Found if
+		196 Read-Loop! do
+			Read-Loop 4 + dup Read-Loop! read
+			dup time > if Read-Loop Last-Used! then
+		while-loop 
+		do 
+			0 Read-Loop write
+			Read-Loop 4 - Read-Loop!
+		Read-Loop Last-Used > while-loop
+		do
+			Idle^
+			0 First-Empty! 196 Read-Loop! do	
+				Read-Loop 4 + dup Read-Loop! read
+				dup time > if
+					Read-Loop 2 + vread
+					food-position 0.5 in-range if drop
+						Read-Loop First-Empty!
+						Food-Listed& jump then
+				else
+					First-Empty nif Read-Loop First-Empty! then
+				then
+			while-loop
+		Food-Listed:
+			food-energy 10 * food-sensor-time + First-Empty write
+			food-position First-Empty 2 + vwrite
+		next-food while-loop
+		Last-Used 200 - 5 / 996 read - 2 / Food-Drift + Food-Drift!
+		Food-Drift 5 > if
+			996 read 1 + 6 2 type-population * 2 4 type-population * + min 996 write
+			0 Food-Drift!
+		then
+		Food-Drift -3 < if
+			996 read 1 - 3 max 996 write
+			0 Food-Drift!
+		then
+	then
+	Stack-Check^
+return
+
+Stack-Check:
+	Stack Stack-Watch > if
+		Stack print
+		pause
+	then
+return
+
+
+
+#var target-ID
+#vector target
+
+
+Track-Shot:
+	shot-type 3 < if
+		shot-velocity unitize -12 vs* shot-position v+ target!
+		-2 target-ID!
+	else
+		shot-position shot-velocity v- target!
+		-3 target-ID!
+	then
+return
+
+#var Pivot-Dir
+#var safe-time
+#var sweep-range
+#var Chirp-Time
+
+#vector Pivot
+#vector Dest
+
+
+Pivot-Movement:
+	Pivot or nifr
+	position pivot 15 in-range if
+		time safe-time - 80 / 12.5 + 25 min sweep-range!
+		Pivot Position v- rect-to-polar swap ;magnitude on top
+		sweep-range - sweep-range / Pivot-Dir * +
+		3 swap polar-to-rect position v+
+		2dup 2.5 restrict-position 2dup Dest!
+		dist if Pivot-Dir negate Pivot-Dir! then
+		Chirp-Time Time-Limit = Last-Used 200 = or energy 15 > and  if 
+			Dest seek-location
+			engine-power 4 / engine-power!
+		else
+			0 engine-power!
+		then
+	else
+		energy 5.0 > if
+			pivot seek-location
+		else
+			0 engine-power!
+		then
+	then
+return
+
+
+
+
+#type Feeder
+#color 00F
+#decoration 000 Dot
+#hardware 
+processor  30 
+eater 2.0 
+energy 250 40 
+armor 70 
+engine 0.045
+syphon 1.5 20
+shot-sensor 4 1
+food-sensor 6 2
+radio send receive read write
+
+#code 
+
+
+#var Read-Loop
+#var Best-Address
+#var Best-Distance
+#var My-Address
+#var Last-Armor
+#var Eating
+#var No-Eat
+#var Full-Energy
+
+
+#vector Home
+#vector Best-Food
+
+	syphon-max-rate 990 write
+	988 read 1 + 988 write
+	id 2 mod pi pi negate ifev Pivot-Dir!
+	max-energy 2 - Full-Energy!
+	do time id 2 * < while-loop
+	998 vread Home!
+	2 Feed-Prefer!
+	position My-Food!
+	Read-Food^
+
+Run-Loop:
+	Idle^
+
+	energy 140 > if
+		Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+		syphon-max-rate negate syphon-rate!
+		Eating 1 + Eating!
+	else
+		energy 25 < if
+			syphon-max-rate 2 / syphon-rate!
+			Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+		else
+			0 syphon-rate!
+		then
+		No-Eat 1 + No-Eat!
+	then 
+	My-Food position radius in-range if
+		eaten if 
+			speed Scan-Food& nifc
+			Read-Food^
+			energy full-energy < Feed-Position Position syphon-range in-range Feed-ID and or Change-Food& nifg
+		else 
+			my-Address if  1 My-Address 1 - write then
+Change-Food:
+			Best-Address if sync
+				Best-Address read time < if
+					time 50 + Best-Address write
+					Best-Address My-Address!			
+					Best-Food My-Food!
+				else
+					0 My-Address!
+					Read-Food^
+				then
+			else
+				Scan-Food^
+				0 My-Address!
+				Read-Food^
+				Best-Address nif
+					Feed-Position Pivot!
+					Pivot-Movement^
+					Dest My-Food!
+				then
+			then
+		then
+	else
+		My-Food or if 
+			My-Food seek-location 
+		else 
+			Feed-Position or if
+				Feed-Position Pivot!
+				Pivot-Movement^
+				Dest My-Food!
+			then
+		then
+		Read-Requests^
+	then
+	15 periodic-shot-sensor if
+		shot-found if
+			position shot-position shot-velocity unitize shot-distance vs* v+
+			v- unitize engine-velocity!
+			engine-max-power engine-power!	
+			Track-Shot^
+			Target Target-ID 3 3 send
+			Scared^
+		then
+	then
+Run-Loop& jump
+
+
+
+Idle:
+	time Chirp-Time > My-Address and if
+		time 50 + My-Address write
+		time 25 + Chirp-Time!
+		992 read Eating + 992 write
+		993 read dup Limit > if
+			Eating + No-Eat + 10 / 993 write
+			992 read 10 / 992 write
+		else
+			Eating + No-Eat + 993 write
+		then
+		0 Eating! 0 No-Eat!
+	then
+	998 vread Home!
+	armor max-armor < max-repair-rate 0 ifev repair-rate!
+	armor last-armor < if
+		position -2 3 3 send
+Scared:
+		feed-position min 0 > if
+			Position feed-position v- 0.1 vs* feed-position v+ 8 restrict-position My-Food!
+		else
+			Position home v- 0.1 vs* home v+ 8 restrict-position My-Food!
+		then
+		time safe-time!
+	then	
+	armor last-armor!
+	enemy-collision if position -1 3 3 send then
+return
+
+Read-Food:
+	stack Stack-Watch!
+	200 Best-Distance!
+	0 Best-Address!
+	196 Read-Loop! do
+		My-Food or if my-food seek-location then
+		Read-Loop 4 + dup Read-Loop! read
+		dup time > if
+			Read-Loop 1 + read
+			time < if 
+				Read-Loop 2 + vread 2dup 2dup 2dup or if
+					position dist rrot home dist + dup Best-Distance < if
+					;2dup feed-position dist feed-position min 0 > * Feed-Type 1 = * rrot
+					;position dist energy max-energy < * + rrot 
+					;home dist + dup Best-Distance < if
+						Best-Distance! Best-Food!
+						Read-Loop 1 + Best-Address!
+					else
+						drop 2drop
+					then
+				else
+					2drop 2drop 2drop 
+				then
+			then
+		then
+	while-loop
+	Read-Requests^
+	Stack-Check^
+return
+
+#type Builder
+#color F0F
+#decoration 02E Dot
+#hardware 
+processor 25 
+energy 1000 1 
+engine 0.02
+solar-cells 0.01
+armor 150 
+repair-rate 0.05
+constructor 5
+food-sensor 9 6
+robot-sensor 9
+radio send receive read write
+
+#code 
+
+#var Fighter-Ratio
+#var Food-Ratio
+#var Build-Ratio
+#var Feed-Ratio
+#var Defenders
+#var Solars
+#var Builders
+#var Feeders
+#var Controlers
+#var Solar-Power
+#var Eater-Power
+#var Builder-Spacing
+#var Wall-Spacing
+#var Space-Factor
+#var Start-Chirp-Energy
+#var Stop-Chirp-Energy
+#var Protector
+#var Protect-Time
+
+#var Building-Rounds
+#var No-Building
+
+#vector Chirp-Position
+#vector dest
+
+
+
+Max-Energy 0.99 * Stop-Chirp-Energy!
+Max-Energy 0.30 * Start-Chirp-Energy!
+Food-Sensor-range 2 sqrt * Builder-Spacing!
+Food-Sensor-range 2 sqrt * 2 / 10 max Wall-Spacing!
+Builder-Spacing -5 / Space-Factor!
+do speed sync while-loop Position dest!
+Main-Loop:
+	Idle^
+	Listen-To-Requests^
+	energy food-sensor-firing-cost > time food-sensor-time > and Scan-Food& ifc
+	50 periodic-robot-sensor Scan-Robots& ifc
+	constructor-type nif
+		0 constructor-rate!
+		3.4 4 type-population 997 read 1 max / 1.75 * - 
+		1 type-population 988 read 1 max / -
+		time 360000 / + Fighter-Ratio! ;changed 2.5 to 3.5
+		996 read Food-Ratio!
+		995 read 994 read 1 max / Build-Ratio!
+		992 read 993 read 1 max / Feed-Ratio!
+		990 read Eater-Power!
+		991 read Solar-Power!
+		4 type-population Defenders!
+		3 type-population Solars!
+		2 type-population 989 read time > + Builders!
+		1 type-population Feeders!
+		
+		Defenders Builders 1 - Feeders 0.20 * + Solars 0.1 * + Fighter-Ratio 0.5 max * <  4
+		Feeders Eater-Power * Feed-Ratio * Solars Solar-Power * + ;energy available
+		Builders constructor-max-rate * Build-Ratio * > 2 ;constructor available
+		Feeders Food-Ratio >= 3 1 ifev
+		ifev ifev constructor-type!
+		constructor-type 2 = if Time 350 + 989 write then
+	then
+Main-loop& jump
+
+Scan-Robots:
+	robot-found nifr
+	robot-shield-fraction 0.8 < ifr
+	robot-position robot-id 3 3 send
+	robot-side 10 * robot-type - read -1 = if
+		robot-position position v- unitize 5 vs* position v+ dest!
+		dest seek-location
+	then
+return
+
+Listen-To-Requests:
+	do 1 messages while
+		1 receive 4 = if nip
+			id <> if 
+				dest v- rect-to-polar swap
+				dup Builder-Spacing < if
+					Space-Factor swap / swap polar-to-rect
+					Dest v+ Wall-Spacing Restrict-Position Dest!
+				else
+					2drop
+				then
+			else
+				2drop
+			then
+		else
+			stack dropn
+		then
+	loop
+	do 4 messages while
+		4 receive if
+			dup -1 = if
+				Protect-Time time < if
+					drop Protector!
+					id protector 2 4 send
+					Time 150 + Protect-Time!
+				else
+					2drop
+				then
+			else id = swap Protector = and if
+				Time 150 + Protect-Time!
+				id protector 2 4 send
+			then then
+			stack dropn
+		then
+	loop			
+return
+
+Idle: 
+	energy Start-Chirp-Energy < Chirp-Time 18000 = and if ; position Chirp-Position radius in-range not or if
+		1 Chirp-Time! 
+	else energy Stop-Chirp-Energy > chirp-time 18000 < and if
+		;-999 -999 2 ID 4 1 send
+		18000 Chirp-Time!
+	then then
+
+	time Chirp-Time < speed or nif
+		position energy max-energy / 0.1 + ID 4 1 send
+		time Builders 5 * + 10 80 min + Chirp-Time!
+		;time 50 + Chirp-Time!
+		position Chirp-Position!
+		994 read Building-Rounds + 994 write
+		995 read No-Building + Building-Rounds + 995 write
+		0 No-Building!
+		0 Building-Rounds!
+		ID 1 = if position 998 vwrite then
+		constructor-type 2 = if Time 350 + 989 write then
+	then 
+	energy 25 > constructor-progress 10 > position dest 3 in-range or and if
+		constructor-max-rate constructor-rate!
+		;994 read 1.1 + 994 write
+		Building-Rounds 1 + Building-Rounds!
+	else
+		0 constructor-rate!
+		No-Building 1 + No-Building!
+	then
+
+	995 Read dup Limit > if
+		10 / 995 write
+		994 read 10 / 994 write
+	else
+		drop
+	then
+	armor max-armor < max-repair-rate 0 ifev repair-rate!
+	constructor-progress 10 <= robot-found or if 
+		dest seek-Location
+	else
+		0 engine-power!
+	then
+return
+
+#type Solar
+#color FF0
+#decoration 000 Dot
+#hardware
+processor 15
+energy 200 0
+solar-cells 0.40
+armor 50
+repair-rate 0.05
+syphon 0.575 15
+radio send receive read write
+
+#code
+
+#var Feed-ID
+#var Feed-Dist
+#var Feed-Loop
+
+9999 Feed-Dist!
+syphon-max-rate 991 write
+Run-Loop:
+	Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+	energy 2 > syphon-max-rate negate 0 ifev syphon-rate!
+	armor max-armor < max-repair-rate 0 ifev repair-rate!
+	3 type-population 35 <= 2 -1 ifev Feed-Prefer!
+	Read-Requests^
+Run-loop& jump
+
+Idle:
+	return
+
+;Fighter type
+
+#type Defense
+#color 059
+#decoration 000 Circle
+#hardware
+processor 40
+energy 500 100
+armor 300
+engine 0.09
+repair-rate 0.1
+robot-sensor 9 4
+food-sensor 7 2
+shot-sensor 3 1
+blaster 40 5.5 20  ;from 20 7.5 10
+force-field 0.001 10
+radio send receive read write
+
+
+#code
+
+
+#var No-Shots
+#var Robot-Read
+#var target-dist
+#var shot-firing-delay
+#var shot-blocked
+#var Last-Armor
+#var Pivot-Distance
+#var Shot-Range
+#var Protect
+#var Protect-Time
+
+#vector Home
+#vector Center
+#vector target-velocity
+#vector Chirp-position
+#vector blocker
+
+999 Target-Dist!
+World-Width 2 / World-Height 2 / Center!
+id 2 mod pi pi negate ifev Pivot-Dir!
+Blaster-Range 0.5 - Shot-Range!
+Start:
+4 type-population 4 > if ID -1 2 4 send then
+997 read 1 + 997 write
+do home or until
+	998 vread Home!
+	sync
+loop
+
+
+Run-Loop:
+	do 4 messages while
+		4 receive 2 = if
+			id = if
+				Protect!
+				Time 200 + Safe-Time!
+				Center Target!
+				Position Pivot!
+				Personal-Protector-Mode& jump
+			then
+		then
+		stack dropn
+	loop
+
+
+	
+	energy 300 > energy 100 > Armor Last-Armor < and or 3 messages and if
+		do 3 messages while
+			9999 target-dist!
+			3 receive 3 = if
+				rrot 2dup position target-dist in-range if
+					target! target-ID! 
+				else
+					drop 2drop
+				then
+			else 	
+				stack dropn
+			then
+			
+		loop
+		Start-Seek^
+		0 force-field-power!
+		0 robot-sensor-focus-distance!
+		0 robot-sensor-sees-friends!
+		3 clear-messages
+		time safe-time!
+	else
+		Armor Last-Armor!
+		3 clear-messages
+	then
+	energy 10 > if
+		30 periodic-robot-sensor if
+			robot-found Robot-Seen& ifc  
+		then
+		20 periodic-shot-sensor if
+			shot-found  Shot-Seen& ifc
+		then
+	then
+	energy food-sensor-firing-cost 10 * > time food-sensor-time > and 
+	Position Pivot 30 in-range and Scan-Food& Idle& ifec
+	Listen-To-Requests^
+	4 type-population 1 = if time safe-time! then
+	Pivot-Movement^
+Run-loop& jump
+
+
+Robot-Seen:
+	robot-shield-fraction 0.9 > if
+		robot-position robot-id 3 3 send
+		energy 100 > if
+			Attack^
+			0 force-field-power!
+			0 robot-sensor-focus-distance!
+			0 robot-sensor-sees-friends!
+			3 clear-messages
+			4 clear-messages
+			time safe-time!
+		else
+			robot-position robot-velocity lead-blaster
+		then
+	then
+return
+
+Shot-Seen:
+	Track-Shot^
+	Target Target-ID 3 3 send
+	Start-Seek^
+	0 force-field-power!
+	0 robot-sensor-focus-distance!
+	0 robot-sensor-sees-friends!
+	3 clear-messages
+	4 clear-messages
+	time safe-time!
+return
+
+Listen-To-Requests:
+	pivot position dist Pivot-Distance!
+	do 1 messages while
+		1 receive 4 = if nip
+			id <> if 
+				2dup position dist dup Pivot-Distance < if
+					Pivot-Distance!
+					Pivot!
+				else
+					drop 2drop 
+				then
+			else
+				2drop
+			then
+		else
+			stack dropn
+		then
+		Pivot-Movement^
+	loop
+return
+
+
+Idle:
+	998 vread Home!
+	energy 400 < Chirp-Time 18000 = and if
+		1 Chirp-time! 
+	else energy 480 > Chirp-Time 18000 < and if
+		-999 -999 10 ID 4 2 send
+		18000 Chirp-Time!
+	then then
+
+	time Chirp-Time < speed or nif   ;position  Chirp-position radius in-range not or speed not and if
+		position energy max-energy / ID 4 2 send
+		time 50 + Chirp-Time!
+		position Chirp-position!
+	then
+	Repair^
+return
+
+
+Start-Seek:
+	-999 -999 10 ID 4 2 send
+	18000 Chirp-Time!
+Seek:
+	target seek-location
+	;position target position v- angle set-force-field
+	20 periodic-robot-sensor if
+		robot-found if
+			robot-shield-fraction 0.8 > Attack& ifg then then
+	20 periodic-shot-sensor if
+		shot-found Track-Shot& ifc then
+	target position 1 in-range energy 50 < or ifr
+	3 receive if 
+		target-id = if 
+			target! 
+		else
+			2drop
+		then
+	then
+Seek& jump
+
+
+
+
+
+Attack:
+	0 shot-firing-delay!
+	0 No-Shots!
+	1 robot-sensor-sees-friends!
+	do 
+		blaster-cooldown shot-firing-delay <= if
+			robot-distance 2 / robot-sensor-focus-distance!
+			robot-direction robot-sensor-focus-direction!
+			0 shot-blocked!
+			fire-robot-sensor sync robot-found nifr
+			do 
+				robot-side side = See-Friend& See-Enemy& ifec 
+			while-loop
+		then
+		target target-velocity seek-moving-location
+		Repair^
+	energy 50 < No-Shots 5 > or until-loop
+Return
+
+See-Friend:
+	shot-blocked nif
+		robot-distance Shot-Blocked!
+		robot-position blocker!
+	then
+Next-Robot dup nif rdrop drop then return
+
+See-Enemy:
+	robot-shield-fraction 0.90 > Fire-Shot& ifg
+Check-Next-Bot:
+	Current-Robot-result 1 = No-Shots + No-Shots! Next-Robot return
+Pick-Target:
+	shot-blocked Safe& ifg
+Fire-Shot:
+	robot-side 20 min 10 * robot-type - robot-read!
+	robot-reloading if 1 robot-read write then
+	robot-read read robot-bomb or if
+		Safe-Shot^
+		robot-position pivot 18 in-range if
+			robot-position 2dup pivot v- angle set-force-field
+			Shot-Range Shot-Blocked min Shot-Blocked!
+		else
+			robot-distance 7.0 < if
+				robot-position 2dup position v- angle set-force-field         
+			else robot-distance 9 > if
+				robot-position position robot-position v- angle set-force-field
+			else
+				0 force-field-power!
+			then then
+			Shot-Range Shot-Blocked min Shot-Blocked!
+		then
+	else
+		robot-position pivot 48 in-range robot-position pivot v- robot-velocity dot 0 >= or if ;changed range from 18
+			Safe-Shot^
+			robot-position position robot-position v- angle set-force-field 
+			1 Shot-Blocked min Shot-Blocked!
+		else
+			robot-position pivot robot-position v- angle set-force-field
+			Shot-Blocked dup 4 ifev Shot-Blocked!
+		then
+	then
+	position robot-position v- unitize Shot-Blocked vs* robot-position v+ target!
+	robot-velocity target-velocity!
+	0 No-Shots!
+0 return
+
+Safe:
+	position robot-position v- unitize robot-distance shot-blocked - vs* robot-position v+ target!
+	robot-velocity target-velocity!
+	robot-side 20 min 10 * robot-type - robot-read!
+	robot-reloading if 1 robot-read write then
+0 return
+
+Safe-Shot:
+	Shot-Blocked nif
+		robot-position robot-velocity lead-blaster
+		time robot-sensor-time - shot-firing-delay!
+		Shot-Range 0.75 - Shot-Blocked!
+	else
+		robot-distance shot-blocked - Shot-Blocked!
+	then
+return
+
+Repair:
+	armor max-armor < energy 30 > and max-repair-rate 0 ifev repair-rate!
+return
+
+Personal-Protector-Mode:
+	do 1 messages while
+		1 receive 4 = if nip
+			Protect = if
+				Pivot!
+			then
+		then
+		stack dropn
+	loop
+	do 4 messages while
+		4 receive 2 = if
+			id = swap protect = and if
+				time 75 + Protect-Time!
+				time 200 + Safe-Time!
+			then
+		then
+		stack dropn
+	loop
+	time ProTect-Time > if
+		ID Protect 2 4 send
+		18000 ProTect-Time!
+	then
+	time Safe-Time > 4 type-population 1 = or if
+		0 Protect!
+		0 Safe-Time!
+		0 Protect-Time!
+		Start& jump
+	then
+	do 3 messages while
+		3 receive 3 = if 
+			dup Target-ID = 2over Pivot Target-Dist in-range or if
+				Target-ID! Target!
+				Target Pivot dist Target-Dist!
+			else
+				Target-Dist 1.1 * 200 max Target-Dist!
+			then
+		then
+		stack dropn
+	loop
+	target pivot v- unitize 4 vs* pivot v+ dest! 
+	Dest seek-location
+	Idle^
+	energy 10 > if
+		30 periodic-robot-sensor if
+			robot-found Robot-Seen& ifc  
+		then
+		20 periodic-shot-sensor if
+			shot-found  Shot-Seen& ifc
+		then
+	then
+Personal-Protector-Mode& jump			
+
+#end

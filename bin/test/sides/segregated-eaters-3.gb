@@ -1,0 +1,486 @@
+#side Segregated Eaters 3
+#author Matt Burkholder
+#date 30 Aug 2004
+
+9-5-2005 Made three updates.  None of them are remarkable except that a champion
+calaber side didn't have them before.  The gatherers now run away from ememy sides.
+Picture that, skittish gatherers.  They do only run from types that they consider dangerous.
+The robot sensor also allows them to report emeny positions to the fighters.  This
+makes the side as a whole more agressive.  The fighters keep moving around when they
+are full on energy, but this change is largely moot.  The fighters now passively dodge
+to make themselves harder to kill.  This adds a couple points to the side's score.
+10-03-07 Fighters NOw try to move in to close range to kill types that are not armed.
+
+#color 111
+#seed 1 2 1 1 2
+
+#code
+
+#const edge-space 10
+#const Address-Offset 100
+#const Construct-Offset 200
+#const Tag-Offset 500
+#const time-offset 100
+#const empty-offset 500
+#const num-types 2
+
+#var chirp-now
+#var Home-Address
+#var Tag-Address
+#var Preferred-Address
+#var World-Cols
+#var World-Rows
+#var Reach-Loop
+#var Width-Loop
+#var Search-Loop
+#var food-sensor-now
+#var robot-sensor-now
+
+#vector Home
+#vector Center
+#vector Dest
+#vector X-Step
+#vector Y-Step
+
+
+Address-to-Location:
+	dup 10 mod 10 * swap 10 / floor 10 * 5 5 v+
+return
+
+Location-to-Address:
+	dup 10 mod - swap 10 / floor +
+return
+
+Search-Home:
+	Home Check-Address^
+	0 0 engine-velocity!
+	1 Reach-Loop!
+	do Reach-Loop 10 < while
+		Home X-Step Reach-Loop vs* v+ Check-Address^
+		Home Y-Step Reach-Loop vs* v+ Check-Address^
+		Home X-Step Reach-Loop vs* v- Check-Address^
+		Home Y-Step Reach-Loop vs* v- Check-Address^
+		1 Width-Loop!
+		do Width-Loop Reach-Loop < while
+			Home X-Step Reach-Loop vs* v+ Y-Step Width-Loop vs* v+ Check-Address^
+			Home Y-Step Reach-Loop vs* v+ X-Step Width-Loop vs* v+ Check-Address^
+			Home X-Step Reach-Loop vs* v+ Y-Step Width-Loop vs* v- Check-Address^
+			Home Y-Step Reach-Loop vs* v+ X-Step Width-Loop vs* v- Check-Address^
+			Home X-Step Reach-Loop vs* v- Y-Step Width-Loop vs* v+ Check-Address^
+			Home Y-Step Reach-Loop vs* v- X-Step Width-Loop vs* v+ Check-Address^
+			Home X-Step Reach-Loop vs* v- Y-Step Width-Loop vs* v- Check-Address^
+			Home Y-Step Reach-Loop vs* v- X-Step Width-Loop vs* v- Check-Address^
+			Width-Loop 1 + Width-Loop!
+		loop
+		Home X-Step Y-Step v+ Reach-Loop vs* v+ Check-Address^
+		Home X-Step Y-Step v- Reach-Loop vs* v+ Check-Address^
+		Home Y-Step X-Step v- Reach-Loop vs* v+ Check-Address^
+		Home Y-Step X-Step v+ Reach-Loop vs* v- Check-Address^
+		Reach-Loop 1 + Reach-Loop!
+	loop
+return
+
+;Directional-Search-b
+;	-5 Reach-Loop!
+;	do 
+;		Reach-Loop robot-direction polar-to-rect position v+
+;		Location-to-Address^ Address-to-Location^ Check-Address^
+;		Reach-Loop robot-direction pi 6 / + polar-to-rect position v+
+;		Location-to-Address^ Address-to-Location^ Check-Address^
+;		Reach-Loop robot-direction pi 6 / - polar-to-rect position v+ 
+;		Location-to-Address^ Address-to-Location^ Check-Address^
+;		Reach-Loop 7.5 - Reach-Loop!
+;	Reach-Loop 50 < while-loop
+;	Search-Home
+;return			
+
+Directional-Search:
+	-1 Robot-direction polar-to-rect 
+	round swap round swap 10 vs* 2dup X-Step!
+	negate swap Y-Step!
+	1 Reach-Loop!
+	do
+		0 Width-Loop!
+		do Width-Loop Reach-Loop < while
+			Home X-Step Reach-Loop vs* v+ Y-Step Width-Loop vs* v+ Check-Address^
+			Home X-Step Reach-Loop vs* v+ Y-Step Width-Loop vs* v- Check-Address^
+			Width-Loop 1 + Width-Loop!
+		loop
+		Reach-Loop 1 + Reach-Loop!
+	Reach-Loop 5 < while-loop
+	Search-Home
+return
+	
+Check-Address:
+    2dup 2dup min 0 < rrot World-Height > swap World-Width > or or if
+    	2drop return then
+	Location-to-Address^ dup Address-OffSet + sync read time < if
+		dup dup Address-OffSet +  ;three copies on stack two raw and one address
+		time time-offset + type 10 / + swap write ;store address and write claim
+		Home-Address! Address-to-Location^ Home!  ;set coordinates of home
+		Constructor-Type Home-Address Construct-Offset + write
+		rdrop ;drop the top item on the return stack (call to this function), so loop will terminate
+	else drop then  
+return
+
+Chirp:
+  time chirp-now < ifr
+  time 50 + chirp-now!
+  time time-offset + type 10 / + Home-Address Address-Offset + write
+return
+
+Scan-Food:
+	eaten position dest radius in-range not or ifr
+	fire-food-sensor sync
+	0 food-sensor-now!
+	food-found if
+		do food-position Location-to-Address^ dup Home-Address = if
+			food-sensor-now nif 
+				food-position dest!
+				1 food-sensor-now!
+			then
+			drop
+		else
+			Address-Offset + dup read is-integer if
+				0 swap write
+			else
+				drop
+			then
+		then
+		next-food while-loop
+	then
+	food-sensor-now ifr
+	home dest dist if
+		home dest!
+	else
+		time empty-offset + Home-Address Address-Offset + write
+		Search-Home^
+		Home Dest!
+	then
+return
+
+Init:
+	World-Width 2 / World-Height 2 / 2dup Center!
+	Position rot > 10 -10 ifev 0 swap Y-Step! < 10 -10 ifev 0 X-Step!
+	World-Width 10 / 1 - World-Cols!
+	World-Height 10 / 1 - World-Rows!
+	do time id 5 * < while-loop
+return
+
+Tag:
+	robot-side 10 * robot-type - Tag-Offset + Tag-Address!
+	Tag-Address read dup if
+		robot-reloading robot-bomb or -1 robot-mass ifev
+		min Tag-Address write
+	else
+		drop robot-reloading robot-bomb or -1 robot-mass ifev
+		Tag-Address write
+	then
+return
+
+Robot-Armed:
+	robot-side 10 * robot-type - Tag-Offset + Tag-Address!
+	Tag-Address read -1 =
+return
+
+#type Builder
+#color 0F0
+#Decoration 0F0 dot
+#hardware 
+processor 20 10
+solar-cells .05  ;5x bigger 10-4-7
+eater 1.75 
+energy 300 50 
+armor 125 ;test change from 150
+food-sensor 7 3 
+robot-sensor 8 3
+repair-rate 0.065
+constructor 0.9 
+engine 0.075
+radio send receive read write
+
+#code 
+
+#const Target-Channel 2
+
+
+Init^
+position Location-to-Address^ Home-Address!
+Home-Address Address-to-Location^ Home!
+Search-Home^ Home Dest!
+
+do 
+	dest seek-location
+	Scan-Food^
+	Construct^
+	Chirp^
+	Scan-Robots^
+forever
+
+
+Scan-Robots:
+	30 periodic-robot-sensor if
+		robot-found if do
+			Tag^
+			robot-position 2 Target-Channel send
+			Robot-Armed Evacuate& ifg
+		next-robot while-loop
+	then then
+return
+
+Evacuate:
+	position 2dup Robot-Position v- v+ 2 restrict-position Dest!
+	Dest seek-location
+	Directional-Search^
+	Home Dest!
+return
+
+Construct:
+	energy 50 > constructor-max-rate 0 ifev constructor-rate!
+	energy 25 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+	eaten nifr
+	constructor-type nif  
+		0 constructor-rate!
+		0 engine-power!
+		num-types Reach-Loop!
+		Do 
+			Reach-Loop type-population Reach-Loop store 
+			Reach-Loop 1 - dup Reach-Loop!
+		While-loop
+		World-Cols Reach-Loop! Do
+			World-Rows Width-Loop! Do
+				Reach-Loop 10 * Width-Loop + 
+				Dup Address-Offset + read time > if
+ 					Construct-Offset + read dup dup if 
+ 						load 1 + swap store 
+					else 
+						2drop 
+					then
+				else drop then
+			Width-Loop dup 1 - Width-Loop!
+		While-loop
+		Chirp^
+		energy 25 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+		Reach-Loop dup 1 - Reach-Loop!
+		While-loop
+ 
+		2 load 1 load 1 * < if
+			2 constructor-type! sync
+		else
+			1 constructor-type! sync
+		then
+      constructor-type Home-Address Construct-Offset + write       
+    then
+return
+
+
+
+#type fighter
+#color F00
+#hardware
+processor 20
+energy 375 50
+eater 0.75
+armor 225
+engine 0.08
+repair-rate 0.075
+food-sensor 7 3
+robot-sensor 10 3
+shot-sensor 4
+blaster 16 8 10
+radio read write send receive
+
+
+#code 
+
+#const danger-offset 500
+;#const num-types 4
+#const robot-sensor-delay 50
+#const listen-delay 100
+#const Target-Channel 2
+
+#var robot-sensor-now
+#var Listen-Now
+#var shot-firing-delay
+#var no-shots
+#var target-distance
+
+
+#vector target
+#vector target-velocity
+#vector blocker
+#vector Dodge-Velocity
+
+Init^
+Restart:
+position Location-to-Address^ Home-Address!
+Home-Address Address-to-Location^ Home!
+Search-Home^ Home Dest!
+
+do 
+	dest seek-location
+	Scan-Food^
+	Scan-Robots^
+	Chirp^
+	Listen^
+	energy max-energy < Speed or nif
+		Search-Home^
+		Home Dest!
+	then
+	energy 25 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+forever
+
+
+
+
+
+Listen:
+	Target-Channel messages energy max-energy 0.75 * > armor max-armor 0.75 * > and and if
+		999 target-distance!
+		do Target-Channel receive 2 >= while
+			2dup position dist dup target-distance < if
+				target-distance! target!
+			else
+				drop 2drop
+			then
+		loop
+		stack dropn
+	else
+		stack dropn return
+	then
+	0 Home-Address Address-Offset + write
+	do
+		target seek-location
+		Scan-Robots^
+		armor max-armor < max-repair-rate 0 ifev repair-rate!
+		target dest dist target-distance!
+		Target-Channel receive if
+			do stack 2 >= while
+				2dup position dist dup target-distance < if
+					target-distance! target!
+				else
+					drop 2drop
+				then
+			loop
+		then
+	target position 5 in-range energy max-energy 0.25 * < or until-loop
+	target-channel clear-messages
+rdrop Restart& jump
+
+Talk:
+	;time chirp-now < ifr
+	target dest 10 in-range ifr
+	target 2 Target-Channel send
+	target dest!
+	time 50 + chirp-now!
+return
+
+
+Scan-Robots:
+	time robot-sensor-now < energy 25 < or blaster-cooldown or ifr
+	time robot-sensor-delay + robot-sensor-now!
+	fire-robot-sensor sync
+	robot-found nifr
+	energy max-energy 0.50 * > armor max-armor 0.50 * > and if
+		do	Tag^
+			robot-shield-fraction 0.75 > Attack& ifg
+		next-robot while-loop
+	else
+		Check-Bots^
+		;time danger-offset + 0.9 + robot-position location-to-address^ Address-Offset + write
+	then
+return
+
+Attack:
+	0 shot-firing-delay!
+	0 Home-Address Address-Offset + write
+	1 No-Shots! 0 robot-sensor-now!
+	1 robot-sensor-sees-friends!
+	1 robot-sensor-sees-enemies!
+	-10 -10 dest!
+	robot-direction robot-sensor-focus-direction!
+	robot-distance 0.55 * robot-sensor-focus-distance!
+	do 
+		blaster-cooldown shot-firing-delay <= time robot-sensor-now > and if
+			time robot-sensor-delay + robot-sensor-now!
+			fire-robot-sensor sync robot-found Check-Bots& ifc
+ 		then
+ 		robot-direction robot-sensor-focus-direction!
+		robot-distance 0.55 * robot-sensor-focus-distance!
+		target target-velocity seek-moving-location
+		armor max-armor < max-repair-rate 0 ifev repair-rate!
+	energy 25 > robot-found and No-Shots and while-loop
+	0 food-sensor-now!
+	0 robot-sensor-focus-distance!
+	0 robot-sensor-sees-friends!
+	target-channel clear-messages
+	position location-to-address^ Home-Address!
+	Home-Address address-to-location^ Home!
+	position dest!
+	Scan-Food^
+Return
+
+Check-Bots:
+	do
+		Robot-Side Side = Block-Firing& ifg
+		robot-shield-fraction 0.90 > Fire-Shot& Check-Next-Bot& ifec
+	while-loop
+	Robot-position 2dup position v- unitize 
+	Robot-Armed if		
+		2dup negate swap time 30 / pi * reorient 0 > 2 -2 ifev vs*
+ 		2swap blaster-range 0.85 * vs* v+ v- target!
+	else
+		-2.0 vs* v+ target!
+	then
+	Robot-velocity target-velocity!
+	Talk^
+	0 current-robot-result!
+	do
+		Tag^
+	next-robot while-loop
+return
+
+Check-Next-Bot:
+	Next-robot 0 No-Shots! return
+Set-Target:
+	1 No-Shots! 0 return
+	
+Block-Firing:
+	robot-position position v- robot-velocity v+ blocker!
+	do
+		Robot-Side Side = Check-Next-Bot& Set-Target& ifec
+	while-loop
+	Robot-position 2dup position v- unitize 
+ 	blaster-range 0.75 * vs* v- target!
+	Robot-position position v- unitize swap negate target-velocity!
+	target-velocity blocker dot 0 > if target-velocity vnegate target-velocity! then
+return
+	
+Fire-Shot: 
+	do blaster-cooldown while-loop
+	robot-position robot-velocity lead-blaster
+	time robot-sensor-time - shot-firing-delay! 
+	time robot-sensor-now!
+	1 No-Shots!
+0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+Fight-While-Eating: 
+	0 shot-firing-delay!
+	Do
+		energy 20 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+		Scan-Food^
+		
+		blaster-cooldown shot-firing-delay <= eaten 
+		energy 25 > time robot-sensor-now > and and and if
+				fire-robot-sensor sync robot-found nifr
+				do 
+					robot-shield-fraction 0.9 > Fire-Shot& Check-Next-Bot& ifec 
+				while-loop 
+				robot-distance robot-sensor-focus-distance!
+				Robot-direction robot-sensor-focus-direction!
+			Then
+	energy 300 < while-loop
+return
+  
+
+#end

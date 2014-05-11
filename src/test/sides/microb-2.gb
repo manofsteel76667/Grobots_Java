@@ -1,0 +1,358 @@
+#side Microb
+#Author Matt Burkholder
+#date Started Oct 5 2002
+
+Very small cells
+This is my attempt to beat the Missile/autotrophe bots with economics.
+The idea is that these bots are so small that its not worth the cost
+of the missile to blow them up.  It kind of works.
+
+It is also pure plagarism.  The gatherer type is fool the hardware cut in half.
+
+#color FFF
+#type Crud
+#color 00F
+#hardware
+energy 300 50
+armor 60
+processor 8
+
+constructor 0.8 
+eater 1.0 
+engine 0.04 
+solar-cells 0.01 
+
+food-sensor 7
+;robot-sensor 7
+;shot-sensor 10
+
+#code
+#var begin-moving-time
+#start
+0.1
+BeginWandering: ;on stack: speed
+ random-angle polar-to-rect engine-velocity!
+ time begin-moving-time!
+do
+ energy 30 speed 100 * - < 0 engine-max-power ifev engine-power!
+ food-sensor-time 30 + time < time 5 < or energy 20 > and if
+  random-angle food-sensor-focus-direction!
+  0 5 random food-sensor-focus-distance!
+  fire-food-sensor sync
+  food-found BeginFoodCharge& ifg
+ then
+ construct^
+ defend^
+ 0.1 speed 0.08 < time begin-moving-time 10 + > and BeginWandering& ifg drop ;must have bumped something
+forever
+
+BeginFoodCharge:
+ time begin-moving-time!
+do
+ food-position position v- 0.06 vs* engine-velocity!
+ engine-max-power engine-power!
+ construct^
+ defend^
+ food-position position v- norm radius 0.05 + < BeginEating& ifg
+ 0.15
+ time begin-moving-time - dup 100 > swap 30 > speed 0.03 < and or BeginWandering& ifg drop ;must be something in way
+forever
+
+BeginEating:
+ 0 0 engine-velocity!
+ engine-max-power 0.1 * engine-power! ;try and sit still
+ sync ;wait to get in position
+do
+ construct^
+ defend^
+ 0.1 eaten BeginWandering& nifg drop
+forever
+
+BeginRunning:
+1.0 BeginWandering& jump
+do
+
+forever
+
+Construct:
+ constructor-type nif 
+			1 5 random-int constructor-type! then
+ energy 250 < 0 constructor-max-rate ifev constructor-rate!
+return
+
+#var last-armor 0
+defend:
+ energy 25 > if
+  armor armor 50 < 1 1.05 ifev * last-armor < if
+   rdrop armor last-armor! BeginRunning& jump
+  then
+ then
+ armor last-armor!
+return
+
+;I included a very small autotrophe.  It appears that a side need an autotrophe 
+;to produce enough biomass to compete.
+
+#type Ooze
+#color 0F0
+#hardware
+energy 1 0
+armor 60
+processor 1
+
+constructor 0.12
+solar-cells 0.12
+
+;food-sensor 7
+;robot-sensor 7
+;shot-sensor 10
+
+#code
+constructor-max-rate constructor-rate!
+do
+		constructor-type nif
+				1 5 random-int constructor-type! then
+forever
+
+
+;I also added this type that would latch onto enemies and syphon energy.
+;I really had it in mind for Tactical's.  It will also cause them to 
+;blow them selves up.  Appears to be a failure, mostly just get killed.
+;They like rats and algae. 20021020 Now Smarter
+
+#type Goo
+#color F00
+#hardware
+processor 8
+armor 60
+energy 100 5
+constructor 0.15
+syphon 0.1
+eater 0.15
+solar-cells 0.05
+engine 0.05
+robot-sensor 5
+food-sensor 6
+shot-sensor 3.5
+shield 0.1
+repair-rate .05
+
+#code
+#var robot-sensor-now 0
+#var food-sensor-now 0
+#var shot-sensor-now 0
+#var curvature
+#var path
+#var inflection-time
+#const robot-sensor-time 30
+#vector target
+
+random-angle path!
+
+Wander:
+  do do do do do
+    Construct^
+    time shot-sensor-now > if
+      fire-shot-sensor 
+      time 10 + shot-sensor-now! sync
+      shot-found if
+        max-shield shield!
+        shot-velocity velocity cross 0 > 1 -1 ifev
+        1 5 random-int 0.3 * curvature!
+        time inflection-time! 
+        time 30 + robot-sensor-now! then
+    then
+    0 time inflection-time - random-int 25 > if
+      1 5 random-int 0.15 * curvature 0 > -1 1 ifev * curvature!
+      time inflection-time! then
+    velocity angle curvature + path!
+    1 path polar-to-rect engine-velocity!
+    engine-max-power engine-power!
+  shot-found while-loop
+   
+  1 robot-sensor-sees-enemies!
+   0 robot-sensor-sees-friends!
+   time robot-sensor-now > if
+     fire-robot-sensor
+     time 30 + robot-sensor-now! sync
+     robot-found if
+         robot-mass 15 < robot-velocity norm or Siphon& nifg 
+     then
+   then
+   robot-found while-loop
+   0 robot-sensor-sees-enemies!
+   1 robot-sensor-sees-friends!
+   fire-robot-sensor sync
+   robot-found while-loop
+   time food-sensor-now > if
+      fire-food-sensor time 20 + food-sensor-now! sync then
+   food-found until-loop
+   0 path!
+   1 robot-sensor-sees-enemies!
+   1 robot-sensor-sees-friends! 
+   do
+       food-position seek-location
+       Construct^
+       time shot-sensor-now > if
+          fire-shot-sensor time 10 + shot-sensor-now! sync 
+          shot-found if shot-direction pi 0.66 * + path! then then
+       time robot-sensor-now > if
+           fire-robot-sensor time 30 + robot-sensor-now! sync
+           robot-found  if robot-direction pi 0.33 * + path! then then
+     eaten speed or path not and while-loop
+     1 path polar-to-rect engine-velocity!
+     engine-max-power engine-power!
+   time food-sensor-now!
+forever
+
+
+
+Siphon:
+  do 
+       robot-distance radius robot-radius syphon-range + + > if 
+          robot-position seek-location sync
+       else
+          0 0 engine-velocity! 
+          robot-direction syphon-direction!
+          syphon-max-rate syphon-rate!
+       then
+       Construct^
+       time shot-sensor-now > if
+          fire-shot-sensor time 10 + shot-sensor-now! sync 
+          shot-found if shot-direction pi 0.66 * + path! then then
+    time robot-sensor-now > if
+      fire-robot-sensor time 30 + robot-sensor-now! sync
+      robot-found robot-velocity norm and if 
+        robot-direction pi 0.33 * + path! then then
+   syphoned speed or path not and while-loop
+   0 syphon-rate!   
+   1 path polar-to-rect engine-velocity!
+   engine-max-power engine-power!
+   time food-sensor-now!
+Wander& jump
+
+Construct:
+    constructor-type nif 1 5 random-int constructor-type! then
+    energy 99 > constructor-max-rate 0 ifev constructor-rate!
+    armor max-armor < energy 10 > and max-repair-rate 0 ifev repair-rate!
+    armor max-armor < energy 5 > and max-shield 0 ifev shield!
+return
+
+
+
+;A food-eater with flash-shielding.
+;Reproduces slowly but survives under heavy fire.
+
+#type Yick
+#color 000
+#hardware
+	energy 300 50
+	food-sensor 7 
+	engine .02
+	processor 8 
+	solar-cells 0.01
+	armor 60 
+	eater 0.7
+	constructor 0.4 
+	repair-rate .05
+	shield 0.3 
+	shot-sensor 3.5 
+	robot-sensor 3.5
+#code
+
+;; steering code ;;
+#var dest-x
+#var dest-y
+#var destination? 0
+
+set-destination: ; x y --
+	dest-y! dest-x!
+	1 destination?!
+return
+
+;;; main ;;;
+
+#start
+do
+	time food-sensor-time - 25 > seek& ifc
+	energy constructor-remaining 250 min > if
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+ constructor-type nif 1 5 random-int constructor-type! then
+
+	energy 20 > if  ;;don't defend/offend if low energy
+		time robot-sensor-time - 5 > if
+			fire-shot-sensor
+			fire-robot-sensor
+			sync
+		then
+		;Raise shields if shots were seen
+		;raise shields more if we are low on armor
+		max-armor armor - 0.002 * 0.2 + ;full armor ==> 0.2
+							;50 armor gone ==> 0.3
+		shot-found robot-found + 2 min
+		* max-shield min shield 0.005 - max shield!
+		energy armor 50 min > max-armor 1 - armor > and if
+			max-repair-rate repair-rate!
+		else
+			0 repair-rate!
+		then
+	else
+		0 repair-rate!
+		0 shield!
+	then
+
+	destination? if
+		dest-x dest-y seek-location
+	then ;else is handled by seek reutine
+forever
+
+seek:
+	fire-food-sensor sync
+	food-found if
+		food-position set-destination
+	else ;wander, at reduced power.
+		0 destination?!
+		engine-max-power 0.5 * engine-power!
+		0.1 speed if velocity angle else random-angle then
+			polar-to-rect engine-velocity!
+	then
+return
+
+#type Slime
+#color FFF
+#hardware
+processor 8
+armor 60
+energy 10 1
+constructor 0.1
+solar-cells 0.1
+engine 0.03
+shot-sensor 5
+repair-rate .05
+
+#code
+
+#var shot-sensor-now 0
+#var path
+#vector target
+
+position target!
+do
+   energy 9 > constructor-max-rate 0 ifev constructor-rate!
+   constructor-type nif 1 5 random-int constructor-type! then
+   armor max-armor < max-repair-rate 0 ifev repair-rate!
+   time shot-sensor-now > if
+      fire-shot-sensor time 10 + shot-sensor-now! sync
+      shot-found if path nif 
+         shot-velocity 2dup norm if
+            angle .785 + path!
+         else 2drop shot-direction 2.35 + path! then then
+      5 path polar-to-rect position v+ target!
+   then 0 path! then
+   target seek-location
+forever
+
+#end

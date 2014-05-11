@@ -1,0 +1,113 @@
+#side Simple-1
+#color 88f
+#author James Austin
+#date started 9/8/04 done
+#seed 1 1 1 1 2
+
+Type 1: Algae
+Type 2: Gatherer
+
+;       Algae
+#type Algae
+
+#color 5c5
+#hardware
+processor 1 0
+constructor .420
+solar-cells .420
+armor 50
+energy 1 0
+
+#code
+#start
+
+constructor-max-rate
+constructor-rate!
+
+start:
+	constructor-remaining
+	start&
+	ifg
+
+		1
+		2
+		random-int
+		constructor-type!
+		constructor-max-rate
+		constructor-rate!
+		
+start&
+jump
+
+;       Gatherer
+#type Gatherer
+
+#color 55c
+#decoration 00f circle
+
+#hardware
+processor 50 0
+armor 50
+engine 0.1
+constructor 1
+
+food-sensor 20 5
+energy 500 50
+
+eater 2
+
+#code
+#start
+
+scan^
+
+start:
+
+	eaten skip-engine-shutdown& nifg
+	
+		0 engine-power!
+		constructor-remaining select-offspring& nifc
+		constructor-max-rate constructor-rate!
+		sync
+		start& jump
+
+	skip-engine-shutdown:
+
+	;die-now?^
+	at-loc?^ scan& ifc
+	energy 100 > skip-constructor-shutdown& ifg
+		0 constructor-rate!
+
+	skip-constructor-shutdown:
+
+	food-position seek-location
+	sync
+	
+start& jump
+
+scan2:
+	;die-now?^
+scan:
+	fire-food-sensor sync
+	food-found food-wait& nifg
+	0 num-food-results 1 - random-int current-food-result!
+return
+
+food-wait:
+	;food-sensor-time time 200 - < scan2& ifg
+	food-sensor-time time 200 - < scan& ifg
+		sync
+food-wait& jump
+
+at-loc?:
+	position food-position dist radius <
+	return
+
+;die-now?:
+	energy 2 > ifr
+	die sync
+
+select-offspring:
+	1 2 random-int constructor-type!
+return
+#end

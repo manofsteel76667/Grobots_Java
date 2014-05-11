@@ -1,0 +1,343 @@
+#side ARG 1.1
+#color 0F4
+#seed 1 2
+#author David
+
+#code
+
+;A deadly Combination of a mobile command base with a massive long range
+; gun and some very expensive stand-off, stand alone, fighters.
+
+#type Mobile Command Base
+#color F07
+#hardware
+  processor 20
+  armor 700
+  engine 0.3
+  eater 5
+  energy 800 140
+  solar-cells 0.05
+  food-sensor 15 1
+  blaster 36 29 10
+  constructor 3
+  robot-sensor 29 1
+  repair-rate 0.5
+#code
+
+#var repeat-time 20
+
+do
+  constructor-progress 0 = if
+    2 constructor-type!
+  then
+  energy 100 > robot-sensor-time repeat-time + time < and if
+    fire-robot-sensor
+  then
+  robot-found if
+    5 repeat-time!
+    energy 200 > robot-position position dist 15 < or if
+      robot-position robot-velocity lead-blaster
+    then
+  else
+    20 repeat-time!
+  then
+  food-sensor-time 20 + time < if
+    fire-food-sensor
+  then
+  food-found if
+    food-position seek-location
+  else  ; This bit probably doesn't help
+      time 2500 / floor 2 mod 100 *
+      time 5000 / floor 2 mod 100 *
+       seek-location
+  then
+  energy 400 > if
+    constructor-max-rate constructor-rate!
+  else
+    0 constructor-rate!
+  then
+  energy 300 > armor max-armor < and if
+    max-repair-rate repair-rate!
+  else
+    0 repair-rate!
+  then
+  sync
+forever
+
+#type Attack Helicopter
+#color 077
+#decoration fff cross
+#hardware
+processor 20
+energy 900 100
+engine 0.2
+eater 2
+armor 300
+blaster 20 12 10
+robot-sensor 14 1
+food-sensor 10 1
+shot-sensor 5 1
+solar-cells 0.02
+repair-rate 0.3
+
+#code
+
+; Don't ask how it works. Even I don't know anymore...
+
+#var previous-dist 100
+#var last-neg-move-check 0
+#var want-food
+#var debug-pos
+#var debug-time
+#vector dest
+#vector temp-dest
+#var speed 0.1
+
+#start Initiate
+
+Initiate:
+  position temp-dest!
+  temp-dest 50 50 v+ 100 mod swap mod 100 swap dest!
+do
+  position temp-dest 10 in-range
+while
+  dest seek-location
+loop
+  position temp-dest!
+  position dest!
+  low-energy-mode& jump
+
+random-movement-mode:
+do
+  energy 40 > if
+    scan-for-bots^
+    scan-for-shots^
+    engine-max-power speed!
+  else
+    0.1 speed!
+  then
+  food-sensor-time 20 + time < want-food and if
+    scan-for-food& jump
+  then
+  dest seek-location
+  speed engine-power!
+  dest position 3 in-range if
+    0 1 random-int if
+      1 100 random 1 100 random dest!
+    else
+      0 1 random-int 98 * 1 + 0 1 random-int 98 * 1 + dest!
+    then
+  then
+  energy 400 > if 2 receive if
+    temp-dest!
+    time 400 - > if
+      temp-dest dest!
+    then
+    2 clear-messages
+  then then
+  energy 750 < if
+    1 want-food!
+  then
+  energy 20 < if
+    low-energy-mode& jump
+  then
+  energy 0 = if die then
+  dest 0 0 dist 0 = if
+    low-energy-mode& jump
+  then
+  repairs^
+  dest seek-location
+  speed engine-power!
+  sync
+  dest seek-location
+  speed engine-power!
+  food-sensor-time 20 + time < if
+    scan-for-food& jump
+  then
+forever
+
+go-to-food-mode:
+  position dest dist previous-dist!
+do
+  dest 0 0 dist 0 = if
+    low-energy-mode& jump
+  then
+  energy 400 > if 2 receive if
+    temp-dest!
+    time 400 - > if
+      temp-dest dest!
+    then
+    2 clear-messages
+    random-movement-mode& jump
+  then then
+  dest seek-location
+  speed engine-power!
+  energy 40 > if
+    scan-for-shots^
+    scan-for-bots^
+    sync
+    robot-found if
+      attack-mode& jump
+    then
+  then
+  last-neg-move-check 10 + time < check-for-movement-progress^ not and if
+    0 last-neg-move-check!
+    next-food if
+      food-position dest!
+    else
+      scan-for-food& jump
+    then
+  then
+  check-for-eating-progress^ if
+    sit-on-food-mode& jump
+  then
+  repairs^
+  sync
+forever
+
+sit-on-food-mode:
+do
+  energy 400 > if 2 receive if
+    temp-dest!
+    time 400 - > if
+      temp-dest dest!
+    then
+    2 clear-messages
+    random-movement-mode& jump
+  then then
+  position seek-location
+  energy 40 > if
+    scan-for-shots^
+    scan-for-bots^
+  then
+  energy max-energy = if
+    0 want-food!
+    random-movement-mode& jump
+  then
+  check-for-eating-progress^ not if
+    scan-for-food& jump
+  then
+  repairs^
+  sync
+forever
+
+low-energy-mode:
+1 want-food!
+0 constructor-rate!
+do
+  0 engine-power!
+  energy food-sensor-firing-cost 1 + > if
+    scan-for-food& jump
+  then
+  sync
+forever
+
+find-him-mode:
+  time position 3 2 send
+  shot-velocity unitize -10 vs* shot-position v+ dest!
+  dest 3 restrict-position swap dest! ;keep it in the arena
+  dest 0 0 dist 0 = if
+    low-energy-mode& jump
+  then
+do
+  position dest 4 in-range not
+while
+  dest seek-location
+  scan-for-bots^
+  robot-found if
+    attack-mode& jump
+  then
+  repairs^
+  sync
+loop
+random-movement-mode& jump
+
+attack-mode:
+;  force-field-max-power force-field-power!
+  0 constructor-rate!
+do
+;  position robot-position v- unitize 11 vs* robot-position v+ robot-velocity seek-moving-location
+  1
+   position robot-position v- angle
+   0.1 time 50 mod 20 < if negate then +
+   polar-to-rect
+   energy 100 < armor 80 < or if 20 else 11 then
+   vs* robot-position v+ 4 restrict-position robot-velocity seek-moving-location
+  robot-sensor-time 5 + time < if
+    fire-robot-sensor
+  then
+  robot-found not if
+;    0 force-field-power!
+    random-movement-mode& jump
+  then
+  robot-position robot-velocity lead-blaster
+;  robot-position position v- rect-to-polar force-field-direction! force-field-distance!
+;  robot-velocity -1 vs* rect-to-polar force-field-angle! drop
+  repairs^
+  sync
+forever
+
+repairs:
+  energy 300 > armor max-armor < and if
+    max-repair-rate repair-rate!
+  else
+    0 repair-rate!
+  then
+  return
+
+scan-for-bots:
+  robot-sensor-time 10 + time < if
+    fire-robot-sensor
+    robot-found if
+      time robot-position 3 2 send
+      energy 200 > if
+        r>
+        drop
+        attack-mode& jump
+      then
+    then
+  then
+  return
+
+scan-for-shots:
+  shot-sensor-time 15 + time < if
+    fire-shot-sensor
+    shot-found if
+      r>
+      drop
+      find-him-mode& jump
+    then
+  then
+  return
+
+scan-for-food:
+  want-food not if
+    random-movement-mode& jump
+  then
+  fire-food-sensor
+  sync
+  food-found food-position 2 read 1 read dist 5 > and if
+    position food-position dist previous-dist!
+    food-position dest!
+    go-to-food-mode& jump
+  then
+  random-movement-mode& jump
+
+check-for-movement-progress:
+  previous-dist print
+  position dest dist previous-dist < if
+    position dest dist previous-dist!
+    1 return
+  else
+    time last-neg-move-check!
+    position dest dist previous-dist!
+    0 return
+  then
+
+check-for-eating-progress:
+  eaten 0 > if
+    1 return
+  else
+    0 return
+  then
+#end

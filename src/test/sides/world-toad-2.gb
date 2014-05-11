@@ -1,0 +1,206 @@
+#side World Toad
+#author Devon
+
+Principles:
+1) Large cells, to exploit their combat advantage.
+2) Coordination in combat. (not yet)
+3) Stay out of trouble.
+4) Don't waste energy.
+
+#color fe9
+
+(20021002) Now stops repairing when low on energy. No more sitting duck^H^H^H^Htoad.
+(20021002) Fixed gestation code (but was it broken?).
+(20021003) Stay slightly farther from target.
+(20021003) Higher firing rate.
+
+#type Pale Wartless One
+#color 950
+
+States:
+  Idle - gestate, food->eat, shot->chase, robot->combat, message->chase
+  Chase - shot, robot->combat, message
+  Combat - robot
+  Flee (later) - robot, shot, message
+
+To do:
+  give up eating when blocked
+  swarming
+  eating during combat
+  fleeing from superior force
+
+#hardware
+  armor 750
+  repair-rate .4   ;c 300
+  grenades 60 12 17   ;c 644?
+  
+  processor 25   ;c 100?
+  
+  energy 600 10
+  solar-cells .5   ;c 900
+  eater 2   ;c 200
+  constructor 2   ;c 200
+  
+  engine .25   ;c 250
+  
+  robot-sensor 12
+  food-sensor 10
+  shot-sensor 6
+
+#code
+
+#var next-robot-scan
+#var next-food-scan
+#var next-shot-scan
+#const shot-scan-interval 12
+
+#var food-time
+
+autorepair:
+  energy 50 > max-repair-rate 0 ifev repair-rate!
+return
+
+minimal-construction:
+  constructor-remaining energy < constructor-type and constructor-max-rate 0 ifev constructor-rate!
+return
+
+
+;;;; idle ;;;;
+
+#start
+idle:
+  time next-food-scan!
+do
+  constructor-type nif 1 constructor-type! then
+  energy max-energy .7 * > constructor-remaining energy <= or
+    constructor-max-rate 0 ifev constructor-rate!
+  autorepair
+  time next-food-scan >= eaten not and if
+    fire-food-sensor sync
+    food-found if
+      time 45 + next-food-scan!
+      time food-time!
+    else
+      time 250 + next-food-scan!
+    then
+  then
+  food-found eaten not and if
+    food-position seek-location
+  else
+    0 engine-power!
+  then
+
+  time next-robot-scan >= if
+    fire-robot-sensor sync
+    robot-found acquire& ifg
+    time 51 + next-robot-scan!
+  then
+  time next-shot-scan >= if
+    fire-shot-sensor sync
+    shot-found if
+      shot-velocity norm chase-shot& ifg
+    then
+    time shot-scan-interval + next-shot-scan!
+  then
+
+  ;answer calls for help
+forever
+
+;;;; chase ;;;;
+
+#vector destination
+
+chase-shot:
+  locate-shot-source^
+do
+  minimal-construction
+  autorepair
+  destination seek-location
+  
+  time next-robot-scan >= if
+    fire-robot-sensor sync
+    robot-found acquire& ifg
+    position destination 4 in-range if
+      0 engine-power!
+      idle& jump
+    then
+    time 35 + next-robot-scan!
+  then
+  time next-shot-scan >= if
+    fire-shot-sensor sync
+    shot-found if
+      shot-velocity norm locate-shot-source& ifc
+    then
+    time shot-scan-interval + next-shot-scan!
+  then
+forever
+
+locate-shot-source:
+  -20 shot-velocity angle polar-to-rect shot-position v+ destination!
+return
+
+;;;; combat ;;;;
+
+acquire:
+  shoot^
+  adjust-range^
+  ;announce 
+combat:
+do
+  minimal-construction
+  autorepair
+  time next-robot-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      shoot^
+      adjust-range^
+    else
+      time 100 + next-robot-scan!
+      idle& jump
+    then
+  then
+  ;steer? how are we moving?
+  ;eat food if close?
+forever
+
+shoot:
+  robot-velocity velocity v- 2dup
+    robot-distance grenades-speed / vs* robot-position v+   ;estimated target position
+    position dist grenades-speed / vs* robot-position v+
+  position v- rect-to-polar fire-grenade
+  time grenades-reload-time + next-robot-scan!
+return
+
+#const min-ok-range 5
+#const max-ok-range 10
+#const combat-adjust-speed .1
+#const combat-distance -10
+
+;; move to keep acceptable range.
+adjust-range:
+  robot-position robot-velocity grenades-reload-time vs* v+   ;future position
+  2dup position v- angle combat-distance swap polar-to-rect   ;delta
+  v+ seek-location
+return
+
+adjust-range-old:
+  robot-distance min-ok-range < if
+    combat-adjust-speed negate robot-direction polar-to-rect robot-velocity v+ engine-velocity!
+    engine-max-power engine-power!
+  else robot-distance max-ok-range > if
+    combat-adjust-speed robot-direction polar-to-rect robot-velocity v+ engine-velocity!
+    engine-max-power engine-power!
+  else   ; range ok
+    robot-velocity engine-velocity!
+    robot-velocity norm .01 > engine-max-power 0 ifev engine-power!
+  then then
+return
+
+;;;; flee ;;;;
+
+flee:
+do
+  autorepair
+forever
+
+#end

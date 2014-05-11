@@ -1,0 +1,205 @@
+#side Swarm 0.6
+#author Raszul
+#seed 1 1 2 1 2
+#color 00FF99
+#code
+    #const ch-live 1  ;channel to call on (armor% x y)
+    #const announce-period 150
+    #const force-halflife 400
+   
+    attack:
+        robot-position robot-velocity seek-moving-location
+        do
+            blaster-reload-time periodic-robot-sensor if
+                robot-found if
+                    robot-position robot-velocity lead-blaster
+                    robot-position robot-velocity seek-moving-location
+                else
+                    return ;nobody here - give up
+                then
+            then
+        energy armor min 20 > while-loop
+    return
+
+    reproduce:
+        constructor-type nif
+            .75 1 balance-type
+            .25 2 balance-type
+        then
+        max-energy .25 * energy < if
+            energy max-energy / constructor-max-rate * constructor-rate!
+        else
+            0 constructor-rate!
+        then
+    return
+
+    repair:
+        armor max-armor < if
+            max-repair-rate repair-rate!
+        then
+    return
+
+    fire-blaster:
+        blaster-reload-time periodic-robot-sensor if
+            robot-found if
+                robot-position robot-velocity lead-blaster
+            then
+        then
+    return
+
+    fire-grenade:
+        grenades-reload-time periodic-robot-sensor if
+            robot-found if
+                position robot-position dist grenades-radius > if
+                    robot-position robot-velocity lead-grenade
+                then
+            then
+        then
+    return
+
+
+#type larva
+#decoration FF0000 triangle
+#hardware
+    processor    10
+    radio send receive read write
+
+    energy      100 25
+    solar-cells    0.100
+
+    food-sensor  10 2
+    eater          1
+    engine        0.100
+
+    constructor    0.600
+    armor        75
+    repair-rate  0.080
+
+    robot-sensor  5.5 1
+    blaster      10 5 10
+#code
+    #vector dest
+   
+    #vector food1
+    #var    dist1
+    #var force-acc-time
+
+    #vector home
+   
+    #var next-announce 0
+    #var local-force-acc 0
+    #var total-force-acc 0
+
+    announce:  ;announce presence
+        time next-announce < ifr
+        armor max-armor / position 3 ch-live send
+        time announce-period + next-announce!
+    return
+   
+    total-force:
+        total-force-acc 0.5 time force-acc-time - force-halflife / exponent *
+    return
+    local-force:
+        local-force-acc 0.5 time force-acc-time - force-halflife / exponent *
+    return
+    listen:  ;listen for announcements
+        ch-live receive nifr
+        2dup home population 1 - vs* v+ population vs/ home!
+        position dist square 1 + over
+        total-force + total-force-acc!
+        / local-force + local-force-acc!
+        time force-acc-time!
+    return
+   
+    walk:
+        dest seek-location
+    return
+   
+    new-dest:
+        0 world-width random 0 world-height random dest!
+    return
+    eat:
+        eaten 0 <= if
+            50 periodic-food-sensor drop
+            food-found if
+                food-found 1 > if
+                    home food-position dist dist1!
+                    food-position food1!
+                   
+                    next-food drop
+                   
+                    home food-position dist dist1 < if
+                        food-position dest!
+                    else
+                        food1 dest!
+                    then
+                else
+                    food-position dest!
+                then
+            else
+                new-dest
+                position dest 3 in-range new-dest& ifc
+            then
+        else
+            0 engine-power!
+        then
+    return
+    flee:
+        armor max-armor / 0.75 < if
+            home dest!
+            constructor-rate 0.5 * constructor-rate!
+        then
+    return
+
+    #start
+    position home!
+    do
+        eat
+        position home dist 10 > if
+            flee
+        then
+        walk
+        reproduce
+        repair
+        fire-blaster
+       
+        announce
+        listen
+    forever
+
+
+
+#type seed
+#decoration FF0000 square
+#hardware
+    processor    10
+    radio send write
+
+    energy      100 10
+    solar-cells    0.300
+
+    constructor    0.500
+
+    armor        150
+    repair-rate    0.100
+
+    robot-sensor  25 1
+    grenades      20 25 100
+#code
+    #var next-announce 0
+
+    announce:  ;announce presence
+        time next-announce < ifr
+        armor max-armor / position 3 ch-live send
+        time announce-period + next-announce!
+    return
+   
+    #start
+    do
+       
+        reproduce
+        fire-grenade
+        repair
+        announce
+    forever
+#end

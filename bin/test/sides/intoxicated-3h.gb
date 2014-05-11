@@ -1,0 +1,612 @@
+#side Intoxicated 3h
+A goofy side designed to kill Economy-based sides before they get big by playing very agressivly at the begging of the game. Unfortuanly it has a tendancy to keep smashing sides untill it runs out of hull and explodes.
+
+Things to note:
+* Short Move, Think, Short Move mentality. Works quite well really.
+* Waypoints, to insure that it covers the whole world
+* Combination Blaster and Grenade gun. Origionaly just a joke, but it seems to work.
+* Tanks do talk a little to each other
+
+
+
+Problems:
+* Combat Range keeping
+* Grouping
+* Retreating
+* Eating
+
+(Warren and Devon 20030101) Fixed non-square world bug.
+(Devon 20040911) Removed zero hardware (friendly syphons and shot sensors).
+
+#author Daniel Von Fange
+
+http://www.braino.org/
+
+#date 2002 10 7
+
+#color 962000
+#seed  1
+
+#type Bubba
+
+#color 000000
+
+#hardware
+processor 45
+solar-cells .01
+eater 4.15
+engine .35
+
+constructor 4
+energy 750 220
+
+armor 750
+repair-rate .4
+
+robot-sensor 15 1
+food-sensor 8 1
+
+blaster 42 11 20
+grenades 42 11 20
+
+radio read write
+
+#code
+#vector home;
+#vector currentDestination
+#var dodgeDirection;
+#var dodgeTimeout;
+#var scanTimeout;
+#var fear;
+#var lastContactDirection
+#var distFactor
+#var radarDist
+#var numWaypoints
+#var currentWaypoint
+#var MOOD_EAT
+#const CHAN_fightY 7
+#const CHAN_fightX 8
+#const CHAN_fightTime 9
+#const CHAN_waypoint 11
+
+;0 robot-sensor-sees-friends!
+;1 robot-sensor-sees-enemies!
+max-repair-rate repair-rate!
+position home!
+
+1 MOOD_EAT!
+time 80 + scanTimeout!
+robot-sensor-range .65 * radarDist!
+
+;Waypoints
+
+world-height radarDist - radarDist
+world-height radarDist - world-width radarDist -
+radarDist world-width radarDist -
+radarDist radarDist
+world-height radarDist - radarDist
+
+
+stack 2 / numWaypoints!
+
+think:
+
+do
+    calcFear^
+    fireControl^
+          
+    time 3000 mod 1600 < fear .2 < and if
+        modeFight^
+    else
+        modeGrow^
+    then
+        
+    energy max-energy / 10 < if
+        0 0 engine-velocity!
+        do  energy 40 < while
+            calcGrowing^
+        loop
+    else
+    then
+    
+    ;position home v- angle  -.3 .3 random +  0 max-armor armor - 20 / random dodge^
+    
+        
+    0 engine-power!
+forever
+
+eat:
+
+	energy max-energy / .75 < MOOD_EAT or if
+		gotoFood^
+	
+		food-position seek-location
+		sync
+		food-position seek-location
+		do eaten while
+			sync
+			fireControl^
+			calcGrowing^
+			food-position seek-location
+		loop
+	
+	
+	
+	else
+		currentDestination position v+ 2 vs/ position dist ;Average
+		currentDestination position v+ 2 vs/ food-position dist < ifr
+		gotoFood^
+	
+	then
+			
+ 
+    return
+
+gotoFood:
+	do food-position position radius in-range until
+		food-position seek-location
+		fireControl^
+		calcGrowing^
+		sync
+	loop
+	return
+
+
+;Takes a direction and duration to dodge
+;This should be a short distance away
+dodge:
+    time + dodgeTimeout!
+    dodgeDirection!
+    engine-max-power engine-power!
+    
+    do time dodgeTimeout > until
+        3 dodgeDirection polar-to-rect engine-velocity!
+        calcGrowing^
+        fireControl^
+        sync
+    loop
+return
+
+;Stolen from World Toad. Hope nobody minds. :)
+fire:
+  robot-velocity velocity v- 2dup ;2dup 2dup
+  
+    robot-distance blaster-speed / vs* robot-position v+   ;estimated target position
+    position dist blaster-speed / vs* robot-position v+
+  position v- rect-to-polar
+  
+    2dup drop blaster-range < if
+        2dup fire-grenade fire-blaster drop 
+    else
+        2drop
+    then 
+  
+return
+
+calcGrowing:
+   energy max-energy .4 * < if
+     	0 repair-rate!
+     	else
+     	max-repair-rate repair-rate!
+     	then
+     	
+      energy max-energy 20 - < if
+        energy constructor-remaining 1.5 * > ifr
+        0 constructor-rate!
+    	else
+    	constructor-type nif 1 2 random-int constructor-type! then
+        constructor-max-rate constructor-rate!
+    	then
+    
+    return
+
+calcFear:
+    armor  max-armor /
+    energy max-energy /
+    min
+    4 /
+    .5 -
+    fear!
+    return
+
+calcOrders:
+    return
+
+fireControl:
+	
+    scanTimeout time > ifr
+    energy max-energy / .1 < ifr
+    
+    time blaster-reload-time + 1 + scanTimeout!
+    fire-robot-sensor
+    ;fire-shot-sensor
+    sync
+    robot-found if
+        blaster-cooldown not if
+            ;robot-distance 
+            fire^
+            robot-position CHAN_fightX write CHAN_fightY write 
+            time 175 + CHAN_fightTime write
+        then
+    then
+    return
+    
+modeFight:
+	0 MOOD_EAT!
+	    robot-found if
+       moodCombat^
+       food-found if
+       		eat^
+            then
+    else
+        sync
+        food-found if
+       		eat^
+            then
+        
+        fear .3 <  time CHAN_fightTime read < and if
+        	            CHAN_fightY read CHAN_fightX read currentDestination!
+            currentDestination position v- angle
+            -.3 .3 random + 10 13 random dodge^
+            
+        else
+            moodPatrol^
+        then
+        fire-food-sensor
+                    
+    then
+    
+    energy max-energy 20 - < if
+        fire-food-sensor
+        then
+        
+    return
+    
+modeGrow:
+	1 MOOD_EAT!
+    robot-found if
+        moodCombat^
+    else
+        sync
+        food-found if
+            eat^
+        then
+        
+        fear .3 <  time CHAN_fightTime read < and if
+            CHAN_fightY read CHAN_fightX read position v- angle
+            -.2 .3 random + 10 13 random dodge^
+        else
+            0 2pi random 20 40 random dodge^
+        then
+        fire-food-sensor
+            
+    then
+    
+    energy max-energy 20 - < if
+        fire-food-sensor
+        sync
+        food-found if
+            eat^
+            then
+        then
+    return
+    
+moodPatrol:
+		CHAN_waypoint read currentWaypoint!
+    currentWaypoint 2 * 1 + pick
+    currentWaypoint 2 * 3 + pick
+    currentDestination!
+    currentDestination position v- angle 15 20 random dodge^
+    currentDestination position 5 in-range if
+    	currentWaypoint 1 + numWaypoints mod CHAN_waypoint write
+    	then
+    
+    return
+    
+moodCombat:
+	fear .2 < if
+		robot-position robot-velocity 80 vs* v+ position dist 
+		blaster-range .6 * -
+		ceiling blaster-range negate / 
+		pi .5 * +
+		distFactor!
+		robot-direction distFactor + 35 dodge^
+		robot-direction distFactor - 35 dodge^
+		
+	else
+		robot-direction 2.5 + 10 20 random dodge^
+		robot-direction 2.5 - 10 20 random dodge^
+	then
+	
+	return
+
+#type Lil'Bubba
+
+#color 000000
+
+#hardware
+processor 50
+solar-cells .005
+eater 1
+engine .05
+
+constructor 1
+energy 200 150
+
+armor 200
+repair-rate .175
+
+robot-sensor 12 1
+food-sensor 5 1
+
+blaster 10 9 25
+grenades 10 9 25
+
+radio read write
+
+#code
+#vector home;
+#vector currentDestination
+#var dodgeDirection;
+#var dodgeTimeout;
+#var scanTimeout;
+#var fear;
+#var lastContactDirection
+#var distFactor
+#var radarDist
+#var numWaypoints
+#var currentWaypoint
+#var MOOD_EAT
+#const CHAN_fightY 7
+#const CHAN_fightX 8
+#const CHAN_fightTime 9
+#const CHAN_waypoint 11
+
+;0 robot-sensor-sees-friends!
+;1 robot-sensor-sees-enemies!
+max-repair-rate repair-rate!
+position home!
+
+1 MOOD_EAT!
+time 80 + scanTimeout!
+robot-sensor-range .65 * radarDist!
+
+;Waypoints
+
+world-height radarDist - radarDist
+world-height radarDist - world-width radarDist -
+radarDist world-width radarDist -
+radarDist radarDist
+world-height radarDist - radarDist
+
+
+stack 2 / numWaypoints!
+
+think:
+
+do
+    calcFear^
+    fireControl^
+    
+    time 3000 mod 1500 < if
+        modeFight^
+    else
+        modeGrow^
+    then
+        
+    energy max-energy / 10 < if
+        0 0 engine-velocity!
+        do  energy 40 < while
+            calcGrowing^
+        loop
+    else
+    then
+    
+    ;position home v- angle  -.3 .3 random +  0 max-armor armor - 20 / random dodge^
+    
+        
+    0 engine-power!
+forever
+
+eat:
+
+	energy max-energy / .75 < MOOD_EAT or if
+		gotoFood^
+	
+		food-position seek-location
+		sync
+		food-position seek-location
+		do eaten while
+			sync
+			fireControl^
+			calcGrowing^
+			food-position seek-location
+		loop
+	
+	
+	
+	else
+		currentDestination position v+ 2 vs/ position dist ;Average
+		currentDestination position v+ 2 vs/ food-position dist < ifr
+		gotoFood^
+	
+	then
+			
+ 
+    return
+
+gotoFood:
+	do food-position position radius in-range until
+		food-position seek-location
+		fireControl^
+		calcGrowing^
+		sync
+	loop
+	return
+
+
+;Takes a direction and duration to dodge
+;This should be a short distance away
+dodge:
+    time + dodgeTimeout!
+    dodgeDirection!
+    engine-max-power engine-power!
+    
+    do time dodgeTimeout > until
+        3 dodgeDirection polar-to-rect engine-velocity!
+        calcGrowing^
+        fireControl^
+        sync
+    loop
+return
+
+;Stolen from World Toad. Hope nobody minds. :)
+fire:
+  robot-velocity velocity v- 2dup ;2dup 2dup
+  
+    robot-distance blaster-speed / vs* robot-position v+   ;estimated target position
+    position dist blaster-speed / vs* robot-position v+
+  position v- rect-to-polar
+  
+    2dup drop blaster-range < if
+        2dup fire-grenade fire-blaster drop 
+    else
+        2drop
+    then 
+  
+return
+
+calcGrowing:
+    energy max-energy 20 - < if
+        0 constructor-rate!
+    else
+    	constructor-type nif 2 2 random-int constructor-type! then
+        constructor-max-rate constructor-rate!
+    then
+    
+    energy max-energy .4 * < if
+     	0 repair-rate!
+     	else
+     	max-repair-rate repair-rate!
+     	then
+    return
+
+calcFear:
+    armor  max-armor /
+    energy max-energy /
+    min
+    2 /
+    .5 -
+    fear!
+    return
+
+calcOrders:
+    return
+
+fireControl:
+	
+    scanTimeout time > ifr
+    energy max-energy / .1 < ifr
+    
+    time blaster-reload-time + 1 + scanTimeout!
+    fire-robot-sensor
+    ;fire-shot-sensor
+    sync
+    robot-found if
+        blaster-cooldown not if
+            ;robot-distance 
+            fire^
+            robot-position CHAN_fightX write CHAN_fightY write 
+            time 175 + CHAN_fightTime write
+        then
+    then
+    return
+    
+modeFight:
+	0 MOOD_EAT!
+	    robot-found if
+       moodCombat^
+    else
+        sync
+        food-found if
+        	            eat^
+                    then
+        
+        fear .3 <  time CHAN_fightTime read < and if
+        	            CHAN_fightY read CHAN_fightX read currentDestination!
+            currentDestination position v- angle
+            -.3 .3 random + 10 13 random dodge^
+            
+        else
+            moodPatrol^
+        then
+        fire-food-sensor
+                    
+    then
+    
+    energy max-energy 20 - < if
+        fire-food-sensor
+        then
+        
+    return
+    
+modeGrow:
+	1 MOOD_EAT!
+    robot-found if
+        moodCombat^
+    else
+        sync
+        food-found if
+            eat^
+        then
+        
+        fear .3 <  time CHAN_fightTime read < and if
+            CHAN_fightY read CHAN_fightX read position v- angle
+            -.3 .3 random + 10 13 random dodge^
+        else
+            0 2pi random 30 60 random dodge^
+        then
+        fire-food-sensor
+            
+    then
+    
+    energy max-energy 20 - < if
+        fire-food-sensor
+        sync
+        food-found if
+            eat^
+            then
+        then
+    return
+    
+moodPatrol:
+		CHAN_waypoint read currentWaypoint!
+    currentWaypoint 2 * 1 + pick ;2
+    currentWaypoint 2 * 3 + pick ;1
+    currentDestination!
+    currentDestination position v- angle 15 20 random dodge^
+    currentDestination position 5 in-range if
+    	currentWaypoint 1 + numWaypoints mod CHAN_waypoint write
+    	then
+    
+    return
+    
+moodCombat:
+	fear .2 < if
+		robot-position robot-velocity 80 vs* v+ position dist 
+		blaster-range .6 * -
+		ceiling blaster-range negate / 
+		pi .5 * +
+		distFactor!
+		robot-direction distFactor + 35 dodge^
+		robot-direction distFactor - 35 dodge^
+		
+	else
+		robot-direction 2.5 + 60 90 random dodge^
+		robot-direction 2.5 - 60 90 random dodge^
+	then
+	
+	return
+
+
+#end

@@ -1,0 +1,67 @@
+#side Megadont
+#author Matt Burkholder
+#date 5 April 2002
+#color 555
+
+(Devon 20020927) Fixed for new rules: more engine, shorter range, less repairer.
+(Devon 20020927) Made dest and target vector variables.
+(Devon 20021119) Smaller.
+
+#type Megadont
+#color f00 
+#hardware 
+	processor 20
+	engine 0.15
+	constructor 1.5
+	energy 210 20
+	solar-cells .25
+	eater 2
+	robot-sensor 23
+	food-sensor 12
+	armor 700
+	repair-rate .3
+	grenades 50 23 31
+	
+
+
+#code
+
+#vector dest
+#vector target 50 50
+#var targetDirection 0
+#var next-robot-scan 0
+#var next-food-scan 0
+	random-angle targetDirection!
+	do
+		energy 140 / constructor-rate!
+		1 constructor-type!
+		armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+		time next-robot-scan < grenades-cooldown or nif
+			time 15 + next-robot-scan!
+			fire-robot-sensor sync
+			robot-found if
+				    robot-position position v-
+				    robot-velocity 0.75 vs* velocity v- 
+				    robot-distance grenades-speed / vs* v+ 
+				    rect-to-polar fire-grenade
+				    robot-position target!
+				    robot-direction targetDirection!
+		then then
+		dest or speed and time next-food-scan < or nif
+			fire-food-sensor
+			time 50 + next-food-scan! sync
+			food-found if
+				food-position else
+				0 0 then
+			dest!
+		then
+		dest or if
+			dest seek-location
+		else
+			target seek-location sync
+			speed nif
+				30 70 random 30 70 random target!
+		then then
+	forever
+
+#end

@@ -1,0 +1,631 @@
+#side Business Cycle 6
+#author Matt Burkholder
+#date 6 Aug 2002
+
+1-15-03 uses world size.  Day traders build more while the count is low.
+1-19-03 Small T-Bills
+3-1-03  Added sweeper.  Day traders don't build as many more daytraders.
+3-5-03 Bigger T-Bills.  Bigger Day trader constructors.
+5-3-3  No Sweeper Constructors. Longer range and less blaster in Day-Trader
+7-2-3  Changes to the way 'home' is determined.  Seeds only Day-Traders
+4-4-4  No constructors in Day Traders.  Industrialists force field food.
+       They eat and use constructors.  They arrange themselves in a circle.
+       Seeds Industrialists and Day Traders.  No T-Bills until later.
+
+#seed 3 2 3 3 2 3 3
+#color 0CC 
+#type T-Bill 
+#color 0f0 
+;Just sits there and reproduces. 
+
+#hardware 
+processor 4 
+solar-cells 0.2 
+energy 100 0 
+armor 50 
+constructor 0.2
+repair-rate 0.05
+radio send
+
+#code
+#var LastArmor
+#var LastCount
+#var LastHome
+
+
+
+armor LastArmor!
+constructor-type nif 2 constructor-type! then
+constructor-max-rate constructor-rate! 
+max-repair-rate repair-rate!
+do 
+  constructor-type nif 
+      time time-limit 0.75 * > if 4 constructor-type!
+    else
+      1 4 random-int constructor-type! 
+    then then
+  Armor LastArmor < enemy-collision or if
+     position 2 3 send then
+  Armor LastArmor! 
+  armor max-armor < max-repair-rate 0 ifev repair-rate!
+  energy 80 > constructor-max-rate 0 ifev constructor-rate!   
+forever 
+
+#type Day Trader
+#color 800
+
+#hardware
+processor 20
+energy 500 100
+eater 0.10
+armor 300
+engine 0.12
+repair-rate 0.2
+robot-sensor 9.0 3
+shot-sensor 5
+blaster 20 8 10
+enemy-syphon 1.0 8
+radio read write send receive
+
+
+#code
+
+#var robot-sensor-now
+#var food-check-now
+#var Damage-Time
+#var targetDirection
+#var take-a-shot
+#vector dest 
+#vector target
+#vector Home
+#vector Center
+#var LastArmor
+#var Center-Angle
+#var Cell-Radius
+#var Cell-Cycle
+#var Count
+#var Closest
+
+ Armor LastArmor!
+ 0 100 random-int 0 100 random-int target!
+ World-Width 2 / World-Height 2 / Center!
+ position dest! 
+ 3 type-population nif position 1 vwrite then
+ pi 16 / Cell-Cycle!
+ 200 food-check-now!
+Feed: 
+   0 engine-power!
+   
+			do
+						armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+      1 vread Home! 
+      3 vread Center-Angle! Cell-Radius!
+
+						time robot-sensor-now < blaster-cooldown or energy 21 < or nif
+								fire-robot-sensor sync
+        robot-found if 
+           robot-position target! Transmit^ 
+           energy 100 > robot-position Home Cell-Radius in-range or if Attack^
+           else energy 20 > if Zap^ else time 20 + robot-sensor-now! then then
+        else 
+											time 20 + robot-sensor-now!
+		         0 take-a-shot!
+        then then 
+
+     energy 490 < if
+        time food-check-now > Sip-Food& ifc
+     else
+        0 enemy-syphon-rate!
+        Cell-Radius 7 + position home v- angle Cell-Cycle +
+        polar-to-rect home v+ dest!
+     then
+					dest seek-location engine-power 0.75 * engine-power!
+
+     time Damage-Time < energy 100 > and if
+         fire-shot-sensor sync
+         shot-found if
+            shot-position shot-velocity unitize -15 vs* v+ target! Transmit^ Track^
+     then then
+ 
+     Check^
+
+     Armor LastArmor < if
+        position Home 1 type-population 2.5 * 10 max in-range if
+           time robot-sensor-now!
+           time 350 + Damage-Time!
+        else
+            home position v- 0.5 vs* position v+ dest!
+     then then armor LastArmor!
+ 
+	    wall-collision if
+       home position v- Center position v- cross 0 >
+       pi -16 / pi 16 / ifev Cell-Cycle!
+     then
+			forever
+
+Sip-Food:
+   Position Home v- rect-to-polar 
+   swap Cell-Radius 5 + - abs 2 > if
+     Cell-Radius 5 + swap polar-to-rect home v+ dest!
+     0 enemy-syphon-rate!
+     return 
+   then
+   1 robot-sensor-sees-friends!
+   0 robot-sensor-sees-enemies!
+   fire-robot-sensor sync 
+   time 15 + food-check-now!
+   0 robot-sensor-sees-friends!
+   1 robot-sensor-sees-enemies!
+   robot-found No-Robots& nifg
+   energy 400 > Un-Sip& ifc
+   do
+     robot-type 3 = robot-type 1 = or robot-energy 50 > and if
+        robot-distance enemy-syphon-distance!
+        robot-direction enemy-syphon-direction!
+        enemy-syphon-max-rate enemy-syphon-rate!
+        drop return
+     then
+   next-robot while-loop
+No-Robots:
+   Cell-Cycle + Cell-Radius 5 + swap polar-to-rect home v+ dest!
+   0 enemy-syphon-rate! 
+return
+
+Un-Sip:
+  do
+    robot-energy 20 < if
+      robot-distance enemy-syphon-distance!
+      robot-direction enemy-syphon-direction!
+      enemy-syphon-max-rate negate enemy-syphon-rate!
+      drop rdrop return
+    then
+  next-robot while-loop
+return
+
+Transmit:
+   target 2 3 send
+return
+
+Check:
+   energy 50 < ifr
+   999 Closest!
+   3 receive count!
+   do count 1 > while
+      2dup 2dup home dist rrot position dist +  
+      dup Closest < if 
+         Closest! target!
+      else
+         drop 2drop
+      then
+      Count 2 - Count!
+   loop stack dropn
+   Closest 4 Cell-Radius * > ifr
+
+Track:
+    target seek-location sync sync
+    do
+       time robot-sensor-now > if
+          fire-robot-sensor sync
+          robot-found if
+             robot-position target! Transmit^ Attack& jump
+          else
+             fire-shot-sensor sync
+             shot-found  if 
+                shot-position shot-velocity unitize -10 vs* v+ target!
+                time 200 + damage-time!
+       then then time 20 + robot-sensor-now! then
+       target seek-location
+    target position 3 in-range not energy 100 > and while-loop
+return
+
+Attack:
+	do 
+			 blaster-cooldown nif
+       fire-robot-sensor sync robot-found not ifr
+       do robot-shield-fraction 0.5 < while
+         next-robot nifr loop
+       robot-distance enemy-syphon-distance!
+       robot-direction enemy-syphon-direction!
+       enemy-syphon-max-rate enemy-syphon-rate!
+	  	   energy blaster-firing-cost > robot-distance blaster-range < and Zap& ifc
+       robot-position robot-velocity robot-distance speed 0.25 max / vs* v+ 
+       robot-position position v- robot-distance 
+       position home 7 in-range -0.9 -0.2 ifev * vs/ v+ target!
+     then
+ 			 target seek-location
+	    armor max-armor < max-repair-rate 0 ifev repair-rate! 
+  energy 25 > while-loop
+return
+
+Zap:
+		 robot-position position v- 
+			robot-velocity 0.85 vs* velocity v- 
+			robot-distance blaster-speed / vs* v+ 
+			rect-to-polar fire-blaster drop 
+return
+
+
+#type Industrialist
+#color bf0 
+#hardware 
+processor 15
+solar-cells 0.05
+eater 1.5  
+energy 200 50 
+armor 100 
+food-sensor 20 4
+force-field 0.05 20
+repair-rate 0.075
+constructor 1.2 
+radio send read write
+
+
+#code 
+
+#const speed-factor 14
+#const edge-space 5
+#const Address-Offset 100
+#const time-offset 150
+#const velocity-factor 4
+
+#var field-distance
+#var field-step
+#var field-speed
+#var food-sensor-now
+#var robot-sensor-now
+#var syphon-now
+#var syphon-angle
+#var LastArmor
+#var LastCount
+#var LastHome
+#var piEight
+#var Home-Address
+#var twirl
+#var Top
+#var Right
+
+
+
+#vector Home
+#vector Center
+#vector Place
+ 
+ World-Width 2 / World-Height 2 / Center!
+ World-Width edge-space - Right!
+ World-Height edge-space - Top!
+ id 1 = if position 1 vwrite then 
+ do time id 10 * < while sync
+ constructor-type nif 3 constructor-type! then loop
+ Search-Home^ address-to-location^ Place!
+ pi 4 / piEight!
+ 1 syphon-angle!
+	do 
+  Construct^
+  Move-Syphon^
+    address-to-location^ Place!
+    do 
+       Construct^
+       Move-Syphon^
+       Place Move^
+    force-field-power speed or while-loop
+    time food-sensor-now < Get-Food& nifc
+	forever 
+
+Move:
+	position velocity velocity-factor vs* v+ v- rect-to-polar
+	force-field-angle!
+	dup radius 0.6 * > swap force-field-max-power * mass * radius 100 * / 0 ifev force-field-power! 
+	0 force-field-distance!
+return
+
+Trafic-Control:
+   
+return
+
+Get-Food:
+    ;food-sensor-range 0.55 * food-sensor-focus-distance!
+    ;syphon-angle food-sensor-focus-direction!
+    fire-food-sensor sync 
+    time 100 + food-sensor-now!
+    food-found if do
+     food-distance 2 < food-velocity or or 
+      1 food-sensor-focus-direction polar-to-rect
+      food-position position v- dot 0 < or Skip-Food& ifg
+       force-field-max-power food-mass 1 + sqrt / speed-factor * field-speed!
+       field-speed 3 / field-step!
+       food-distance .1 + field-distance!
+       food-direction pi + force-field-angle!
+       food-direction force-field-direction!
+       field-distance dup force-field-distance!
+       do radius force-field-radius + > position place 1.5 in-range and while
+          force-field-max-power force-field-power!
+          field-distance force-field-distance!
+          field-distance field-step - dup field-distance!
+          field-step 1.3 * field-speed min field-step!
+          Construct^ Move-Syphon^
+       loop 
+       16 Twirl! radius force-field-radius + force-field-distance!
+       sync sync sync sync sync sync
+    Skip-Food:
+    next-food position place 1 in-range and while-loop
+       force-field-max-power 2 / force-field-power! 
+       force-field-radius radius 2 / + force-field-distance!
+       do twirl while
+          force-field-direction pi 8 / + force-field-direction!
+          force-field-direction pi + force-field-angle!
+          twirl 1 - twirl! Move-Syphon^ Construct^
+          sync sync sync sync sync
+       loop
+       0 force-field-power!
+  then
+return 
+
+Construct:
+   constructor-type nif 
+      0 4 random-int dup nif
+         time time-limit 0.66 * > if 
+            4 constructor-type!
+         else
+            2 type-population 3 type-population 3 / 4 max < 
+               2 3 ifev constructor-type!
+         then
+      drop else constructor-type! then 
+      constructor-type 1 = 3 type-population 12 <= and if
+         3 constructor-type! then
+    then
+   energy 150 > constructor-max-rate 0 ifev constructor-rate!
+   energy 20 > armor max-armor < and max-repair-rate 0 ifev repair-rate!
+return
+
+Move-Syphon:
+  time syphon-now < ifr
+  Armor LastArmor < enemy-collision or if
+    position 2 3 send then
+  Armor LastArmor! 
+  time 50 + syphon-now!
+  time time-offset + Home-Address Address-Offset + write
+  ;Home-Address 1 = Address-to-Location^ Place!
+return
+
+#var World-Cols
+#var World-Rows
+#var Search-Reach
+#var Search-Width
+
+Search-Home:
+  1 vread home!
+  1 Search-Reach!
+  do Search-Reach 3 type-population <= while
+     Search-Reach Check-Address^
+     Search-Reach 1 + Search-Reach!
+  loop
+return
+
+Check-Address:
+       dup Address-OffSet + read time < if
+          dup Address-OffSet +  ;two copies on stack one raw and one address
+          time time-offset + swap write Home-Address! ;store address and write claim
+          rdrop ;drop the top item on the return stack (call to this function), so loop will terminate
+       else drop then  
+return
+
+#var Spread
+#var Step
+#vector Center-Angle
+#var Cell-Radius
+#var Angle-Squash
+
+Address-to-Location: 
+   Home-Address 1 = if 
+      Home 1 vwrite
+      Cell-Radius Center-Angle angle 3 vwrite
+   else 1 vread Home! then
+   1 angle-squash!
+   0 0.01 Center-Angle!
+   Home dup edge-space Cell-Radius 6 + + < if
+      drop edge-space Home!
+      2 angle-squash!
+      0 1 Center-Angle!
+   else
+      Top Cell-Radius 6 + - > if
+        Top Home!
+	       2 angle-squash!
+        0 -1 Center-Angle!
+   else drop then then 
+   Home swap dup edge-space Cell-Radius 6 + + < if
+      drop edge-space swap Home!
+      angle-squash 2 * angle-squash!
+      1 0 Center-Angle v+ Center-Angle!
+   else
+      Right Cell-Radius 6 + - > if
+        Right swap Home!
+        angle-squash 2 * angle-squash!
+        -1 0 Center-Angle v+ Center-Angle!
+   else drop then then
+   Spread-Angle^ angle-squash / Center-Angle angle + syphon-angle!
+   3 type-population Angle-Squash sqrt * Cell-Radius!
+
+   3 type-population  1 = Home-Address 1 = Cell-Radius 10 > and or if
+     Home random-angle food-sensor-focus-direction!
+     food-sensor-range 0.55 * food-sensor-focus-distance!
+   else
+     Cell-Radius syphon-angle polar-to-rect home v+
+     food-sensor-range 0.55 * food-sensor-focus-distance!
+     Cell-radius food-sensor-range 1.25 * < Home-address 5 mod or 0 pi ifev
+     syphon-angle + food-sensor-focus-direction!
+   then
+return
+
+
+Spread-Angle:
+   Home-Address 1 = if
+      0 return else
+        Home-Address 2 = if
+           pi return celse
+      Home-Address 2 - Spread!
+   then
+   2 Step!
+   do
+     Spread Step <= if
+       pi pi Step / - 2pi Step / Spread Step mod * -
+       return
+     then
+     Spread Step - Spread!
+     Step 2 * Step!
+   forever
+return  
+
+
+
+
+#type Dot-Com
+#color F05
+
+#hardware
+processor 10
+energy 70 70
+armor 40
+engine 0.15
+robot-sensor 13 4
+bomb 750
+solar-cells 0.01
+radio read write send receive
+
+#code
+
+#var robot-sensor-now
+#vector target 0 0
+#vector Home 0 0
+#var robot-biomass 0
+#var Cell-Radius
+
+
+1 vread Home!
+
+do 
+    time robot-sensor-now > if
+    fire-robot-sensor sync
+    robot-found if
+       0 robot-biomass! 
+       time 25 + robot-sensor-now! 
+       robot-position home 20 Cell-Radius 2 * max in-range if
+          robot-position 2 3 send then
+       do 
+          robot-mass mass 2 * >= armor max-armor < time time-limit 0.8 * > or or if
+             robot-position robot-distance robot-radius - 2 < if 5 vwrite sync die then
+             target! time 10 + robot-sensor-now!
+          then
+          robot-position robot-position-overall 3.5 in-range if
+             robot-mass robot-biomass + robot-biomass! then 
+        next-robot while-loop
+        robot-biomass mass 4 * > if
+           robot-position-overall robot-distance-overall 4 < if 5 vwrite sync die then
+           target! time 10 + robot-sensor-now! 
+        then
+      else 
+          time 50 + robot-sensor-now!
+          target or nif 4 type-population 5 > PickDest& ChooseDest& ifec then
+     then
+    else check^ then
+  energy 10 > robot-found or if
+      target seek-location
+  else 0 engine-power! then
+  3 read Cell-Radius!
+forever
+
+#var counter 0
+#var end-wait-now 0
+#const Return-wait 25
+#var random-height
+#var random-width
+
+Check:
+    1 receive counter!
+    do counter 0 > while
+        counter 3 - counter!
+        target 1 in-range if
+            1 2 send else drop then
+    loop
+return
+
+
+PickDest:
+    3 read Cell-Radius!
+				target or 5 read 0 = or nif
+				   5 read 10 / round 1 max 9 min 10 *
+				   6 read 10 / round 1 max 9 min 10 *
+       0 5 write
+				else
+       1 world-width 10.1 / floor random-int 10 *  dup 20 mod
+       1 world-height 20.1 / ceiling random-int 20 * 10 -
+		     1 world-height 20.1 / floor random-int 20 * ifev
+				then
+    target! target Home Cell-Radius in-range PickDest& ifg
+    id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = PickDest& ifg
+        loop
+    loop
+    stack dropn
+return
+
+ChooseDest: 
+    1 vread Home!
+    3 read Cell-Radius!
+    World-Width 11 - Random-Width!
+    World-Height 11 - Random-Height!
+    Home 11 max Random-Height min 10 / round dup
+    2 mod if
+        10 * swap 20 / floor 20 * 10 + swap
+    else
+        10 * swap 11 max Random-Width min 20 / round 20 * swap
+    then 
+WaitDest: 
+    Target! Target Home Cell-Radius 6 + in-range WalkDest& ifg
+    id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = WalkDest& ifg
+        loop
+    loop
+    stack dropn
+return
+ 
+WalkDest:
+    Target dup 10 Random-Height random-int > -10 10 ifev +
+    swap dup 10 Random-Width random-int > -10 10 ifev +
+    swap 
+WaitDest& jump
+ 
+EdgeDest:
+    1 vread Home!
+    World-Width 10.1 / floor Random-Width!
+    World-Height 10.1 / floor Random-Height!
+    0 1 random-int if
+        1 Random-Width random-int 10 *
+        0 1 random-int 1 Random-Height ifev 10 *
+    else
+        0 1 random-int 1 Random-Width ifev 10 *
+        1 Random-Height random-int 10 *
+    then
+    Target! id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = EdgeDest& ifg
+        loop
+    loop
+    stack dropn
+return
+
+
+#end

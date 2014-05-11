@@ -1,0 +1,143 @@
+#side Artillery Support
+#author Devon
+7 Feb 2002
+
+(20020508) updates for old rule changes
+(20021116) Updates for communication changes.
+(20021116) Added surplus food reporting and using.
+(20021116) Use vector variables.
+(20021119) Added missing radio to artillery.
+
+Rabbits with artillery support. This side is the first comm user.
+
+The signalling convention:
+channels 2-6 for enemy sightings.
+channel 2: time of observation
+channel 3, 4: x, y
+channel 5, 6: velocity (later?)
+
+channels 10-12 for surplus food.
+channel 10: time
+channel 11, 12: x, y
+
+#color 00f
+
+#type Spotter
+Gathers food. Reports enemies.
+#color 0f0
+
+#hardware
+  processor 15
+  radio write read
+  engine .05
+  energy 200 15
+  constructor 1.5
+  eater 2
+  food-sensor 13
+
+  armor 150
+  robot-sensor 15
+
+#code
+
+do
+  sync scan-for-robots^ scan-for-food^ move^
+  energy 100 > if
+    constructor-type nif
+      1 2 random-int constructor-type!
+    then
+    constructor-max-rate
+  else 0 then constructor-rate!
+forever
+
+scan-for-robots:
+  time robot-sensor-time 87 + < ifr
+  fire-robot-sensor sync
+  robot-found if
+    robot-sensor-time robot-position robot-velocity sync
+    6 write 5 write 4 write 3 write 2 write
+  then
+return
+
+scan-for-food:
+  time food-sensor-time 31 + < ifr
+  fire-food-sensor sync
+  food-found if
+    food-position set-destination^
+    10 read time 50 - < if food-found food-energy 100 - * 1000 > and-if
+      time 10 write
+      position 12 write 11 write
+    then
+  else
+    10 read time 250 - >= if
+      11 read 12 read set-destination
+    else
+      no-destination^
+    then
+  then
+  return
+
+#vector dest
+#var dest-kind 0
+
+set-destination: ; x y --
+  dest!
+  1 dest-kind!
+  return
+
+no-destination: ; --
+  0 dest-kind!
+  return
+
+move:
+  dest-kind if
+    dest seek-location
+  else
+    0 engine-power!
+  then return
+
+
+#type Artillery
+#color f00
+
+#hardware
+  processor 15
+  energy 150 0
+  solar-cells .15
+  armor 110
+  grenades 66 28 100
+  radio read
+
+#code
+
+#const age-limit 5 ; max. age of observations to use?
+
+do
+  grenades-cooldown not energy grenades-firing-cost > and if
+    2 read age-limit + time > Shoot& ifc
+  then
+  sync
+forever
+
+#vector delta
+#vector vel
+
+Shoot:
+;receive data
+  sync
+  2 read 3 read 4 read 5 read 6 read
+  vel!
+  position v- delta!
+;think
+  delta norm
+  dup grenades-range < if
+    ;announce response?
+    grenades-speed / ;tti
+    time rot - + ;tti+age
+    vel rot vs* delta v+
+    rect-to-polar fire-grenade
+  else drop drop
+  then
+return
+
+#end

@@ -1,0 +1,223 @@
+;1000 - done with 3 types
+;		God, bomb, sustain
+;1001 - modified food routine
+;1002 - improve bomb movement
+;1003 - balanced construction routine 60:20:20
+;1004 - added hashing 30 slots ... but got another idea
+;1005 - simplified hashing for food , 97 slots
+;       hash is gen from food-position and time is stored
+;		if we get same hash next time its our food
+;		else if the time is too old then claim food if not leave it
+;1006 - tweaked the bomb hardware and code
+;1007 - bugfix: choose-type is returning nothing somtimes
+
+#side Hasher
+#author Gigatron
+#color FF0
+
+
+#code
+#var totpop
+choose-type:
+	1 type-population
+	2 type-population
+	3 type-population
+	+ +
+	totpop! ;total pop
+
+;	1 type-population totpop / 100 *
+;	60 < if 1 then
+	1			;bugfix: sometimes it returns nothing
+	3 type-population totpop / 100 *
+	20 < if drop 3 then
+	2 type-population totpop / 100 *
+	20 < if drop 2 then
+	time 3000 < if drop 1 then ;first few frames produce only gods
+return
+
+#type GOD
+#color 0F0
+#hardware
+  energy 180 50
+  solar-cells .02
+  constructor 1
+  armor 200
+  processor 8
+  eater 1.5
+  food-sensor 5 1
+  engine 0.04
+  repair-rate 0.1
+  robot-sensor 10
+  radio read write
+#code
+#const HRANGE 15
+#vector dest
+#var run-timer 0
+
+new-dest:
+ position drop HRANGE -
+ dup 1 < if
+   drop 1
+ then
+ position drop HRANGE +
+ dup world-width > if
+   drop world-width 1 -
+ then
+ random
+ position swap drop HRANGE -
+ dup 1 < if
+   drop 1
+ then
+ position swap drop HRANGE +
+ dup world-height > if
+   drop world-height 1 -
+ then
+ random
+ dest!
+return
+
+#const HASH-BASE 3
+#const HASH-SIZE 500
+#var hash-value
+#var hash-prev 0
+; fx,fy is expected on stack
+; returns hash
+hash-food:
+	2dup 17 * swap 19 * v+ + HASH-SIZE mod HASH-BASE + round
+return
+
+;call on finding food
+claim-food:
+	food-position hash-food hash-value!
+	hash-value hash-prev = if
+		1 ;belongs to me
+	else
+		sync
+		hash-value read time 300 - >
+		if
+			;already claimed put 0 on stack
+			0
+		else
+			;claim food put 1 on stack
+			time hash-value write
+			hash-value hash-prev!
+			1
+		then
+	then
+return
+
+#start
+new-dest
+do
+
+  constructor-type 0 = if
+     choose-type^ constructor-type!
+  then
+
+  energy 50 > constructor-rate!
+  energy 50 > armor max-armor < and repair-rate!
+
+  energy 50 > 20 periodic-robot-sensor and if sync
+	robot-found if
+		do
+			position robot-position v- position v+ seek-location
+			run-timer 1 + run-timer!
+			20 periodic-robot-sensor drop
+		run-timer 20 < robot-found or while-loop
+		0 run-timer!
+	then
+  then
+  
+  40 periodic-food-sensor drop sync
+  food-found if claim-food^ and-if
+		food-position seek-location
+		food-position position 0 in-range if
+			0 engine-power!
+		then
+  else
+		dest seek-location
+		position dest 3 in-range new-dest& ifc
+  then
+forever
+
+
+
+#type Bombzor
+#color F00
+#hardware
+processor 4
+energy 10 5
+bomb 800
+armor 200
+engine 0.04
+solar-cells 0.07
+robot-sensor 10 1
+#code
+#vector dest
+#var signal-rate 10
+
+new-dest:
+  1 world-width 1 - random
+  1 world-height 1 - random
+  dest!
+return
+
+signal-loc:
+	signal-rate 1 + signal-rate!
+	signal-rate 10 > if
+		robot-position 2 write 1 write
+		0 signal-rate!
+	then
+return
+
+#start
+
+1 read dup 0 = if
+  drop
+  new-dest^
+else
+  2 read dest!
+then
+ do
+   12 periodic-robot-sensor if sync
+	   robot-found if
+		  signal-loc^
+		  robot-position dest!
+
+		  robot-position drop
+		  -5 5 random +
+		  robot-position swap drop
+		  -5 5 random +
+		  1 restrict-position
+		  dest!
+		  dest robot-velocity seek-moving-location
+
+		  position robot-position 2 in-range if
+			die
+		  then
+	   else
+		;wander around
+		dest seek-location
+		position dest 1 in-range new-dest& ifc
+	   then
+   then
+ forever
+
+#type Sustain
+#color 00F
+#hardware
+processor 4
+energy 15 2
+armor 10
+solar-cells .4
+constructor .41
+#code
+#start
+do
+	constructor-type 0 = if
+		choose-type^ constructor-type!
+	then
+	energy 10 > constructor-rate!
+forever
+
+#end

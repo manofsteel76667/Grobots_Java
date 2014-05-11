@@ -1,0 +1,102 @@
+#side Predator
+#author devon
+#date 7 feb 2002-modified April 14 by WJS for new physics
+
+Based on one of the hardcoded sides. This version uses grenades
+in hopes of reducing friendly fire, which was a big problem
+before.
+
+Big inaccuracy problem. Sensor handling should be fixed.
+
+(Devon 20020324?) No longer fires when low on energy. This should
+reduce the starvation problem.
+
+#color f70
+
+#type predator
+#color ff0
+#hardware
+	processor 22
+	engine .06
+	energy 250 40
+		;no solar cells on this version
+	eater 2 ;c 120
+	food-sensor 16
+	constructor 1.5 ;c 180
+	repair-rate .1
+
+	armor 300
+	grenades 5 17 5
+		;trying mini-grenades but might not work at long range
+	robot-sensor 16
+
+#code
+
+do
+	scan-for-robots^ scan-for-food^ move^
+	energy 150 > if
+		1 constructor-type!
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+	armor max-armor < energy 50 > and if
+		max-repair-rate repair-rate!
+	else 0 repair-rate! then
+	robot-found grenades-cooldown not and if
+		energy 30 >= if
+			robot-position position v-
+			robot-velocity
+			time robot-sensor-time - vs* v+
+			2dup norm robot-velocity velocity v- rot grenades-speed / vs* v+
+			rect-to-polar fire-grenade
+		then
+	then
+forever
+
+scan-for-robots:
+	time robot-sensor-time - 10 < ifr
+	energy 30 < ifr
+	fire-robot-sensor sync
+	robot-found if
+		robot-distance 4 - robot-direction polar-to-rect position v+
+			1 set-destination^
+	else
+		1 no-destination^
+	then return
+
+scan-for-food:
+	time food-sensor-time - 40 < ifr
+	fire-food-sensor sync
+	food-found if
+		food-position 2 set-destination^
+	else
+		2 no-destination^
+	then return
+
+#var destx
+#var desty
+#var dest-kind 0
+
+set-destination: ; x y kind --
+	dup dest-kind >= if
+		dest-kind!
+		desty! destx!
+	else
+		drop 2drop
+	then return
+
+no-destination: ; kind --
+	dest-kind = if
+		0 dest-kind!
+	then return
+
+move:
+	dest-kind if
+		destx desty seek-location
+	else
+		0 engine-power!
+	then return
+
+#end
+

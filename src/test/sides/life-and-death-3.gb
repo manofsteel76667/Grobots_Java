@@ -1,0 +1,279 @@
+#side Life and Death
+#author Warren Schudy
+#date May 1 2002
+
+Most directly related to Homesick.
+Some ideas from rat and gnats.
+
+#color A07
+
+#type Life
+Mobile eaters. They have shields to improve survivability and
+to take hits for the armed types.
+
+Mobiles try and stay near their birthplace in a manner similar to 
+the original homesick eaters. They should someday be more homesick the more damaged
+they are.
+
+States:
+-eating
+-wandering
+
+#color 00f
+#hardware
+	energy 300 30 ;c 60
+	processor 15 ;c 45
+	armor 100 ;c 100
+	constructor 1.0 ;c 100
+	repair-rate 0.2 ;c 80
+	shot-sensor 8 ;c 11
+	robot-sensor 4 ;c
+	food-sensor 10 ;c 20
+	engine 0.06 ;c 50
+	eater 2.0 ;c 300
+	shield 0.45 ;c 225
+;shieldPower/m/0.02 - 0.005/0.02 = 2 (halving powers)
+;power = 2.25*0.02*mass = 0.045*mass
+
+#code
+#const Eater_type 1
+#const Defender_type 2
+#var home-x
+#var home-y
+#var bias-angle
+#const bias-distance 2
+#start
+position home-y! home-x!
+random-angle bias-angle!
+BeginWandering& jump
+construct:
+	energy 100 shield 200 * + < 0 constructor-max-rate ifev constructor-rate!
+	constructor-type ifr
+	0 1 random
+	0.30 < if
+		Eater_type constructor-type!
+		return
+	then
+	Defender_Type constructor-type!
+return
+BeginEating:
+do
+	defend^
+	construct^
+	food-position seek-location
+	time food-sensor-time - 40 > if
+		home-x home-y position v- 0.4 vs* bias-distance bias-angle polar-to-rect v+ rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!	
+		fire-food-sensor sync
+		food-found nif
+			BeginWandering& jump
+		then
+	then
+forever
+Defend:
+0 repair-rate!
+	energy 50 < if
+		 0 shield! return
+	then
+	time shot-sensor-time - 30 > if
+		fire-robot-sensor fire-shot-sensor sync
+	then
+	robot-found shot-found + 1 min max-shield *
+	shield 0.005 - max shield!
+	energy 75 < ifr
+	max-repair-rate repair-rate!
+return
+#var last-direction-change-time -100
+BeginWandering:
+	new-wander-location^
+do
+	time last-direction-change-time 300 + > new-wander-location& ifc
+	defend^
+	construct^
+	time food-sensor-time - 60 > if
+		home-x home-y position v- 0.4 vs* bias-distance bias-angle polar-to-rect v+ rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-food-sensor sync
+		food-found if
+			BeginEating& jump
+		then
+	then
+forever
+new-wander-location:
+	0 100 random 0 100 random seek-location
+	time last-direction-change-time!
+return
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Death
+An attempt at an intelligent plant defender. Uses blasters, siphons
+and passive defense at point-blank range. Solves friendly-fire problem
+by being so short range there isn't room for a friend between it and target.
+
+Hardware is similar to a 500 cost rabbit, but has 1500 worth
+of fighting hardware added.
+
+Modes:
+-Eating
+-Killing
+-Wandering (ie: none of the above)
+
+#color f00
+#hardware
+	energy 500 150 ;c 200
+	processor 20 ;c 60
+	armor 250 ;c 250
+	constructor 0.7 ;c 70
+	repair-rate 0.2 ;c 100
+	food-sensor 10  ;c 20 u 0.3
+	engine 0.18   ;c 180
+	eater 1.0    ;c 120
+	robot-sensor 15  ;c 45 u 1.2
+	shot-sensor 12 ;c 20
+	blaster 35 2.0 10 ;c 420
+	syphon 2.0 ;c 200
+#code
+#start
+#var home-x
+#var home-y
+#var bias-angle
+#const bias-distance 2
+position home-y! home-x!
+random-angle bias-angle!
+BeginWandering& jump
+#var target-x
+#var target-y
+#const Eater_type 1
+#const Defender_type 2
+#const zigzagtime 60 ;time for zig and zag
+#const zigangle 0.5
+#const zagangle -0.5
+
+BeginCharging:
+
+do
+;	1 print-mode^
+	construct^
+	time food-sensor-time 50 + > if
+		fire-food-sensor sync
+	then
+	energy 100 > max-repair-rate 0 ifev repair-rate!
+	food-position target-x target-y v- norm 2.2 < food-found and if
+		food-position seek-location
+	else
+		target-x target-y position v-
+		robot-found if robot-velocity 10 vs* v+ then
+		0.1 random-angle polar-to-rect v+ ;add a random 0.1 units to reduce clumping
+		2dup norm 15 > if
+			rect-to-polar
+			time zigzagtime / dup floor - 0.5 < zigangle zagangle ifev + polar-to-rect
+		then
+		0.1 vs* 2dup engine-velocity!
+		norm .18 < 0 engine-max-power ifev engine-power!
+	then
+	time robot-sensor-time 10 + > if
+		target-x target-y position v- rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-robot-sensor sync
+		robot-found if
+			robot-position target-y! target-x!
+			robot-position position v- 2dup norm dup 3.0 < if
+				;stack: dx dy norm
+				radius - 0.3 max syphon-range min syphon-distance!
+				robot-velocity robot-distance blaster-speed / vs* velocity v- v+ angle dup fire-blaster syphon-direction!
+				syphon-max-rate syphon-rate!
+				energy 30 < max-armor armor - 10 < and BeginWandering& ifg
+			else
+				2drop drop
+				energy 50 < BeginWandering& ifg
+				0 syphon-rate!
+			then	
+		else ;not found... might they be dead?
+			0 syphon-rate!
+			target-x target-y position v- norm robot-sensor-range < energy 100 < or if
+				BeginEating& jump
+			then
+		then ;robot found
+	then ;time to scan for robots
+forever
+;-----below is rabbitish code
+construct:
+	energy 250 < 0 constructor-max-rate ifev constructor-rate!
+	constructor-type ifr
+	0 1 random
+	0.6 < if
+		Eater_Type constructor-type!
+		return
+	then
+	Defender_Type constructor-type!
+return
+BeginEating:
+do
+;	2 print-mode^
+	defend^
+	construct^
+	food-position seek-location 
+	time food-sensor-time - 30 > if
+		home-x home-y position v- 0.4 vs* bias-distance bias-angle polar-to-rect v+ rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-food-sensor sync
+		food-found nif
+			BeginWandering& jump
+		then
+	then
+forever
+#const shot-chase-distance 30
+Defend:
+	energy 50 < if
+		0 repair-rate!
+	then
+	max-repair-rate repair-rate!
+	energy 150 < ifr ;cannot charge if low energy
+	time robot-sensor-time - 30 > if
+		0 robot-sensor-focus-distance!
+		fire-robot-sensor sync
+		robot-found if
+			rdrop ;drop return address
+			robot-position target-y! target-x!
+			BeginCharging& jump
+		then
+	then
+	time shot-sensor-time - 15 > if
+		fire-shot-sensor sync
+		shot-found shot-velocity norm and if
+			rdrop		
+			shot-chase-distance
+			shot-velocity -100 vs* shot-position position v- v+ angle
+			polar-to-rect position v+
+			0 max 100 min target-y!
+			0 max 100 min target-x!
+			BeginCharging& jump
+		then
+	then
+return
+#var last-direction-change-time -100
+BeginWandering:
+	new-wander-location^
+do
+;	3 print-mode^
+	time last-direction-change-time 300 + > new-wander-location& ifc
+	defend^
+	construct^
+	time food-sensor-time - 60 > if
+		home-x home-y position v- 0.4 vs* bias-distance bias-angle polar-to-rect v+ rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-food-sensor sync
+		food-found if
+			BeginEating& jump
+		then
+	then
+forever
+new-wander-location:
+	0 100 random 0 100 random seek-location
+	time last-direction-change-time!
+return
+
+#var last-mode-print -100
+print-mode:
+	time last-mode-print 100 + > if
+		print
+		time last-mode-print!
+	else
+		drop
+	then return
+
+#end

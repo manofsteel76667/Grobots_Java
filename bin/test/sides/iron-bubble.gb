@@ -1,0 +1,38 @@
+#side Iron Bubble
+#author Devon
+13 November 2002
+#color cff
+
+#type Bubble
+#color c90
+#hardware
+  processor 8
+  armor 1500
+  repair-rate .1
+  solar-cells 1
+  constructor .98
+  energy 20 0
+  robot-sensor 13
+  grenades 50 13 40
+  
+#code
+#var next-scan
+max-repair-rate repair-rate!
+do
+  1 constructor-type!
+  energy 15 > constructor-max-rate 0 ifev constructor-rate!
+  time next-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      robot-position robot-velocity robot-distance grenades-speed / vs* v+
+      position v- rect-to-polar fire-grenade
+      time grenades-reload-time + next-scan!
+    else
+      time 55 + next-scan!
+    then
+  then
+  sync
+forever
+
+
+#end

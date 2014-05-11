@@ -1,0 +1,88 @@
+#side Teledont
+This is teledont updated for the last rule changes.  It has shorter range
+weapons(30).
+An larger energy gathering hardware (eater, solar-cell).  Children also
+gravitate to
+different areas of the world and it waits until it has high energy before it
+opens fire.
+#author Matt Burkholder
+#date 5 May 2002
+#color 55f
+#type Teledont
+#color a0a 
+#hardware 
+   processor 15
+   engine 0.175
+   constructor 1.7
+   energy 1000 20
+   solar-cells .5
+   eater 2
+   robot-sensor 30
+   food-sensor 12
+   armor 649
+   repair-rate .5
+   blaster 37 30 15
+   
+
+#code 
+
+#var destx 0
+#var desty 0
+#var targetx 50
+#var targety 50
+#var targetDirection 0
+#var robot-sensor-now 0
+#var food-sensor-now 0
+#var take-a-shot 0
+
+   id 1 = nif
+          id 2 / is-integer if
+             30 targetx! else 70 targetx! then
+     id 3 > if
+       30 targety! else 70 targety! then
+   then
+       food-sensor-range 0.6 * food-sensor-focus-distance!
+       do
+         energy 900 > energy constructor-remaining 2 * > or
+      constructor-max-rate 0 ifev constructor-rate!
+         1 constructor-type!
+         armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+         time robot-sensor-now < blaster-cooldown or energy 21 < or nif
+            fire-robot-sensor sync
+            robot-found take-a-shot energy 900 > robot-distance 15 < or or and if
+                   robot-position position v-
+                   robot-velocity 0.75 vs* velocity v- 
+                   robot-distance blaster-speed / vs* v+ 
+                   rect-to-polar fire-blaster drop
+      robot-direction robot-distance 20 < pi 0 ifev + targetDirection!
+                   robot-direction take-a-shot - abs 0.5 > take-a-shot and
+      0 robot-direction ifev take-a-shot!
+                else
+                   targetx targety position v- angle targetDirection!
+                   time 50 + robot-sensor-now!
+       0 take-a-shot!
+         then then
+         time food-sensor-now > if
+   targetDirection food-sensor-focus-direction!
+            fire-food-sensor sync
+            food-found if
+               18000 food-sensor-now!
+                food-position 2dup seek-location sync sync sync sync
+            else
+                   time 50 + food-sensor-now!  0 0 then
+            desty! destx!
+         then
+         destx if
+            destx desty seek-location
+           else
+   targetx targety seek-location
+          then
+   speed eaten or nif
+       time food-sensor-now! then
+          ;speed energy 499 > or nif
+         ;energy sync energy - constructor-rate - -1 > if
+          ;       time 50 + food-sensor-now min food-sensor-now! 
+          ;then then
+       forever
+    
+#end 

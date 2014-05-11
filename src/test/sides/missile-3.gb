@@ -1,0 +1,108 @@
+#side Missile-Lunatic
+#color f99
+#author Warren
+#date March 4 2002
+
+(Devon 20020508) old rule-change updates
+(Devon 20020617) Removed focus arguments in missile
+
+Don't give a drunken sailor the materials he needs to make a Molotov cocktail!
+
+#type Missile
+#color f44
+#hardware
+
+processor 5 ;c 20
+energy 50 50 ;c 55
+
+engine .1 ;c 100
+solar-cells 0.015 ;c 27
+
+robot-sensor 15 ;c 90
+
+armor 80 ;c 80
+shield 0.1 ;c 50
+
+bomb 2000 ;c 200
+
+#code
+engine-max-power engine-power!
+
+do
+	fire-robot-sensor sync
+	robot-found if
+		robot-position position v- engine-velocity!
+		engine-max-power engine-power!
+		energy 30 > if
+			max-shield shield!
+		else
+			0 shield!
+		then
+	else
+		0 shield!
+		energy 30 speed 100 * - < if ;unstable: move or sit still
+			0 engine-power!
+			sync sync sync sync sync sync sync sync sync sync
+			sync sync sync sync sync sync sync sync sync sync
+			sync sync sync sync sync sync sync sync sync sync
+			sync sync sync sync sync sync sync sync sync sync
+		else
+			engine-max-power engine-power!
+			energy 0.003 * 0.1 min
+			speed 0.01 > if velocity angle else random-angle then
+			polar-to-rect engine-velocity!
+		then
+		sync sync sync sync sync sync sync sync sync sync
+		sync sync sync sync sync sync sync sync sync sync
+		sync sync sync sync sync sync sync sync sync sync
+		sync sync sync sync sync sync sync sync sync sync
+		;no enemies. Save energy.
+	then
+
+	robot-distance 1.5 < if
+		die
+	then
+	sync
+	sync
+	sync
+	sync
+forever
+
+#type Lunatic
+Copied from Devon's lunatic.
+#color ff0
+
+#hardware
+processor 10
+engine .15 ;big engine
+armor 200
+repair-rate .1
+solar-cells .4
+constructor .25
+energy 100 10
+
+#code
+
+#var dir
+#var increment
+
+random-angle dir!
+0.15 0.3 random 0 1 random-int -1 1 ifev * increment!
+engine-max-power engine-power!
+
+do
+	dir increment + dir!
+	1 dir polar-to-rect engine-velocity!
+	constructor-type nif
+		1 2 random-int constructor-type!
+	then
+	energy 50 > if
+		constructor-max-rate constructor-rate!
+		max-repair-rate repair-rate!
+	else
+		0 constructor-rate!
+		0 repair-rate!
+	then
+forever
+
+#end

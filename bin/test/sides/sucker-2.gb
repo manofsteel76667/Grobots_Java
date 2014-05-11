@@ -1,0 +1,87 @@
+#side Sucker 2
+#author Devon
+#color fb0
+
+Syphons at very long range.
+This was a demo side to show the need for a way to trace
+  syphons back to their origins. But it works anyway by
+  starving enemies.
+
+#type drain
+#color 099
+
+(20030530) Stay a little within range.
+           Don't scan as often when not sucking.
+           Don't flee starved enemies.
+           Eat food or wander when you have nothing better to do.
+
+#hardware
+  energy 100 0
+  solar-cells .04
+  syphon .4 19
+  robot-sensor 21 10
+  food-sensor 7
+  eater .4
+  constructor .4
+  engine .03
+  
+  processor 12
+  armor 100
+
+#code
+
+#var syphoning
+#const suck-distance 18
+#vector wander-dest
+
+#start
+random-location^ wander-dest!
+do
+  time robot-sensor-time syphoning 21 53 ifev + >= if
+    fire-robot-sensor sync
+    robot-found if
+      do
+        robot-energy 2 > if 1 syphoning! ok& jump then
+      next-robot while-loop
+    then
+    0 syphoning!
+    ok:
+  then
+  syphoning if
+    robot-velocity time robot-sensor-time - 3 + vs*
+    robot-position v+ position v- rect-to-polar
+    syphon-direction! radius - syphon-distance!
+    syphon-max-rate syphon-rate!
+  else
+    0 syphon-rate!
+  then
+  syphoning if
+    position robot-position v- unitize suck-distance vs* robot-position v+
+      robot-velocity seek-moving-location
+  else
+    eaten if
+      0 engine-power!
+    else
+      time food-sensor-time 43 + >= if
+        fire-food-sensor sync
+        food-found nif
+          random-location^ wander-dest!
+        then
+      then
+    then
+    food-found if food-position else wander-dest then seek-location
+  then
+  energy 80 constructor-remaining min > if
+    constructor-type nif 1 constructor-type! then
+    constructor-max-rate constructor-rate!
+  else
+    0 constructor-rate!
+  then
+forever
+
+
+random-location:  ; -- x y
+  0 world-width random 0 world-height random
+return
+
+#end

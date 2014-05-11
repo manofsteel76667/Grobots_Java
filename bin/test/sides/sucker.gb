@@ -1,0 +1,59 @@
+#side Sucker
+#author Devon
+#color fb0
+
+Syphons at very long range.
+This was a demo side to show the need for a way to trace
+  syphons back to their origins. But it works anyway by
+  starving enemies.
+
+#type drain
+#color 099
+#hardware
+  energy 100 0
+  solar-cells .05
+  syphon .4 19
+  robot-sensor 23 10
+  
+  constructor .4
+  engine .03
+  
+  processor 12
+  armor 100
+
+#code
+
+#var syphoning
+
+do
+  time robot-sensor-time 23 + >= if
+    fire-robot-sensor sync
+    do
+      robot-energy 2 > if 1 syphoning! ok& jump then
+    next-robot while-loop
+    0 syphoning!
+    ok:
+  then
+  syphoning if
+    robot-velocity time robot-sensor-time - 3 + vs*
+    robot-position v+ position v- rect-to-polar
+    syphon-direction! radius - syphon-distance!
+    syphon-max-rate syphon-rate!
+  else
+    0 syphon-rate!
+  then
+  robot-found if
+    position robot-position v- unitize syphon-range vs* robot-position v+
+      robot-velocity seek-moving-location
+  else
+    0 engine-power!
+  then
+  energy 80 constructor-remaining min > if
+    constructor-type nif 1 constructor-type! then
+    constructor-max-rate constructor-rate!
+  else
+    0 constructor-rate!
+  then
+forever
+
+#end

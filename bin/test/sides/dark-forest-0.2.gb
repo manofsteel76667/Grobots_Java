@@ -1,0 +1,264 @@
+#side Dark Forest [0.2]
+#author Alexander
+
+
+#color 006600
+0.1: Experimental Version - Only The Tower and Runner - Seeing how do I do non-pure solar type of sides.
+0.2: Still underconstruction... Added Defence Tower
+
+#code
+;;List of Types
+#const type-TheTower 1
+#const type-Initiate 2
+#const type-DefenceTower 3
+
+;;List of Radios
+#const radio-need-food 2
+#const radio-unit-food 3
+#const radio-enemyglobal 4
+
+#type Summoner
+0.1 - Added too-much-food, check-armor and armor-repair
+#color 000000
+#decoration 000000 cross
+#hardware
+processor 10   ;;c  20
+constructor 1  ;;c 100
+energy 700 0   ;;c  70
+solar-cells .2 ;;c1000
+armor 350      ;;c  80
+repair-rate .2 ;;c 250
+syphon 5 20
+radio receive send
+#code
+armor-repair: 80 energy < max-repair-rate 0 ifev repair-rate! return
+
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position id 3 radio-need-food send
+  time 50 0 5 random-int + + food-next-call-time!
+return
+
+#var last-armor
+check-armor:
+armor-repair^
+armor last-armor < if
+  position 2 radio-enemyglobal send ;;Send enemy notice
+then
+armor last-armor!
+return
+
+#start
+do
+check-armor^
+call-for-food
+2 constructor-type!
+constructor-max-rate constructor-rate!
+energy 550 > if
+  too-much-food^
+else
+  0 syphon-rate!
+then
+forever
+
+too-much-food:
+  radio-need-food messages if
+    radio-need-food receive drop id = if 2drop return then
+	syphon-max-rate negate syphon-rate!
+    position v- rect-to-polar syphon-direction! syphon-distance!
+  then
+  radio-need-food clear-messages
+return
+
+#type Initiate
+0.1 - Original Version
+0.2 - Modified from parent lock on to optional lock on.
+#color 000000
+#decoration 000000 cross
+#hardware
+engine 0.05    ;;c 
+processor 10   ;;c  20
+energy 600 50  ;;c  80
+armor 150      ;;c  80
+repair-rate .2 ;;c 250
+food-sensor 5  ;;c
+eater 2
+syphon 2 2
+radio receive send
+#code
+#vector home-location
+#vector wander-location
+#var last-armor
+
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position id 3 radio-need-food send
+  time 20 0 5 random-int + + food-next-call-time!
+return
+
+armor-repair: 80 energy < max-repair-rate 0 ifev repair-rate! return
+new-wander-location: 0 world-width random 0 world-height random wander-location! return
+
+check-armor:
+armor-repair^
+armor last-armor < if
+  position 2 radio-enemyglobal send ;;Send enemy notice
+  go-to-safety^ ;;Scram!!!
+then
+armor last-armor!
+return
+
+#start
+;;Init
+position home-location!
+new-wander-location^
+armor last-armor!
+
+get-food:
+0 syphon-rate!
+do
+  check-armor^
+  eaten not if 44 periodic-food-sensor drop then ;;If last fired is more than 44 frames and has not eaten, fire food sensor
+  food-found if
+    food-position seek-location
+  else
+    wander-location seek-location
+    position wander-location 3 in-range if new-wander-location^ then
+  then
+energy 400 > until-loop
+feed& jump
+
+go-to-safety:
+do
+  call-for-food^
+  armor-repair^
+  home-location position 10 in-range nif 
+    home-location seek-location
+  else
+    0 engine-power!
+  then
+armor 110 < while-loop
+armor last-armor!
+return
+
+#var friend-id
+#vector friend-position
+#var lock-id
+#var forced-lock-on
+feed:
+0 lock-id!
+disable-lock-on^
+syphon-max-rate negate syphon-rate!
+do
+  disable-lock-on^ ;;Just in case we are syphoning to somewhere that does not exist.
+  armor-repair^
+  radio-need-food messages if
+    radio-need-food receive drop friend-id! friend-position!
+	lock-id friend-id = feed-need-to-change& ifg
+	forced-lock-on feed-no-need-to-change& ifg
+	0.3 random-bool if 1 forced-lock-on! feed-need-to-change& jump then ;;Give chance...
+	friend-position position dist wander-location position dist > feed-no-need-to-change& ifg
+	feed-need-to-change:
+	friend-position wander-location!
+	friend-id lock-id!
+	feed-no-need-to-change:
+  then
+  position wander-location v- unitize 2 vs* wander-location v+ seek-location
+  wander-location position v- rect-to-polar syphon-direction! syphon-distance!
+energy 100 < until-loop
+radio-need-food clear-messages
+get-food& jump
+
+#var next-check-time
+disable-lock-on:
+  time next-check-time < ifr
+  syphoned nif 0 forced-lock-on! then
+  time 200 + next-check-time!
+return
+
+#type Defense Tower
+#color 00FFFF
+#decoration 00FFFF cross
+Type: Building
+24th April 2006: Modified version of Fortification (Cost: 1700+)
+25th April 2006: Added enemy-syphon (Cost: 2017.5)
+25th April 2006: Tweaked hardware and added blaster. (Cost: 2007.3)
+25th April 2006: Transfered Syphon to Watch Tower, increased armor (Cost: 1818.5)
+
+Transfered from Town2 to DarkForest 0.2 - renamed from Sentry Tower to Defense Tower
+DF 0.2 - Changed hardware, food calling, food exchange, construction, enemy alert to suit DF.
+
+#hardware
+	processor 15
+	energy 700 0
+	armor 320
+	constructor 1
+	repair-rate .2
+	grenades 40 23 50
+	robot-sensor 21
+	syphon 5 15
+	radio send receive
+#code
+#vector home
+#var enemy-here-flag 0
+armor-repair: 80 energy < max-repair-rate 0 ifev repair-rate! return
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position id 3 radio-need-food send
+  time 50 0 5 random-int + + food-next-call-time!
+return
+#var last-armor
+check-armor:
+armor-repair^
+armor last-armor < if
+  position 2 radio-enemyglobal send ;;Send enemy notice
+then
+armor last-armor!
+return
+too-much-food:
+  radio-need-food messages if
+    radio-need-food receive drop id = if 2drop return then
+	syphon-max-rate negate syphon-rate!
+    position v- rect-to-polar syphon-direction! syphon-distance!
+  then
+  radio-need-food clear-messages
+return
+#start
+;sync sync sync sync sync sync sync sync sync sync
+position home!
+beg:
+do
+    check-armor^
+    call-for-food^
+	constructor-type nif 
+	  0 1 random 0.5 < if 
+		type-DefenceTower constructor-type! 
+	  else
+	    type-Initiate constructor-type!
+	  then
+	then
+	autoconstruct
+  enemy-here-flag not if 30 periodic-robot-sensor and-if
+    robot-found if 1 enemy-here-flag! robot-position 2 radio-enemyglobal send then
+  then
+  enemy-here-flag if 10 periodic-robot-sensor and-if
+	robot-found if
+	  robot-position robot-velocity lead-grenade
+	  robot-position 2 radio-enemyglobal send
+	else
+	  0 enemy-here-flag!
+	then
+  then
+  energy 650 > if
+    too-much-food^
+  else
+    0 syphon-rate!
+  then
+forever
+
+#type Daemon
+
+#end

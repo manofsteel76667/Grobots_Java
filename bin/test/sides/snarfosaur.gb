@@ -1,0 +1,110 @@
+#side Snarfosaur 
+#author Matt Burkholder
+#date 14 May 2002 
+
+#color fff 
+#type Snarfosaur
+#color 00f
+
+
+#hardware 
+processor 20
+constructor 2
+energy 500 80 
+eater 2
+robot-sensor 10
+food-sensor 10
+shot-sensor 10
+armor 250
+repair-rate 0.5
+blaster 10 10 10
+force-field 0.2 10
+
+#code 
+
+#const robot-delay 50
+#const food-delay 50
+#const shot-delay 10
+
+#var robot-next 0
+#var food-next 0
+#var shot-next 0
+#var destx 0
+#var desty 0
+#var centerx 0
+#var centery 0 1...
+
+food-sensor-range 0.6 * food-sensor-focus-distance!
+random-angle force-field-direction!
+radius force-field-distance!
+force-field-max-power negate force-field-power!
+do time 100 < while-loop
+do 
+    time robot-next > ScanRobots& ifc
+    Move^
+    time food-next > ScanFood& ifc
+    Move^
+    time shot-next > ScanShots& ifc
+    Move^
+    CheckRepairs^
+    Reproduce^
+forever 
+
+Move:
+    destx if
+        destx desty position v- 2dup norm radius > if
+                angle force-field-direction!
+                radius force-field-distance!
+                force-field-max-power force-field-power!
+        else
+                2drop
+                0 force-field-power!
+                time food-next!
+                0 destx!
+            then
+    else
+        force-field-max-power force-field-power!
+        radius force-field-distance!
+        50 50 position v- angle pi 2 / + force-field-direction!
+    then
+return
+
+CheckRepairs:
+    armor max-armor < max-repair-rate 0 ifev repair-rate!
+return
+
+Reproduce:
+        energy 490 > constructor-max-rate 0 ifev constructor-rate!
+        1 constructor-type!
+return
+
+ScanRobots: return
+ScanShots: return
+
+ScanFood:
+    random-angle food-sensor-focus-direction!
+    fire-food-sensor sync
+    food-found if
+        food-distance 2 >  if
+        food-position desty! destx!
+        18000 food-next!
+        return then
+    else
+            food-delay time + food-next!
+            return then
+        food-sensor-focus-direction 2pi 3 / + food-sensor-focus-direction!
+    fire-food-sensor sync
+    food-found food-distance 2 > and if
+        food-position desty! destx!
+        18000 food-next!
+        return then
+        food-sensor-focus-direction 2pi 3 / + food-sensor-focus-direction!
+    fire-food-sensor sync
+food-found food-distance 2 > and if
+        food-position desty! destx!
+        18000 food-next!
+        return then
+        food-delay time + food-next!
+            return
+#end 
+

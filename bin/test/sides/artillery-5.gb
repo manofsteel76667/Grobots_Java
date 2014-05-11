@@ -1,0 +1,217 @@
+#side Artillery 5
+#author Devon
+#color 00f
+7 Feb 2002
+
+Rabbits with artillery support. This was the first side to use communications.
+
+(20020508) updates for old rule changes
+(20021116) Updates for communication changes.
+(20021116) Added surplus food reporting and using.
+(20021116) Use vector variables.
+(20021119) Added missing radio to artillery.
+(20120806) Modernized: periodic-*-sensor, shared constants, vwrite, no radio, 2drop
+           Food claims.
+           Don't call fire (or shoot) at point blank range.
+           Bigger engine.
+           Dodge (by circling) while eating.
+           Try to win pushing contests.
+           Fire at foods if the target is approaching them
+
+To do:
+  Run when attacked.
+  Feed artillery with syphons.
+  Move constructor to artillery?
+  Artillery should follow spotters around.
+  Artillery should flee from close enemies.
+
+#code
+;Addresses for enemy sightings:
+#const target-time 2
+#const target-pos 3
+#const target-vel 5
+
+#const safe-distance 3
+
+#type Spotter
+Gathers food. Reports enemies.
+#color 0f0
+
+#hardware
+  processor 35
+  engine .08
+  energy 200 15
+  constructor 1.5
+  eater 2
+  food-sensor 13 5
+
+  armor 150
+  robot-sensor 15
+
+#code
+
+;Addresses for surplus food:
+#const feast-time 10
+#const feast-pos 11
+
+;Base address for food claims:
+#const claims 101
+#const claim-time 300 ;claim expiry
+
+#vector dest
+#var dest-kind 0
+
+#const seek-rate 0.2
+#const circle-speed 0.08
+#const circle-radius 0.3
+
+#const push-range 1.5 ;how close an enemy to push
+#const push-radius 0.4
+#var pushing 0
+
+do
+  scan-for-robots^
+  scan-for-food^
+  dest-kind if
+    dest position 2 in-range if
+      ;If another robot is close, push it.
+      pushing if
+        robot-position robot-velocity 10 vs* v+ dest push-range in-range and-if
+        robot-position dest v- unitize push-radius vs* dest v+
+          position v- seek-rate vs* engine-velocity!
+      else ;Circle the food as passive dodging:
+        ;position dest v- unitize 2dup
+        ;circle-radius vs* dest v+ position v- seek-rate vs*   ;seek distance...
+          ;2swap angle 1.8 + circle-speed swap polar-to-rect v+ engine-velocity! ;...and velocity
+        circle-radius position dest v- angle 0.8 + polar-to-rect
+          dest v+ position v- unitize circle-speed vs* engine-velocity!
+      then
+      engine-max-power engine-power!
+    else ;not close yet
+      dest seek-location ;TODO zigzag?
+    then
+  else ;no food :(
+    ;TODO wander?
+    0 engine-power!
+  then
+  energy 100 > if
+    constructor-type nif
+      1 2 random-int constructor-type!
+    then
+    constructor-max-rate
+  else 0 then constructor-rate!
+forever
+
+scan-for-robots:
+  87 periodic-robot-sensor nifr
+  0 pushing!
+  robot-found nifr
+  robot-position robot-velocity 25 vs* v+ dest safe-distance in-range if
+    position dest safe-distance in-range if
+      ;too close to shoot, so win the pushing contest instead
+      1 pushing!
+      return
+    else ;shoot at the food, since that's probably where they're going
+      0 dest-kind! ;abandon this food
+      robot-sensor-time dest 0 0 sync
+      target-vel vwrite target-pos vwrite target-time write
+      return
+    then
+  then
+  ;call fire
+  robot-sensor-time robot-position robot-velocity sync
+  target-vel vwrite target-pos vwrite target-time write
+return
+
+food-hash: ; x y -- addr
+  + 100 * floor 100 mod claims +
+return
+
+scan-for-food:
+  eaten ifr
+  31 periodic-food-sensor nifr
+  food-found if
+    do
+      food-velocity nor if 
+        target-time read time 25 - > if
+        target-pos vread food-position safe-distance in-range and-if
+          ;ignore it - incoming grenade (TODO flee)
+        else
+          food-position + dest + = ifr ;already got it
+          ;try to claim it
+          food-position food-hash dup sync
+          read time < if
+            time claim-time + swap write
+            food-position set-destination^
+            ;if there's extra, announce it
+            food-found food-energy 100 - * 1000 > if
+              time feast-time write
+              position feast-pos vwrite
+            then
+            return
+          else
+            drop ;addr
+          then
+        then
+      then
+    next-food while-loop
+  else
+    feast-time read time 250 - >= if ;has someone recommended food recently?
+      feast-pos vread set-destination
+    else
+      0 dest-kind!
+    then
+  then
+  return
+
+set-destination: ; x y --
+  dest!
+  time claim-time + dest food-hash write
+  1 dest-kind!
+  return
+
+
+#type Artillery
+#color f00
+
+#hardware
+  processor 15
+  energy 150 0
+  solar-cells .15
+  armor 110
+  grenades 66 28 100
+
+#code
+
+#const age-limit 5 ; max. age of observations to use?
+
+do
+  grenades-cooldown not energy grenades-firing-cost > and if
+    2 read age-limit + time > Shoot& ifc
+  then
+  sync
+forever
+
+#vector delta
+#vector vel
+
+Shoot:
+;receive data
+  sync
+  target-time read target-pos vread target-vel vread
+  vel!
+  position v- delta!
+;think
+  delta norm
+  dup grenades-range < if
+    ;announce response?
+    grenades-speed / ;tti
+    time rot - + ;tti+age
+    vel rot vs* delta v+
+    rect-to-polar
+    over safe-distance > if fire-grenade else 2drop then
+  else 2drop
+  then
+return
+
+#end

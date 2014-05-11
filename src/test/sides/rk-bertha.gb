@@ -1,0 +1,923 @@
+#side RK Bertha
+#author Warren
+#color e83
+#seed 1 3 3 2 3 2
+
+Like Big Bertha but more blaster and less grenades and more importantly RK 5 instead of Active.
+
+;################ SHARED #################
+#code
+
+;701-950 are food claims
+;format: claim-time
+#const FOOD_CLAIM_BASE 701
+#const NUM_FOOD_CLAIMS 250
+
+
+#const HOME_CORNER 972 ;;a 0/1 vector
+
+#const CORNER_CLEARED 978 ;;0/1 indicator
+
+;;;;message channels
+#const help-channel 1 ;position time
+#const kill-channel 2
+#const safe-channel 3
+#const hungry-channel 5
+#const food-channel 10  ;  position amount time
+
+#const GATHERER_TYPE 3
+#const FIGHTER_TYPE 2
+
+;;;;;;;;;;; real shared code ;;;;;;;;;;;;
+
+;copied from Walled City 2 via Cyclops
+;Streamlined version of equivalent from Walled City 2.
+;Looks like it should work on any CPU 7 or greater.
+#var food-hash
+claim-food:
+food-position drop world-width /
+;stack: between 0 and 1
+NUM_FOOD_CLAIMS * floor
+;stack: presumably between 0 inclusive and NUM_FOOD_CLAIMS exclusive
+FOOD_CLAIM_BASE + food-hash!
+;staack empty
+time 100 + ;put on stack for later
+food-hash sync read time < ClaimExpired& ifg
+	;valid claim already
+	not ;;drops and then pushes "0" since time+400 != 0.
+	return
+ClaimExpired:
+;stack: time+300
+	food-hash write
+	1 return
+
+reclaim-food: ;;updates time-stamp of food we've claimed already.
+	time 100 + food-hash write
+return
+
+clamp-pos: ;x y -> x y limited to in-range
+0 max world-height min swap
+0 max world-width min swap
+return
+
+
+
+#type Big Bertha
+#color ff0
+#hardware
+  processor 40
+  armor 650
+  repair-rate 0.25
+  engine 0.4
+  energy 1000 200
+  
+  blaster 83.7 26 50 ;50
+  grenades 103.7 26 50 ;136
+  
+  robot-sensor 27.5 2
+  shot-sensor 7
+  food-sensor 13 5
+  eater 4
+  constructor 1.7
+ 
+  
+#code
+
+
+#const WAKE_ENERGY 180
+#const SHOOT_ENERGY 200
+#const START_CONSTRUCT_ENERGY 600
+#const CONSTRUCT_ENERGY 450
+#const REPAIR_ENERGY 330
+
+#var temp
+
+#vector target-food
+#vector current-waypoint
+#var waypoint-left ;bool, true if waypoint is left side vs bottom
+#var waypoint-second ;bool, true if waypoint is second on side vs first.
+#var waypoint-radius ;scalar
+#const waypoint-gutter 10
+#var world-width-minus-gutters
+#var world-height-minus-gutters
+
+#var eating ;bool
+#var danger-time 0
+
+
+#var corner-left-right
+#var corner-bottom-top
+#vector corner-position
+
+map-*: ;x y a b -- x*a y*b
+rot * rrot * swap ;; How unintuitive
+return
+
+;convert real coords to home-centric ones
+real-to-my-posn: ; x y - x y
+corner-position v- corner-left-right corner-bottom-top map-*
+return
+
+;inverse
+my-posn-to-real: ; x y - x y
+corner-left-right corner-bottom-top map-* corner-position v+
+return
+
+;convert a relative vector in our coords to real or back again
+;(the same because -1*-1=1)
+my-relative-to-real:
+real-to-my-relative:
+corner-left-right corner-bottom-top map-*
+return
+
+set-corner-stuff: ;; a b -- where a,b are 0/1 indicators of which corner we have
+;stack: nearest corner in 0/1 for each
+2dup world-height * swap world-width * swap corner-position!
+-2 vs* 1 1 v+ corner-bottom-top! corner-left-right!
+return
+
+adjust-engine:
+eating if
+ time danger-time < if
+  target-food position radius 3 * in-range if
+  ;passive dodge circling while touching food
+  radius 4 /
+  position target-food v- angle 1 + polar-to-rect target-food v+ position v- engine-velocity!
+  else
+  ;head to food with wiggle
+  target-food position v- 0.05 vs* rect-to-polar time 40 mod 20 > 0.5 -0.5 ifev + polar-to-rect engine-velocity!
+  engine-max-power engine-power! 
+  then
+ else
+  ;straight to food
+  target-food position v- 0.05 vs* engine-velocity!
+  target-food position velocity 5 vs* v+ radius 2 / in-range engine-max-power * engine-power! 
+ then
+
+  engine-max-power engine-power!
+else
+  0.08 current-waypoint position v- angle time danger-time < if time 40 mod 20 > 0.5 -0.5 ifev + then
+  polar-to-rect engine-velocity!
+  engine-max-power engine-power!
+then
+return
+
+set-current-waypoint:
+  waypoint-left if
+    waypoint-radius world-height-minus-gutters < if
+      waypoint-gutter waypoint-gutter waypoint-radius +  
+    else
+      waypoint-radius world-height-minus-gutters - waypoint-gutter + world-height waypoint-gutter - 
+    then
+  else
+    waypoint-radius world-width-minus-gutters < if
+      waypoint-gutter waypoint-radius + waypoint-gutter   
+    else
+      world-width waypoint-gutter - waypoint-radius world-width-minus-gutters - waypoint-gutter +  
+    then
+  then
+  my-posn-to-real^ current-waypoint!
+return
+
+#var shoot-straight 1 ;;boolean
+#start
+ world-width waypoint-gutter 2 * - world-width-minus-gutters!
+ world-height waypoint-gutter 2 * - world-height-minus-gutters!
+
+ time 20 < if
+	position world-height / round swap world-width / round swap 2dup HOME_CORNER vwrite
+ else
+	HOME_CORNER vread
+ then set-corner-stuff^
+	1 waypoint-left!
+        0 waypoint-second!
+        0 waypoint-radius!
+        set-current-waypoint^
+
+time 20 > if
+do ;;hack to avoid friendly fire on birth
+   current-waypoint seek-location
+energy WAKE_ENERGY < position current-waypoint 10 in-range or until-loop
+then
+
+do
+
+ eating eaten not and target-food position radius in-range and if
+  0 eating!
+ then
+
+ eating if reclaim-food^ then
+
+ eating not time food-sensor-time - 30 > and if
+  
+  robot-found if
+   ;run away
+   position robot-position v- angle food-sensor-focus-direction!
+   robot-sensor-range 5 - robot-distance - food-sensor-focus-distance!
+  else
+   current-waypoint position v- angle food-sensor-focus-direction!
+   5 food-sensor-focus-distance! ;was 4
+  then
+
+  fire-food-sensor sync  
+   
+	food-found if
+		Food-check-loop:
+                food-energy 80 > if
+		claim-food^ and-if
+   food-position target-food!
+   1 eating!
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+ then
+
+ energy SHOOT_ENERGY > grenades-cooldown not and if
+ time robot-sensor-time 30 + > and-if
+		fire-robot-sensor sync
+		robot-found if	
+  ;accelerating while firing can mess up aiming of long range shots a bit, on the order of a distance of 0.02*30=0.6. This
+  ; isn't enough to miss most targets, but together with other errors might cause a miss, so maintain steady velocity while firing.
+  ;From the GB source:
+  ; GBWorld::SimOneFrame order: think (includes lead-blaster firing direction computation), move (includes drag), act, collide
+  ; HardwareState::Act order: engine, blaster
+  ;with engine-velocity set to velocity the drag and engine effect cancel and thinking and blaster-acting velocities should match.
+		velocity engine-velocity! engine-max-power engine-power! ;helps aim
+
+		shoot-straight if
+			robot-position robot-velocity lead-grenade
+			robot-position robot-velocity lead-blaster
+		else
+		;blaster aimed around 2 units behind the enemy, grenade a tiny bit ahead. The reason for the tiny bit ahead is convincing stationary actives to dodge the wrong way.
+		; Grenade is slightly faster so enemy probably dodges it, right into the blaster.
+			robot-distance 10 min 0.1 * square robot-position position v- angle polar-to-rect robot-position position v- robot-velocity cross 0 > if swap negate else negate swap then 2dup 
+			
+			-0.02 vs* robot-position v+ robot-velocity lead-grenade
+			energy 150 > if	
+			robot-position v+ robot-velocity lead-blaster
+			else 2drop then
+	then
+	;shoot-straight not shoot-straight!
+   robot-sensor-time 100 + danger-time max danger-time!
+   sync ;let the lead-blaster happen
+   adjust-engine^ ;puts engine back in an appropriate state
+ then
+ then
+
+
+ 20 periodic-shot-sensor if
+   shot-found if
+      time 200 + danger-time max danger-time!
+   then
+ then
+
+constructor-type not energy START_CONSTRUCT_ENERGY > and if
+   GATHERER_TYPE constructor-type!
+ then
+
+
+ constructor-progress 300 > CONSTRUCT_ENERGY START_CONSTRUCT_ENERGY ifev energy < constructor-max-rate * constructor-rate!
+
+
+ energy REPAIR_ENERGY > max-repair-rate * repair-rate!
+
+
+ current-waypoint position 10 in-range if
+   1 CORNER_CLEARED write ;;is redundant except for first time but that's harmless
+   waypoint-second if
+    waypoint-left not waypoint-left!
+    0 waypoint-second!
+   else
+    1 waypoint-second!
+    world-width world-height + waypoint-gutter 4 * - dup temp! waypoint-radius = if
+	0 waypoint-radius!
+    else
+	    temp 4 / waypoint-radius + temp min waypoint-radius! ;temp/4 was 25
+    then
+    
+   then
+   set-current-waypoint^
+ then
+
+ adjust-engine^
+
+forever
+
+
+#type Arm's Length
+;#decoration 00f cross
+#color f00
+#hardware
+  processor 35
+  armor 200
+  engine 0.11
+  energy 600 200
+  radio send receive
+  
+  blaster 18 10.5 12
+  enemy-syphon 0.01 11 ;primarily for distracting enemy active dodgers
+  
+  robot-sensor 10.5 3
+  shot-sensor 9 2
+  food-sensor 6 3
+  eater 0.4
+  
+#code
+
+
+#const FIGHT_DIST 9.3
+
+#vector desired-velocity
+#const NO_DODGE_DIST 2.5 ;minimum miss distance (center to center) that we don't dodge
+#var miss-dist ;temp for dodging
+;Here's a simple dodge and move routine. It takes no arguments on the stack and returns nothing. Its inputs are the vector variable desired-velocity and the hardware variables shot-sensor-focus-*. It sets engine-velocity and engine-power appropriately.
+;The user should set desired-velocity to the velocity they would prefer absent any dodging. For example set desired-velocity whenever you would have set engine-velocity (or called seek-location).
+;If user knows what direction shots will come from set shot-sensor-focus-direction to that direction and shot-sensor-focus-distance to 5ish. Otherwise set shot-sensor-focus-distance to 0.
+dodge-and-move:
+fire-shot-sensor sync
+
+shot-found No-danger& nifg
+;;following is specialized to shot-sensor returning <=2 results
+shot-velocity norm dup 1 < and
+shot-velocity unitize shot-position position v- dot -2.5 < ;quick and dirty test to see if it's far enough away to dodge.
+and have-shot& ifg ;ignore stationary or hyper-fast shots
+next-shot drop ;if only one shot this does nothing but that's fine
+shot-velocity norm dup 1 < and no-danger& nifg
+have-shot: ;30 instr up to here
+#vector dodged-shot ;debug out
+shot-position dodged-shot!
+
+;new coordinates: shot-velocity minus half our velocity is along new x axis.
+;compute our position in a shifted and rotated coordinated system (axes) where
+;the shot is at the origin and the shot is moving along the (new) x axis.
+;The new y' component is the miss distance (positive or negative) if we sit still. The new x' coordinate is how far we're in front of the shot (if positive) or behind it (if negative).
+	position shot-position v- rect-to-polar shot-velocity velocity 0.5 vs* v- angle - polar-to-rect
+	miss-dist! ;leave other coordinate on stack for next line
+;Despite the name miss-dist is a component and can be negative.
+
+;use how far shot has to go before passing us from stack
+1.8 < ; no time to dodge or shot already past us; ignore it.
+miss-dist abs NO_DODGE_DIST > or no-danger& ifg ;only dodge shots that are close to hitting us
+;try to dodge at speed 2 with appropriate sign.
+	 miss-dist 0 < -2 2 ifev
+;leave cross velocity on stack
+
+;now convert velocity back to ordinary coordinates to set the engine.
+	pi/2 shot-velocity angle + polar-to-rect 2dup engine-velocity! ;;preliminary to get moving, adjust in a sec
+	engine-max-power engine-power! ;69 instr to here
+	desired-velocity rect-to-polar swap 0.1 min 6 * swap polar-to-rect v+ ;mix in a little desired-velocity, up to 0.6 vs. 2 dodge
+	engine-velocity!
+	return
+no-danger:
+	desired-velocity engine-velocity!
+	engine-max-power engine-power!
+return ;end of dodge-and-move
+
+
+#var current-seperation
+#var enemys-closing-speed
+#vector current-enemy-position
+
+#vector target-delta
+#vector expected-shot-velocity
+
+#vector enemy-position
+#vector enemy-velocity
+#var enemy-time
+#var enemy-processed
+
+#vector rumor-position
+#vector rumor-velocity
+#var rumor-time
+#var have-rumor
+
+#var anger
+#var rumor-xmit-time
+#var safe-xmit-time
+#var hungry-xmit-time
+
+#var received-time
+#var received-anger
+#vector received-position
+
+#var max-crusade-distance
+
+#var have-food 0
+
+#const EDGE_SHY 10
+#vector circle-center ;wandering for food
+
+non-shielded-robot-found: ;returns 1 if a non-shielded robot is found, 0 otherwise. Leaves robot cursor on non-shielded target.
+robot-found if
+  do
+    robot-shield-fraction 0.25 > if
+      1 return
+    then
+  next-robot while-loop
+then
+0 return
+
+out-of-bounds: ;x y -> bool
+2dup 0 < swap 0 < or if
+  2drop 1 return
+then
+world-height > swap world-width > or return
+
+#start
+5 shot-sensor-focus-distance! ;stays unchanged forever
+30 60 random max-crusade-distance!
+
+Begin-waiting:
+    0 robot-sensor-focus-distance!
+0 anger!
+0 enemy-syphon-rate!
+0 have-rumor!
+0 have-food!
+position EDGE_SHY max world-height EDGE_SHY - min swap EDGE_SHY max world-width EDGE_SHY - min swap circle-center!
+do
+  energy max-energy / 0.2 > if
+  time robot-sensor-time - 20 > and-if
+	    fire-robot-sensor sync
+	    non-shielded-robot-found^ if
+	      Begin-chasing-enemy& jump
+	    then
+  then
+
+have-food nif
+30 periodic-food-sensor and-if
+	food-found if
+		Food-check-loop:
+		food-velocity norm nif
+		claim-food^ and-if
+			1 have-food!
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+then
+  
+;food code copied from cyclops
+  have-food if
+    food-position position v- 0.08 vs* desired-velocity!
+	reclaim-food^
+	food-position position radius in-range
+	eaten not and if
+		0 have-food!
+	then
+  else
+    population 10 > if
+    circle-center position v- 0.001 vs* 0.08 time 50 / polar-to-rect v+ desired-velocity!
+    else
+     circle-center position v- 0.05 vs* desired-velocity!
+    then
+  then
+
+  energy 30 > if
+    time shot-sensor-time - 8 > if
+        dodge-and-move^
+    shot-found and-if
+      energy max-energy / 0.2 > if
+ 	      set-shot-chase^
+	      Begin-chasing-rumor& jump
+      else
+ 	18 periodic-robot-sensor if ;not enough energy to chase, but shoot while eating
+	robot-found and-if
+		robot-position robot-velocity lead-blaster
+	then
+      then ;energy
+    then ;shot-sense-time and shot found
+  else
+     desired-velocity engine-velocity! engine-max-power engine-power!
+  then
+
+
+  do
+    help-channel receive
+  while
+    received-time! received-position!
+    received-position position dist max-crusade-distance < 
+    time received-time - 40 < and
+      have-rumor if received-position position dist rumor-position position dist < and then ;closer
+    if
+      received-position rumor-position!
+      received-time rumor-time!
+      0 0 rumor-velocity!
+      0 anger!
+      1 have-rumor!
+    then
+  loop
+  
+  have-rumor if
+  time rumor-xmit-time - 20 > and-if
+  energy max-energy / 0.3 > and-if
+    time rumor-xmit-time!
+    rumor-position rumor-time 1.5 4 kill-channel send
+  then
+  
+  time safe-xmit-time - 50 > if
+  energy max-energy / 0.5 > and-if
+    time safe-xmit-time!
+    position time 3 safe-channel send
+  then
+  
+  do
+    kill-channel receive
+  while
+    received-anger! received-time! received-position!
+    received-position position dist max-crusade-distance < if
+    time received-time - 40 < and-if
+	    have-rumor nif
+	      received-position rumor-position!
+	      received-time rumor-time!
+	      1 have-rumor!
+	    then
+	    
+	    received-position rumor-position dist 5 < if
+	      anger received-anger + anger!
+	    then
+    then
+  loop
+  
+  time rumor-time - 70 > if
+    0 have-rumor!
+  then
+  
+  have-rumor if
+  anger 1 type-population sqrt > 0.1 random-bool or and-if
+  energy max-energy / 0.25 > and-if
+    Begin-chasing-rumor& jump
+  then
+  
+  anger 0.93 * anger!
+  
+  energy max-energy / 0.6 < if
+  time hungry-xmit-time - 100 > and-if
+  velocity norm not and-if
+   time hungry-xmit-time!
+   position time 3 hungry-channel send
+  then
+
+forever
+
+Begin-chasing-enemy: ;entered when robot-* is enemy
+      robot-sensor-time enemy-time!
+      robot-velocity enemy-velocity!
+      robot-position enemy-position!
+      robot-distance current-seperation!
+      0 enemy-processed!
+	0 enemy-syphon-rate!
+do
+  energy max-energy / 0.05 < if
+    Begin-waiting& jump
+  then
+  time robot-sensor-time - 8 >= if
+    do
+      time robot-sensor-time - 9 >=
+    until  ;wait for sensing time
+      sync 
+    loop
+    0 robot-sensor-focus-distance!
+    fire-robot-sensor sync
+    non-shielded-robot-found^ if
+      robot-sensor-time enemy-time!
+      robot-velocity enemy-velocity!
+      robot-position enemy-position!
+      robot-distance current-seperation!
+      0 enemy-processed!
+    else
+      Begin-waiting& jump
+    then
+  then
+  
+  enemy-processed nif
+      do
+        blaster-cooldown
+      while
+        sync
+      loop
+      enemy-position enemy-velocity lead-blaster
+
+      1 enemy-processed!
+      enemy-position enemy-time 15 4 kill-channel send
+	enemy-position position v- angle shot-sensor-focus-direction!
+  then ;enemy processed
+
+    time shot-sensor-time - 5 >= dodge-and-move& ifc
+
+  enemy-position
+      enemy-velocity time enemy-time - vs* v+
+      current-enemy-position!
+    current-enemy-position position dist current-seperation!
+    enemy-velocity position current-enemy-position v- unitize dot enemys-closing-speed!
+  
+    ;adjust perpendicular component of velocity to 90% of current, and parallel to maintain good seperation
+
+    current-seperation FIGHT_DIST - 0.03 * ;stack: desired closing speed
+    enemys-closing-speed - current-enemy-position position v- angle polar-to-rect
+    ;stack: closing velocity
+    
+    2dup 100 vs* position v+ out-of-bounds^ if
+      0.07 current-enemy-position position v- angle Pi/2 + polar-to-rect
+    else
+        enemy-velocity 0.5 vs* velocity 0.4 vs* v+ current-enemy-position position v- swap negate project
+    then
+    ;stack: closing-velocity, orbit-velocity
+    v+ desired-velocity!
+    
+    time shot-sensor-time - 5 >= dodge-and-move& ifc
+    current-enemy-position position v- rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+    enemy-syphon-max-rate enemy-syphon-rate!
+forever
+
+set-shot-chase:
+	shot-direction shot-sensor-focus-direction!
+      0 0 rumor-velocity!
+      shot-position shot-velocity unitize shot-power 40 > -15 -10 ifev vs* v+ clamp-pos^ rumor-position!
+      shot-sensor-time rumor-time!
+return
+
+Begin-chasing-rumor:
+  rumor-position rumor-time 10 4 kill-channel send
+do
+  energy max-energy / 0.1 < if
+    Begin-waiting& jump
+  then
+
+  rumor-position position v- unitize desired-velocity!
+
+  time shot-sensor-time - 5 >= if
+  dodge-and-move^
+    shot-found if
+      set-shot-chase^
+    then
+  then
+  
+  time robot-sensor-time - 10 > if
+    1 robot-sensor-sees-enemies!
+    0 robot-sensor-sees-friends!
+    fire-robot-sensor sync
+    non-shielded-robot-found^ if
+      Begin-chasing-enemy& jump
+    then
+  then
+  
+  rumor-position position dist 5 < if
+    Begin-waiting& jump
+  then
+forever
+
+;;#################################################
+#type Gatherer
+;#decoration f0f cross
+#color 0f0
+
+(Devon 20030721) Fixed for syphon changes.
+
+#hardware
+processor 17
+energy 400 30
+armor 120
+engine 0.08
+radio send receive
+
+constructor 1.4
+
+food-sensor 10 4
+shot-sensor 5
+robot-sensor 4
+eater 2
+
+syphon 0.3 18
+
+#code
+
+;shared variables
+#var typical-food-amount
+
+;message received variables
+#vector received-food-position
+#var received-food-amount
+#var received-food-time
+
+#vector next-meal-position
+
+#vector wander-position
+
+#var begin-food-chase-time
+
+#vector birth-place
+
+#vector flee-position
+#var flee-time -1000
+
+Update-stats-food-msg:
+   time received-food-time - 50 < if
+   received-food-position position dist 30 < and-if
+      received-food-amount 0.1 * typical-food-amount 0.9 * + typical-food-amount!
+      
+   then
+
+return
+
+#const edge-space 4
+;this subreutine copied from eventually 12
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+out-of-bounds: ;x y -> bool
+2dup 0 < swap 0 < or if
+  2drop 1 return
+then
+world-height > swap world-width > or return
+
+
+new-wander-position:
+ 0.2 random-bool if
+    birth-place
+ else
+  0.5 random-bool if
+    random-edge-position^
+  else
+    position 20 random-angle polar-to-rect v+ 2dup out-of-bounds nif
+      ;return it
+    else
+      2drop random-edge-position^
+    then
+ then then return
+
+#var last-armor
+Defend:
+  time robot-sensor-time - 20 > if
+    fire-robot-sensor fire-shot-sensor sync
+    last-armor armor > robot-found 1 > or 
+    shot-found or
+    if
+      Call-for-help^
+    then
+     last-armor armor dup last-armor! > shot-found or if
+      rdrop Begin-fleeing& jump
+    then
+  then
+return
+
+call-for-help:
+  position time 3 help-channel send
+return
+
+#start
+position birth-place!
+armor last-armor!
+
+Begin-seeking-food:
+  0 syphon-rate!
+  new-wander-position^ wander-position!
+do
+  constructor-progress energy max-energy / 0.3 > and constructor-max-rate 0 ifev constructor-rate!
+
+  energy max-energy / 0.15 > if
+    defend^
+  then
+
+  wander-position position dist 5 < if
+    new-wander-position^ wander-position!
+  then
+  
+  wander-position position v- unitize energy 50 > time flee-time - 500 > and 0.1 0.05 ifev vs* engine-velocity!
+  engine-max-power engine-power!
+
+
+
+;food code copied from cyclops
+30 periodic-food-sensor if
+	food-found if
+		Food-check-loop:
+		food-velocity norm nif
+		claim-food^ and-if
+    			food-position next-meal-position!
+			Begin-eating-food& jump
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+then  
+  
+  do
+    food-channel receive
+  while
+   received-food-time! received-food-amount! received-food-position!
+   update-stats-food-msg^
+   received-food-amount 10 / received-food-position position dist > if
+    ;ooooooo ffoooooodd
+    received-food-position next-meal-position!
+    Begin-eating-food& jump
+   then
+  loop
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Begin-eating-food:
+  time begin-food-chase-time!
+do
+  next-meal-position seek-location
+  reclaim-food^
+
+  do
+    food-channel receive
+  while
+   received-food-time! received-food-amount! received-food-position!
+   update-stats-food-msg^
+  loop
+
+  constructor-progress if
+    energy max-energy / 0.2 > constructor-max-rate 0 ifev constructor-rate!
+  else
+    energy max-energy / 0.8 > if
+      FIGHTER_TYPE type-population population / 0.16666 - 2 * 
+	population 8 < if 1 min 0 max else 0.2 max 0.8 min then random-bool GATHERER_TYPE FIGHTER_TYPE ifev constructor-type! 
+      constructor-max-rate constructor-rate!
+    else
+      0 constructor-rate!
+    then
+  then
+  
+  energy max-energy / 0.12 > if
+    defend^
+  then
+  #vector sink-position
+  energy max-energy / 0.2 > if
+      hungry-channel receive if
+      time swap - 30 < if
+        2dup position dist syphon-range radius + < if
+          sink-position!
+        else
+          2drop
+        then
+      else
+        2drop
+      then
+      then
+      sink-position or if
+        sink-position position v- rect-to-polar syphon-direction! syphon-distance!
+        syphon-max-rate negate syphon-rate!
+      else
+        0 syphon-rate!
+      then
+  else
+    0 syphon-rate!
+  then
+  
+  
+  eaten not if
+  time begin-food-chase-time - 200 300 random > ;long time
+  position next-meal-position radius in-range or ;on food
+  and-if ;
+    Begin-seeking-food& jump
+  then
+  
+forever
+
+Begin-fleeing:
+  0 syphon-rate!
+  shot-found if
+    15 shot-velocity angle 0.5 random-bool 0.4 -0.4 ifev + position v+ clamp-pos^ flee-position!
+  else
+    robot-found time robot-sensor-time - 20 < if
+      robot-position position v- unitize -20 vs* position v+ clamp-pos^ flee-position!
+    else
+		  do
+		    safe-channel receive
+		  while
+		    time swap - 100 < if
+		      2dup position dist 50 < if
+		        flee-position!
+		        Got-safe-place& jump
+		      else
+		        2drop
+		      then
+		    else
+		      2drop
+		    then
+		  loop
+		  random-edge-position^ flee-position!
+Got-safe-place:
+	  then ;robot-found
+  then ;shot-found
+  time flee-time!
+do
+  flee-position seek-location
+  time flee-time - 75 >
+  flee-position position dist 5 < or
+  energy max-energy / 0.05 < or if
+    Begin-seeking-food& jump
+  then
+forever
+
+#end

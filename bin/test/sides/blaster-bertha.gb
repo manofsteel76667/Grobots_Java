@@ -1,0 +1,1352 @@
+#side Blaster Bertha
+#author Warren
+#color ff2f41
+#seed 1 2 3 3 3 4 3
+
+Like Bertha and the Actives but instead of Big Bertha's grenade/blaster combo it uses a single large blaster.
+One of theses blasts kills most civilians in one shot and most fighters in two.
+
+Blaster Bertha is currently quite a bit better than Big Bertha, but if run against 8 Active 9's then Blaster Bertha gets scores of a few percent whereas Big Bertha does fine.
+
+(This side was originally called Big Bertha for the first week, but I decided the Big Bertha name was much better suited to the grenade-using variant
+so I renamed this one.)
+
+;################ SHARED #################
+#code
+
+;;;;types
+#const GIANT_TYPE 1
+#const CTOR_TYPE 2
+#const GATHERER_TYPE 3
+#const FIGHTER_TYPE 4
+
+;;;;message channels
+;;#const help-channel 1 ;position time
+#const kill-channel 2
+#const safe-channel 3
+;#const hungry-channel 5
+#const noff-channel 6 ; SM_id position
+#const food-channel 10  ;  position amount time
+
+#const hungry-channel 4 ; id type
+
+;;;;;;;;;;;;;;;;shared memory and related;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;001-660 are ally stats. When ALLY_SIZE=10, 10I-9 to 10I stores info for id I, e.g. 001-010 is id 1.
+;format: x y vx vy t energy-level
+;these offsets include the base implicitly, so e.g. velocity of I is at ROBOT_STAT_SIZE * I + ALLY_VEL_OFFSET
+#const ALLY_POS_OFFSET -5
+#const ALLY_VEL_OFFSET -3
+#const ALLY_TIME_OFFSET -1
+#const ALLY_HUNGER_OFFSET -0
+#const NUM_ROBOTS 110
+#const ALLY_SIZE 6 ;;do 10 for easy debugging
+#const UPPER_ROBOT_AREA 660 ;; NUM_ROBOTS * ALLY_SIZE, the highest address in the ALLY shared memory
+
+;701-950 are food claims
+;format: claim-time
+#const FOOD_CLAIM_BASE 701
+#const NUM_FOOD_CLAIMS 250
+
+#const DANGER_TIME 970
+
+#const HOME_CORNER 972 ;;a 0/1 vector
+
+#const COLONY_POSITION 975
+
+#const CORNER_CLEARED 978 ;;0/1 indicator
+
+;981-990 are side records. Currently only one item is stored, namely the time at which we have/will make peace with each side
+#const SIDE_BASE 980
+#const SIDE_SIZE 1
+
+;################# SHARED VARS ######################
+#var temp
+#vector vtemp
+
+#var hunger
+
+#var my-id ;;usually id, but if id>NUM_ROBOTS we assign manually
+
+
+;;;;;;;;;;; real shared code ;;;;;;;;;;;;
+
+
+call-for-help:
+  position time 3 kill-channel send
+return
+
+;; called at initialization to set my-id to an unused slot
+assign-id: ;; --
+	id NUM_ROBOTS <= if
+		id my-id!
+	else
+		;; take a dead 'bots ID
+		ALLY_SIZE ALLY_TIME_OFFSET + temp!
+		do
+			temp read time 1000 - < if
+			sync temp read time 1000 - < and-if ;;sync and check again to avoid two robots claiming same id
+				time temp write ;;claim it
+				temp ALLY_TIME_OFFSET - ALLY_SIZE / my-id!
+				return			 
+			then
+			temp ALLY_SIZE + temp!
+		temp UPPER_ROBOT_AREA > until-loop
+		stop ;;population over NUM_ROBOTS; panic!
+	then
+return
+
+
+;Streamlined version of equivalent from Walled City 2.
+;Looks like it should work on any CPU 7 or greater.
+#var food-hash
+claim-food:
+food-position drop world-width /
+;stack: between 0 and 1
+NUM_FOOD_CLAIMS * floor
+;stack: presumably between 0 inclusive and NUM_FOOD_CLAIMS exclusive
+FOOD_CLAIM_BASE + food-hash!
+;staack empty
+time 400 + ;put on stack for later
+food-hash sync read time < ClaimExpired& ifg
+	;valid claim already
+	not ;;drops and then pushes "0" since time+400 != 0.
+	return
+ClaimExpired:
+;stack: time+400
+	food-hash write
+	1 return
+
+;; adress -- quality
+;; 
+calculate-sink-quality:
+temp!
+temp ALLY_POS_OFFSET + vread position syphon-range in-range ;stack: in-range or not
+temp ALLY_HUNGER_OFFSET + read *
+;stack: quality
+return
+
+#var last-id-announce -1000
+#var energy-sink-adr 0 ; 0 for none.
+#var energy-sink-quality
+#var received-adr
+#var received-type
+
+
+write-our-posn:
+my-id ALLY_SIZE * temp!
+position temp ALLY_POS_OFFSET +
+velocity temp ALLY_VEL_OFFSET +
+time temp ALLY_TIME_OFFSET +
+hunger temp ALLY_HUNGER_OFFSET +
+;;stack: stuff to write
+sync
+write write vwrite vwrite
+return
+
+
+announce-if-hungry:
+time last-id-announce 100 + > if
+hunger 0.05 > and-if
+	my-id 1 hungry-channel send
+	time last-id-announce!
+then
+return
+
+listen-to-hungry:
+energy-sink-adr if
+energy-sink-adr ALLY_TIME_OFFSET + read time 30 - > and-if
+;we have an up to date sink
+ energy-sink-adr calculate-sink-quality^ energy-sink-quality!
+else
+ 0 energy-sink-adr!
+then
+
+  do
+#var skipped
+    0 population 10 / floor random-int dup skipped! hungry-channel skip-messages
+    hungry-channel receive
+  while
+   ALLY_SIZE * received-adr!
+   syphon-range 2 > if    ;; i.e. if this robot is a type with a syphon
+   	update-energy-sink^
+   then
+;   process-announcement^
+  loop
+
+return
+
+;;This function writes our data to shared memory, announces our existence, and listen to other announcements
+;; -- 
+communicate-unused:
+
+;;first write our own stuff
+write-our-posn^
+
+;;second announce if hungry
+announce-if-hungry^
+
+;;third listen to other announcements
+listen-to-hungry^
+return
+
+update-energy-sink:
+   received-adr my-id ALLY_SIZE * = ifr
+   energy-sink-adr replace-sink& nifg
+   received-adr calculate-sink-quality^ temp! temp energy-sink-quality <= ifr
+replace-sink:
+    received-adr energy-sink-adr!
+    temp energy-sink-quality!
+return
+
+;;This function transfers energy to neediest friend in range
+;; -- 
+transfer-energy:
+ energy-sink-adr energy-sink-quality and if
+ energy max-energy / 0.2 > and-if
+ hunger energy-sink-adr ALLY_HUNGER_OFFSET + read < and-if
+  syphon-max-rate negate syphon-rate!
+  energy-sink-adr ALLY_POS_OFFSET + vread position v-
+  energy-sink-adr ALLY_VEL_OFFSET + vread time energy-sink-adr ALLY_TIME_OFFSET + read - 5 + vs* v+
+  velocity 5 vs* v-
+ rect-to-polar syphon-direction! syphon-distance!
+ else
+  0 syphon-rate!
+ then
+return
+
+#type Blaster Bertha
+#color ff0
+#hardware
+  processor 35
+  armor 650
+  repair-rate 0.25
+  engine 0.4
+  energy 1000 200
+  
+  blaster 158 26 50
+  
+  robot-sensor 29 6
+  shot-sensor 7
+  food-sensor 13 5
+  eater 4
+  constructor 1.7
+ 
+  
+#code
+
+
+#const WAKE_ENERGY 180
+#const SHOOT_ENERGY 200
+#const START_CONSTRUCT_ENERGY 600
+#const CONSTRUCT_ENERGY 450
+#const REPAIR_ENERGY 330
+
+#var temp
+
+#vector target-food
+#vector current-waypoint
+#var waypoint-left ;bool, true if waypoint is left side vs bottom
+#var waypoint-second ;bool, true if waypoint is second on side vs first.
+#var waypoint-radius ;scalar
+#const waypoint-gutter 10
+#var world-width-minus-gutters
+#var world-height-minus-gutters
+
+#var eating ;bool
+#var danger-time 0
+
+
+#var corner-left-right
+#var corner-bottom-top
+#vector corner-position
+
+map-*: ;x y a b -- x*a y*b
+rot * rrot * swap ;; How unintuitive
+return
+
+;convert real coords to home-centric ones
+real-to-my-posn: ; x y - x y
+corner-position v- corner-left-right corner-bottom-top map-*
+return
+
+;inverse
+my-posn-to-real: ; x y - x y
+corner-left-right corner-bottom-top map-* corner-position v+
+return
+
+;convert a relative vector in our coords to real or back again
+;(the same because -1*-1=1)
+my-relative-to-real:
+real-to-my-relative:
+corner-left-right corner-bottom-top map-*
+return
+
+set-corner-stuff: ;; a b -- where a,b are 0/1 indicators of which corner we have
+;stack: nearest corner in 0/1 for each
+2dup world-height * swap world-width * swap corner-position!
+-2 vs* 1 1 v+ corner-bottom-top! corner-left-right!
+return
+
+adjust-engine:
+eating if
+ time danger-time < if
+  target-food position radius 3 * in-range if
+  ;passive dodge circling while touching food
+  radius 4 /
+  position target-food v- angle 1 + polar-to-rect target-food v+ position v- engine-velocity!
+  else
+  ;head to food with wiggle
+  target-food position v- 0.05 vs* rect-to-polar time 40 mod 20 > 0.5 -0.5 ifev + polar-to-rect engine-velocity!
+  engine-max-power engine-power! 
+  then
+ else
+  ;straight to food
+  target-food position v- 0.05 vs* engine-velocity!
+  target-food position velocity 5 vs* v+ radius 2 / in-range engine-max-power * engine-power! 
+ then
+
+  engine-max-power engine-power!
+else
+  0.08 current-waypoint position v- angle time danger-time < if time 40 mod 20 > 0.5 -0.5 ifev + then
+  polar-to-rect engine-velocity!
+  engine-max-power engine-power!
+then
+return
+
+set-current-waypoint:
+  waypoint-left if
+    waypoint-radius world-height-minus-gutters < if
+      waypoint-gutter waypoint-gutter waypoint-radius +  
+    else
+      waypoint-radius world-height-minus-gutters - waypoint-gutter + world-height waypoint-gutter - 
+    then
+  else
+    waypoint-radius world-width-minus-gutters < if
+      waypoint-gutter waypoint-radius + waypoint-gutter   
+    else
+      world-width waypoint-gutter - waypoint-radius world-width-minus-gutters - waypoint-gutter +  
+    then
+  then
+  my-posn-to-real^ current-waypoint!
+return
+
+
+#start
+ world-width waypoint-gutter 2 * - world-width-minus-gutters!
+ world-height waypoint-gutter 2 * - world-height-minus-gutters!
+
+ time 20 < if
+	position world-height / round swap world-width / round swap 2dup HOME_CORNER vwrite
+ else
+	HOME_CORNER vread
+ then set-corner-stuff^
+	1 waypoint-left!
+        0 waypoint-second!
+        0 waypoint-radius!
+        set-current-waypoint^
+
+time 20 > if
+do ;;hack to avoid friendly fire on birth
+   current-waypoint seek-location
+energy WAKE_ENERGY < position current-waypoint 10 in-range or until-loop
+then
+
+do
+
+ eating eaten not and target-food position radius in-range and if
+  0 eating!
+ then
+
+
+ eating not time food-sensor-time - 30 > and if
+  
+  robot-found if
+   ;run away
+   position robot-position v- angle food-sensor-focus-direction!
+   robot-sensor-range 5 - robot-distance - food-sensor-focus-distance!
+  else
+   current-waypoint position v- angle food-sensor-focus-direction!
+   5 food-sensor-focus-distance! ;was 4
+  then
+
+  fire-food-sensor sync  
+   
+	food-found if
+		Food-check-loop:
+                food-energy 80 > if
+		claim-food^ and-if
+   food-position target-food!
+   1 eating!
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+ then
+
+ energy SHOOT_ENERGY > blaster-cooldown not and if
+ time robot-sensor-time 30 + > and-if
+  fire-robot-sensor sync
+  robot-found if
+  ;accelerating while firing can mess up aiming of long range shots a bit, on the order of a distance of 0.02*30=0.6. This
+  ; isn't enough to miss most targets, but together with other errors might cause a miss, so maintain steady velocity while firing.
+  ;From the GB source:
+  ; GBWorld::SimOneFrame order: think (includes lead-blaster firing direction computation), move (includes drag), act, collide
+  ; HardwareState::Act order: engine, blaster
+  ;with engine-velocity set to velocity the drag and engine effect cancel and thinking and blaster-acting velocities should match.
+   velocity engine-velocity! engine-max-power engine-power!
+   robot-position robot-velocity lead-blaster
+   robot-sensor-time 100 + danger-time max danger-time!
+   sync ;let the lead-blaster happen
+   adjust-engine^ ;puts engine back in an appropriate state
+  then
+ then
+
+
+ 20 periodic-shot-sensor if
+   shot-found if
+      time 200 + danger-time max danger-time!
+   then
+ then
+
+constructor-type not energy START_CONSTRUCT_ENERGY > and if
+   CTOR_TYPE type-population not if CTOR_TYPE else GATHERER_TYPE then constructor-type!
+ then
+
+
+ constructor-progress 300 > CONSTRUCT_ENERGY START_CONSTRUCT_ENERGY ifev energy < constructor-max-rate * constructor-rate!
+
+
+ energy REPAIR_ENERGY > max-repair-rate * repair-rate!
+
+ current-waypoint position 10 in-range if
+   1 CORNER_CLEARED write ;;is redundant except for first time but that's harmless
+   waypoint-second if
+    waypoint-left not waypoint-left!
+    0 waypoint-second!
+   else
+    1 waypoint-second!
+    world-width world-height + waypoint-gutter 4 * - dup temp! waypoint-radius = if
+	0 waypoint-radius!
+    else
+	    temp 4 / waypoint-radius + temp min waypoint-radius! ;temp/4 was 25
+    then
+    
+   then
+   set-current-waypoint^
+ then
+
+ adjust-engine^
+
+forever
+
+;;#################################################
+#type Ctor
+;#decoration 0f0 cross
+#color 00f
+
+#hardware
+processor 18
+energy 600 3
+armor 120
+engine 0.09
+solar-cells 0.02
+
+shot-sensor 5
+robot-sensor 4
+
+constructor 2.0 ;;2.3
+
+#code
+
+; -- 
+; This procedure responds to a received type/id pair, passed in received-* variables, and responds as needed.
+; For Ctor, we keep track of 
+process-announcement:
+return
+
+
+
+out-of-bounds: ;x y -> bool
+2dup 0 < swap 0 < or if
+  2drop 1 return
+then
+world-height > swap world-width > or return
+
+#var gutter
+
+set-gutter: ;--
+	population GIANT_TYPE type-population 50 * + sqrt 2 * gutter!
+return
+
+keep-away-edges: ; x y -> x y
+gutter max world-height gutter - min swap
+gutter max world-width gutter - min swap
+return
+
+edge-dist: ;x y -> d
+	2dup min swap world-height swap - min swap world-width swap - min
+return
+
+#vector home
+
+#var last-armor
+#var last-birth-time 0
+#var baby-cost
+#var num-children 0
+
+#start
+	max-armor last-armor!
+	assign-id^
+	constructor-type if
+	;;seeded with fetus
+		time last-birth-time!
+		constructor-remaining baby-cost! ;;;hack
+	then
+
+	max-repair-rate repair-rate!
+
+type type-population 1 > if
+	set-gutter^
+	do
+		position 2 population sqrt 4 * + random-angle polar-to-rect v+ home!
+	home edge-dist^ gutter > until-loop
+else
+;;;If giant has gotten to corner that's our home, otherwise current position is the best we can do.
+	CORNER_CLEARED read if 
+         HOME_CORNER vread 2dup world-height * swap world-width * swap 
+        else
+         position
+        then 
+	set-gutter^
+        keep-away-edges^ home!
+        home COLONY_POSITION vwrite
+then
+
+#var loop-time
+do
+
+	friendly-collision position home 3 in-range and if position 1 random-angle polar-to-rect v+ home! then
+	;;fix home here
+	set-gutter^
+	home keep-away-edges^ home!
+
+
+	time loop-time!
+
+	position sync COLONY_POSITION vread 100 vs* v+ 101 vs/ COLONY_POSITION vwrite ;;move colony position towards us
+
+	constructor-type nif
+		last-birth-time if
+#var power-consumption
+			baby-cost time last-birth-time - / power-consumption!
+			;base type on how long it's taken us to reproduce
+		constructor-max-rate 1.0 num-children 0.1 * - 0.7 max * power-consumption < and-if
+                	CTOR_TYPE constructor-type!
+		else
+			;either we're newly born ourselves or else reproduction was slow last time.
+			FIGHTER_TYPE type-population population / 0.45 / 1 min random-bool GATHERER_TYPE FIGHTER_TYPE ifev constructor-type!
+		then
+
+		constructor-remaining constructor-type CTOR_TYPE = if 0.5 * then baby-cost! ;contains hack so we don't build CTOR twice in  a row
+		time last-birth-time!
+		num-children 1 + num-children!
+	then
+	constructor-progress 200 > 0.04 0.2 ifev max-energy * energy < constructor-max-rate 0 ifev constructor-rate!
+
+#var last-danger-time -555
+	14 periodic-shot-sensor if
+		shot-found if
+			shot-sensor-time last-danger-time!	
+			time 300 + shot-side SIDE_BASE + write 
+  			call-for-help^
+			home position 5 in-range nif
+				position shot-velocity unitize 15 vs* v+ home!
+			else
+				shot-velocity unitize 3 population sqrt + vs* home v+ home! 
+			then
+		then
+	then
+
+	30 periodic-robot-sensor if
+		robot-found if
+			robot-sensor-time last-danger-time!			
+		then
+	then
+
+	armor dup last-armor < if
+		time last-danger-time!
+	then
+	last-armor!
+
+	time last-danger-time 200 + < if
+		home position v- 0.05 vs*
+		0.2 time 9 / polar-to-rect v+ engine-velocity! ;;period is 2pi * 7
+		engine-max-power engine-power!
+	else
+		home seek-location
+	then
+
+	1 energy max-energy / - 1.5 / 0.8 energy exponent + hunger!
+      write-our-posn^
+      announce-if-hungry^
+forever
+
+;;#################################################
+#type Gatherer
+;#decoration 0f0 cross
+#color 0f0
+
+#hardware
+processor 23
+energy 400 15
+armor 150
+engine 0.05
+
+food-sensor 9 3
+shot-sensor 5
+robot-sensor 4
+eater 2.0
+
+syphon 1.4 30 
+
+#code
+
+assert-stack-empty:
+	stack nifr
+	pause
+	return
+
+;shared variables
+#var typical-food-amount
+
+;message received variables
+#vector received-food-position
+#var received-food-amount
+#var received-food-time
+
+#vector next-meal-position
+
+#vector wander-position
+
+#var begin-food-chase-time
+
+#vector birth-place
+#var scary-shot-found 0
+
+#var flee-type
+#vector flee-position
+#var flee-time
+
+Update-stats-food-msg:
+   time received-food-time - 50 < if
+   received-food-position position dist 30 < and-if
+      received-food-amount 0.1 * typical-food-amount 0.9 * + typical-food-amount!
+   then
+return
+
+#const edge-space 4
+;this subreutine copied from eventually 12
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+out-of-bounds: ;x y -> bool
+2dup 0 < swap 0 < or if
+  2drop 1 return
+then
+world-height > swap world-width > or return
+
+#const gutter 5
+keep-away-edges: ; x y -> x y
+gutter max world-height gutter - min swap
+gutter max world-width gutter - min swap
+return
+
+new-wander-position:
+  population 30 > if
+    random-edge-position^
+  else
+	birth-place 25 population + random-angle polar-to-rect v+ keep-away-edges^
+ then 
+return
+
+#var last-armor
+Defend:
+  energy max-energy / 0.1 > if
+  time robot-sensor-time - time flee-time 300 + > 15 8 ifev > if
+    fire-robot-sensor fire-shot-sensor sync
+    shot-found shot-side side <> shot-type 3 <> or and scary-shot-found!  ;;shot-type 3 is friendly-syphon
+    scary-shot-found if ;;ignore friendly-syphons.
+	Call-for-help^
+;;Same-side recording is harmless
+;	shot-side side <> if
+		time 300 + shot-side SIDE_BASE + write
+;	then
+    else
+    	last-armor armor > robot-found if robot-found 2 >= robot-side SIDE_BASE + read time > or or then Call-for-help& ifc
+    then
+
+  then ;time to fire sensor
+  else
+   ;no energy to sense
+   0 scary-shot-found!
+  then
+  last-armor armor dup last-armor! > scary-shot-found or energy max-energy / 0.05 > and if
+     rdrop Begin-fleeing& jump
+  then
+return
+
+
+common:
+	CTOR_TYPE type-population 6 <= if
+		COLONY_POSITION vread birth-place!
+	then
+      0.7 energy exponent hunger!
+      write-our-posn^
+      listen-to-hungry^
+      announce-if-hungry^
+      transfer-energy^
+return
+
+;;;;;;;;;;; START
+#start
+1 shot-sensor-sees-friendly!
+assign-id^
+position birth-place!
+
+Begin-seeking-food:
+  armor last-armor!  
+  new-wander-position^ wander-position!
+do
+ common^
+
+;  energy max-energy / 0.08 > if
+    defend^
+ ; then
+
+  wander-position position dist 5 < if
+    new-wander-position^ wander-position!
+  then
+  
+  wander-position position v- unitize 0.2 0.09 energy max-energy / 0.02 > ifev vs* engine-velocity!
+  engine-max-power engine-power!
+
+birth-place position v- rect-to-polar food-sensor-focus-direction! 4 / food-sensor-focus-distance!
+;food code copied from cyclops
+30 periodic-food-sensor if
+	food-found if
+		Food-check-loop:
+		food-velocity norm nif
+		claim-food^ and-if
+    			food-position next-meal-position!
+			Begin-eating-food& jump
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+then  
+  
+	transfer-energy^ ;;also called in common^
+  do
+    food-channel receive
+  while
+   received-food-time! received-food-amount! received-food-position!
+   update-stats-food-msg^
+   received-food-amount 10 / received-food-position position dist > if
+    ;ooooooo ffoooooodd
+    received-food-position next-meal-position!
+    Begin-eating-food& jump
+   then
+  loop
+forever
+
+adjust-engine-eating:
+ time flee-time 500 + < if
+ next-meal-position position radius 2 * in-range and-if
+  ;passive dodge circling while touching food
+  0.05 radius 3 / position next-meal-position v- angle 1 + polar-to-rect next-meal-position v+ position v- angle polar-to-rect engine-velocity!
+  engine-max-power engine-power!
+ else
+  ;straight to food
+  next-meal-position position v- 0.07 vs* engine-velocity!
+  next-meal-position position velocity 5 vs* v+ radius 2 / in-range not engine-max-power * engine-power! 
+ then
+return
+
+
+Begin-eating-food:
+  time begin-food-chase-time!
+do
+
+  adjust-engine-eating^
+
+ common^
+
+  adjust-engine-eating^
+
+  do
+    food-channel receive
+  while
+   received-food-time! received-food-amount! received-food-position!
+   update-stats-food-msg^
+  loop
+  
+;  energy max-energy / 0.05 > if
+    defend^
+;  then  
+
+  adjust-engine-eating^
+
+  transfer-energy^
+  
+
+  adjust-engine-eating^
+
+  eaten not if
+  time begin-food-chase-time - 200 300 random > ;long time
+  position next-meal-position radius in-range or ;on food
+  and-if ;
+    Begin-seeking-food& jump
+  then
+  
+ energy max-energy / 0.99 > birth-place position 25 in-range energy-sink-adr energy-sink-quality and and not and Begin-homing& ifg
+forever
+
+Begin-fleeing:
+  scary-shot-found if
+    ;;run away from both shot position and shot velocity.
+    ;;this calculation ensures we never flee towards either.
+    position shot-position v- rect-to-polar swap 1.5 > swap polar-to-rect ;;unit vector if norm >1, zero otherwise. This means relative  position of close shots ignored.
+    shot-velocity unitize shot-side side = if vnegate then
+    v+ unitize 15 vs* position v+ flee-position!
+	1 flee-type!
+;    shot-side side <> if
+;	   15 shot-velocity angle polar-to-rect position v+ flee-position!
+ ;   else
+;	;;it's our team's shot. Run away from the shot itself (a combat zone)
+ ;           position shot-position v- unitize 15 vs* position v+ flee-position!
+  ;  then
+  else
+    robot-found time robot-sensor-time - 20 < and if
+      robot-position position v- unitize -20 vs* position v+ flee-position!
+      2 flee-type!
+    else
+#comment
+		  do
+		    safe-channel receive
+		  while
+		    time swap - 100 < if
+		      2dup position dist 50 < if
+		        flee-position!
+		        Got-safe-place& jump
+		      else
+		        2drop
+		      then
+		    else
+		      2drop
+		    then
+		  loop
+;		  random-edge-position^ flee-position!
+Got-safe-place:
+#code
+;	velocity norm if
+;		13 velocity angle pi + polar-to-rect position v+ flee-position!	3 flee-type!
+;        else
+		13 birth-place position v- angle polar-to-rect position v+ flee-position! 4 flee-type!
+;	then
+	  then ;robot-found
+  then ;shot-found
+  time flee-time!
+
+;  armor last-armor!
+do
+ common^
+  0.3 flee-position position v- angle time flee-time - 80 mod 40 >= 0.6 -0.6 ifev + polar-to-rect engine-velocity!
+  engine-max-power engine-power!
+  time flee-time - 85 >
+  flee-position position dist 4 < or
+  energy max-energy / 0.02 < or if
+    Begin-seeking-food& jump
+  then
+
+  energy max-energy / 0.05 >
+  time flee-time - 100 > and if
+  time shot-sensor-time - 15 > and-if
+    fire-shot-sensor sync
+    shot-found shot-side side <> shot-type 3 <> or and scary-shot-found!  ;;shot-type 3 is friendly-syphon
+    scary-shot-found if ;;ignore friendly-syphons.
+	Call-for-help^
+	time 300 + shot-side SIDE_BASE + write
+    ;;run away from both shot position and shot velocity.
+    ;;this calculation ensures we never flee towards either.
+    position shot-position v- rect-to-polar swap 1.5 > swap polar-to-rect ;;unit vector if norm >1, zero otherwise. This means relative  position of close shots ignored.
+    shot-velocity unitize shot-side side = if vnegate then
+    v+ unitize 15 vs* position v+ flee-position! 5 flee-type!
+    then
+
+  else
+    0 scary-shot-found! ;;is this needed?
+  then ;time to fire sensor
+
+forever
+
+
+Begin-homing:
+do
+ common^
+  birth-place seek-location
+
+  birth-place position 20 in-range 
+  energy max-energy / 0.3 < or if
+    Begin-seeking-food& jump
+  then
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Fighter
+#type Fighter
+#decoration fcc cross
+#color f00
+#hardware
+energy 700 80 ;;includes extra for syphon resistance
+armor 180
+repair-rate 0.025
+processor 50 ;to dodge in a few frames
+engine 0.15
+
+robot-sensor 15 3
+shot-sensor 9 4
+
+blaster 40.4 14.5 26 ; large blaster
+
+enemy-syphon 0.0 13.5 ;negligible
+
+#code
+
+#var temp2
+#const pseudo-max-energy 400
+#const RUN_HOME_ENERGY 100
+
+;communication with Dodge-and-move:
+#vector desired-velocity 0 0
+#var speed-slop 0.01
+
+;communication with Eat-and-move:
+#vector desired-position
+
+random-position:
+	0 world-width random 0 world-height random
+return
+
+;returns distance to nearest wall
+wall-distance: ; -> dist
+	position min
+	world-size position v- min
+	min return
+
+#const WALL_OFFSET 5
+restrict-location: ;x y -> x y
+world-height WALL_OFFSET - min WALL_OFFSET max swap
+world-width WALL_OFFSET - min WALL_OFFSET max swap return
+
+
+
+#const FIGHT_DISTANCE 12 ;14
+#var CRUSADE_DIST
+#const MIN_CRUSADE_DIST 10
+
+#var have-crusade 0
+#var crusade-time
+#vector crusade-position
+#vector birth-place
+#var wander
+#var wait-far-from-home-factor ;;between 0 and 8
+
+buddy-quality: ;; id -> quality
+	ALLY_SIZE * temp!
+	temp ALLY_TIME_OFFSET + read time 50 - < if
+		0 ;;out of date record
+	else
+		1000 temp ALLY_POS_OFFSET + vread position dist -
+	then
+return
+
+#var buddy-one-id 70
+#var buddy-two-id 75
+#var buddy-one-quality
+#var buddy-two-quality
+#var buddy-rec-id
+#var buddy-rec-quality
+#vector buddy-one-pos
+#vector buddy-two-pos
+#vector buddy-one-cur-pos
+#vector buddy-two-cur-pos
+#vector buddy-one-vel
+#vector buddy-two-vel
+#var buddy-one-time
+#var buddy-two-time
+#var have-target ;;bool
+
+#vector wander-loc -99 -99
+
+#const gutter 11
+keep-away-edges: ; x y -> x y
+gutter max world-height gutter - min swap
+gutter max world-width gutter - min swap
+return
+
+#start
+;shot-sensor-firing-cost print
+0.3 random-bool FIGHTER_TYPE type-population 4 >= and wander!
+assign-id^
+22 45 random-int CRUSADE_DIST!
+5 20 random wait-far-from-home-factor!
+position birth-place!
+position desired-position!
+
+Begin-normaling:
+do
+
+       CTOR_TYPE type-population 6 <= if
+		COLONY_POSITION vread birth-place!
+	then
+	birth-place keep-away-edges^ birth-place!
+
+
+;;;;keep track of two nearest buddies (as defined in buddy-quality proc)
+#var buddy-announce-time -999
+	time buddy-announce-time - 50 > if
+		my-id 1 noff-channel send
+		time buddy-announce-time!
+	then
+
+
+	buddy-one-id buddy-quality^ buddy-one-quality!
+	buddy-two-id buddy-quality^ buddy-two-quality!
+
+	dodge-and-move^
+
+	do noff-channel receive
+	while
+		; id
+		buddy-rec-id!
+		buddy-rec-id my-id <> buddy-rec-id buddy-one-id <> buddy-rec-id buddy-two-id <> and and if
+		buddy-rec-id buddy-quality^ buddy-rec-quality!
+		buddy-rec-quality buddy-one-quality buddy-two-quality min > and-if
+			;;replace one of them
+			buddy-one-quality buddy-two-quality < if
+				buddy-rec-id buddy-one-id!
+				buddy-rec-quality buddy-one-quality!
+			else
+				buddy-rec-id buddy-two-id!
+				buddy-rec-quality buddy-two-quality!
+			then
+
+		then
+	loop
+
+	dodge-and-move^
+
+
+	energy pseudo-max-energy / shot-found 0.09 0.2 ifev > No-target& nifg
+
+Wait: ;;unused label
+	do
+		blaster-cooldown
+	while
+		blaster-cooldown 2 >= if sync dodge-and-move^ else sync then
+	loop
+
+Scan: ;;unused label
+	robot-sensor-time robot-found have-crusade or blaster-reload-time 60 ifev +
+	time <= if
+				sync
+				buddy-one-id ALLY_SIZE * temp!
+				temp ALLY_POS_OFFSET + vread buddy-one-pos!
+				temp ALLY_VEL_OFFSET + vread buddy-one-vel!
+				temp ALLY_TIME_OFFSET + read buddy-one-time!
+				buddy-one-pos buddy-one-vel time buddy-one-time - vs* v+ buddy-one-cur-pos!
+
+				buddy-two-id ALLY_SIZE * temp!
+				temp ALLY_POS_OFFSET + vread buddy-two-pos!
+				temp ALLY_VEL_OFFSET + vread buddy-two-vel!
+				temp ALLY_TIME_OFFSET + read buddy-two-time!
+				buddy-two-pos buddy-two-vel time buddy-two-time - vs* v+ buddy-two-cur-pos!
+
+		fire-robot-sensor sync
+		robot-found if
+			NextRobot:
+				robot-position robot-velocity 50 vs* v+ position 7 population sqrt + in-range if
+					time 300 + robot-side SIDE_BASE + write
+				then
+				robot-side SIDE_BASE + read FIGHTER_TYPE type-population 8 > if 5000 + then
+				time < TryNextTarget& ifg ;;not hostile
+			
+;;				blaster-cooldown NoShoot& ifg ;;unnecessary conditioning?
+				robot-position 
+				robot-velocity velocity v- robot-distance blaster-speed / vs* v+ position v- unitize blaster-speed vs*  velocity v+ vtemp!
+				;vtemp is velocity of blaster after firing.
+
+				buddy-one-cur-pos position v- vtemp dot 0 > buddy-one-quality and if
+				buddy-one-cur-pos position v- buddy-one-vel vtemp v- unitize cross abs 1.5 < NoShoot& ifg
+				then
+
+				buddy-two-cur-pos position v- vtemp dot 0 > buddy-two-quality and if
+				buddy-two-cur-pos position v- buddy-two-vel vtemp v- unitize cross abs 1.5 < NoShoot& ifg
+				then
+
+				robot-position robot-velocity lead-blaster
+
+				NoShoot:
+
+				dodge-and-move^
+
+				1 have-crusade!
+				time crusade-time!
+				robot-position crusade-position!
+
+				;call for help if they're closing us, they're reloading, or we see a shot
+				robot-velocity robot-position position v- unitize dot -0.1 < robot-reloading or shot-found or if
+					robot-position robot-sensor-time 3 kill-channel send
+				then
+
+
+				robot-position robot-velocity 10 vs* v+ vtemp!
+				FIGHT_DISTANCE birth-place vtemp dist 5 - 5 max min ;;FIGHT_DISTANCE, but closer if close to home
+				position vtemp v- angle ;;time 5 / my-id + reorient 30 / +
+				polar-to-rect
+				vtemp v+
+				;;stack: tentative desired position
+				;;Now add correction to stay away from buddies
+				buddy-one-quality if
+					position buddy-one-cur-pos v- rect-to-polar
+					;stack: tent-des-pos ally-dist ally-angle
+					swap 1 max reciprocal square swap polar-to-rect v+ 
+				then
+				buddy-two-quality if
+					position buddy-two-cur-pos v- rect-to-polar
+					;stack: tent-des-pos ally-dist ally-angle
+					swap 1 max reciprocal square swap polar-to-rect v+ 
+				then
+				desired-position!
+				;;stack empty
+				1 have-target!
+				Done-targeting& jump
+TryNextTarget:
+			next-robot NextRobot& ifg
+		then
+	else
+		Done-targeting& jump
+	then ;time to fire
+	
+No-target:
+	0 have-target!
+
+	have-crusade if
+	crusade-position position 5 in-range 
+	time crusade-time - 200 > or
+	and-if
+			0 have-crusade!
+	then
+
+        dodge-and-move^
+
+
+		
+	have-crusade nif
+	energy pseudo-max-energy / 0.3 > and-if
+		kill-channel messages 2 - 0 max 0 random-int kill-channel skip-messages
+		do
+			kill-channel receive
+		while
+			;stack: x y t
+			crusade-time! crusade-position!
+			time crusade-time - 100 < if ;newish
+			crusade-position position dist CRUSADE_DIST < and-if
+			crusade-position position dist MIN_CRUSADE_DIST > and-if
+				1 have-crusade!
+				done-chatting& jump
+			then ;acceptable crusade
+		loop Done-chatting:
+	then ;have-crusade not
+
+	dodge-and-move^
+
+	have-crusade if
+	energy pseudo-max-energy / 0.15 > and-if	
+		energy pseudo-max-energy / 0.2 > if
+			crusade-position
+		else
+			position
+		then
+		desired-position!
+	else
+                population 10 < if
+			population temp!
+		else
+			population sqrt wait-far-from-home-factor * energy RUN_HOME_ENERGY < if 0.5 * then temp!
+                then
+		position birth-place temp in-range nif
+			birth-place
+		else
+			energy pseudo-max-energy / 0.5 > if
+			wander and-if
+				wander-loc birth-place temp in-range not wander-loc position 5 in-range or if
+					birth-place temp random-angle polar-to-rect v+ restrict-location^ wander-loc!
+				then
+				wander-loc
+			else
+				position
+			then
+		then
+		desired-position!
+	then ;have crusade
+	
+Done-targeting: ;;jump here if we have a target
+	eat-and-move^
+	dodge-and-move^
+
+	energy pseudo-max-energy / 0.2 > max-repair-rate 0 ifev repair-rate!
+
+	write-our-posn^
+	1 energy pseudo-max-energy / - hunger!
+        announce-if-hungry^
+
+	Dodge-and-move^
+forever
+
+#const MAX_SPEED 0.19
+
+
+;in: desired-position
+;out: desired-velocity, speed-slop
+;As might be guessed from the name this procedure used to be responsible for eating too.
+;Now that this fighter no longer eats it might be cleaner to have the main code set desired-velocity directly and eliminate this  procedure.
+eat-and-move:
+	desired-position position v- rect-to-polar
+	swap 0.05 * MAX_SPEED min swap
+	polar-to-rect desired-velocity!
+	radius 0.05 * speed-slop!
+return ;end of eat-and-move
+
+
+#var shots-angle 0   ;;;the angle which the shots we're dodging are coming from (for sensor-focus aiming)
+#var last-danger-time -500 ;;;shot-sensor is fired more frequently after danger
+#vector assumed-self-velocity ;;;an initial guess at our velocity in the near future
+#vector dv  ;;;;shot-velocity assumed-self-velocity v-
+#vector perp_hat ;;;;a unit vector perpendicular to dv (rotated 90 degrees CCW)
+#var assumed_miss ;;;miss distance if we travel at asssumed-self-velocity
+#const MIN_MISS_DIST 2.1 ;;;minimum acceptable distance between shot center and our center
+;#const MIN_GRENADE_MISS_DIST 3 ;;grenades have shot-type 2. Treating grenades differently is not worth the extra 5ish instructions  probably.
+#vector dodged-shot-posn ;;for debugging, the position of the shot we dodged
+#var shot-sense-time ;;for debug
+;Dodge has inputs:
+;-desired-velocity, the desired medium-term engine velocity
+;-speed-slop, the amount the velocity can differ before engine is used
+;Dodge then sets engine-velocity and power to avoid shots while staying as close to desired-velocity as possible.
+Dodge-and-move:
+	time shot-sensor-time - time last-danger-time 100 + > 8 5 ifev < ifr
+	write-our-posn^ ;;not really dodge and move related but it wants to be done a lot
+	energy pseudo-max-energy / 0.05 < Obey-user& ifg
+
+	;do as much computation as possible before firing shot sensor to get up-to-date info		
+	desired-velocity rect-to-polar swap 0.05 min swap polar-to-rect vtemp! ;;vtemp is desired-vel limited to speed 0.1
+	velocity vtemp dist 0.05 <= if
+		vtemp
+	else
+		velocity vtemp v- unitize -0.05 vs* velocity v+
+	then
+	assumed-self-velocity!
+
+	;stack empty
+
+	6 shot-sensor-focus-distance! shots-angle shot-sensor-focus-direction!
+
+;;;From here until engine-velocity is set instructions have been squeezed out.
+
+;;;; Here through the commented-out HaveShot label is structured weird to save a few precious instructions.
+;;;; No unnecessary jumps but hard to read.
+	fire-shot-sensor sync
+        shot-sensor-time shot-sense-time! ;;for debug
+	shot-found Obey-User& nifg
+shot-process-loop:
+	shot-velocity norm 2 < CheckPos& ifg
+NextShot:
+	next-shot shot-process-loop& ifg
+Obey-User: ;This ObeyUser stuff doesn't belong here, but putting it here saves an instruction (pushing address for ifeg).
+	desired-velocity
+	shot-found 2 > if 0.1 time 7 / polar-to-rect v+ then   ;;;passive dodge
+	engine-velocity!
+	velocity desired-velocity v- norm speed-slop < 0 engine-max-power ifev engine-power!
+	CheckNewHostiles& jump			
+CheckPos:
+	;don't dodge super-fast shots such as force fields
+	shot-velocity assumed-self-velocity v- dv!
+	dv unitize shot-position position v- dot
+	-2.0 < NextShot& nifg ;;don't dodge shots too late to dodge
+	dv norm 0.05 < NextShot& ifg ;;prevents divide by zero errors from dv norm and dv project.
+
+;HaveShot:
+#var dodging-needed
+	dv unitize negate swap perp_hat! ;;perp_hat is a unit vector perpendicular to dv (rotated pi/2 CCW)
+;;one of the key ideas of this active dodging routine is to express vectors in a basis of dv and perp_hat.
+	perp_hat shot-position position v- dot assumed_miss!
+	;negative "assumed_miss" means shot miss to left, dodge right (facing shot's origin) if we go assumed_vel
+	;positive means    miss right dodge left
+	
+perp_hat ;;put on stack for use in a while
+;The following line has a bug if assumed_miss==0, but who cares as that's unlikely and using signum saves a few instructions.
+shot-position position v- perp_hat MIN_MISS_DIST assumed_miss signum * vs* v-
+;stack: perp_hat, our change in position before intercept if shot is to barely miss
+shot-distance dv norm / ;this line is time to intercept.
+vs/ shot-velocity v+ ;stack: perp_hat, velocity so that we barely miss
+2 vs* velocity v- ;;adjust velocity by twice to account for slow acceleration
+perp_hat dot ;;target velocity to barely miss, perp_hat direction
+0.25 min -0.25 max ;;limit attempted speed to attainable
+desired-velocity perp_hat dot
+;;now the stack has the old perp_hat, perp_hat component velocity to barely miss, and perp_hat component velocity if we
+;; don't dodge and simply go at desired. Now we see if desired velocity would allow us tomiss.
+	assumed_miss 0 > if
+		2dup < dodging-needed! min
+	else	
+		2dup > dodging-needed! max
+	then
+;stack: perp_hat, desired perp_hat component of engine_velocity
+	vs* ;use the perp_hat pushed on stack many lines ago
+	dodging-needed nif desired-velocity else assumed-self-velocity then dv project v+
+	engine-velocity!
+;stack empty now
+
+	engine-max-power engine-power!
+
+	shot-velocity angle pi + shots-angle!
+	shot-position dodged-shot-posn! ;;for debugging
+
+CheckNewHostiles:
+	shot-found if
+
+		;have-crusade nif
+		shot-velocity norm have-target not and if
+			shot-position shot-velocity -100 vs* v+ crusade-position!
+			shot-sensor-time crusade-time!
+			1 have-crusade!
+		then
+
+		time last-danger-time!
+		do
+			time 500 + shot-side SIDE_BASE + write 
+		next-shot while-loop
+	then
+	return
+;end of Dodge subroutine
+
+#end

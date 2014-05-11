@@ -1,0 +1,142 @@
+#side Forest Fighters
+#author Alexander
+#color 006600
+
+#code
+;;List of Radios
+#const radio-need-food 2
+#const radio-unit-food 3
+#const radio-enemyglobal 4
+
+#type Fighter
+#color 000000
+#decoration 000000 cross
+#hardware
+constructor 1
+engine 0.05
+processor 10
+energy 500 50
+armor 200
+repair-rate .2
+food-sensor 5
+robot-sensor 8
+eater 1
+enemy-syphon 2 2
+blaster 10 2 10
+radio receive send
+#code
+#vector home-location
+#vector wander-location
+#var last-armor
+
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position id 3 radio-need-food send
+  time 20 0 5 random-int + + food-next-call-time!
+return
+
+armor-repair: 50 energy < max-repair-rate 0 ifev repair-rate! return
+new-wander-location: 0 world-width random 0 world-height random wander-location! return
+
+check-armor:
+energy 250 < if 0 constructor-rate! else 1 constructor-type! constructor-max-rate constructor-rate! then
+check-for-enemy^
+armor-repair^
+armor last-armor < if
+  position 2 radio-enemyglobal send ;;Send enemy notice
+  30 periodic-robot-sensor if robot-position + 0 <> and-if attack-mode^ then
+then
+armor last-armor!
+return
+
+#start
+;;Init
+position home-location!
+new-wander-location^
+armor last-armor!
+
+get-food:
+0 enemy-syphon-rate!
+do
+  check-armor^
+  eaten not if 44 periodic-food-sensor drop then ;;If last fired is more than 44 frames and has not eaten, fire food sensor
+  food-found if
+    food-position seek-location
+  else
+    wander-location seek-location
+    position wander-location 3 in-range if new-wander-location^ then
+  then
+energy 495 > until-loop
+feed& jump
+
+go-to-safety:
+do
+  home-location position 2 in-range nif 
+    home-location seek-location
+  else
+    0 engine-power!
+    call-for-food^
+  then
+  armor-repair^
+armor 110 < while-loop
+armor last-armor!
+return
+
+#var friend-id
+#vector friend-position
+#var lock-id
+#var forced-lock-on
+feed:
+0 lock-id!
+disable-lock-on^
+enemy-syphon-max-rate negate enemy-syphon-rate!
+do
+  disable-lock-on^ ;;Just in case we are syphoning to somewhere that does not exist.
+  check-armor^
+  radio-need-food messages if
+    radio-need-food receive drop friend-id! friend-position!
+	lock-id friend-id = feed-need-to-change& ifg
+	forced-lock-on feed-no-need-to-change& ifg
+	0.3 random-bool if 1 forced-lock-on! feed-need-to-change& jump then ;;Give chance...
+	friend-position position dist wander-location position dist > feed-no-need-to-change& ifg
+	feed-need-to-change:
+	friend-position wander-location!
+	friend-id lock-id!
+	feed-no-need-to-change:
+  then
+  position wander-location v- unitize 2 vs* wander-location v+ seek-location
+  wander-location position v- rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+energy 200 < until-loop
+radio-need-food clear-messages
+get-food& jump
+
+#var next-check-time
+disable-lock-on:
+  time next-check-time < ifr
+  enemy-syphoned nif 0 forced-lock-on! then
+  time 200 + next-check-time!
+return
+
+#var do-not-check
+;;;;;Attack Mode.
+attack-mode:
+1 do-not-check!
+enemy-syphon-rate
+enemy-syphon-max-rate enemy-syphon-rate!
+do
+  10 periodic-robot-sensor drop
+  robot-position robot-velocity lead-blaster
+  call-for-food^
+  robot-position robot-velocity seek-moving-location
+  robot-position position v- rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+robot-position + 0 = until-loop
+enemy-syphon-rate!
+0 do-not-check!
+;go-to-safety^
+return
+
+check-for-enemy:
+  do-not-check nif 30 periodic-robot-sensor and-if robot-position + 0 <> and-if attack-mode^ then
+return
+#end

@@ -1,0 +1,125 @@
+#side Carrier has arrived
+#color 0CF
+#seed 1 3 3 3
+
+#type Carrier
+#hardware
+  processor 20
+  engine 0.1
+  solar-cells 0.22
+  eater 5
+  constructor 5
+  energy 1500 0
+  robot-sensor 30 10
+  food-sensor 10 1
+  armor 500
+#code
+#vector move-target 0 0
+#var frequency 90
+
+#start
+position move-target!
+do
+  constructor-type nif
+    2 type-population 3 type-population > if
+      3 constructor-type!
+    else
+      2 constructor-type!
+    then
+  then
+  energy max-energy < eaten not and if
+    energy 300 < if
+      0 constructor-rate!
+    else
+      constructor-max-rate constructor-rate!
+    then
+    position move-target radius in-range if
+      0 world-width random 0 world-height random move-target!
+    then
+    50 periodic-food-sensor if
+      food-found if
+        food-position move-target!
+      then
+    then
+  else
+    constructor-max-rate constructor-rate!
+    position move-target!
+  then
+  move-target seek-location
+  position 1 vwrite
+  frequency periodic-robot-sensor if
+    robot-found if
+      1 3 write
+      robot-position 4 vwrite
+      robot-velocity 6 vwrite
+      30 frequency!
+    else
+      0 3 write
+      90 frequency!
+    then
+  then
+forever
+
+#type Interceptor
+#color F00
+#hardware
+  processor 10
+  syphon 1 10
+  engine 0.3
+  robot-sensor 2 1
+  energy 200 50
+  armor 250
+  blaster 100 1 50
+#code
+
+#start
+syphon-max-rate syphon-rate!
+do
+  1 vread position dist syphon-distance!
+  1 vread position v- angle syphon-direction!
+  robot-sensor-time 4 + time <= if
+    fire-robot-sensor sync
+    robot-found if
+      robot-position robot-velocity lead-blaster
+    then
+  then
+  3 read energy 50 > and robot-found not and if
+    4 vread seek-location
+  else
+    robot-found energy 50 > and if
+      robot-position seek-location
+    else
+      1 vread position dist 5 > if
+        1 vread seek-location
+      else
+        position seek-location
+      then
+    then
+  then
+forever
+
+#type Support
+#color 0F0
+#hardware
+  processor 10
+  syphon 0.42 10
+  solar-cells 0.43
+  engine 0.1
+  robot-sensor 2 1
+  energy 100 0
+  armor 100
+#code
+
+#start
+syphon-max-rate negate syphon-rate!
+do
+  1 vread position dist syphon-distance!
+  1 vread position v- angle syphon-direction!
+  1 vread position dist 5 > if
+    1 vread seek-location
+  else
+    position seek-location
+  then
+forever
+
+#end

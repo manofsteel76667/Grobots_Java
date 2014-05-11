@@ -1,0 +1,828 @@
+#side The Borg Cube
+#seed 1 3 2 2
+;#color 111
+#color 999
+#author Max
+
+;unfinished version
+
+#code
+;variables
+#var x
+#var y
+#var mag
+#var ang
+#var distance
+#var timer
+#var waittimer
+#var test
+#var orbitdirection 0
+#var EDD 2; used to determine when to share energy
+#var storage-position; used by analysis
+#var enemy-id
+#var true
+#var true-id
+#var selves
+#var pin
+#var wut
+#var boot 1
+#var holdfactor
+#var blaster-angle
+
+;vectors
+#vector target
+#vector target2
+#vector home
+#vector holdat
+#vector vinc-pos
+
+;constants
+#const timeout 20
+
+;chans
+#const energy-share-chan 1 ; 2
+#const overall-borg-position 3 ; 4
+#const obp-counter 5
+#const total-energy 6
+#const average-energy 7
+#const average-energy-counter 8
+#const reserved 9
+#const vinc-pos-chan 10 ; 11
+#const reserved 12 ; 13
+#const collective-force-field-vector 14 ; 15
+#const collective-force-field-angle 16
+#const CollectiveFoodSensor 17; 18
+#const Collective-Targeting-pos 19 ; 20
+#const Collective-Targeting-vel 21 ; 22
+#const Collective-Targeting-timer 23
+#const SE-cube-pop 25
+#const SW-cube-pop 26
+#const NE-cube-pop 27
+#const NW-cube-pop 28
+
+
+
+;unfinished subs
+interesting:
+
+;true-id selves mod x!
+
+;true-id selves * selves 1 + mod y!
+
+;y x mod x!
+
+x 2 * x!
+y 2 * y!
+
+x y 2 2 v+ x! y!
+
+x y vinc-pos v+ home!
+
+return
+
+;end of unfinished
+
+;custom standard subroutines
+
+closer:; xy
+;changed this to be more complex but won't move the bot around too much
+;change #2: now checks to see how large the processor is. if the processor is 20 or larger,
+;it will use the complex code, otherwise it uses the simpler one.
+target!
+processor 20 > if
+position target v- rect-to-polar ang! drop
+;target ang set-force-field
+target position v- rect-to-polar force-field-direction! force-field-distance!
+ang force-field-angle!
+force-field-radius radius + force-field-distance < nif
+radius force-field-distance + force-field-distance! then
+force-field-max-power force-field-power!
+else
+position target v- rect-to-polar ang! drop
+target ang set-force-field
+then
+return
+
+away: ; xy
+target!
+target position v- rect-to-polar ang! drop
+target ang set-force-field
+return
+
+wait: ;time to wait
+waittimer!
+do
+sync
+waittimer 1 - waittimer!
+waittimer 0 < until-loop
+return
+
+hold: ;xy
+target!
+robot-id enemy-id = nif
+robot-id enemy-id!
+robot-position holdat!
+else
+target holdat dist robot-radius < nif
+robot-position holdat towards^
+else
+0 force-field-power!
+then
+then
+
+return
+
+moveaway: ; xy
+target!
+position target v- rect-to-polar ang! drop
+position ang set-force-field
+return
+
+movecloser: ; xy
+target!
+target position v- rect-to-polar ang! drop
+position ang set-force-field
+return
+
+orbit: ; xy
+target!
+target position v- rect-to-polar ang! drop
+orbitdirection 0 = if
+ang pi/2 + ang!
+else
+ang pi/2 - ang!
+then
+position ang set-force-field
+return
+
+changeorbit:
+orbitdirection 1 = if
+		0 orbitdirection!
+	else
+	1 orbitdirection!
+	then
+return
+
+towards: ; x1 y2 x2 y2
+target! target2!
+target target2 v- rect-to-polar ang! drop
+target2 ang set-force-field
+return
+
+esyphon: ;xy of target
+target!
+target position dist enemy-syphon-range < if
+target position v- rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+enemy-syphon-max-rate enemy-syphon-rate!
+then
+return
+
+corner: ; distance
+distance!
+position world-height / 0.5 > if world-height 2 - else 2 then swap
+world-width / 0.5 > if world-width 2 - else 2 then swap
+distance restrict-position home!
+return
+
+raise-shields:
+max-shield shield!
+return
+
+lower-shield:
+0 shield!
+return
+
+;end of custom standard subroutines
+
+;Borg subroutines
+
+Neuro-processor:
+Regeneration^
+enemy-energy-distribution^
+
+return
+
+
+
+Regeneration:
+max-energy 2 / energy < if
+armor max-armor = nif
+max-repair-rate repair-rate!
+else
+0 repair-rate!
+then
+then
+return
+
+
+enemy-energy-distribution:
+robot-found nif
+enemy-syphoned 0 = if
+energy-share-chan vread target!
+position target dist enemy-syphon-range < if
+target position v- rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+then
+then
+max-energy EDD / energy > if
+enemy-syphon-max-rate enemy-syphon-rate!
+else
+enemy-syphon-max-rate negate enemy-syphon-rate!
+then
+then
+position energy-share-chan vwrite
+
+return
+
+energy-distribution:
+energy-share-chan vread target!
+position target dist syphon-range < if
+target position v- rect-to-polar syphon-direction! syphon-distance!
+then
+energy max-energy EDD / < if
+syphon-max-rate syphon-rate!
+else
+syphon-max-rate negate syphon-rate!
+then
+position energy-share-chan vwrite
+return
+
+;CUBE SPAM -------------------------------------------------------------------------------------------------
+
+cube:
+
+
+vinc-pos-chan vread vinc-pos!
+2 type-population 3 type-population + true!
+true 8 + true!
+true 4 / true!
+
+selves true < if
+true selves!
+then
+vinc-pos x! y!
+
+id 4 mod wut!
+
+
+wut 0 = if
+boot 0 = nif
+SW-cube-pop read 1 + SW-cube-pop write
+SW-cube-pop read true-id!
+0 boot!
+then
+south-west-cube^
+return
+then
+
+wut 1 = if
+boot 0 = nif
+SE-cube-pop read 1 + SE-cube-pop write
+SE-cube-pop read true-id!
+0 boot!
+then
+south-east-cube^
+return
+then
+
+wut 2 = if
+boot 0 = nif
+NW-cube-pop read 1 + NW-cube-pop write
+NW-cube-pop read true-id!
+0 boot!
+then
+north-west-cube^
+return
+then
+
+wut 3 = if
+boot 0 = nif
+NE-cube-pop read 1 + NE-cube-pop write
+NE-cube-pop read true-id!
+0 boot!
+then
+north-east-cube^
+return
+then
+
+return
+
+
+
+south-west-cube:
+
+true-id 3 mod wut!
+
+wut 0 = if
+0 x!
+true-id y!
+then
+
+wut 1 = if
+true-id x!
+0 y!
+x 1 - x!
+
+
+then
+
+wut 2 = if
+true-id y!
+true-id x!
+then
+
+
+
+x selves - x!
+y selves - y!
+
+vinc-pos x y v+ home!
+
+return
+
+
+
+
+south-east-cube:
+
+true-id 3 mod wut!
+
+wut 0 = if
+0 x!
+true-id y!
+then
+
+wut 2 = if
+true-id negate x!
+x 2 + x!
+0 y!
+;fire up
+then
+
+wut 1 = if
+true-id y!
+true-id negate x!
+y 1 + y!
+x 1 - x!
+then
+
+
+
+x selves + x!
+y selves - y!
+
+vinc-pos x y v+ home!
+
+return
+
+
+
+
+
+north-west-cube:
+
+true-id 3 mod wut!
+
+wut 1 = if
+true-id x!
+true-id negate y!
+selves 5 < nif
+x 1 + x!
+y 1 - y!
+then
+then
+
+wut 0 = if
+true-id x!
+0 y!
+;fire up
+then
+
+wut 2 = if
+true-id negate y!
+y 2 + y!
+0 x!
+;fire left
+then
+
+
+
+x selves - x!
+y selves + y!
+
+vinc-pos x y v+ home!
+
+return
+
+
+
+
+
+
+north-east-cube:
+
+true-id 3 mod wut!
+
+wut 0 = if
+true-id negate x!
+true-id negate y!
+then
+
+wut 1 = if
+true-id negate x!
+x 1 + x!
+0 y!
+;fire up
+then
+
+wut 2 = if
+true-id negate y!
+;y 2 + y!
+0 x!
+;fire left
+then
+
+
+
+x selves + x!
+y selves + y!
+
+vinc-pos x y v+ home!
+
+return
+
+
+
+
+
+
+
+
+;END OF CUBE SPAM -----------------------------------------------
+
+;end of Borg subroutines
+
+; END OF ALL SUBS ----------------------------------------------------------------
+
+
+
+
+
+#type Vinculum
+#hardware
+;MAIN
+processor 30 ;memory
+engine .08
+constructor 7
+;ENERGY
+energy 1000 200
+solar-cells .1
+eater 8
+syphon .41 15
+;enemy-syphon 1 20
+;SENSORS
+robot-sensor 20 6
+food-sensor 15 10
+;shot-sensor range ;numresult
+;DEFENSES
+armor 150
+repair-rate .1
+;shield max-power
+;WEAPONS
+;blaster damage range reload
+grenades 30 20 30
+force-field .04 15
+;bomb damage
+#code
+radius test!
+do
+constructor-type nif
+child-id 3 mod wut!
+wut 0 = if
+2 constructor-type!
+then
+wut 1 = if
+3 constructor-type!
+then
+wut 2 = if
+2 constructor-type!
+then
+then
+
+energy 0.01 * 10 exponent constructor-rate!
+constructor-rate test!
+30 periodic-robot-sensor drop
+
+
+robot-found if
+
+
+robot-position-overall moveaway
+
+
+;rect-to-polar ang! drop
+;target ang set-force-field
+
+
+
+do
+robot-reloading robot-bomb or robot-distance 12 < or energy 200 < or if
+robot-position robot-velocity lead-grenade
+robot-position Collective-Targeting-pos vwrite
+robot-velocity Collective-Targeting-vel vwrite
+time Collective-Targeting-timer write
+then
+next-robot while-loop
+then
+
+Collective-Targeting-timer read time timeout - > if
+Collective-Targeting-pos vread target!
+target + 0 = nif
+target Collective-Targeting-vel vread lead-grenade
+then
+then
+
+position home!
+home vinc-pos-chan vwrite
+robot-distance 15 > if
+50 periodic-food-sensor drop
+food-found if
+food-position home!
+food-position position 2.1 in-range if
+next-food drop 0 force-field-power!
+else
+;food-direction force-field-direction! 2.2 food-distance max force-field-distance! 1 force-field-power!
+;position food-position v- rect-to-polar force-field-angle! drop
+food-position closer
+then
+then
+eaten if
+home 20 restrict-position seek-location
+else
+home seek-location
+then
+then
+energy-distribution
+
+
+forever
+
+
+
+
+
+
+
+
+
+#type Tactical Drone
+#hardware
+;MAIN
+processor 50 ;memory
+engine .08
+;constructor max-power
+;ENERGY
+energy 300 0
+solar-cells .05
+;eater .1
+syphon 1 15
+enemy-syphon .5 20
+;SENSORS
+robot-sensor 15 ;numresult
+;food-sensor 10 1
+;shot-sensor range ;numresult
+;DEFENSES
+armor 100
+repair-rate .1
+;shield max-power
+;WEAPONS
+blaster 1 30 25
+grenades 36 40 50
+force-field .07 20
+;bomb damage
+#code
+
+;type type-population true-id!
+;OR
+;type type-population 3 type-population + true-id!
+
+pi/2 negate pin!
+
+do
+
+cube^
+
+home seek-location
+energy-distribution^
+regeneration^
+
+Collective-Targeting-timer read time timeout - > if
+Collective-Targeting-pos vread target!
+target + 0 = nif
+target Collective-Targeting-vel vread lead-grenade
+then
+then
+
+30 70 random-int periodic-robot-sensor drop
+robot-found if
+7 periodic-robot-sensor drop
+robot-position robot-velocity lead-grenade
+robot-position robot-velocity v+ esyphon
+
+robot-velocity + if
+
+robot-position robot-position robot-velocity v+
+v- rect-to-polar force-field-angle! drop
+robot-distance force-field-distance!
+robot-direction force-field-direction!
+1 force-field-power!
+else
+
+selves 2 * holdfactor!
+
+vinc-pos y! x!
+robot-position vinc-pos v- rect-to-polar ang! drop
+ang test!
+ang 0 < if; down
+
+	ang pin > if; bot is at right bottom
+		x holdfactor + x!
+		y holdfactor - y!
+	else; left bottom
+		x holdfactor - x!
+		y holdfactor - y!
+	then
+else; up
+
+	ang pi/2 < if; bot is top right
+		x holdfactor + x!
+		y holdfactor + y!
+	else			;bot is at top left
+		x holdfactor - x!
+		y holdfactor + y!
+	then
+then
+
+;x y 0 0 lead-grenade
+
+robot-position x y towards^
+then
+else
+0 force-field-power!
+then
+enemy-energy-distribution^
+
+forever
+
+
+
+#type Resource Drone
+#hardware
+;MAIN
+processor 40 ;memory
+engine .05
+constructor .3
+;ENERGY
+energy 500 0
+solar-cells .4
+eater .5
+syphon 1 15
+;enemy-syphon max-power range
+;SENSORS
+;robot-sensor range ;numresult
+food-sensor 10 ;numresult
+;shot-sensor range ;numresult
+;DEFENSES
+armor 150
+;repair-rate max-power
+;shield max-power
+;WEAPONS
+;blaster damage range reload
+;grenades strength range reload
+force-field .04 10
+;bomb damage
+#code
+5 EDD!
+do
+regeneration
+energy-distribution
+cube^
+home position 1 in-range if 0 engine-power! else home seek-location then
+20 periodic-food-sensor drop
+food-found if
+food-position vinc-pos 5 in-range nif
+food-position home 20 restrict-position 2dup home! towards^ 
+else
+0 force-field-power!
+next-food drop
+then
+else
+0 force-field-power!
+then
+
+1 type-population nif 1 constructor-type! else 2 constructor-type! then
+autoconstruct
+
+
+next-food drop
+
+forever
+
+
+
+#type Test Probe
+#decoration 090 hline
+#hardware
+;MAIN
+processor 7 ;memory
+engine 0.04
+;constructor max-power
+;ENERGY
+energy 50 50
+solar-cells .045
+;eater max-power
+;syphon max-power range
+;enemy-syphon max-power range
+;SENSORS
+robot-sensor 15 ;numresult
+;food-sensor range ;numresult
+;shot-sensor range ;numresult
+;DEFENSES
+armor 50
+;repair-rate max-power
+;shield .05
+;WEAPONS
+;blaster 30 15 100
+;grenades strength range reload
+;force-field .05 0
+bomb 500
+#code
+main:
+1 test!
+do
+test 1 = if 50 50 seek-location then
+wall-collision 0 = nif
+1 test!
+else
+position 50 50 5 in-range if
+test 1 = if
+velocity x! y!
+y -1 * y!
+x y engine-velocity!
+0 test!
+then
+
+then
+then
+
+100 periodic-robot-sensor drop
+robot-found if
+do
+
+robot-position robot-velocity seek-moving-location
+robot-position position 1 in-range if
+fire-robot-sensor sync
+robot-position position 2 in-range if die then
+robot-found nif main^ then
+then
+
+forever
+then
+forever
+
+
+
+;#type Template
+;#hardware
+;MAIN
+;processor speed ;memory
+;engine power
+;constructor max-power
+;ENERGY
+;energy max initial
+;solar-cells power
+;eater max-power
+;syphon max-power range
+;enemy-syphon max-power range
+;SENSORS
+;robot-sensor range ;numresult
+;food-sensor range ;numresult
+;shot-sensor range ;numresult
+;DEFENSES
+;armor amount
+;repair-rate max-power
+;shield max-power
+;WEAPONS
+;blaster damage range reload
+;grenades strength range reload
+;force-field power range
+;bomb damage
+;#code
+
+
+
+
+
+
+
+
+#end

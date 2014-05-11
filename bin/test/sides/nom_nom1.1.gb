@@ -1,0 +1,370 @@
+#side nom nom 1.1
+#author elel
+#color eee
+#seed 2 4 3 1
+
+#code									;section for declaring global variables and constants
+
+;;;;;;;;;;UNIVERSAL VARIABLES;;;;;;;;;;;;;;;;
+
+;types of bots in this side - for construction
+
+#const KONQUERER 1
+#const NOMS 2
+#const SPIN-OFF 3
+#const HONEY-POT 4
+
+;;;;;;;;;;;;UNIVERSAL CODE;;;;;;;;;;;;;;
+
+
+
+;50-100 is for interception
+
+#const M_ENEMY_POS_0 50					;first memory location for relaying enemy positions - it actually takes memory location 50 AND 51 (for vector)
+
+;100-150 is for energy transfer
+
+#const M_ENERGY_NEEDED_0 100
+
+#var U_LOOP_COUNTER						;counter for loops which need to run a set number of times
+
+;bot_start konquerer
+#type konquerer
+#color f16
+#decoration f18 triangle
+#hardware
+
+processor 20
+solar-cells 0.06
+eater 0.05
+engine 0.03
+robot-sensor 10 1
+energy 100 1
+armor 100
+bomb 600
+
+#code
+
+
+
+#vector L_INTERCEPT_POINT
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;for now search for food
+seek_random^
+do
+	ka_boom^							;blow up if there is an enemy
+	U_LOOP_COUNTER nif					;check if counter has run out for a new random direction - if so, re-set it and go a new direction
+		seek_random^
+		then
+	U_LOOP_COUNTER 1 - U_LOOP_COUNTER!      ;decrement loop counter to count
+	food-collision if					;check for food collision and jump to eating code if found
+		food_found_mode^
+		then
+	energy 5 > if						;fire robot sensor
+		50 periodic-robot-sensor
+		drop
+		then
+	robot-position + if					;look for enemies
+		hunt_mode^
+		then
+	intercept_message_check^
+	wall-collision if					;change direction if there is a wall in the way
+		seek_random^
+		then
+	velocity vprint ;temp
+forever 
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+first_responder_mode:
+	L_INTERCEPT_POINT seek-location		;seek trouble spot
+	0.02 engine-power!					;turn down engine so we have energy when we get
+	do energy 3 > while					;look for enemies
+		wall-collision if				;if you touch the wall, you have gone too far. Stop.
+			return
+			then	
+		50 periodic-robot-sensor
+		drop
+		ka_boom^
+		robot-position + if				;check for enemies
+			hunt_mode^
+			then
+		loop
+return
+
+food_found_mode:
+	0 0 engine-velocity!
+	do food-collision energy 90 < and while	;only stay on the food if it exists and we need energy
+		ka_boom^
+		energy 5 > if					;fire robot sensor
+			50 periodic-robot-sensor		;the periodic sensor automagicaly syncs if it is fired	
+			drop
+			then
+		robot-position + if				;look for enemies
+			hunt_mode^
+			then
+		intercept_message_check^		;check for messages
+		loop
+return
+
+hunt_mode:								;hunt down and blow up enemys
+	do robot-position + while
+		robot-position seek-location
+		ka_boom^
+		10 periodic-robot-sensor
+		drop
+		loop
+return
+
+;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;	
+
+intercept_message_check:				;check for messages from other bots about enemies
+	M_ENEMY_POS_0 vread + if 			;check for enemy sightings
+		M_ENEMY_POS_0 vread L_INTERCEPT_POINT! ;store the position to be intercepted in a local variable, since it will be erased shortly
+		0 0 M_ENEMY_POS_0 vwrite		;clear the memory location
+		first_responder_mode^			;act on the message
+		then
+return
+	
+ka_boom:								;checks whether there is an enemy to blow up  >:}
+	enemy-collision if
+		die
+		then
+return
+
+seek_random:							;goes to a random position
+	100 U_LOOP_COUNTER!
+	1 world-width random-int
+	1 world-height random-int
+	seek-location
+	0.02 engine-power!
+return
+
+;bot_end
+
+;bot_start noms
+#type noms
+#color 2f9
+#decoration f22 hline
+#hardware
+
+processor 10
+solar-cells 0.03
+eater 1
+engine 0.015
+constructor 1
+food-sensor 10 1
+energy 100 0
+armor 20
+
+#code
+
+#var L_ALREADY_HIT 1					;variable prevents the bot from reporting being hit more than once - ever
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		30 periodic-food-sensor				;fire food sensor only after waiting 30 cycles
+		drop								;drop unused success return from sensor
+		then
+	energy 10 < if
+		0 constructor-rate!
+		then
+	friendly-collision 2 >= if			;if we are touching more than 2 friendlies, move
+		new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, call in re-enforcements
+		position M_ENEMY_POS_0 vwrite
+		then
+	last-hit if							;check if the bot has been hit
+		last-hit side <> L_ALREADY_HIT and if ;check if the bot has been hit by an enemy and if it has already used its only shout
+			position M_ENEMY_POS_0 vwrite
+			0 L_ALREADY_HIT!
+			then
+		then
+	food-position + if 					;get food position and add (to check both co-ordinates at the same time); check if food is found
+		food-position
+		seek-location
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+		constructor-type nif			;if nothing is being built
+			0.05 random-bool if			;build honey-pots with a 5% probability
+				HONEY-POT constructor-type!
+					else				;otherwise build your own type
+				NOMS constructor-type!
+				then
+			then
+		constructor_rate_limit^			;don't run out of energy
+		loop
+return
+
+new_pastures:
+	80 U_LOOP_COUNTER!
+	random-angle engine-max-power engine-velocity!
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+;bot_end
+
+;bot_start spin-off
+#type spin-off
+#color f92
+#decoration f16 square
+#hardware
+
+processor 10
+solar-cells 0.1
+constructor 0.4
+energy 200 0
+armor 50
+
+#code
+
+#start main_loop
+
+main_loop:
+
+;pre-start code
+
+2 flag!									;set a flag so honey pots can know which bots to transfer to
+
+do
+	energy 10 > if
+		child-id 0 = child-id HONEY-POT = or if
+			SPIN-OFF constructor-type!
+			constructor-max-rate constructor-rate!
+			construction_loop& jump
+				else
+			KONQUERER constructor-type!
+			construction_loop& jump
+			then
+		then
+	energy 10 < if
+		position M_ENERGY_NEEDED_0 vwrite
+		then
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;
+
+construction_loop:
+do
+	constructor-max-rate constructor-rate!
+	energy 10 < if
+		0 constructor-rate!
+		position M_ENERGY_NEEDED_0 vwrite
+		then
+	constructor-type nif
+		main_loop& jump
+		then
+	sync
+forever
+
+;bot_end
+
+;bot_start honey pot
+#type honey pot
+#color 2ec
+#decoration 0ad circle
+
+#hardware
+
+processor 5
+armor 60
+energy 200 1
+solar-cells 0.2
+syphon 0.5 5
+engine 0.01
+robot-sensor 5 4
+
+#code
+
+#vector L_PARKING
+
+1 robot-sensor-sees-friends!			;set the sensor to see only friends, since that's who we'll be transferring to
+0 robot-sensor-sees-enemies!
+
+do
+	energy 50 > if						;only give energy if we have over 50
+		M_ENERGY_NEEDED_0 vread + if	;check if anyone is calling for energy
+			M_ENERGY_NEEDED_0 vread L_PARKING! ;store location of beacon
+			0 0 M_ENERGY_NEEDED_0 vwrite	;erase beacon for re-use
+			L_PARKING seek-location			;go to location of beacon
+			go_to_parking_mode^
+			then
+		then
+		sync							;use less energy by not running the processor
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;;
+
+go_to_parking_mode:						;go to the bot which needed energy
+do
+	position L_PARKING dist				;find the distance to the destination
+	2.5 < if							;if it is less than 2.5, stop and start transfering energy
+		0 engine-power!
+		fire-robot-sensor
+		sync
+		transfer_energy_mode& jump
+		then
+forever
+
+transfer_energy_mode:
+do energy 2 > robot_type_check^ or while ;only do the loop while there is more than 2 energy in the banks and there is a friendly robot in range
+	40 periodic-robot-sensor
+	drop
+	robot-distance syphon-distance! 
+	robot-direction syphon-direction!
+	syphon-max-rate negate syphon-rate!
+	loop
+return
+
+;;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;
+
+robot_type_check:						;check if a robot has been found, and what flag it has set. Return different numbers depending on the flag
+	robot-position + nif
+		0 return
+		then
+	do
+		robot-flag 2 = if
+			1 return
+			then
+		next-robot while-loop
+0 return
+
+;bot_end
+#end

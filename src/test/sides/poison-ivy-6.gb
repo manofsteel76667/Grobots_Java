@@ -1,0 +1,150 @@
+#side Poison Ivy
+#Author Warren
+Started June 12 2002
+
+A three-type plant. Undefended autotrophs, parabolic shot-leaders, and force-field using
+anti-missilers.
+
+(Matt Burkholder 200303xx) Fixed for directional forcefields.
+(Devon 20030324) Shrank all types. Reduced ranges.
+                 Fiddled with constructor control.
+
+#color 7a0
+
+#seed 2 3 1
+
+#type Ivy
+#color 0f1
+#hardware
+energy 10 0
+armor 75
+processor 1
+
+constructor 0.42
+solar-cells 0.42
+
+#code
+#start
+do
+ constructor-max-rate constructor-rate!
+ constructor-type nif
+  1 3 random-int constructor-type!
+ then
+forever
+
+#type Poison
+#color fa1
+
+#hardware
+energy 150 0
+armor 200
+processor 20
+
+constructor 0.17
+solar-cells 0.18
+
+robot-sensor 16
+grenades 50 16 50
+
+repair-rate 0.05
+
+#code
+#var tti
+#vector accel
+
+do
+ constructor-type nif
+  1 3 random-int constructor-type!
+ then
+ energy 130 > constructor-max-rate * constructor-rate!
+ energy 75 > max-repair-rate * repair-rate!
+ robot-sensor-time time 47 - < if grenades-cooldown not and-if energy grenades-firing-cost > and-if
+  fire-robot-sensor sync
+  robot-found if
+   0 4 random-int if
+    robot-velocity robot-id
+    fire-robot-sensor sync
+    robot-found if
+     robot-id = if
+      robot-velocity v- vnegate
+            ;discard large accelerations
+            rect-to-polar swap 0.01 min swap polar-to-rect
+          accel!
+     else
+      2drop 0 0 accel!
+     then ;robot-id =
+     robot-distance grenades-speed / tti!
+     accel 0.4 tti 20 min tti * *  vs*
+     robot-velocity tti vs* v+
+     robot-position v+ position v-
+     rect-to-polar fire-grenade
+    else
+     2drop drop
+    then
+   else ;try an unled shot once in a while
+    robot-distance robot-direction fire-grenade
+   then ;random
+  then ;robot-found
+ then
+forever
+
+#type Anti-Missile
+#color fff
+#hardware
+energy 200 0
+armor 150
+processor 15
+
+constructor 0.17
+solar-cells 0.18
+
+robot-sensor 16
+
+force-field 0.1 16
+grenades 20 16 25
+
+repair-rate 0.05
+
+#code
+#var incoming 0
+
+do
+	time robot-sensor-time 20 + > if
+		0 incoming!
+		fire-robot-sensor sync
+		robot-found if
+			robot-velocity robot-position position v- dot robot-distance /
+			;stack: radial component of velocity
+			-0.01 < if
+				1 incoming!
+			then
+			0 incoming random not if ;always shot-lead if not missile, sometimes shot-lead if missile
+			 robot-velocity
+			 robot-distance grenades-speed / vs*
+			else 0 0 then
+			robot-position v+ position v- rect-to-polar fire-grenade
+		then	
+	then
+	incoming energy 50 > and if
+		robot-position position v-
+		robot-velocity
+		time robot-sensor-time - vs* v+
+		rect-to-polar dup force-field-direction!
+  pi + force-field-angle!
+		;stack: distance
+		time robot-sensor-time - square 0.002 * 0.6 + +
+		force-field-distance!
+		force-field-max-power force-field-power!
+  
+	else
+		0 force-field-power!
+	then
+  constructor-type nif
+   1 3 random-int constructor-type!
+  then
+	energy 180 > constructor-max-rate * constructor-rate!
+	energy 75 > max-repair-rate * repair-rate!
+forever
+
+#end
+

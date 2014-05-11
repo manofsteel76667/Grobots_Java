@@ -1,0 +1,1626 @@
+#side Borg (v1)
+#color 000
+#seed 2 3 1 1 1
+
+#comment
+feed levels
+  1  - emergency feed
+  3  - defenders (< 700)
+  5  - constructor (< 1000)
+  6  - defenders (> 700)
+  7  - constructor (> 1000)
+
+radio channels
+  1  - feed
+  2  - alert
+
+;#
+
+#code
+#const Harvester 1
+#const Constructor 2
+#const Defender 3
+#const Battery 4
+#const Bomber 5
+
+#const tmFood 500
+#const tmEat 50
+
+#const mbc 11
+#const mcc 12
+
+#var preth
+#var think
+#var thtm
+#var sntm
+#var mktm
+#var tm1
+#var tm2
+#var tm3
+#var c1tm
+#var c2tm
+
+#const eatmb 101
+#const dngmb 201
+#const fdmb 301
+#const almb 401
+#const basmb 501
+
+#var curmi
+#var oldmi -1
+#var mi2 -1
+
+sleep:
+do dup while
+  sync
+  1 -
+loop
+drop
+return
+
+in-curr-rect:
+curmi 10 mod 10 * 5 + curmi 10 / floor 10 * 5 + v-
+abs 5 < swap abs 5 < and 1 0 ifev
+return
+
+get-pos:
+dup 10 mod 10 * 5 + swap 10 / floor 10 * 5 +
+return
+
+get-idx:
+10 / floor 10 * swap 10 / floor +
+return
+
+get-posx:
+10 mod 10 * 5 +
+return
+
+get-posy:
+10 / floor 10 * 5 +
+return
+
+; mem val
+mark-mem:
+sync
+time +
+swap write
+return
+
+; mb val
+mark-cmem:
+sync
+time +
+swap curmi + write
+return
+
+; idx mb val
+mark-smem:
+sync
+time +
+rrot + write
+return
+
+; mem
+clr-mem:
+sync
+0 swap write
+return
+
+; mb
+clr-cmem:
+sync
+curmi + 0 swap write
+return
+
+; idx mb
+clr-smem:
+sync
++ 0 swap write
+return
+
+; mark if timer expired
+; mem val
+mark-mem-if-exp:
+sync
+time +
+swap dup
+read time > if
+  2drop
+  0 return
+then
+write
+1 return
+
+; mark if timer expired
+; mb val
+mark-cmem-if-exp:
+sync
+time +
+swap curmi + dup
+read time > if
+  2drop
+  0 return
+then
+write
+1 return
+
+; mark if timer expired
+; idx mb val
+mark-smem-if-exp:
+sync
+time +
+rrot + dup
+read time > if
+  2drop
+  0 return
+then
+write
+1 return
+
+get-rnd-idx:
+; W
+curmi get-posx 10 > if
+  0.25 random-bool if
+    curmi 1 - 1 return
+  then
+then
+; S
+curmi get-posy 90 < if
+  0.25 random-bool if
+    curmi 10 + 1 return
+  then
+then
+; E
+curmi get-posx 90 < if
+  0.25 random-bool if
+    curmi 1 + 1 return
+  then
+then
+; N
+curmi get-posy 10 > if
+  0.25 random-bool if
+    curmi 10 - 1 return
+  then
+then
+; SW
+curmi get-pos 90 < swap 10 > and if
+  0.25 random-bool if
+    curmi 9 + 1 return
+  then
+then
+; SE
+curmi get-pos 90 < swap 90 < and if
+  0.25 random-bool if
+    curmi 11 + 1 return
+  then
+then
+; NE
+curmi get-pos 10 > swap 90 < and if
+  0.25 random-bool if
+    curmi 9 - 1 return
+  then
+then
+; NW
+curmi get-pos 10 > swap 10 > and if
+  0.25 random-bool if
+    curmi 11 - 1 return
+  then
+then
+0 return
+
+get-rnd-idx2:
+mi2 -1 = if
+  curmi mi2!
+then
+; W
+mi2 get-posx 10 > if
+  0.25 random-bool if
+    mi2 1 - dup mi2! 1 return
+  then
+then
+; S
+mi2 get-posy 90 < if
+  0.25 random-bool if
+    mi2 10 + dup mi2! 1 return
+  then
+then
+; E
+mi2 get-posx 90 < if
+  0.25 random-bool if
+    mi2 1 + dup mi2! 1 return
+  then
+then
+; N
+mi2 get-posy 10 > if
+  0.25 random-bool if
+    mi2 10 - dup mi2! 1 return
+  then
+then
+; SW
+mi2 get-pos 90 < swap 10 > and if
+  0.25 random-bool if
+    mi2 9 + dup mi2! 1 return
+  then
+then
+; SE
+mi2 get-pos 90 < swap 90 < and if
+  0.25 random-bool if
+    mi2 11 + dup mi2! 1 return
+  then
+then
+; NE
+mi2 get-pos 10 > swap 90 < and if
+  0.25 random-bool if
+    mi2 9 - dup mi2! 1 return
+  then
+then
+; NW
+mi2 get-pos 10 > swap 10 > and if
+  0.25 random-bool if
+    mi2 11 - dup mi2! 1 return
+  then
+then
+0 return
+
+
+#type Harvester
+#hardware
+processor 25
+engine 0.09
+energy 700 50
+food-sensor 7 4
+shot-sensor 7
+;robot-sensor 10 4
+eater 2.0
+armor 80
+repair-rate 0.05
+syphon 1.5 50
+
+#code
+#vector wv
+#vector fv
+#vector bv
+#vector evec
+#vector evel
+#vector ch1v
+#var ch1l
+#var sl
+#var st
+#vector sv
+#var rs
+#var mi
+
+find-food:
+fire-food-sensor sync
+food-found
+do while
+  food-position get-idx mi!
+  food-velocity norm 0.01 < if mi dngmb + read time < and-if mi basmb + read time < and-if
+    mi eatmb 50 mark-smem-if-exp if
+      food-position fv!
+      food-found negate mi fdmb + write
+      1 return
+    then
+  then
+  next-food
+loop
+fdmb 500 mark-cmem
+0 return
+
+scan-shots:
+15 periodic-shot-sensor drop
+shot-found nif
+  0 return
+then
+shot-side side = nif
+  shot-type 3 < shot-power 1 > and shot-type 3 > or if
+    position shot-position v- unitize 8 vs* position v+ seek-location
+    0 syphon-rate!
+    time c2tm > if
+      shot-position get-idx 1 2 2 send
+      shot-position get-idx dngmb 1000 mark-smem
+      dngmb 1000 mark-cmem
+      time 50 + c2tm!
+    then
+    1 return
+  then
+  0 return
+then
+shot-type 3 < if
+  position shot-position v- unitize 8 vs* position v+ seek-location
+  0 syphon-rate!
+  1 return
+then
+0 return
+
+scan-enemy:
+evec norm 9 30 ifev rs!
+rs periodic-robot-sensor drop
+robot-found
+do while
+  robot-shield-fraction 0.5 > if
+    robot-position evec!
+    robot-velocity evel!
+    evec position v- rect-to-polar
+    ;enemy-syphon-direction! enemy-syphon-distance!
+    ;enemy-syphon-max-rate enemy-syphon-rate!
+    time c2tm > if
+      robot-position get-idx 1 2 2 send
+      time 50 + c2tm!
+    then
+    return
+  then
+  next-robot
+loop
+0 0 evec!
+;0 enemy-syphon-rate!
+return
+
+chk-feed-chan:
+1 receive nif
+  0 ch1l!
+  return
+then
+ch1l! ch1v!
+return
+
+chk-feed-info:
+ch1l if
+  sl if
+    ch1l sl < if ch1v position dist syphon-range < and-if
+      ch1v sv!
+      ch1l sl!
+      0 0 bv!
+    then
+  else
+    ch1v position dist syphon-range < if
+      ch1v sv!
+      ch1l sl!
+      0 0 bv!
+    else
+      ch1v bv!
+    then
+  then
+then
+sl if
+  sv position v- rect-to-polar syphon-direction! syphon-distance!
+  syphon-max-rate negate syphon-rate!
+then
+return
+
+set-food-wander:
+dup oldmi = if
+  drop 0 return
+then
+dup basmb + read time > if
+  drop 0 return
+then
+dup dngmb + read time > if
+  drop 0 return
+then
+dup eatmb + read time > if
+  drop 0 return
+then
+dup fdmb + read time > if
+  drop 0 return
+then
+dup get-pos wv!
+fdmb 100 mark-smem
+curmi oldmi!
+1 return
+
+th-feed-wander:
+scan-shots ifr
+bv norm if
+  bv seek-location
+  position bv syphon-range 5 - in-range if
+    0 0 bv!
+    0 engine-power!
+    th-food-find& think!
+    return
+  then
+  return
+then
+0 engine-power!
+energy 200 < if
+  0 0 bv!
+  th-food-find& think!
+then
+return
+
+th-food-wander:
+scan-shots if
+  0 0 wv!
+  return
+then
+wv norm if
+  wv get-idx eatmb + read time > if
+    0 0 wv!
+    0 engine-power!
+    return
+  then
+  wv seek-location
+  position wv 1 in-range if
+    0 0 wv!
+    0 engine-power!
+    th-food-find& think!
+    return
+  then
+  return
+then
+get-rnd-idx if
+  set-food-wander if
+    -1 mi2!
+    return
+  then
+then
+get-rnd-idx2 if
+  set-food-wander if
+    return
+  then
+then
+time thtm > if time sntm > and-if
+  time 30 + sntm!
+  find-food if
+    fv seek-location
+    0 preth!
+    th-food-eat& think!
+    return
+  then
+then
+return
+
+th-food-find:
+0 0 wv!
+find-food nif
+  th-food-wander& think!
+  time 50 + thtm!
+  return
+then
+th-food-eat& think!
+return
+
+th-food-eat:
+scan-shots if
+  0 preth!
+  th-food-wander& think!
+  200 thtm!
+  return
+then
+energy 690 > if sl not and-if bv norm and-if
+  fv get-idx eatmb clr-smem
+  0 preth!
+  th-feed-wander& think!
+  return
+then
+fv seek-location
+time mktm > if
+  fv get-idx eatmb 50 mark-smem
+  time 30 + mktm!
+then
+speed 0.03 < position fv dist radius < and if
+  food-collision nif
+    fv get-idx eatmb clr-smem
+    th-food-find& think!
+  then
+then
+return
+
+th-energy:
+energy 30 > if
+  0 preth!
+  th-food-wander& think!
+  200 thtm!
+  return
+then
+0 engine-power!
+time c1tm > if
+  position 1 3 1 send
+  time 50 + c1tm!
+then
+return
+
+#start
+main:
+-1 mi2!
+1 shot-sensor-sees-friendly!
+position 10 / floor 10 * swap 10 / floor + curmi!
+;time 2 < if
+;  id 3 * sleep
+;then
+th-food-find& think!
+do
+  position 10 / floor 10 * swap 10 / floor + curmi!
+  syphon-rate if syphoned -0.3 >= and-if
+    0 syphon-rate!
+    0 sl!
+  then
+  chk-feed-chan
+  energy 100 > if
+    armor max-armor < if
+      max-repair-rate repair-rate!
+    then
+    chk-feed-info
+  else
+    0 repair-rate!
+    0 syphon-rate!
+    0 sl!
+  then
+  energy 1 < if
+    0 preth!
+    th-energy& think!
+  then
+  preth dup ifc
+  think dup ifc
+forever
+
+
+#type Constructor
+#decoration 00f x
+#hardware
+processor 25
+energy 1600 50
+armor 100
+eater 1.0
+food-sensor 15 4
+repair-rate 0.10
+constructor 4.0
+force-field 0.05 15
+
+#code
+#var c1tm
+#var c2tm
+#vector fv
+#var fd
+#var fm
+#var fp
+#var fpd
+#var bi -1
+#vector wv
+#var mi5 -1
+
+get-rnd-idx5:
+mi5 -1 = if
+  curmi mi5!
+then
+; W
+mi5 get-posx 20 > if
+  0.25 random-bool if
+    mi5 2 - dup mi5! 1 return
+  then
+then
+; S
+mi5 get-posy 80 < if
+  0.25 random-bool if
+    mi5 20 + dup mi5! 1 return
+  then
+then
+; E
+mi5 get-posx 80 < if
+  0.25 random-bool if
+    mi5 2 + dup mi5! 1 return
+  then
+then
+; N
+mi5 get-posy 20 > if
+  0.25 random-bool if
+    mi5 20 - dup mi5! 1 return
+  then
+then
+; SW
+mi5 get-pos 80 < swap 20 > and if
+  0.25 random-bool if
+    mi5 18 + dup mi5! 1 return
+  then
+then
+; SE
+mi5 get-pos 80 < swap 80 < and if
+  0.25 random-bool if
+    mi5 22 + dup mi5! 1 return
+  then
+then
+; NE
+mi5 get-pos 20 > swap 80 < and if
+  0.25 random-bool if
+    mi5 18 - dup mi5! 1 return
+  then
+then
+; NW
+mi5 get-pos 20 > swap 20 > and if
+  0.25 random-bool if
+    mi5 22 - dup mi5! 1 return
+  then
+then
+0 return
+
+find-food:
+fire-food-sensor sync
+food-found
+do while
+  food-position position dist radius > if food-velocity norm 0.01 < and-if food-mass 25 < and-if
+    food-position get-idx
+    dup curmi = if
+      drop
+      food-position fv!
+      food-mass 1 max fm!
+      1 return
+    then
+    eatmb 50 mark-smem-if-exp if
+      food-position fv!
+      food-mass 1 max fm!
+      1 return
+    then
+  then
+  next-food
+loop
+0 return
+
+pre-construct:
+energy 300 > if constructor-type not and-if
+  Constructor type-population 3 > if
+    Harvester type-population Constructor type-population 1.5 * < Harvester 0 ifev
+    dup 0 = if
+      drop
+      energy 1300 > if Constructor type-population 9 < and-if
+        mcc 1000 mark-mem-if-exp if
+          Constructor constructor-type!
+          return
+        then
+      then
+      3 5 random-int
+      dup Defender = Defender type-population Constructor type-population 2.0 * >= and Bomber rot ifev
+      dup Bomber = Battery type-population Bomber type-population 3.0 * < and Battery rot ifev
+      dup Battery = Battery type-population 90 > and Bomber rot ifev
+      dup Bomber = Bomber type-population 60 > and 0 rot ifev
+    then
+    constructor-type!
+    return
+  then
+  Constructor type-population 1 > if
+    Harvester type-population Constructor type-population 3.0 * < Harvester Battery ifev
+    dup Battery = Defender type-population Constructor type-population 3.0 * < and Defender rot ifev
+    dup Battery = Battery type-population Constructor type-population 4.0 * >= and 0 rot ifev
+    dup 0 = if
+      drop
+      energy 1300 > if
+        mcc 1000 mark-mem-if-exp if
+          Constructor constructor-type!
+          return
+        then
+      then
+      3 5 random-int
+      dup Defender = Defender type-population Constructor type-population 4.0 * >= and Bomber rot ifev
+      dup Bomber = Battery type-population Bomber type-population 4.0 * < and Battery rot ifev
+      dup Battery = Battery type-population 90 > and Bomber rot ifev
+      dup Bomber = Bomber type-population 40 > and 0 rot ifev
+    then
+    constructor-type!
+    return
+  then
+  Harvester type-population Constructor type-population 4.0 * < Harvester Constructor ifev
+  dup Constructor = Defender type-population Constructor type-population 3.0 * < and Defender rot ifev
+  dup Defender = Harvester type-population Defender type-population 2.0 * < and Harvester rot ifev
+  constructor-type!
+then
+return
+
+th-food-find:
+thtm time > ifr
+find-food nif
+  time 30 + thtm!
+  return
+then
+fv position dist fd!
+fv position v- unitize fv!
+0.75 fm sqrt / fp!
+fp 2 / fd force-field-range / * fp fm 20 / * + fpd!
+th-food-grab& think!
+return
+
+th-food-grab:
+fd force-field-max-power 30 * radius + < if
+  time 30 + tm2!
+  th-food-grab2& think!
+  return
+then
+position fv fd vs* v+ fv vnegate rect-to-polar
+swap drop set-force-field
+fpd 0.00 > if
+  fd fp fpd - - fd!
+  fpd 0.015 - fpd!
+else
+  fd fp - fd!
+then
+return
+
+th-food-grab2:
+tm2 time > nif
+  0 force-field-power!
+  th-food-find& think!
+  return
+then
+position fv force-field-max-power 30 * radius + vs* v+ fv vnegate rect-to-polar
+swap drop set-force-field
+return
+
+pre-think:
+energy 1500 < if time c1tm > and-if
+  position
+  energy 1000 < 5 7 ifev
+  energy 300 < 4 rot ifev
+  3 1 send
+  time 50 + c1tm!
+then
+pre-construct
+return
+
+th-find-base:
+wv norm if
+  position wv position v- rect-to-polar
+  swap drop set-force-field
+  position wv dist 3 min 3 / force-field-max-power * force-field-power!
+  position wv 0.5 in-range if speed 0.03 < and-if
+    0 force-field-power!
+    pre-think& preth!
+    ;0 think!
+    th-food-find& think!
+    return
+  then
+  return
+then
+basmb 50 mark-cmem-if-exp if
+  curmi bi!
+  curmi get-pos wv!
+  return
+then
+get-rnd-idx5 if
+  dup oldmi = if
+    drop return
+  then
+  dup basmb 50 mark-smem-if-exp nif
+    drop return
+  then
+  dup bi!
+  get-pos wv!
+  curmi oldmi!
+  -1 mi5!
+  return
+then
+
+th-energy:
+energy 30 > if
+  th-find-base& think!
+  return
+then
+time c1tm > if
+  position 1 3 1 send
+  time 50 + c1tm!
+then
+return
+
+#start
+main:
+position 10 / floor 10 * swap 10 / floor + curmi!
+0 preth!
+th-energy& think!
+do
+  position 10 / floor 10 * swap 10 / floor + curmi!
+  mktm time > nif
+    bi -1 = nif
+      bi basmb 50 mark-smem
+    then
+    time 30 + mktm!
+  then
+  time tm1 > if
+    constructor-type Constructor = if
+      mcc 500 mark-mem
+    then
+    time 100 + tm1!
+  then
+  energy 100 > if
+    armor max-armor < if
+      max-repair-rate repair-rate!
+    then
+    constructor-type if
+      constructor-max-rate constructor-rate!
+    then
+  else
+    0 repair-rate!
+    0 constructor-rate!
+  then
+  bi -1 = nif position wv 0.5 in-range and-nif
+    0 preth!
+    th-find-base& think!
+  then
+  energy 1 < if
+    0 preth!
+    th-energy& think!
+  then
+  preth dup ifc
+  think dup ifc
+forever
+
+
+#type Defender
+#decoration f00 triangle
+#hardware
+processor 50
+engine 0.14
+energy 900 50
+robot-sensor 12 4
+shot-sensor 7
+armor 250
+repair-rate 0.25
+blaster 20 8 10
+
+#code
+#const alst 300
+#const almt 150
+
+#var myang
+#var dgang
+#var dg
+#var dgtm
+#var rstm
+#vector fv
+#vector evec
+#vector evel
+#var emass
+#vector evec2
+#vector evel2
+#var ecnt
+#vector av
+#vector wv
+#vector bv
+#var am
+#var al
+#var ch2m
+#var ch2l 0
+
+chk-alert:
+2 receive if
+  ch2l!
+  ch2m!
+else
+  0 ch2l!
+  return
+then
+ch2l 5 > ifr
+al if
+  ch2l al <= ifr
+  ch2m get-pos position dist am get-pos position dist > ifr
+  ch2m almb almt mark-smem-if-exp nifr
+  ch2m am!
+  ch2l al!
+  return
+then
+ch2m almb almt mark-smem-if-exp nifr
+ch2m am!
+ch2l al!
+return
+
+scan-shots:
+15 periodic-shot-sensor drop
+shot-found nif
+  0 return
+then
+shot-side side = nif
+  shot-type 3 < shot-power 1 > and shot-type 3 > or if
+    position shot-position v- unitize 8 vs* position v+ seek-location
+    time c2tm > if
+      ;shot-position get-idx 5 2 2 send
+      shot-position get-idx dngmb 1000 mark-smem
+      dngmb 1000 mark-cmem
+      time 50 + c2tm!
+    then
+    1 return
+  then
+  0 return
+then
+shot-type 3 < if
+  position shot-position v- unitize 8 vs* position v+ seek-location
+  1 return
+then
+0 return
+
+get-enemy:
+0 0 evec!
+0 0 evec2!
+0 emass!
+fire-robot-sensor sync
+robot-found dup ecnt!
+do while
+  robot-shield-fraction 0.5 > if
+    robot-mass emass > if
+      robot-position evec!
+      robot-velocity evel!
+      robot-mass emass!
+      ecnt 4 < ifr
+    then
+  else
+    evec2 norm nif
+      robot-position evec2!
+      robot-velocity evel2!
+    then
+  then
+  next-robot
+loop
+evec norm ifr
+Defender type-population 10 >= if evec2 norm and-if
+  evec2 evec!
+  evel2 evel!
+then
+return
+
+shot-enemy:
+blaster-cooldown rstm time > or if
+  0 return
+then
+get-enemy
+time evec norm 10 30 ifev + rstm!
+evec norm if
+  evec evel lead-blaster
+  time c2tm > if
+    evec get-idx ecnt 3 > 6 5 ifev 2 2 send
+    time 30 + c2tm!
+  then
+  energy 400 > armor 180 > and if
+    0 preth!
+    th-fight& think!
+    1 return
+  then
+then
+0 return
+
+fire-enemy:
+time rstm < ifr
+blaster-cooldown 1 > ifr
+get-enemy
+time 9 + rstm!
+evec norm if
+  evec evel lead-blaster
+  time c2tm > if
+    evec get-idx ecnt 3 > 6 5 ifev 2 2 send
+    time 30 alst ecnt / max + c2tm!
+  then
+  return
+then
+return
+
+th-fight:
+energy 200 < armor 100 < or if
+  th-go-charge& think!
+  return
+then
+fire-enemy
+evec norm nif
+  pre-think& preth!
+  th-go-charge& think!
+  return
+then
+time dgtm > if
+  dg negate dg!
+  time 20 + dgtm!
+then
+position evec v- 2dup norm 7 > if
+  unitize 6 vs* evec v+ evel seek-moving-location
+  return
+then
+unitize 2dup 6 vs* evec v+
+2swap swap negate dg vs* v+ evel seek-moving-location
+return
+
+th-alert-wander:
+energy 400 < if
+  0 0 wv!
+  0 preth!
+  th-go-charge& think!
+  return
+then
+energy 50 > if
+  shot-enemy ifr
+then
+scan-shots ifr
+wv seek-location
+curmi basmb + read time > if
+  curmi get-pos bv!
+then
+position wv 1 in-range if
+  0 al!
+  0 engine-power!
+  th-go-charge& think!
+  return
+then
+return
+
+pre-think:
+energy 300 < if
+  0 preth!
+  return
+then
+armor 230 > if
+  chk-alert
+  al if
+    am get-pos wv!
+    0 preth!
+    th-alert-wander& think!
+    return
+  then
+else
+  2 clear-messages
+then
+return
+
+th-go-away:
+wv norm if
+  wv seek-location
+  0.07 engine-power!
+  position wv 1 in-range if
+    0 0 wv!
+    0 engine-power!
+    th-charge& think!
+    return
+  then
+  return
+then
+get-rnd-idx if
+  dup oldmi = if
+    drop return
+  then
+  get-pos wv!
+  curmi oldmi!
+  return
+then
+return
+
+th-go-charge:
+0 al!
+energy 50 > if
+  shot-enemy if
+    0 preth!
+    th-fight& think!
+    return
+  then
+then
+bv norm if
+  bv seek-location
+  position bv 20 in-range if
+    0 engine-power!
+    th-charge& think!
+    return
+  then
+  return
+else
+  th-charge& think!
+  return
+then
+return
+
+th-charge:
+energy 50 > if
+  shot-enemy ifr
+then
+scan-shots ifr
+preth nif energy 600 > and-if
+  2 clear-messages
+  pre-think& preth!
+then
+0 engine-power!
+energy 850 < if time c1tm > and-if
+  armor 150 > if
+    position energy 600 < 3 6 ifev 3 1 send
+  else
+    position energy 300 < 5 8 ifev 3 1 send
+  then
+  time 50 + c1tm!
+then
+curmi basmb + read time > if
+  curmi get-pos bv!
+  0 0 wv!
+  th-go-away& think!
+  return
+then
+return
+
+th-energy:
+energy 30 > if
+  0 0 wv!
+  th-charge& think!
+  return
+then
+0 engine-power!
+time c1tm > if
+  position 1 3 1 send
+  time 50 + c1tm!
+then
+2 clear-messages
+return
+
+#start
+main:
+0 shot-sensor-sees-friendly!
+position 10 / floor 10 * swap 10 / floor + curmi!
+random-angle 5 / myang!
+pi/2 dgang!
+2 dg!
+curmi get-pos bv!
+th-energy& think!
+do
+  position 10 / floor 10 * swap 10 / floor + curmi!
+  energy 100 > if
+    armor max-armor < if
+      max-repair-rate repair-rate!
+    then
+  else
+    0 repair-rate!
+  then
+  energy 1 < if
+    0 preth!
+    th-energy& think!
+  then
+  preth dup ifc
+  think dup ifc
+forever
+
+
+#type Battery
+#decoration 0f0 square
+#hardware
+processor 25
+engine 0.05
+energy 500 0
+solar-cells 0.50
+shot-sensor 7
+armor 150
+repair-rate 0.10
+syphon 0.75 40
+
+#code
+#vector wv
+#vector ch1v
+#var ch1l
+#var sl
+#vector sv
+
+scan-shots:
+15 periodic-shot-sensor drop
+shot-found nif
+  0 return
+then
+shot-side side = nif
+  shot-type 3 < shot-power 1 > and shot-type 3 > or if
+    position shot-position v- unitize 8 vs* position v+ seek-location
+    0 syphon-rate!
+    time c1tm > if
+      shot-position get-idx 2 2 2 send
+      dngmb 1000 mark-cmem
+      time 50 + c1tm!
+    then
+    1 return
+  then
+  0 return
+then
+shot-type 3 < if
+  position shot-position v- unitize 8 vs* position v+ seek-location
+  0 syphon-rate!
+  1 return
+then
+0 return
+
+chk-feed-chan:
+1 receive nif
+  0 ch1l!
+  return
+then
+ch1l! ch1v!
+return
+
+chk-feed-info:
+ch1l if
+  sl if
+    ch1l sl < if ch1v position dist syphon-range < and-if
+      ch1v sv!
+      ch1l sl!
+    then
+  else
+    ch1v position dist syphon-range < if
+      ch1v sv!
+      ch1l sl!
+    then
+  then
+then
+sl if
+  sv position v- rect-to-polar syphon-direction! syphon-distance!
+  syphon-max-rate negate syphon-rate!
+then
+return
+
+th-circle:
+wv norm if
+  wv seek-location
+  position wv 0.5 in-range if speed 0.03 < and-if
+    0 engine-power!
+    th-idle& think!
+    return
+  then
+  return
+then
+id 3 mod pi/2 *
+0 89 random-int pi 18 / *
++ reorient
+1
+do while
+  8 over polar-to-rect
+  curmi get-pos v+ 2dup
+  dup 5 > swap 95 < and swap dup 5 > swap 95 < and and if
+    0
+  else
+    2drop
+    pi/2 + reorient
+    1
+  then
+loop
+wv!
+drop
+return
+
+th-idle:
+scan-shots ifr
+0 engine-power!
+return
+
+#start
+main:
+1 shot-sensor-sees-friendly!
+position 10 / floor 10 * swap 10 / floor + curmi!
+th-circle& think!
+do
+  position 10 / floor 10 * swap 10 / floor + curmi!
+  syphon-rate if syphoned -0.3 >= and-if
+    0 syphon-rate!
+    0 sl!
+  then
+  chk-feed-chan
+  energy 5 > if
+    armor max-armor < if
+      max-repair-rate repair-rate!
+    then
+    chk-feed-info
+  else
+    0 repair-rate!
+    0 syphon-rate!
+    0 sl!
+  then
+  wv norm if position wv 3.0 in-range and-nif
+    th-circle& think!
+  then
+  preth dup ifc
+  think dup ifc
+forever
+
+
+#type Bomber
+#decoration ff5 triangle
+#hardware
+processor 50
+engine 0.14
+energy 900 50
+robot-sensor 12 4
+shot-sensor 7
+armor 250
+repair-rate 0.25
+grenades 20 9 10
+
+#code
+#const alst 300
+#const almt 30
+
+#var myang
+#var dgang
+#var dg
+#var dgtm
+#var rstm
+#vector fv
+#vector evec
+#vector evel
+#var emass
+#vector evec2
+#vector evel2
+#var ecnt
+#vector av
+#vector wv
+#vector bv
+#var am
+#var al 0
+#var ch2m
+#var ch2l 0
+#var c1tm
+#var c2tm
+
+chk-alert:
+2 receive if
+  ch2l!
+  ch2m!
+else
+  0 ch2l!
+  return
+then
+ch2l 5 < ifr
+al if
+  ch2m al <= ifr
+  ch2m get-pos position dist am get-pos position dist > ifr
+  ch2m almb almt mark-smem-if-exp nifr
+  ch2m am!
+  ch2l al!
+  return
+then
+ch2m almb almt mark-smem-if-exp nifr
+ch2m am!
+ch2l al!
+return
+
+scan-shots:
+15 periodic-shot-sensor drop
+shot-found nif
+  0 return
+then
+shot-side side = nif
+  shot-type 3 < shot-power 1 > and shot-type 3 > or if
+    position shot-position v- unitize 8 vs* position v+ seek-location
+    time c2tm > if
+      shot-position get-idx 6 2 2 send
+      shot-position get-idx dngmb 1000 mark-smem
+      dngmb 1000 mark-cmem
+      time 50 + c2tm!
+    then
+    1 return
+  then
+  0 return
+then
+shot-type 3 < if
+  position shot-position v- unitize 8 vs* position v+ seek-location
+  1 return
+then
+0 return
+
+get-enemy:
+0 0 evec!
+0 0 evec2!
+0 emass!
+fire-robot-sensor sync
+robot-found ecnt!
+robot-found
+do while
+  robot-shield-fraction 0.5 > if
+    robot-mass emass > if
+      robot-position evec!
+      robot-velocity evel!
+      robot-mass emass!
+      ecnt 4 < ifr
+    then
+  else
+    evec2 norm nif
+      robot-position evec2!
+      robot-velocity evel2!
+    then
+  then
+  next-robot
+loop
+evec norm ifr
+Defender type-population 10 >= if evec2 norm and-if
+  evec2 evec!
+  evel2 evel!
+then
+return
+
+shot-enemy:
+grenades-cooldown rstm time > or if
+  0 return
+then
+get-enemy
+time evec norm 10 30 ifev + rstm!
+evec norm if
+  evec evel lead-grenade
+  time c2tm > if
+    evec get-idx 6 2 2 send
+    time 30 + c2tm!
+  then
+  energy 400 > armor 180 > and if
+    0 preth!
+    th-fight& think!
+    1 return
+  then
+then
+0 return
+
+fire-enemy:
+time rstm < ifr
+grenades-cooldown 1 > ifr
+get-enemy
+time 9 + rstm!
+evec norm if
+  evec evel lead-grenade
+  time c2tm > if
+    evec get-idx 6 2 2 send
+    time 30 alst ecnt / max + c2tm!
+  then
+  return
+then
+return
+
+th-fight:
+energy 200 < armor 100 < or if
+  th-go-charge& think!
+  return
+then
+fire-enemy
+evec norm nif
+  pre-think& preth!
+  th-go-charge& think!
+  return
+then
+time dgtm > if
+  dg negate dg!
+  time 20 + dgtm!
+then
+position evec v- 2dup norm 8 > if
+  unitize 7 vs* evec v+ evel seek-moving-location
+  return
+then
+unitize 2dup 7 vs* evec v+
+2swap swap negate dg vs* v+ evel seek-moving-location
+return
+
+th-alert-wander:
+energy 400 < if
+  0 0 wv!
+  0 preth!
+  th-go-charge& think!
+  return
+then
+energy 50 > if
+  shot-enemy ifr
+then
+scan-shots ifr
+wv seek-location
+curmi basmb + read time > if
+  curmi get-pos bv!
+then
+position wv 1 in-range if
+  0 al!
+  0 engine-power!
+  th-go-charge& think!
+  return
+then
+return
+
+pre-think:
+energy 300 < if
+  0 preth!
+  return
+then
+armor 230 > if
+  chk-alert
+  al if
+    am get-pos wv!
+    0 preth!
+    th-alert-wander& think!
+    return
+  then
+else
+  2 clear-messages
+then
+return
+
+th-go-away:
+wv norm if
+  wv seek-location
+  0.07 engine-power!
+  position wv 1 in-range if
+    0 0 wv!
+    0 engine-power!
+    th-charge& think!
+    return
+  then
+  return
+then
+get-rnd-idx if
+  dup oldmi = if
+    drop return
+  then
+  get-pos wv!
+  curmi oldmi!
+  return
+then
+return
+
+th-go-charge:
+energy 50 > if
+  shot-enemy if
+    0 preth!
+    th-fight& think!
+    return
+  then
+then
+bv norm if
+  bv seek-location
+  position bv 20 in-range if
+    0 engine-power!
+    th-charge& think!
+    return
+  then
+  return
+else
+  th-charge& think!
+  return
+then
+return
+
+th-charge:
+energy 50 > if
+  shot-enemy ifr
+then
+scan-shots ifr
+preth nif energy 600 > and-if
+  2 clear-messages
+  pre-think& preth!
+then
+0 engine-power!
+energy 850 < if time c1tm > and-if
+  armor 150 > if
+    position energy 600 < 3 6 ifev 3 1 send
+  else
+    position energy 300 < 5 8 ifev 3 1 send
+  then
+  time 50 + c1tm!
+then
+curmi basmb + read time > if
+  curmi get-pos bv!
+  0 0 wv!
+  th-go-away& think!
+  return
+then
+return
+
+th-energy:
+energy 30 > if
+  0 0 wv!
+  th-charge& think!
+  return
+then
+0 engine-power!
+time c1tm > if
+  position 1 3 1 send
+  time 50 + c1tm!
+then
+2 clear-messages
+return
+
+#start
+main:
+0 shot-sensor-sees-friendly!
+position 10 / floor 10 * swap 10 / floor + curmi!
+random-angle 5 / myang!
+pi/2 dgang!
+2 dg!
+curmi get-pos bv!
+th-energy& think!
+do
+  position 10 / floor 10 * swap 10 / floor + curmi!
+  energy 100 > if
+    armor max-armor < if
+      max-repair-rate repair-rate!
+    then
+  else
+    0 repair-rate!
+  then
+  energy 1 < if
+    0 preth!
+    th-energy& think!
+  then
+  preth dup ifc
+  think dup ifc
+forever
+
+
+#end

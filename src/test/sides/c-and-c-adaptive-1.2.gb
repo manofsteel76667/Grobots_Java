@@ -1,0 +1,677 @@
+#side C&C Adaptive 1.2
+#author Matt Burkholder
+#date 10 March 2006
+
+#color FFF
+
+#seed 1 3 5 2 2 2 2
+
+#code
+
+#var Feed-Loop
+#var Feed-ID
+#var Feed-Time
+#var Feed-Prefer
+#var Feed-Type
+
+#vector Feed-Position
+
+Read-Requests:
+	2 Feed-Loop!
+	do Feed-Loop while
+		time Feed-Time > Feed-Type < Feed-Prefer or if
+			0 Feed-ID!
+			-999 -999 Feed-Position!
+			0 Feed-Type!
+		then
+		do Feed-Loop messages while 
+			Feed-Loop receive 3 = if 
+				dup Feed-ID = if 
+					0 Feed-ID!
+					-999 -999 Feed-Position!
+					0 Feed-Type!
+				then
+				rrot dup 0 < if
+					2drop drop
+				else
+					2dup position Feed-Position position dist syphon-range min in-range if
+						Feed-Position! Feed-ID!
+						time 100 + Feed-Time!
+						Feed-Loop Feed-Type!
+					else
+						2drop drop
+					then
+				then
+			else
+				stack dropn
+			then
+			Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+			energy 2 > Feed-ID and syphon-max-rate negate 0 ifev syphon-rate!
+			armor max-armor > max-repair-rate 0 ifev repair-rate!
+	 	loop
+	 	Feed-Type Feed-Prefer = ifr
+	 	Feed-Loop 1 - Feed-Loop!
+	 loop
+return
+
+#type Control
+#color 0F0
+#decoration 000 x
+#hardware 
+processor 100 
+solar-cells .1
+energy 100 5 
+armor 100 
+food-sensor 25 25 
+robot-sensor 30 8
+repair-rate 0.1
+engine 0.01
+
+radio send receive read write
+
+
+#code 
+
+#const edge-space 10
+#const Address-Offset 96
+#const time-offset 100
+#const empty-offset 500
+#const num-types 4
+
+#const Robot-sensor-period 100
+
+
+#var Robot-Sensor-Time 0
+#var Food-Loop
+#var Read-Loop
+#var First-Empty
+#var Last-Used
+#var Chirp-Time
+#var Food-Drift
+#var Robot-Quad
+#var D-Step
+#var D-Assign
+#var D-Free
+#var pi2
+
+#vector Home
+#vector Center
+#vector Dest
+#vector X-Step
+#vector Y-Step
+
+pi 2 / pi2!
+World-Width 2 / World-Height 2 / Center!
+Search-Home^
+10 996 write
+1 980 write
+0 990 write
+
+Run_Loop:
+	energy food-sensor-firing-cost > Scan-Food& ifc
+	Idle^	
+	
+	
+Run_Loop& jump
+
+Idle:
+	Home seek-location
+	armor max-armor < energy 25 > and max-repair-rate 0 ifev repair-rate!
+	time robot-sensor-time > energy robot-sensor-firing-cost food-sensor-firing-cost + > and Scan-Robots& ifc
+	
+	position 998 vwrite
+	energy 25 < Chirp-Time 18000 = and if
+		1 Chirp-Time! 
+	else energy 90 > chirp-time 18000 < and if
+		-999 -999 ID 3 1 send
+		18000 Chirp-Time!
+	then then
+	time Chirp-Time > if
+		position ID 3 1 send
+		time 50 + Chirp-Time!
+	then
+return
+
+Search-Home:
+	Position food-sensor-range .75 * restrict-position Home!
+	Home 998 vwrite
+return
+
+Scan-Food:
+	fire-food-sensor sync
+	Food-Found if
+		200 Last-Used! 196 Read-Loop! do
+			Read-Loop 4 + dup Read-Loop! read
+			dup time > if Read-Loop Last-Used! then
+		while-loop 
+		do 
+			0 Read-Loop write
+			Read-Loop 4 - Read-Loop!
+		Read-Loop Last-Used > while-loop
+		do
+			Idle^
+			0 First-Empty! 196 Read-Loop! do	
+				Read-Loop 4 + dup Read-Loop! read
+				dup time > if
+					Read-Loop 2 + vread
+					food-position 0.5 in-range if drop
+						Read-Loop First-Empty!
+						Food-Listed& jump then
+				else
+					First-Empty nif Read-Loop First-Empty! then
+				then
+			while-loop
+		Food-Listed:
+			food-energy 10 * food-sensor-time + First-Empty write
+			food-position First-Empty 2 + vwrite
+		next-food while-loop
+		food-found 996 read - 2 / Food-Drift + Food-Drift!
+		Food-Drift 3 > if
+			996 read 1 + 25 1 type-population * min 996 write
+			0 Food-Drift!
+		then
+		Food-Drift -3 < if
+			996 read 1 - 5 max 996 write
+			0 Food-Drift!
+		then
+	then
+return
+
+Scan-Robots:
+	fire-robot-sensor 
+	time 25 + robot-sensor-time! sync
+	robot-found if 
+		do
+			robot-position robot-id robot-side 10 / + 3 3 send 
+			robot-reloading if 
+				1 robot-side 20 min 10 * robot-type - write 
+			then
+			robot-direction pi2 / floor 983 + Robot-Quad!
+			Robot-Quad read 1 + robot-Quad write
+			980 read 1 + 980 write
+		next-robot while-loop 
+	else
+		5 type-population dup D-Step! D-Free!
+		980 read D-Assign!
+		981 read D-Assign / D-Step * 971 write
+		982 read D-Assign / D-Step * 972 write
+		983 read D-Assign / D-Step * 973 write
+		984 read D-Assign / D-Step * 974 write
+		0 961 write 0 962 write 0 963 write 0 964 write
+		0 D-Assign!
+		do D-Step D-Free D-Assign > and while
+			0 D-Assign!
+			971 read D-Step > if
+				961 read 1 + 961 write
+				D-Assign 1 + D-Assign!
+				D-Free 1 - D-Free!
+			then
+			972 read D-Step > if
+				962 read 1 + 962 write
+				D-Assign 1 + D-Assign!
+				D-Free 1 - D-Free!
+			then
+			973 read D-Step > if
+				963 read 1 + 963 write
+				D-Assign 1 + D-Assign!
+				D-Free 1 - D-Free!
+			then
+			974 read D-Step > if
+				964 read 1 + 964 write
+				D-Assign 1 + D-Assign!
+				D-Free 1 - D-Free!
+			then
+			D-Step 1 - D-Step!
+		loop
+	then
+return
+
+#type Feeder
+#color 00F
+#decoration 000 x
+#hardware 
+processor 30 
+eater 1.0 
+energy 50 11 
+armor 50 
+repair-rate 0.05
+engine 0.04
+syphon 1 30
+radio send receive read write
+
+#code 
+
+
+#var Read-Loop
+#var Best-Address
+#var Best-Distance
+#var My-Address
+#var Chirp-TIme
+;#var Feed-ID
+;#var Feed-Time
+;#var Feed-Type
+
+#vector Home
+;#vector Feed-Position
+#vector My-Food
+#vector Best-Food
+
+	do time 5 < while-loop
+	998 vread Home!
+	2 Feed-Prefer!
+	position My-Food!
+	Read-Food& jump
+
+Run-Loop:
+	time Chirp-Time > My-Address and if
+		time 50 + My-Address write
+		time 25 + Chirp-Time!
+	then
+	998 vread Home!
+	armor max-armor > max-repair-rate 0 ifev repair-rate!
+	energy 30 > if
+		Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+		syphon-max-rate negate syphon-rate!
+	else
+		energy 10 < if
+			syphon-max-rate 20 / syphon-rate!
+			home Position v- rect-to-polar syphon-direction! syphon-distance!
+		else
+			0 syphon-rate!
+		then
+	then
+	My-Food position radius in-range if
+		eaten if Read-Food:
+			200 Best-Distance!
+			0 Best-Address!
+			196 Read-Loop! do
+				My-Food seek-location
+				Read-Loop 4 + dup Read-Loop! read
+				dup time > if
+					Read-Loop 1 + read
+					time < if 
+						Read-Loop 2 + vread 2dup 2dup 
+						;home dist dup Best-Distance < if
+						home dist rrot position dist + dup Best-Distance < if
+							Best-Distance! Best-Food!
+							Read-Loop 1 + Best-Address!
+						else
+							drop 2drop
+						then
+					then
+				then
+			while-loop
+			Read-Requests^
+		else
+			my-Address if  1 My-Address 1 - write then
+			Best-Address if sync
+				Best-Address read time < if
+					time 50 + Best-Address write
+					Best-Address My-Address!			
+					Best-Food My-Food!
+				else
+					0 My-Address!
+					Read-Food& jump
+				then
+			else
+				0 My-Address!
+				Read-Food& jump
+			then
+		then
+	else
+		My-Food seek-location
+		Read-Requests^
+	then
+Run-Loop& jump
+
+;Read-Requests:
+;	2 messages Feed-Type 1 = and if 0 Feed-Time! then
+;	do 2 messages while 
+;		2 receive 3 = nif stack dropn return then
+;		dup Feed-ID = time Feed-Time > or if 
+;			0 Feed-ID!
+;			-999 -999 Feed-Position!
+;			0 Feed-Type!
+;		then
+;		rrot dup 0 < if
+;			2drop drop
+;		else
+;			2dup position Feed-Position position dist syphon-range min in-range if
+;				Feed-Position! Feed-ID!
+;				2 Feed-Type!
+;				time 100 + Feed-Time!
+;			else
+;				2drop drop
+;			then
+;		then
+;		My-Food seek-location
+;	loop
+;	Feed-Type 2 = ifr
+;	 do 1 messages while 
+;		1 receive 3 = nif stack dropn return then
+;		dup Feed-ID = time Feed-Time > or if 
+;			0 Feed-ID!
+;			-999 -999 Feed-Position!
+;			0 Feed-Type!
+;		then
+;		rrot dup 0 < if
+;			2drop drop
+;		else
+;			2dup position Feed-Position position dist syphon-range min in-range if
+;				Feed-Position! Feed-ID!
+;				time 100 + Feed-Time!
+;				1 Feed-Type!
+;			else
+;				2drop drop
+;			then
+;		then
+;		My-Food seek-location
+;	loop
+;return
+
+#type Builder
+#color F0F
+#decoration 000 x
+#hardware 
+processor 10 
+energy 500 5 
+solar-cells 0.1
+armor 100 
+repair-rate 0.05
+constructor 5
+radio send receive read write
+
+#code 
+
+#var Chirp-Time
+#var Fighter-Ratio
+#var Food-Ratio
+#var Build-Ratio
+#var Defenders
+#var Solars
+#var Builders
+#var Feeders
+#var Controlers
+
+
+#vector Chirp-Position
+
+#const Limit 2000
+
+Loop:
+	energy 100 < Chirp-Time 18000 = and position Chirp-Position dist radius 0.7 * > or if
+		1 Chirp-Time! 
+	else energy 480 > chirp-time 18000 < and if
+		-999 -999 ID 3 1 send
+		18000 Chirp-Time!
+	then then
+	time Chirp-Time > if
+		position ID 3 1 send
+		time 50 + Chirp-Time!
+		position Chirp-Position!
+	then
+	energy 25 > if
+		constructor-max-rate constructor-rate!
+		994 read 1.1 + 994 write
+	else
+		0 constructor-rate!
+	then
+	995 read 1 + dup Limit > if
+		10 / 995 write
+		994 read 10 / 994 write
+	else
+		995 write
+	then
+	armor max-armor > max-repair-rate 0 ifev repair-rate!
+	1 type-population 990 read or nif
+		1 constructor-type!
+		id 990 write
+	then
+	constructor-type nif
+		2.5 5 type-population 997 read 1 max / 1.75 * - time 36000 / + Fighter-Ratio! 
+		996 read Food-Ratio!
+		994 read 995 read 1 max / Build-Ratio!
+		5 type-population Defenders!
+		4 type-population Solars!
+		3 type-population Builders!
+		2 type-population Feeders!
+		1 type-population Controlers!
+		
+		Defenders Builders 1 - Feeders 0.25 * + Fighter-Ratio 0.5 max * <  5
+		Feeders Solars 0.30 * + ;energy available
+		Builders constructor-max-rate * Build-Ratio / > 3 ;constructor available
+		Feeders Controlers Food-Ratio * > 4 2 ifev
+		ifev ifev constructor-type!
+	then
+loop& jump
+
+#type Solar
+#color FF0
+#hardware
+processor 20
+energy 50 0
+solar-cells 0.30
+armor 50
+repair-rate 0.05
+syphon 0.4 20
+radio send receive read write
+
+#code
+
+#var Feed-ID
+#var Feed-Time
+#var Feed-Dist
+#var Feed-Loop
+
+#vector Feed-Position
+9999 Feed-Dist!
+-1 Feed-Prefer!
+Run-Loop:
+	Feed-Position Position v- rect-to-polar syphon-direction! syphon-distance!
+	energy 2 > syphon-max-rate negate 0 ifev syphon-rate!
+	armor max-armor > max-repair-rate 0 ifev repair-rate!
+	Read-Requests^
+Run-loop& jump
+
+
+
+;Fighter type
+
+#type Defense
+#color 059
+#decoration 000 x
+#hardware
+processor 35
+energy 500 5
+armor 250
+engine 0.07
+repair-rate 0.2
+robot-sensor 10 16
+blaster 20 7.5 10
+force-field 0.07 10
+radio send receive read write
+
+
+#code
+
+#var Chirp-Time
+#var No-Shots
+#var Robot-Read
+#var target-ID
+#var target-dist
+#var shot-firing-delay
+#var shot-blocked
+#var Last-Armor
+
+#vector Home
+#vector target
+#vector target-velocity
+#vector Chirp-position
+#vector blocker
+
+997 read 1 + 997 write
+Run-Loop:
+	998 vread Home!
+		energy 100 < Chirp-Time 18000 = and if
+		1 Chirp-time! 
+	else energy 480 > Chirp-Time 18000 < and if
+		-999 -999 ID 3 2 send
+		18000 Chirp-Time!
+	then then
+	time Chirp-Time > position Chirp-position radius in-range not or speed not and if
+		position ID 3 2 send
+		time 50 + Chirp-Time!
+		position Chirp-position!
+	then
+	Repair^
+	position home 20 in-range energy 24 < or if
+		0 engine-power!
+	else
+		home seek-location
+	then
+	energy 300 > energy 100 > Armor Last-Armor < and or 3 messages and if
+		do 3 messages while
+			9999 target-dist!
+			3 receive 3 = if
+				rrot 2dup position target-dist in-range if
+					target! target-ID! 
+				else
+					drop 2drop
+				then
+			else 	
+				stack dropn
+			then
+			
+		loop
+		Start-Seek^
+		0 force-field-power!
+		0 robot-sensor-focus-distance!
+		0 robot-sensor-sees-friends!
+		3 clear-messages
+	else
+		Armor Last-Armor!
+		3 clear-messages
+	then
+	1 type-population nif
+		25 periodic-robot-sensor if
+			robot-found if
+			Attack^
+				0 force-field-power!
+				0 robot-sensor-focus-distance!
+				0 robot-sensor-sees-friends!
+				3 clear-messages
+			then
+		then
+	then
+Run-loop& jump
+
+
+Start-Seek:
+	-999 -999 ID 3 2 send
+	18000 Chirp-Time!
+Seek:
+	target seek-location
+	;position target position v- angle set-force-field
+	10 periodic-robot-sensor if
+		robot-found Attack& ifg then
+	target position 1 in-range energy 50 < or ifr
+	3 receive if do
+		target-id = if target! then
+	stack while-loop then
+Seek& jump
+
+
+
+Attack:
+	0 shot-firing-delay!
+	0 No-Shots!
+	1 robot-sensor-sees-friends!
+	do 
+		blaster-cooldown shot-firing-delay <= if
+			robot-distance 2 / robot-sensor-focus-distance!
+			robot-direction robot-sensor-focus-direction!
+			0 shot-blocked!
+			fire-robot-sensor sync robot-found nifr
+			do 
+				robot-side side = See-Friend& See-Enemy& ifec 
+			while-loop
+		then
+		target target-velocity seek-moving-location
+		Repair^
+	energy 50 < No-Shots 10 > or until-loop
+Return
+
+See-Friend:
+	shot-blocked nif
+		robot-distance Shot-Blocked!
+		robot-position blocker!
+	then
+Next-Robot dup nif rdrop drop then return
+
+See-Enemy:
+	robot-shield-fraction 0.90 > Fire-Shot& ifg
+Check-Next-Bot:
+	Current-Robot-result 1 = No-Shots + No-Shots! Next-Robot return
+Pick-Target:
+	shot-blocked Safe& ifg
+Fire-Shot:
+	robot-side 20 min 10 * robot-type - robot-read!
+	robot-reloading if 1 robot-read write then
+	robot-read read robot-bomb or if
+		Safe-Shot^
+		robot-position home 22.5 in-range if
+			robot-position 2dup home v- angle set-force-field
+			7.0 Shot-Blocked min Shot-Blocked!
+		else
+			robot-distance 7.0 < if
+				robot-position 2dup position v- angle set-force-field         
+			else robot-distance 9 > if
+				robot-position position robot-position v- angle set-force-field
+			else
+				0 force-field-power!
+			then then
+			7.0 Shot-Blocked min Shot-Blocked!
+		then
+	else
+		robot-position home 22.5 in-range robot-position home v- robot-velocity dot 0 > or if
+			Safe-Shot^
+			robot-position position robot-position v- angle set-force-field 
+			1 Shot-Blocked min Shot-Blocked!
+		else
+			robot-position home robot-position v- angle set-force-field
+			Shot-Blocked dup 4 ifev Shot-Blocked!
+		then
+	then
+	position robot-position v- unitize Shot-Blocked vs* robot-position v+ target!
+	robot-velocity target-velocity!
+	0 No-Shots!
+0 return
+
+Safe:
+	position robot-position v- unitize robot-distance shot-blocked - vs* robot-position v+ target!
+	robot-velocity target-velocity!
+	robot-side 20 min 10 * robot-type - robot-read!
+	robot-reloading if 1 robot-read write then
+0 return
+
+Safe-Shot:
+	Shot-Blocked nif
+		robot-position robot-velocity lead-blaster
+		time robot-sensor-time - shot-firing-delay!
+		6.5 Shot-Blocked!
+	else
+		robot-distance shot-blocked - Shot-Blocked!
+	then
+return
+
+;Fire-Shot:
+;	robot-position robot-velocity lead-blaster
+;	time robot-sensor-time - shot-firing-delay! 
+;	0 No-Shots!
+;0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+Repair:
+	armor max-armor < energy 10 > and max-repair-rate 0 ifev repair-rate!
+return
+
+#end

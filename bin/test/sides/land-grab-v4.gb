@@ -1,0 +1,547 @@
+#side    Land Grab v4
+#author    Mike Anderson
+#date    Aug 10, 2012
+
+#Seed 4 1
+
+#Code
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	Global Memory Map Setup			;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Global memory to build food map.
+;Food is stored by its Y-value and verified by its X-value.  This can lead to conflicts
+;but they should be rare and only result in 2 robots bumping each other for a little while.
+#Const Food-Mem-Start 200
+#Const Food-Slot-Size 2
+
+;Global Food Memory Structure:
+;Slot Number = Floor(y)
+; 0 = Last time someone updated this slot
+; 1 = ID of claiming robot
+
+#const home-position-addr 1
+#const control-radius-addr 3
+#const type-to-build-addr 4
+
+#const longhorn-type 1
+#const cowboy-type 2
+#const doc-type 3
+#const baron-type 4
+
+;Timers
+#const food-reserved-duration 400  ;Number of turns before reserved food is free again
+#const posse-call-duration 50  ;Number of turns a posse will stay together
+#const doc-call-interval 50  ;How often to repeat a doc call if needed
+#const resync-interval 100   ;How often to redo synchronization
+#const new-position-interval 20   ;How often to check your position on the perimeter (too much movement wastes energy)
+#const new-position-duration 200   ;How long it takes to get there, max.  Longer than this and something's in the way.
+#const wall-dist 5   ;How far away from the wall to build the ranch
+
+#const doc-channel 1  ;My-loc time
+#const posse-channel 2  ;Target-loc time
+#const sync-channel 3   ;home-pos control-radius time
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		Common Local Variables		;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;General-purpose nonpermanent storage locations
+#var scratch
+#vector vscratch
+;Saved values from the last time we looked
+#var last-armor
+#var last-radius
+#var last-sync-time
+#var last-doc-time
+#var last-new-position-time
+#vector last-home
+;Variables to control perimeter position
+#var radius-multiple 1
+#var radius-offset 0
+#var pos-shift-dir 1
+#var angle-from-home
+;Movement control variables
+#var doing-special-move  ;doing something besides <location> destination! destination seek-location
+#vector destination
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		Global Properties			;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+home-position:
+	home-position-addr vread
+return
+
+control-radius:
+	control-radius-addr read
+return
+
+set-control-radius:
+	cowboy-type type-population doc-type type-population + 10 max ;population min 
+	control-radius-addr write
+return
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		Global Functions			;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+loc-on-map:   ;Checks whether the given coordinate is on the map or not.  Returns boolean
+	50 - abs 50 < swap 50 - abs 50 < and
+return
+
+do-circling:
+;Adapted from Active 9
+	mass sqrt 80 / radius 3 / position destination v- angle 1 + polar-to-rect destination v+ position v- angle polar-to-rect engine-velocity!
+return
+
+check-sync:
+	sync-channel messages if
+		sync-channel receive drop
+		last-sync-time!
+		last-radius!
+		last-home!
+	then
+	time last-sync-time - resync-interval > if
+		set-control-radius
+		home-position control-radius time 4 sync-channel send
+		home-position last-home! control-radius last-radius! 
+	then
+return
+
+increment-angle-from-home: ;Delta angle
+	pos-shift-dir * angle-from-home + reorient angle-from-home! 
+return
+
+set-new-position:   ;Tells robots who guard the perimeter where to go
+	time last-new-position-time - new-position-interval > if
+		time last-new-position-time!
+		last-radius radius-multiple * radius-offset + pos-shift-dir 2 * + angle-from-home polar-to-rect last-home v+ destination!
+		destination loc-on-map nif  ;At the map edge, time to turn around
+			pi/2 9 / scratch!
+			do
+				pos-shift-dir -1 * pos-shift-dir!
+				scratch 1.5 * dup scratch! increment-angle-from-home
+				last-radius angle-from-home polar-to-rect last-home v+ destination!
+				destination loc-on-map
+			until-loop
+		then
+		1 doing-special-move!
+	then
+return
+
+gen-init:
+	home-position last-home!
+	control-radius last-radius!
+	Armor Last-Armor!
+	resync-interval negate last-sync-time!
+	doc-call-interval negate last-doc-time!
+	position last-home v- angle angle-from-home!
+	new-position-interval negate last-new-position-time!
+return
+
+Reserve-Food: 		;To be called only when you have food on your scanner	
+	;having 300 slots should prevent conflicts and still allow closely-spaced food to be shared
+	do		
+		food-position 3 * floor food-slot-size * Food-Mem-Start + scratch! drop
+		scratch vread dup not rrot id = swap time swap - food-reserved-duration > or or if  			;No one but me has claimed it lately 
+			time id scratch vwrite   					;Save the time and my id
+			food-position destination!
+			1 return
+		then
+		next-food 
+	while-loop
+	0 	;It's not yours, hands off!
+return
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		  Longhorn Type				;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#type    Longhorn
+#color    00ffff                    
+#decoration 000000 triangle
+#hardware
+    Processor	20 
+	Energy 300 100
+	Eater 2
+	Food-Sensor 10 3
+	Armor 100
+	Engine .1
+	Constructor 1.5
+	repair-rate .2
+#code
+
+#var patrol-dir
+
+Find-New-Pasture:	
+	do
+		patrol-dir pi 60 / + reorient patrol-dir!   ;keep turning slightly; 
+		position 10 patrol-dir polar-to-rect v+ Destination! 
+		destination loc-on-map
+	until-loop
+return
+
+check-armor:
+	armor last-armor < if
+		last-home destination!
+		1 doing-special-move!
+		last-home position v- angle patrol-dir!  ;when you're done running home, keep going the opposite way
+		armor last-armor!
+		energy 50 - repair-rate!
+		;max-repair-rate repair-rate!
+	;else
+	;	energy 50 < armor max-armor = or if
+	;		0 repair-rate!
+	;	then
+	then
+return
+
+do-food-scan:
+	20 periodic-food-sensor if
+		food-found if
+			energy 30 < if
+				food-position destination! destination seek-location  ;Bypass the food reservation system if you're about to starve
+			else
+				reserve-food nif  
+					find-new-pasture
+				then
+			then
+		else
+			find-new-pasture
+		then
+	then
+return
+
+check-energy:
+	eaten nif
+		energy 20 < if  ;I'm starving and I'm pregnant
+			constructor-type if
+				0 constructor-type!   ;abort and live a little while longer
+			then
+			energy nif
+				time last-doc-time!
+				position time 3 doc-channel send 
+				do 
+					time last-doc-time - doc-call-interval > if
+						time last-doc-time! 
+						position time 3 doc-channel send 
+					then
+					energy 20 > sync 
+				until-loop				
+			then
+		then
+	else
+		;I am eating, juke a little to avoid shots.  
+		do-circling
+	then
+return
+
+#start
+
+gen-init
+random-angle patrol-dir!
+Find-New-Pasture
+
+Do
+	check-sync
+	destination position radius in-range nif  ;only move if you're not there yet (otherwise passive dodge while eating fails)
+		Destination Seek-Location
+	then
+	
+	doing-special-move if  
+		destination position last-radius in-range if
+			0 doing-special-move!
+		then
+		skip& jump
+	then
+	
+	eaten nif
+		do-food-scan
+	then
+	
+	constructor-type 0 = if
+		.2 doc-type balance-type
+		.4 longhorn-type balance-type
+		.4 cowboy-type balance-type
+	then
+	Autoconstruct
+
+skip:	
+	check-armor
+	check-energy
+	
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;			Cowboy Type				;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type    Cowboy
+#color    87ceeb                    
+#decoration 000000 slash
+#hardware
+    Processor	20 
+	Energy 300 100
+    grenades 50 25 50
+	Robot-Sensor 25 1
+	Armor 400
+	Solar-cells .1
+	Engine .2
+	
+#code
+
+#start
+
+cowboy-type type-population 1 = id 1 = or if   ;I'm the only one, so where I stand is now home 
+	;Find the nearest wall (going to a corner would be better but we'll probably find someone there)
+	position world-height 2 / - abs swap world-width 2 / - abs > if ;Y is closer to a side
+		position 50 < if
+			wall-dist 
+		else	
+			world-height wall-dist - 
+		then
+	else
+		position swap 50 < if
+			wall-dist swap 
+		else	
+			world-width wall-dist - swap 
+		then
+	then
+	home-position-addr vwrite
+	set-control-radius  ;reset the control radius too
+then  
+;Figure out current angle from home position. We'll use that and control-radius to determine
+;where to position ourselves
+gen-init
+home-position last-radius angle-from-home v+ destination!
+
+do
+main-loop:
+	last-radius scratch!
+	check-sync
+	scratch last-radius = nif
+		set-new-position
+	then
+	
+	destination position radius 4 * in-range nif
+		energy 100 > if ;Adjust position if you have the energy, otherwise stay put.  This means you'll keep firing and call for docs if there's a target
+			destination seek-location 
+		else
+			0 engine-power!
+		then
+	else  ;Coast to a stop since your exact position is not critical
+		0 doing-special-move! 0 engine-power!
+	then
+
+	energy robot-sensor-firing-cost grenades-firing-cost + > if     ;If you have the power, look for something to shoot
+		grenades-reload-time 1 - periodic-robot-sensor if
+			robot-found if
+				robot-position position grenades-range in-range if 
+					robot-position robot-velocity lead-grenade
+				then
+			else	
+				doing-special-move nif
+					pi/2 18 / increment-angle-from-home set-new-position
+				then
+			then
+		then
+	else	;Call a doc, your energy is low
+		doc-type type-population if
+			time last-doc-time - doc-call-interval > if
+				position time 3 doc-channel send 
+			then
+		then		
+	then
+	
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;			Doc Type				;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type    Doc
+#color    87ceeb                    
+#decoration 000000 cross
+#hardware
+    Processor	50 
+	Energy 40 20
+    syphon 2 15
+	Robot-Sensor 15 10
+	Armor 40
+	Solar-cells .2
+	Engine .05
+	Constructor 1
+	
+#code
+
+#const max-housecall-time 200
+#var on-call
+#var lowest-robot-energy
+#var max-housecall-dist 30
+
+hit-with-syphon:
+	robot-position position v- angle syphon-direction! 
+	position robot-position dist syphon-distance!
+return
+
+answer-phone:
+	doc-channel receive if
+		time - doc-call-interval < if
+			2dup position dist max-housecall-dist < if
+				destination!
+				1 doing-special-move!
+			else
+				2drop
+			then
+		else
+			2drop
+		then
+	then
+return
+
+#start
+cowboy-type type-population 0 = if   ;No more cowboys.  Uh-oh!
+	doc-type type-population 1 = if   ;I'm the last doc too.  Everyone regroup around me!
+		position home-position-addr vwrite
+		set-control-radius  ;reset the control radius too
+	then
+then   
+;Figure out current angle from home position. We'll use that and control-radius to determine
+;where to position ourselves
+gen-init
+-5 radius-offset! 
+1 robot-sensor-sees-friends!
+0 robot-sensor-sees-enemies!
+do
+main-loop:
+	last-radius scratch!
+	check-sync
+	scratch last-radius = nif
+		set-new-position
+	then
+
+	destination position radius 4 * in-range nif
+		destination seek-location 
+	else
+		0 engine-power! 0 doing-special-move!
+	then
+	
+	10 periodic-robot-sensor if
+		0 syphon-rate!
+		0 syphon-distance!
+		robot-found if   ;cycle through all results and find the one with the lowest energy
+			-1 scratch!
+			1000 lowest-robot-energy!
+			do
+				doc-type robot-type  = nif
+					robot-energy lowest-robot-energy < if
+						robot-energy lowest-robot-energy!
+						current-robot-result scratch!
+					then
+				then
+				next-robot
+			while-loop
+			-1 scratch = nif
+				scratch current-robot-result!
+				syphon-max-rate negate syphon-rate!
+				hit-with-syphon
+			else
+				doing-special-move nif
+					pi/2 18 / increment-angle-from-home set-new-position
+				then
+			then
+		else
+			doing-special-move nif
+				pi/2 18 / increment-angle-from-home set-new-position
+			then
+		then
+	then
+	
+	longhorn-type type-population 0 = if   ;we're all hat, no cattle.  Do nothing except make more cows
+		0 0 engine-velocity!  ;stop engines
+		constructor-type longhorn-type = nif
+			longhorn-type constructor-type!
+		then
+		constructor-max-rate constructor-rate!
+		0 syphon-rate!
+		do
+			longhorn-type type-population sync  ;no sense wasting CPU cycles while we wait for the baby...
+		until-loop
+	then
+	
+	answer-phone
+	
+forever
+
+#type Cattle Baron
+;Mostly cribbed from Lunacy's Mobile Command Base
+#color    87ceeb                    
+#decoration 000000 square
+#hardware
+  processor 20
+  armor 700
+  engine 0.2
+  eater 5
+  energy 800 140
+  solar-cells 0.05
+  food-sensor 15 1
+  blaster 36 25 10
+  constructor 3
+  robot-sensor 25 1
+  repair-rate 0.5
+#code
+
+#var repeat-time 20
+
+#start
+;This looks like a good spot... let's build a ranch here
+position home-position-addr vwrite
+position last-home!
+10 control-radius-addr write
+
+do
+	blaster-range time 5000 / * blaster-range max last-radius!
+	time 1000 / 2pi * reorient angle-from-home!
+
+	constructor-progress 0 = if
+		longhorn-type constructor-type!
+	then	
+	
+	energy 100 > robot-sensor-time repeat-time + time < and if
+		fire-robot-sensor
+	then
+  
+	robot-found if
+		5 repeat-time!
+		energy 200 > robot-position position dist 15 < or if
+			robot-position robot-velocity lead-blaster
+		then
+	else
+		20 repeat-time!
+	then
+  
+	20 periodic-food-sensor if
+		last-radius angle-from-home polar-to-rect last-home v+ destination!
+		food-found if
+			population 1 = if
+				food-position destination!
+			else
+				reserve-food drop
+			then
+		then
+	then
+	
+	eaten nif
+		destination seek-location
+	else
+		do-circling
+	then
+	
+	energy 400 > if
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+  
+	energy 300 - repair-rate!
+
+forever
+
+#end

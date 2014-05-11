@@ -1,0 +1,121 @@
+#side Bombs and Factories
+My first ever Grobot! Very simple. Can win about 2/3 of the time ( 
+Maybe I'm just on a lucky streak tonight with my wins though)
+
+#author Daniel Von Fange
+http://www.braino.org  - never updated blog. :)
+botman@daniel-labs.com
+
+#date September 18th 2002
+#color 962000
+
+
+
+#type Factory
+
+#color 962000
+#hardware
+	energy 1 0
+	processor 2
+	armor 100
+	constructor 1
+	repair-rate 0.01
+	shot-sensor 4
+	robot-sensor 0
+	food-sensor 0
+	engine 0
+	eater 0
+	solar-cells 1
+
+
+#code
+#start
+
+
+constructor-max-rate constructor-rate!
+
+
+do
+	constructor-type not  newSpawnBot& ifc
+forever
+
+newSpawnBot:
+
+1 2 random-int constructor-type!
+return;
+
+
+
+
+
+#type BombBot
+
+#color FFFFFF
+#hardware
+	energy 25 0
+	processor 10
+	armor 100
+	constructor 0
+	repair-rate 0.01
+	shot-sensor 0
+	robot-sensor 6 2
+	food-sensor 0
+	engine 0.1
+	eater 0
+	solar-cells 0.1
+	bomb 1000
+
+#code
+#start
+
+engine-max-power engine-power!
+constructor-max-rate constructor-rate!
+
+ramble:
+	do
+		fire-robot-sensor
+		robot-found robot-sensor-sees-enemies and seek& ifg
+		
+		-50 50 random -50 50 random engine-velocity!
+		
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+	forever
+
+seek:
+	beep
+	do
+		sync
+		fire-robot-sensor
+		robot-found robot-sensor-sees-enemies and not ramble& ifg
+		robot-position seek-location
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		sync
+		
+		
+	forever
+
+
+
+#end

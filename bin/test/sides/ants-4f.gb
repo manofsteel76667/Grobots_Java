@@ -1,0 +1,514 @@
+#side Ants 4 fixed
+#color 700
+#author Warren
+#date started 12/1/02
+#seed 1 2 3 3 2 3 2
+
+Shielded workers collect manna, and deliver the energy to queens, which have constructors. Force-field grenades users defend.
+
+ToDo:
+-autotrophy when manna is scarce
+-construct intelligently
+-home shouldn't move outside the boundaries of the world!
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; QUEEN ;;;;;;;;;;;;;;;;;;;;
+#type Queen
+Type nubmer 1.
+
+#color f00
+#hardware
+processor 15
+armor 250
+engine 0.05
+radio send receive
+
+solar-cells 0.3
+
+energy 700 0
+constructor 1.15
+
+robot-sensor 7 5
+
+#code
+;;;;;;;;;;;; Only modify Queen's header (this one) ;;;;
+
+;;;;;;;; begin all-type header ;;;;;;;;;;;
+#const feed-me-channel 1
+#const home-channel 2
+
+#const talk-interval 150
+#var last-talk-time -1000
+
+#vector home
+
+#const QUEEN_TYPE 1
+#const RAT_TYPE 2
+#const GUNNER_TYPE 3
+#const LEAF_TYPE 4
+#const NUM_TYPES 4
+
+#const COLONY_SEPARATION 30
+
+random-location:
+	0 world-width random 0 world-height random
+return
+
+communicate:
+	do
+		home-channel receive
+	while
+		2dup position dist COLONY_SEPARATION < if  ;only consider nearby 'bots
+			0.2 vs* home 0.8 vs* v+ home!
+		else
+			2drop
+		then
+	loop
+	time last-talk-time talk-interval  + < ifr
+	time -5 5 random + last-talk-time! ;add small random so they get desynced
+	specific-send^
+return
+
+;;;;;;;; end all-type header
+
+specific-send:
+	home 2 home-channel send
+	energy 500 > nif
+		position max-energy energy - time 4 feed-me-channel send
+	then
+return
+
+construct:
+	constructor-type nif
+		0 max-energy random energy < if
+			QUEEN_TYPE
+		else
+			RAT_TYPE LEAF_TYPE random-int
+		then
+		constructor-type!
+	then
+	energy 100 > constructor-max-rate 0 ifev constructor-rate!
+return
+
+#vector my-place
+move:
+	robot-sensor-time time 30 - < if
+		0 robot-sensor-focus-distance!
+		fire-robot-sensor sync
+		my-place 0.77 vs* home 0.03 vs* position 0.2 vs* v+ v+ ;stack: x y
+		robot-found if
+			do
+				robot-side side = if
+				robot-type QUEEN_TYPE = and-if
+				;run away
+				robot-position position v- unitize
+				-1 robot-position position dist /
+				vs* v+
+				then
+			next-robot while-loop	
+		then ;robot-found
+		;stack: better position
+		my-place!
+	then ;sense
+	my-place seek-location
+return
+
+#start
+position home!
+position epsilon + my-place!
+1 robot-sensor-sees-friends!
+do
+	construct^
+	communicate^
+	move^
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; WORKER (aka rat) ;;;;;;;;;;;;;;
+#type Worker
+
+Shielded food gatherers. Usually gives energy to queens.
+
+If food gathering brought us far away, or no queens are found, start a new colony.
+
+(Devon 20030721) Fixed for syphon renaming and re-aiming.
+                 Fixed annoying "energy-sync" misspelling.
+
+#color ecc
+#hardware
+
+processor 10
+engine 0.045
+radio receive send
+
+constructor 0.3
+
+armor 100
+repair-rate 0.15
+shield 0.55
+
+energy 500 50
+Eater 1.9
+food-sensor 10 1
+
+syphon 2.5
+
+
+robot-sensor 7 5
+shot-sensor 8
+
+#code
+
+;;;;;;;; begin all-type header ;;;;;;;;;;;
+#const feed-me-channel 1
+#const home-channel 2
+
+#const talk-interval 150
+#var last-talk-time -1000
+
+#vector home
+
+#const QUEEN_TYPE 1
+#const RAT_TYPE 2
+#const GUNNER_TYPE 3
+
+#const COLONY_SEPARATION 30
+
+random-location:
+	0 world-width random 0 world-height random
+return
+
+communicate:
+	do
+		home-channel receive
+	while
+		2dup position dist COLONY_SEPARATION < if  ;only consider nearby 'bots
+			0.2 vs* home 0.8 vs* v+ home!
+		else
+			2drop
+		then
+	loop
+	time last-talk-time talk-interval  + < ifr
+	time -5 5 random + last-talk-time! ;add small random so they get desynced
+	specific-send^
+return
+
+;;;;;;;; end all-type header
+
+#var last-armor 50
+specific-send:
+	armor last-armor < if
+		world-size 0.5 vs* ;center
+		  0.05 vs*
+		position home v- unitize -20 vs*
+		home v+ 0.95 vs*
+		v+ home!
+		home 2 home-channel send
+	then
+	armor last-armor!
+	return
+
+#var energy-sink-available
+#vector energy-sink-position
+#var energy-sink-capacity
+#var energy-sink-time
+
+#var hyp-es-time ;hypothetical energy-sink time
+#var hyp-es-capacity
+#vector hyp-es-position
+
+get-energy-sink: ; ->
+feed-me-channel messages
+QUEEN_TYPE type-population GUNNER_TYPE type-population +
+- 0 max feed-me-channel skip-messages
+
+energy-sink-available nif
+	-1000 -1000 energy-sink-position!
+	0 energy-sink-capacity!
+then
+
+do
+	feed-me-channel receive
+while ;now on stack: x y energy time
+	hyp-es-time! hyp-es-capacity! hyp-es-position!
+	time hyp-es-time - 500 < if
+		hyp-es-capacity hyp-es-position position dist 15 * -
+		energy-sink-capacity energy-sink-position position dist 15 * -
+		> if
+			hyp-es-time energy-sink-time!
+			hyp-es-capacity energy-sink-capacity!
+			hyp-es-position energy-sink-position!
+			1 energy-sink-available!
+		then
+	then
+loop
+return
+
+defend:
+	;halving power: 0.01*mass
+	;overhead: 0.002*mass
+	energy 100 > max-repair-rate 0 ifev repair-rate!
+	energy 75 > if
+	time shot-sensor-time 10 + > if
+		fire-shot-sensor sync
+	then
+	last-armor 0.8 * max-armor 0.2 * +
+	armor 2 + > 
+	shot-found or
+	and-if
+		max-shield shield!
+	else
+		shield 0.05 < if
+			0
+		else
+			shield energy armor 3 * > 0.01 0.05 ifev -
+		then
+		shield!
+	then ;raise shields
+	return
+
+#var wandering
+
+Full: ;full of energy; what to do?
+	position home dist COLONY_SEPARATION > 
+	shield not and armor max-armor 5 - > and
+	Begin-reproducing& ifg
+Begin-attempt-emptying& jump
+
+
+#start
+
+position home!
+0 energy-sink-available!
+1 robot-sensor-sees-friends!
+
+
+Begin-foraging:
+0 syphon-rate!
+0 wandering!
+forage-loop:
+	defend^
+	communicate^
+	time food-sensor-time 30 + > if
+		fire-food-sensor sync
+		food-found if
+			;
+		then ;food-found
+	then ;fire food-sense
+	food-found if
+		food-position seek-location
+		0 wandering!
+	else
+		wandering not wall-collision or if
+			1 wandering!
+			random-location^ seek-location
+		then
+	then
+max-energy energy - 50 < Full& Forage-loop& ifeg
+
+Begin-attempt-emptying:
+			0 energy-sink-available!
+0 syphon-rate!
+attempt-emptying-loop:
+	QUEEN_TYPE type-population Begin-reproducing& nifg
+	defend^
+	communicate^
+	get-energy-sink^
+	energy-sink-available Begin-emptying& ifg
+	home position dist 15 > if
+		home seek-location
+	else
+		0 engine-power!
+	then
+energy 300 < Begin-foraging& attempt-Emptying-loop& ifeg
+
+Begin-emptying: ;on stack:
+Empty-loop:
+	defend^
+	communicate^
+	energy-sink-position position dist robot-sensor-range < if
+	robot-sensor-time time 30 - < and-if
+		energy-sink-position position v- rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+		fire-robot-sensor sync
+		robot-found if
+			loop1:
+				robot-side side = if
+				robot-type RAT_TYPE <> and-if
+					robot-position energy-sink-position!
+					done1& jump
+				then
+			next-robot loop1& ifg
+			done1:
+		else
+			Begin-attempt-emptying& jump
+		then ;robot-found
+	then ;fire robot sensor
+	energy-sink-position position dist 2 < if
+		0 engine-power!
+		energy-sink-position position v- rect-to-polar
+		syphon-direction! epsilon max syphon-distance!
+		syphon-max-rate negate syphon-rate!
+		sync
+		syphoned syphon-max-rate negate = nif
+			Begin-attempt-emptying& jump
+		then
+	else
+		0 syphon-rate!
+		energy-sink-position seek-location
+	then ;in range
+energy 125 < Begin-foraging& Empty-loop& ifeg
+
+Begin-reproducing:
+QUEEN_TYPE constructor-type!
+do
+	energy 25 - 100 / 0 max constructor-max-rate min constructor-rate!
+	defend^
+	communicate^
+	time food-sensor-time 50 + > if
+	energy 100 - constructor-remaining < and-if
+		fire-food-sensor sync
+	then ;fire food-sense
+	food-found if
+		food-position seek-location
+	then
+	constructor-type nif
+		position home!
+		Begin-foraging^ jump
+	then
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; Gunner
+#type Anti-Missile
+
+Copied from Poison Ivy 4. I'm free to plagiarize my own robots. :)
+
+(Devon 20030206) Adapted to new, better forcefields. Reduced power.
+
+#color fff
+#hardware
+energy 250 0
+armor 200
+processor 15
+radio receive send
+
+solar-cells 0.12
+
+robot-sensor 16
+
+force-field 0.2 15
+grenades 40 16 25
+
+repair-rate 0.05
+
+#code
+
+;;;;;;;; begin all-type header ;;;;;;;;;;;
+#const feed-me-channel 1
+#const home-channel 2
+
+#const talk-interval 150
+#var last-talk-time -1000
+
+#vector home
+
+#const QUEEN_TYPE 1
+#const RAT_TYPE 2
+#const GUNNER_TYPE 3
+
+#const COLONY_SEPARATION 30
+
+random-location:
+	0 world-width random 0 world-height random
+return
+
+communicate:
+	do
+		home-channel receive
+	while
+		2dup position dist COLONY_SEPARATION < if  ;only consider nearby 'bots
+			0.2 vs* home 0.8 vs* v+ home!
+		else
+			2drop
+		then
+	loop
+	time last-talk-time talk-interval  + < ifr
+	time -5 5 random + last-talk-time! ;add small random so they get desynced
+	specific-send^
+return
+
+;;;;;;;; end all-type header
+
+specific-send:
+	home 2 home-channel send
+	position max-energy energy - 5 * ; being low on energy bad
+	time 4 feed-me-channel send
+return
+
+
+#var incoming 0
+
+#start
+position home!
+do
+	communicate^
+	time robot-sensor-time grenades-reload-time + > if
+	energy 20 > and-if
+		0 incoming!
+		fire-robot-sensor sync
+		robot-found if
+			robot-velocity robot-position position v- dot robot-distance /
+			;stack: radial component of velocity
+			-0.01 < if
+				1 incoming!
+			then
+			robot-velocity
+			robot-distance grenades-speed / vs*
+			robot-position v+ position v- rect-to-polar fire-grenade
+		then	
+	then
+	incoming energy 150 > and if
+		robot-position position v-
+		robot-velocity
+		time robot-sensor-time - vs* v+
+		rect-to-polar dup force-field-direction! force-field-angle!
+		;stack: distance
+		time robot-sensor-time - square 0.0015 * +
+		dup ;dist dist
+		force-field-range < if
+			force-field-distance!
+			force-field-max-power force-field-power!
+		else
+			0 force-field-power!
+			drop
+		then
+	else
+		0 force-field-power!
+	then
+	energy 75 > max-repair-rate * repair-rate!
+forever
+
+#type Leaf
+#color 0f0
+
+#hardware
+
+processor 3
+armor 100
+
+solar-cells 0.4
+
+energy 20 0
+constructor 0.4
+
+#code
+#const LEAF_TYPE 4
+#const NUM_TYPES 4
+
+do
+	constructor-max-rate constructor-rate!
+	constructor-type nif
+		1 NUM_TYPES random-int constructor-type!
+	then
+forever
+
+#end

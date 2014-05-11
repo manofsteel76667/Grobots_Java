@@ -1,0 +1,209 @@
+#side Bomberz
+#seed 1 5 5
+#author Alexander (aka nfwu)
+#type Constructor Alpha
+#color 000000
+;#decoration 
+#hardware
+;;Basics:
+  processor 1
+  constructor .95
+;;Energy:
+  energy 25 0
+  solar-cells .95
+  engine .15
+  armor 350
+#code
+#vector home
+#start
+;position world-width 2 / world-height 2 / v-
+  position world-height / 0.5 > if world-height 2 - else 2 then swap
+  world-width / 0.5 > if world-width 2 - else 2 then swap
+home!
+;1 constructor-type!
+do
+  home seek-location
+  constructor-type nif
+  	0.4 random-bool if
+  		5 constructor-type!
+  	else
+  		3 constructor-type!
+  	then
+  	0.2 random-bool if 6 constructor-type! then
+  then
+  5 type-population nif 5 constructor-type! then
+  constructor-max-rate constructor-rate!
+forever
+
+#type Bomb
+#color FF0000
+#hardware
+processor 5
+energy .6 0 ;;It needs only about .5 for a robot-sensor shot.
+bomb 1200
+engine .02
+solar-cells .03
+robot-sensor 10 1
+#code
+#vector home
+
+seek:
+robot-position seek-location
+sync sync sync sync sync
+robot-position position .5 in-range if position home 15 in-range not and-if die then
+sync
+energy .50 > if fire-robot-sensor then
+sync
+robot-found seek& ifg
+
+#start
+  position home!
+start:
+stack dropn
+1 world-width 1 - random 1 world-height 1 - random 
+2dup home 20 in-range if start& jump then
+do
+   2dup seek-location
+position home 20 in-range while-loop
+do
+   2dup seek-location
+   2dup position 2 in-range start& ifg
+   sync sync sync sync sync
+   fire-robot-sensor sync
+   robot-found seek& ifg
+forever
+
+#type Constructor Beta
+#color 000000
+;#decoration 
+#hardware
+;;Basics:
+  processor 1
+  constructor .4
+;;Energy:
+  energy 25 0
+  solar-cells .4
+  armor 300
+#code
+#vector home
+#start
+do
+  constructor-type nif
+  	2 constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+  1 type-population nif 6 constructor-type! emergency^ then
+forever
+
+emergency:
+do
+  6 constructor-type!
+  home 2 restrict-position seek-location
+  autoconstruct
+  30 periodic-robot-sensor drop
+  robot-found if
+    robot-position robot-velocity lead-grenade
+  then
+forever
+
+#type Constructor Delta
+#color 000000
+;#decoration 
+#hardware
+;;Basics:
+  processor 1
+  constructor .6
+;;Energy:
+  energy 25 0
+  solar-cells .6
+  armor 300
+  ;engine .2
+#code
+#vector home
+#start
+;position world-width 2 / world-height 2 / v-
+  ;position world-height / 0.5 > if world-height else 0 then swap
+
+  ;world-width / 0.5 > if world-width else 0 then swap
+;home!
+;1 constructor-type!
+do
+  home seek-location
+  constructor-type nif
+  	3 constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+forever
+
+#type Nanobot
+#decoration 000000 hline
+#color FF0000
+#hardware
+  solar-cells .2
+  engine .02
+  constructor .2
+  robot-sensor 15
+  energy 300 0
+  processor 10
+  armor 150
+  grenades 32 14 20
+#code
+#vector dest
+#vector home
+new-dest:
+  home 8 random-angle polar-to-rect v+ 5 restrict-position dest!
+return
+
+#start
+position world-height / 0.5 > if world-height else 0 then swap
+world-width / 0.5 > if world-width else 0 then swap
+home!
+new-dest
+do
+  constructor-type nif
+    0.9 random-bool if 5 else 6 then constructor-type! 
+    ;0.05 random-bool if 6 constructor-type! then
+  then
+  1 type-population nif 6 constructor-type! emergency^ then
+  autoconstruct
+  20 periodic-robot-sensor drop
+  robot-found if
+      robot-position robot-velocity lead-grenade
+  else
+    dest seek-location
+    position dest 3 in-range new-dest& ifc
+  then
+forever
+
+emergency:
+do
+  6 constructor-type!
+  home 2 restrict-position seek-location
+  autoconstruct
+  30 periodic-robot-sensor drop
+  robot-found if
+    robot-position robot-velocity lead-grenade
+  then
+forever
+
+#type Survivor
+#decoration 000000 cross
+#color 000000
+#hardware
+processor 1
+armor 600
+constructor .2
+engine .02
+solar-cells .2
+energy 1 0
+#code
+#vector home
+position world-height / 0.5 > if world-height else 0 then swap
+world-width / 0.5 > if world-width else 0 then swap
+home!
+do
+   home seek-location
+   6 constructor-type!
+   constructor-max-rate constructor-rate!
+forever
+#end

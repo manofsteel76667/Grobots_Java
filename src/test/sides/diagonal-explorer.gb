@@ -1,0 +1,798 @@
+#side Diagonal Explorer
+  ;My first Side :)
+#author Marcos Coelho MarÌn
+
+#date 23rd anniversary
+
+#seed 1 1 1 1 1 1 1 1 ;ad infinitum
+
+#color FF7000
+
+#type Diagonal Explorer
+
+#hardware
+  processor 35 0  
+  energy 350 30
+  ;solar-cells 0.05
+  armor 22
+  
+  eater 0.4
+  
+  constructor 0.3
+  
+  engine 0.02
+  
+  food-sensor 5 1
+  
+#code
+  #var armor-flow 22
+  
+  #const reproduce 220
+  #const hungry 250
+  #const satsfd 330
+  #const starving 40
+  #const onIT 0.5
+    
+  #var food-time 25
+  
+  #var sectX
+  #var sectY
+  #var diag
+  #var sectSum
+  #var sectDif
+  
+  ;choose diagonal
+  1 constructor-type!
+    position 10 /  sectY!
+             10 /  sectX!
+    
+    sectX sectY + 5 + ceiling sectSum!
+    sectX sectY - 5 + ceiling sectDif!
+    
+     sectSum 10 < sectSum 20 > or if
+          sectDif diag!     
+        else 
+       sectDif 1 < sectDif 9 > or if
+          sectSum diag!
+        celse
+          sectSum read sectDif read > if
+            sectDif diag!
+          celse
+            sectSum diag!
+     then
+        
+    ;set diagonal
+    
+  diag read 1 + diag write
+    
+  #vector diagStart
+  #vector diagEnd
+  
+  #var dir 0
+  
+  
+  #var seeking 1
+  #var chann 10
+  
+  #var conta 1
+  
+  #vector foodPos
+  #vector where
+  
+  
+  #var running 0
+  
+  #var hotzone
+  #var newhotzone
+  
+  #var patrolsPerArea 2
+  
+  #var children 1
+  #var willDo 0
+  #var last-child
+    
+  diag 5 - 10 * 0 diagStart!
+  
+  diag 10 - 20 mod 5 - 10 * 100 diagEnd!
+  
+  diagStart seek-location         
+  diagStart where!
+    
+  do
+  
+  strt:
+  
+  armor armor-flow < if
+    running nif
+      0 constructor-rate!    
+      dir if
+        diagStart seek-location
+        diagStart where!      
+        0 dir!
+      else
+        diagEnd seek-location
+        diagEnd where!      
+        1 dir!
+      then    
+      40 running!
+    then
+  
+    armor armor-flow!
+      
+    position 20 / floor 10 * swap 10 / ceiling + 20 + newhotzone!
+      
+    hotzone newhotzone <> if
+      newhotzone read 1 + newhotzone write
+      newhotzone hotzone!
+      hotzone position 911 ID 5 10 send 
+      71 read 1 + 71 write   ;CALL 911 (hotzone pos 911 ID send)     
+    then      
+      
+  then
+  
+  running if
+    where seek-location  
+    running 1 - running!
+    strt& jump
+  then
+  
+  last-child child-id <> if
+    willDo if willDo 1 - willDo! then
+    child-id last-child!
+  then
+  
+   
+  willDo if
+    2 children!
+  else
+    1 children!
+  then 
+  
+  71 read patrolsPerArea * 72 read 2 type-population + > if    
+    72 read 1 + 72 write
+    willDo 1 + willDo!            
+  then
+  
+  
+  energy reproduce > if
+    children constructor-type!
+    constructor-max-rate constructor-rate!
+  then
+    
+  energy starving < if
+    0 constructor-rate!
+  then
+  
+  seeking if
+    where seek-location
+    energy hungry < if
+      food-time periodic-food-sensor if              
+        food-found if
+        
+          foodPos food-position onIT in-range brk2& ifg
+    
+          0 seeking! 
+   
+          food-position foodPos!
+          foodPos seek-location
+          foodPos drop 10 / ceiling chann!
+          energy foodPos ID ID 5 chann send      
+        then
+        25 food-time! 
+      then 
+    then
+  then
+  
+  wall-collision if 
+    dir if
+      diagStart seek-location
+      diagStart where!      
+      0 dir!
+    else
+      diagEnd seek-location
+      diagEnd where!      
+      1 dir!
+    then
+  then
+  
+  
+  
+  brk2:
+  
+  seeking nif
+    
+   foodPos seek-location
+    
+    energy satsfd > if
+      1 seeking!
+      50 food-time!
+      brk& jump
+    else
+      foodPos position onIT in-range food-collision not and if
+        0 foodPos ID ID 5 chann send
+        1 seeking!
+        brk& jump
+      then
+    then
+    
+    do chann receive while
+      ID = if
+        4 dropn
+      else
+        drop
+        foodPos onIT in-range if
+          energy > if
+             energy foodPos ID ID 5 chann send
+             foodPos seek-location   ;can delete this i guess
+           else
+            1 seeking!   
+            50 food-time!
+            brk& jump
+          then
+        
+        else
+          drop      
+        then    
+      then
+    loop
+    
+      foodPos seek-location
+    
+    do conta chann = until
+      conta clear-messages
+      conta 1 + conta!
+      foodPos seek-location
+    loop
+    conta 1 + conta!
+    do conta 10 > until
+      conta clear-messages
+      conta 1 + conta!    
+      foodPos seek-location
+    loop
+    1 conta!
+    
+    brk:
+   
+    seeking if
+      where seek-location      
+    then  
+    
+  then
+    ;discarta todos # //menos can if not seeking
+    
+  seeking if
+    do conta 10 > until
+      conta clear-messages 
+      conta 1 + conta!
+      where seek-location
+    loop
+    
+    1 conta!
+   
+  then
+  
+  
+
+  forever
+  
+#type Diagonal Exploder
+
+#color F00000
+
+#decoration 000 x
+
+#hardware
+  processor 40
+  energy 175 30
+  armor 33
+  
+  food-sensor 5 1
+  robot-sensor 7 1
+  
+  eater 0.3
+  engine 0.04
+  blaster 6 0.8 8
+  
+  repair-rate 0.03
+#code
+
+  #var armor-flow 33
+
+  #const hungry 80
+  #const satsfd 150
+  #const starving 40
+  #const onIT 0.5 
+  
+  #var food-time 25
+        
+  #var seeking 1
+  #var toEat 0
+  #var combat 0        
+    
+  #var chann 10
+  #var msgID
+  #var combatData
+  
+  #var conta 1
+      
+  #vector where 50 50
+  #vector foodPos
+      
+  #var hotzone
+  #var newhotzone
+  
+  #var patrolsPerArea 2
+  
+  #var arrived 0
+  #var arrival-range 20
+  
+  #var gathered
+  
+  #var combatState 0
+  #var running 0
+  #vector retreated 
+  
+  #var find-robot 10
+  
+  #var attack-range 1
+  #var found-bot 0
+  
+  #var patrolling 0
+  #var patrolX
+  #var patrolY
+  #vector patrolA
+  #vector patrolB
+  
+  #var scan-zone 21
+  #var find-slot 0
+  
+  #vector patrolled
+    
+  #var dir 0
+  
+  72 read 1 - 72 write
+
+
+do
+  toEat nif
+    where seek-location
+    seeking nif
+      energy starving < if ; if in combat, flee, set previous combat state to temp, and set combat to 4, also flee if going somewhere and find robot on the way, if patrolling flee and then gather, which causes gathering
+        1 seeking!   
+        combat if
+          combat combatState!
+          4 combat! ;run
+        then
+      else
+        combat nif
+          c10Analysis^
+          energy hungry < if
+            1 seeking!
+          then 
+          ;look for hotzones, 1 zone at a time (of the 50)
+          scan-zone read if
+            50 50 where!
+            where seek-location
+            1 combat!            
+            scan-zone combatData!
+          else
+            scan-zone 70 = if
+              21 scan-zone!
+            else
+              scan-zone 1 + scan-zone!
+            then            
+          then
+        else ;go fight lazy idiot
+           ;FIGHT
+           
+           1 combat = if ;patrol... when start gathering, set combatData 3+ to 1 (combatData when patrolling is a hotzone, when gather, search for free combatData slot
+            where seek-location
+            patrolling nif  ;go to hotzone , if find robot while on way, attack, ... set patrolling var, when get there           
+              combatData 21 - 10 mod 10 * patrolX!
+              combatData 21 - 10 / floor 20 * patrolY!
+              patrolX patrolY patrolA!
+              patrolA 10 20 v+ patrolB!
+              patrolA where!
+              1 patrolling!
+            else
+            patrolling 1 = if ;on my way
+              position where 1 in-range if
+                2 patrolling!
+              else
+                20 periodic-robot-sensor if
+                robot-found and-if
+                  3 combat!;attack?  
+                then  
+              then
+            
+            celse ;there   ;set patrol pattern
+              combatData read 0 > if
+                20 periodic-robot-sensor if
+                robot-found and-if
+                  ;if find robot, run, search for free combatData slot, and set gathering... 
+                  ; gather! findslot patrolled 998 ID 5 send
+                  robot-position patrolled!
+                  74 find-slot!
+                  2 combatState!
+                  4 combat!                  
+                then
+              
+                ;patrol while still hotzone, decrement danger every patrolling sequence, if no threat found, 0combat!
+                dir if
+                  patrolB where!
+                else
+                  patrolA where!
+                then
+           
+                position patrolA 1 in-range if
+                  patrolB where!
+                  1 dir!
+                else
+                  position patrolB 1 in-range if
+                    patrolA where!
+                    combatData read 1 - combatData write
+                    71 read 1 - 71 write
+                    0 dir!
+                  then
+                then
+              else ; no threat found
+                0 combatData write
+                0 patrolling!  
+                0 combat!
+              then
+            then 
+            
+            combat 2 < nif
+              do 10 receive while ;answer gathering calls
+                ID = if
+                  4 dropn
+                else
+                  msgID!
+                  msgID 911 = if 
+                    combat nif
+                      where!
+                      1 combat! ;patrol
+                      combatData!
+                    else ;already patrolling
+                      3 dropn
+                    then
+                  else
+                  msgID 998 = if  ;classified IDs
+                    where!
+                    2 combat! ;gather for attack
+                    0 arrived!
+                    combatData!   
+                    combatData read 1 + combatData write
+                  celse
+                    3 dropn       ; cry for food
+                  then    
+                then    
+              loop            
+            then
+           
+           
+           else
+           2 combat = if ;THE Gathering todo: if find enemy on the way, attack or run (probably best)
+             ;where seek-location
+             find-slot if ;if 97 is < 900 go else where AND combatdata > 0 else it havent being used
+               ;if found, send call, 0 find-slot!
+               find-slot read if
+                 find-slot 3 + read 900 > if
+                   1 find-slot write
+                   0 find-slot 3 + write
+                   0 arrived!
+                   patrolled find-slot 1 + vwrite
+                   find-slot combatData!
+                   combatData patrolled 998 ID 5 10 send
+                   0 find-slot! 
+                 else
+                   find-slot 98 < if
+                     find-slot 4 + find-slot!
+                   else ;find a battle to join..... TODO: search for battles
+                     0 find-slot!
+                     0 combat!
+                   then
+                 then
+               else
+                 1 find-slot write
+                 0 find-slot 3 + write
+                 0 arrived!
+                 patrolled find-slot 1 + vwrite
+                 find-slot combatData!
+                 combatData patrolled 998 ID 5 10 send
+                 0 find-slot!                                  
+               then                            
+             else
+               arrived nif
+                 position where arrival-range in-range if
+                   position where!
+                   where seek-location
+                   1 arrived!
+                   combatData 3 + gathered! ;probably better to set this before, when u patrol and find a place to attack, or receive a call
+                   gathered read 1 + gathered write                 
+                 then
+               else    ;maybe set gathered for a high value when attack starts
+                 gathered read patrolsPerArea >= if ;maybe multiply by constant to avoid too much soldier
+                   combatData 1 + vread where!
+                   where seek-location
+                   where patrolA!
+                   patrolA 10 20 patrolB!
+                   999 gathered write ;means position free and whoever gets there after attack started, go attack already
+                   3 combat! 
+                 else
+                   combatData read patrolsPerArea <= if ;same as above, to avoid soldier death neutralize an attack
+                     combatData
+                     combatData 1 + vread
+                     998 ID 5 10 send                   
+                   then
+                 then
+               then           
+             then
+             
+           celse           
+           3 combat = if ;Attack
+             where seek-location
+             
+             find-robot periodic-robot-sensor if
+               robot-position where!
+             then
+             
+             robot-found if
+               where robot-velocity seek-moving-location
+               
+               where position attack-range in-range if
+                 where robot-velocity lead-blaster
+               then
+               0 found-bot!
+             else
+               found-bot 80 > if
+                 patrolA where!
+                 1 combat!
+                 0 found-bot!
+               else
+                 found-bot 1 + found-bot!
+               then
+             then
+             
+             
+           celse
+           ;4 combat = if ;Retreat todo: Find better place to run to, watch out for enemies...
+             running nif
+               1 running!
+               position retreated!
+               50 50 where!
+             else
+               where seek-location               
+               position retreated 25 in-range nif
+                 retreated where!
+                 combatState 4 = if
+                   0 combat!
+                 else
+                   combatState combat!
+                 then
+                 0 running!
+               else
+                 position 50 50 10 in-range if
+                   retreated where!
+                   combatState 4 = if
+                     0 combat!
+                   else
+                     combatState combat!
+                   then                   
+                   0 running!
+                 then
+               then
+               find-slot if
+                 ;if found, send call, 0 find-slot!
+                 find-slot read if
+                   find-slot 3 + read 900 > if
+                     1 find-slot write
+                     0 find-slot 3 + write
+                     0 arrived!
+                     patrolled find-slot 1 + vwrite
+                     find-slot combatData!
+                     combatData patrolled 998 ID 5 10 send
+                     0 find-slot! 
+                   else
+                     find-slot 98 < if
+                       find-slot 4 + find-slot!
+                     else ;find a battle to join
+                       0 find-slot!
+                       0 combat!
+                     then
+                   then
+                 else
+                   1 find-slot write
+                   0 find-slot 3 + write
+                   0 arrived!
+                   patrolled find-slot 1 + vwrite
+                   find-slot combatData!
+                   combatData patrolled 998 ID 5 10 send
+                   0 find-slot!                                  
+                 then
+               then
+             then
+           then
+           
+          do conta 9 > until
+            conta clear-messages 
+            conta 1 + conta!
+            where seek-location
+          loop      
+          1 conta!                
+        then
+      then 
+    else ; already looking for food
+      position 50 50 5 in-range if
+        0 0 seek-location
+      else
+        50 50 seek-location
+      then
+      food-time periodic-food-sensor if      
+        food-found if      
+        
+          foodPos food-position onIT in-range brk2& ifg
+          
+          0 seeking!    
+          1 toEat!
+         
+          food-position foodPos!
+          foodPos seek-location
+          foodPos drop 10 / ceiling chann!
+          energy foodPos 0 ID 5 chann send ;send energy 0 to grant         
+          brk2:
+        then 
+      then    ;else: didnt fired
+    then 
+  else  ;if to eat, erase sets to seeking, eating doesnt change soldier duty
+      
+    foodPos seek-location
+      
+    armor armor-flow < if
+      0 combatState!
+      0 toEat!
+      4 combat!    
+      armor armor-flow!
+      brk& jump
+    then
+      
+    combat if      
+      energy hungry > if
+        ; 50 food-time!  Warrior arent only seeking food, at least not only the still ones
+        0 toEat!
+        brk& jump
+      else
+        foodPos position onIT in-range food-collision not and if
+          0 foodPos 0 ID 5 chann send
+          0 toEat!
+          brk& jump
+        then
+      then
+    else ;not on duty
+      energy satsfd > if
+        0 toEat!
+        brk& jump
+      else
+        foodPos position onIT in-range food-collision not and if
+          0 foodPos 0 ID 5 chann send
+          0 toEat!
+          brk& jump
+        then
+      then
+    then
+    
+       ; Eating:
+    foodPos seek-location
+    
+    do chann receive while
+      ID = if
+        4 dropn
+      else
+        msgID!
+        msgID 0 = if        
+          foodPos onIT in-range if
+            energy > if
+              energy foodPos 0 ID 5 chann send           
+              foodPos seek-location
+            else
+              0 toEat!
+              brk& jump
+            then          
+          else ;not same food
+            drop      
+          then
+        else
+        msgID 911 = if 
+          combat nif
+            where!
+            1 combat! ;patrol
+            combatData!
+          else ;already fighting
+            3 dropn
+          then
+        celse
+        msgID 998 = if  ;classified IDs
+          combat nif
+            where!
+            2 combat! ;gather for attack
+            0 arrived!
+            combatData!
+            combatData read 1 + combatData write
+          else ;already fighting
+            3 dropn
+          then
+        celse  ;civilian hapless cry for food
+          foodPos onIT in-range if
+            0 foodPos 0 ID 5 chann send  ; was: 3 dropn  
+            drop
+          else
+            drop
+          then
+        then
+      then
+      foodPos seek-location
+    loop
+      
+    ;foodPos seek-location
+    ;no need, other then chnn 10, soldiers have priority, no need to listen, just like real life (test later with allowing, if combat gets bogged, change, which is probably better, cause a civilian around a hotzone needs to go away)
+    ; just send 0 energy to send them away
+    do conta chann = until
+      conta clear-messages
+      conta 1 + conta!
+      foodPos seek-location
+    loop
+    conta 1 + conta!
+    do conta 9 > until
+      conta clear-messages
+      conta 1 + conta!    
+      foodPos seek-location
+    loop
+    1 conta!
+    
+    chann 10 <> if
+      c10Analysis^
+    then  
+    
+    foodPos seek-location
+    2 type-population 73 write  ;WHEN IDLE
+    
+    brk: ;finished eating this food     
+   
+  then    
+ 
+  
+forever
+
+c10Analysis:
+  do 10 receive while
+    ID = if
+      4 dropn
+    else
+      msgID!
+      msgID 911 = if 
+        combat nif
+          where!
+          1 combat! ;patrol
+          combatData!
+        else ;already fighting
+          3 dropn
+        then
+      else
+      msgID 998 = if  ;classified IDs
+        combat nif
+          where!
+          2 combat! ;gather for attack
+          0 arrived!
+          combatData!
+          combatData read 1 + combatData write
+        else ;already fighting
+          3 dropn
+        then
+      celse
+         3 dropn       ; cry for food
+      then    
+    then    
+  loop   
+return  
+
+#end

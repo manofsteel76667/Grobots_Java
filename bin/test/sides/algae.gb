@@ -1,0 +1,30 @@
+#side algae
+#author Devon
+#date 6 Feb 2002
+
+#color 070
+
+#type algae cell
+#color 0f0
+
+Just sits there and reproduces.
+
+#hardware
+processor 2
+solar-cells .5
+constructor .5
+energy 20 2
+armor 100
+
+#code
+
+do
+	energy 10 >= if
+		1 constructor-type!
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+forever
+
+#end

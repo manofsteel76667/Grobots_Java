@@ -1,0 +1,289 @@
+#side Move Zig!(nc)
+#color ba4
+#seed 3 3 1 2
+
+#author ziggystar
+
+This is a version of Move Zig! which doesn't seek a corner. I've made this to meassure the benefit of hiding.
+
+
+#code
+
+2-wheel-of-fortune: ; p_1 p_2 -- x ; x is 1 with prob p_1/(p_1+p_2), 2 otherwise
+
+over + / random-bool if 1 else 2 then 
+return
+
+3-wheel-of-fortune: ; p_1 p_2 p_3 -- x ; like 2-wof with 3 choices
+
+over over + over +             ; Stk: p_1 p_2 p_3 (p_1+p_2+p_3)
+0 swap random              ; Stk: p_1 p_2 p_3 r                          ; 0 <= r <= (p_1+p_2+p_3) randomly
+
+2dup > if
+  4 dropn
+  3                        ;return 3
+  return
+then
+
+swap -                     ; Stk: p_2 p_2 (r-p_3)
+> if
+  drop
+  2                        ;return 2
+else
+  drop 
+  1                        ;return 1
+then
+
+return
+
+who-is-needed:     ;this part is some kind of voodoo
+;construct inputs to 3-wheel-of-fortune
+  2 type-population 3 type-population + 1.0 exponent      ;probability for eggmen
+  1 type-population 3 type-population + 1.4 *
+  1 type-population 2 type-population + 0.7 exponent 1.8 *
+  3-wheel-of-fortune
+return
+  
+
+wheel-of-fortune:  ; p_1 p_2 ... p_n n -- x ; x takes value i with probabilty p_i/(p_1+...+p_n)
+;not implemented
+
+
+
+#type Eggman
+#hardware
+  solar-cells .4
+  engine 0.05
+  constructor .4
+  armor 50
+  processor 5
+#code
+#start
+do
+
+  ;home position averaging
+  1 vread 2dup position v- -1 1 type-population / vs* v+ 1 vwrite
+
+;  ;find nearest corner
+;  position world-height / 0.5 > if world-height else 0 then swap
+;  world-width / 0.5 > if world-width else 0 then swap
+
+1 vread
+  2dup position 1 1 type-population + in-range not if seek-location else 2drop 0 engine-power! then
+  
+
+  constructor-progress 0 = if
+    who-is-needed constructor-type!
+  then
+
+  autoconstruct
+forever
+
+
+#type Zig
+#decoration F00 square
+#hardware
+  solar-cells .01
+  engine 0.14
+  eater 0.7
+  armor 333
+  energy 250 40
+  blaster 25 6 15
+  robot-sensor 7.5
+  food-sensor 6.5
+  shot-sensor 4
+  processor 20
+
+#code
+
+#vector dest  ;where to go
+#vector avoid ;don't stay here
+#const avoid-range 10 
+
+#var dest_time_stamp
+
+#var fighting ;are we fighting (actually kill everything on sight)
+
+
+new-dest:   ;try to stay closer to home if less zigs are alife
+  time 30 < if position else 1 vread then
+  2dup 0 world-width random 0 world-height random v- 2 type-population sqrt 5 / 1 min vs* v- dest!
+  time dest_time_stamp!  
+return
+
+
+wander:
+  dest seek-location
+  energy 10 > if 0.1 else 0.01 then engine-power!
+  position dest 3 in-range new-dest& ifc
+return
+
+seek-food:
+
+  food-collision if       ;fire weapon when eating
+    blaster-reload-time periodic-robot-sensor robot-found and if
+      robot-position robot-velocity lead-blaster
+     then
+  else
+    30 periodic-food-sensor drop
+  then
+
+  food-found food-position avoid 3 in-range not and if
+    food-position seek-location
+  else
+    wander
+  then
+
+return
+
+
+attack-robot:
+  time robot-sensor-time - 3 < if
+    robot-position robot-velocity lead-blaster
+  then
+    robot-position robot-velocity seek-moving-location
+return
+
+#start
+
+0 robot-sensor-sees-friends!
+1 robot-sensor-sees-enemies!
+0 shot-sensor-sees-friendly!
+
+new-dest
+
+do
+
+ friendly-collision food-collision and if
+   position avoid!
+ then
+
+ shot-collision if
+   energy 50 > if
+     1 fighting!
+   else
+     position avoid!
+   then
+ then
+
+ ;don't go to avoid
+ dest avoid food-sensor-range in-range new-dest& ifc
+
+ time dest_time_stamp - 1000 > if
+   new-dest
+ then
+
+ energy 50 < if
+   0 fighting!
+ then
+
+ energy max-energy 10 - > if
+   1 fighting!
+ then
+
+; energy 50 > max-armor armor - 0 > and if
+;   max-repair-rate repair-rate!
+; else
+;   0 repair-rate!
+; then
+
+
+
+ fighting if
+
+   ;shot chasing
+   3 periodic-shot-sensor drop
+   shot-found if
+     shot-position shot-velocity -10 vs* v+ dest!
+   then 
+
+
+   blaster-reload-time periodic-robot-sensor drop
+
+   robot-found if
+     attack-robot
+   else
+     wander
+   then
+ else
+   seek-food
+ then
+
+forever
+
+#type Walruss
+#hardware
+  eater 1.7
+  solar-cells 0.01
+  engine 0.05
+  constructor 1.6
+  armor 50
+  energy 150 50
+  food-sensor 10
+  processor 10
+#code
+
+#vector dest  ;where to go
+#vector avoid ;don't stay here
+#const avoid-range 10 
+
+#var dest_time_stamp
+
+new-dest:   ;try to stay closer to home if less zigs are alife
+  time 30 < if position else 1 vread then
+  2dup 0 world-width random 0 world-height random v- 2 type-population 1 + sqrt 4.5 / 1 min vs* v- dest!
+  time dest_time_stamp!  
+return
+
+
+wander:
+  dest seek-location
+  0.1 engine-power!
+  position dest 3 in-range new-dest& ifc
+return
+
+seek-food:
+
+  food-collision not if
+    30 periodic-food-sensor drop
+  then
+
+  food-found food-position avoid 3 in-range not and if
+    food-position seek-location
+  else
+    wander
+  then
+
+return
+
+#start
+
+new-dest
+
+do
+
+ friendly-collision food-collision and if
+   position avoid!
+ then
+
+ shot-collision if
+   position avoid!
+ then
+
+ ;don't go to avoid
+ dest avoid food-sensor-range in-range new-dest& ifc
+
+ time dest_time_stamp - 1000 > if
+   new-dest
+ then
+
+  constructor-progress 0 = if
+      who-is-needed constructor-type!
+  then
+
+  seek-food  
+    
+  autoconstruct
+forever
+
+#end

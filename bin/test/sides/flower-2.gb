@@ -1,0 +1,888 @@
+#side Flower
+#author Tyson Hoffman < Tilendor@tiltech.net >
+#color E01D97
+#date Begun on 2/15/06
+
+
+
+
+;<-------------------------------- Concept -------------------------------->
+;Experimental side using colonies, solar collectors, gatherers, and defensive fighters.
+;A Big focus of this side is side is its colony.  It forms rings, which grow from the center
+;this means the outside can be damaged, but still have a viable center.  Doing the math, and then coding it for this
+;was challenging.
+
+
+;Side note, which sides aren't experimental?
+
+;Major observation - Big cells are not worth it.  Don't use them.  They are silly
+
+;TODO
+; Problem made apparent by Statistics window: Overflow energy generally ranges from 1 to 4 percent, its a shame to waste.
+; Solutions: Have Worker Bees distribute when necessary.  Or as inspired by Warren, give solar cells a small constructor
+;	to utilize extra power.
+
+;<-------------------------------- Changes -------------------------------->
+;[02-20-06] Removed Mine-layer type
+;[03-02-06] Attempted to make Buds Formate as well. Changed Pollen patrol patterns.
+;[03-06-06] Began Big Refactoring, in order to take out Bud.
+;[04-08-06] Bud is gone, changing mini-missiles to fighters
+;[04-16-06] Removed Blaster from Pollen
+;<-------------------------------- Reference -------------------------------->
+;Shared Memory
+; 1 - # of Petals produced
+; 2 - # of Pollens produced
+; 3 - # of Worker-Bees produced
+; 4 - # of Leaves produced
+
+; 6 - Start angle for protective perimeter
+; 7 - angle span
+
+; 11 - # of Petals to build
+; 12 - # of Pollens to build
+; 13 - # of Worker-Bees to build
+; 14 - # of Leaves to build
+; 17 - Current Build Phase
+; 18 - Current Building Stage
+
+; 20 - Message Count for Channel 3
+; 21 - Processed messages on Channel 3
+
+; 50 - # of Rings
+; 51+ - Radius for each ring.
+
+; 98 - Width of Petal Formation
+; 99,100 - Flower home
+; 201+ - Actual x,y pairs for successive Petals
+; 601+ - Timestamps for cell life.
+
+;Message Channels:
+; 1 - Danger Angle, used to shift Pollens to where enemies are
+; 2 - Food Requests from injured Pollens.
+; 3 - Robot Warnings - Bogies to try to avoid
+
+
+#seed 1 2 3 4 4 4 4
+
+
+;<----------------------------COMMON---------------------------->
+#code
+#const Petal 1
+#const Pollen 2
+#const WorkerBee 3
+#const Leaf 4
+
+#var TypeID
+#const Border 10
+
+#var x
+#var y
+In-World:
+	y! x!
+	x 1 < if 0 return then
+	x world-width 1 - > if 0 return then
+	y 1 < if 0 return then
+	y world-width 1 - > if 0 return then
+	1 return
+
+
+
+
+;<----------------------------PETAL---------------------------->
+#type Petal
+#color FFFF00
+
+; The Petal is Small, but pretty to look at.  It likes circles.  Its really productive
+; Has slight solar-cells to allow operation without any energy sources.
+; Behaviors:
+;	Circles - Each new petal starts at the very center of the formation.  As new petals are built, they push older
+;		Petals outwards
+;	Communication - Broadcasts its X,Y position as well as each frame of execution, used to determine if it was killed.
+;	Hurt - If hurt, the Petal moves the formation away from where it got hurt.
+;		This sometimes leads to a tennis ball effect: bouncing between two enemies
+;  Building - Cooperatively decides what to build, according to my master plans!!!!
+;  Flag - Indicates if hungry.  Almost always is.
+;  Hugs Wall - Always moves to the closest wall, then makes room as formation grows
+;  Listens to Enemy Locations - Channel 3 tells where fighters are, scoots formation the other way.
+
+;TODO:
+;	Give Robot and or Shot Sensors.
+
+#hardware
+processor 30
+engine .05
+constructor 3.2
+energy 700 5
+armor 100
+solar-cells .02
+repair-rate .2
+
+#code
+
+#var build 0
+#var CellAngle 0
+#var SpacingAngle 0
+#var SpacingDist 3
+#var Range 0
+#var a
+#var b
+#vector temp 0 0
+#var DistTop
+#var DistBottom
+#var DistLeft
+#var DistRight
+#var MemOffset
+#var LastPopulation 0
+#vector vdest
+#var Padding 6
+#var Ring
+#var RingStart
+#var RingEnd
+#var C2R ;# of cells to radius conversion
+#var R2C ;Radius to # of cells conversion
+#var OldArmor
+
+#start init
+init:
+	Petal read 1 + dup Petal write TypeID! ;Count which Petal I am
+	TypeID 2 * 199 + MemOffset!
+	parent-id nif
+		1 18 write
+		0 98 write
+		position 99 vwrite 
+		1 50 write
+	then
+	Padding 2pi / dup C2R! reciprocal R2C!
+	Set-Home^
+	Ring-Math^
+	time MemOffset 400 + write
+	Set-Defensive-Perimeter^
+	51 read 98 write
+	armor OldArmor!
+
+;<([--MAIN--])>
+Main:
+	time MemOffset 400 + write
+	max-energy .8 * energy > flag!
+	Formate^
+	Produce^
+	Am-I-Hurt^
+	sync
+	Check-Comms^
+	Main& jump
+;<([--END MAIN--])>
+
+Check-Comms:
+	3 messages nifr
+	3 messages 20 vread - - 3 skip-messages
+	do
+		3 messages
+	while
+		3 receive drop 21 write 2dup ;Increments message count and duplicates bogies' location
+		99 vread 51 read 15 + in-range 2 .5 ifev ;Distance to move based on closeness to colony  X,Y,Range
+		rrot 99 vread v- angle pi + reorient polar-to-rect 99 vread v+ 99 vwrite ;Moves colony away from dangerous cell
+		Set-Home^
+		Set-Defensive-Perimeter^
+	loop
+	return
+
+Determine-Construction:
+	18 read 1 = if
+		BuildStage1& 17 read 10 * + jump
+	else 18 read 2 = if
+		BuildStage2& 17 read 10 * + jump
+	celse 18 read 3 = if
+		BuildStage3& jump
+	celse
+	then
+
+BuildStage1: ;
+;  3  4  2  1  Build Order
+;  Pe Po W  L  Types
+;First column indicates if final phase
+0	1  1  0  3  Announce-Construct& jump nop nop nop
+0	0  1  0  2  Announce-Construct& jump nop nop nop
+0  0  0  1  2  Announce-Construct& jump nop nop nop 
+0	1	1	0	4	Announce-Construct& jump nop nop nop
+0	0  5  0  4  Announce-Construct& jump nop nop nop
+0	1  1  2  2  Announce-Construct& jump nop nop nop
+1	2  4  1  6  Announce-Construct& jump nop nop nop
+
+BuildStage2:
+0	3 10  2  12  Announce-Construct& jump nop nop nop
+1  2 10  1  18  Announce-Construct& jump nop nop nop
+
+BuildStage3:
+0	1  3  1   6
+	
+Announce-Construct:
+	Leaf 10 + write ; Leaf
+	WorkerBee type-population 0 = 1 rot ifev WorkerBee 10 + write ; WorkerBee
+	Pollen 10 + write ; Pollen
+	Petal 10 + write ; Petal
+	
+	if
+		18 read 1 + 18 write
+		0 17 write
+	else
+		17 read 1 + 17 write
+	then
+
+	return
+
+Am-I-Hurt:
+	max-armor armor > if
+		armor OldArmor < if
+			CellAngle 1 1 send	
+			5 CellAngle pi + reorient polar-to-rect 99 vread v+ 99 vwrite
+			Set-Home^
+			Set-Defensive-Perimeter^
+			armor OldArmor!
+		then
+		0 constructor-rate!
+		max-repair-rate repair-rate!
+	else
+		constructor-max-rate constructor-rate!
+		0 repair-rate!
+	then
+	return
+
+Produce:
+	energy 10 > constructor-max-rate 0 ifev constructor-rate!
+	constructor-remaining ifr
+	Leaf build!
+Produce-check:
+	build 10 + read 0 > if
+		build constructor-type!
+		constructor-max-rate constructor-rate!
+		build 10 + read 1 - build 10 + write
+		return
+	then
+	build Pollen = if Determine-Construction^ return then ;No build instructions, announce next phase.
+	build Petal = if Pollen build! then
+	build WorkerBee = if Petal build! then
+	build Leaf = if WorkerBee build! then
+	Produce-check& jump
+	;build order = Leaf, WorkerBee, Petal, Pollen
+	return
+
+Ring-Math:
+	50 read a!
+	50 a + read b!
+	b Padding > if
+		50 read 1 + 50 write
+		a 1 + a!
+		C2R 50 a + write
+		return
+	then
+	50 read b! ;Rings
+	1 a!
+	do
+		a b <
+	while
+		50 a + vread Padding + < if
+			50 a + read C2R + 50 a + write
+			return
+		then
+		a 1 + a!
+	loop
+	50 a + read C2R + 50 a + write
+	return
+
+Formate:
+	Petal read LastPopulation = nif ;Change formation is a Petal is built
+		sync sync sync
+		Petal read LastPopulation!
+		0 Ring!
+		0 RingEnd!
+		do
+			RingEnd RingStart!
+			Ring 1 + Ring!
+			50 Ring + read R2C * round RingEnd + RingEnd!
+			TypeID RingStart > TypeID RingEnd <= and
+		until-loop	
+		
+
+
+	then
+
+	2pi RingEnd RingStart - / reorient SpacingAngle!
+	TypeID RingStart 1 + - SpacingAngle * reorient CellAngle!
+	50 Ring + read CellAngle polar-to-rect 99 vread v+ vdest!
+
+	vdest seek-location
+	position MemOffset vwrite ; Announce actual location
+	return
+
+Set-Defensive-Perimeter:
+
+	99 vread y! x!
+	pi 6 * 4 / 7 write
+	world-size 2 vs/ 99 vread v- angle pi 5 * 8 / - 6 write
+	
+	return 
+
+
+Set-Home:
+	99 vread DistBottom! DistLeft!
+	world-size 99 vread v- DistTop! DistRight!
+	DistRight DistLeft < if
+		DistTop DistBottom < if
+			DistRight DistTop < if
+				world-width 10 - 98 read - 99 write
+			else
+				world-height 10 - 98 read - 100 write
+			then
+		else
+			DistRight DistBottom < if
+				world-width 10 - 98 read - 99 write
+			else
+				0 6 write
+				10 98 read + 100 write
+			then
+		then
+	else
+		DistTop DistBottom < if
+			DistLeft DistTop < if
+				10 98 read + 99 write
+			else
+				world-height 10 - 98 read - 100 write
+			then
+		else
+			DistLeft DistBottom < if
+				10 98 read + 99 write
+			else
+				10 98 read + 100 write
+			then
+		then
+	then
+	;This codes stays 10 + the inner circle radius from wall
+	return
+	
+	
+;<----------------------------POLLEN---------------------------->
+#type Pollen
+#color FF0000
+#decoration FFFF00 triangle
+; Keep your distance.
+; Message Channel 1 - Danger angle
+
+
+; Changed from a mini-bomb to a defensive picket
+; Forms a ring outside the main colony.
+; Grenades are for defense outside the colony.
+; Flag - Indicates when hungry
+; 3 Tiered defense:
+;	Border - Standard Defensive Posture
+;	Resort - Move inward when damaged to allow room for others and get out of line of fire
+;	Retreat - Go within colony border to repair and ask for energy
+; If shots are detected, it will weave in the direction of the circle and radially to make it a harder target.
+; If damaged, it lets other Pollens know where it got hurt at.  Pollens will then gravitate in that direction
+;	bringing the firepower where it is needed.  Pollen will slowly gravitate to assigned spots if no one is being hurt.
+
+; TODO:
+; Make firing more intelligent
+; Intelligent Missle defense
+; Work with value of gravitation based on number of pollens
+#hardware
+processor 15
+solar-cells .15
+robot-sensor 10 1
+shot-sensor 5
+energy 100 30
+engine .03
+armor 150
+repair-rate .25
+grenades 22.5 10 15
+
+#code
+
+#vector vDest
+#vector vFoeLoc
+#vector vFoeVel
+#vector vFoeFuture
+
+#const DefendingColony 1
+#const DefendingBorder 2
+#const Retreating 3
+#const Hunting 4
+#const Resorting 5
+#const Avoiding 6
+#var Stage 0
+
+
+
+#var MyAngle
+#var AngleTweak
+#var AngleStep .1
+#var WeaveAngle
+#var WeaveRadius 2
+#var RadiusTweak 0
+#var PercentLocation
+#var OldPop 0
+#var LastArmor
+#var LastRequest
+#start init
+init:
+	parent-id nif
+		1 Pollen write
+	then
+	0 robot-sensor-sees-friends!
+	1 robot-sensor-sees-enemies!
+	Pollen read 1 + dup Pollen write TypeID! ;Count which Pollen I am
+	max-armor LastArmor!
+	
+	pi 9 / WeaveAngle!
+	Location^
+
+Defend-Border:
+	15 periodic-robot-sensor if
+		robot-found Fire& ifc
+	then
+	20 periodic-shot-sensor if
+		shot-found if
+			WeaveRadius RadiusTweak + RadiusTweak!
+			WeaveRadius negate WeaveRadius!
+			WeaveAngle AngleTweak + AngleTweak!
+			WeaveAngle negate WeaveAngle!
+		then
+	then
+	Location^
+	Stage Retreating = if energy 30 < and-if
+		time LastRequest 20 + > if
+			position 2 2 send
+			time LastRequest!
+		then
+	else
+		energy 5 < if
+			-9.5 RadiusTweak!
+			Retreating Stage!
+			Defend-Border& jump
+		then
+	then
+		
+	vDest seek-location
+	Armor-Management^
+	Check-Comms^
+	AngleTweak dup signum .03 * - AngleTweak!
+	max-energy .6 * energy > flag!
+	Defend-Border& jump
+
+Avoid:
+	5 periodic-robot-sensor if
+		robot-found nifr
+	then
+	robot-distance 3 >= ifr
+	2 robot-direction pi + reorient polar-to-rect position v+ vdest!
+	vdest seek-location
+	Fire^
+	Avoid& jump
+	
+Check-Comms:
+	do
+		1 messages
+	while
+		1 receive drop 2pi + AngleTweak MyAngle + 2pi + - 0 < if
+			AngleTweak AngleStep - AngleTweak!
+		else
+			AngleTweak AngleStep + AngleTweak!
+		then
+	loop
+	return
+
+
+Armor-Management:
+	Repair^
+	armor LastArmor < if
+		MyAngle 1 1 send
+		armor LastArmor!
+		armor max-armor .3 * < if
+			Stage Retreating <> if
+				Retreating Stage!
+				-9.5 RadiusTweak!
+				return
+			then
+			return
+		then
+		armor max-armor .6 * < if
+			Stage Resorting <> if
+				Resorting Stage!
+				-5 RadiusTweak!
+				return
+			then
+			return
+		then
+		armor max-armor .8 * < if
+			Stage DefendingBorder <> if
+				0 RadiusTweak!
+				DefendingBorder Stage!
+				return
+			then
+			return
+		then
+		return
+	then
+	armor LastArmor > if
+		armor LastArmor!
+	then
+	armor max-armor = if
+		Stage DefendingBorder <> if
+			0 RadiusTweak!
+			DefendingBorder Stage!
+		then
+	then
+	return
+
+Repair:
+	energy 5 > if
+		armor max-armor < if
+			max-repair-rate repair-rate!
+		then
+	else
+		0 repair-rate!
+	then
+	armor max-armor = if
+		0 repair-rate!
+	then
+	return;
+	
+
+Fire:
+#var distance
+;	do
+		robot-position vFoeLoc!
+		robot-velocity vFoeVel!
+		robot-reloading robot-bomb or if
+			robot-position 20 read 1 + dup 20 write 3 3 send
+		then
+		Stage Avoiding <> if robot-distance 3 <= and-if
+			Stage Avoiding Stage! Avoid^ Stage!
+		then
+		grenades-cooldown nif
+			vFoeVel vFoeLoc position dist grenades-speed /  vs* vFoeLoc v+ vFoeFuture!
+			99 vread vFoeFuture dist 51 read 3 + >= if vFoeFuture position grenades-radius .75 * in-range not and-if
+				vFoeLoc vFoeVel lead-grenade
+				return
+			then
+		then
+;		next-robot
+;	while-loop
+	return
+
+
+Close-Combat:
+	vFoeLoc vFoeVel seek-moving-location
+	10 periodic-robot-sensor if
+		robot-found nifr
+		Fire^
+	then
+	51 read 5 + position 99 vread dist < ifr
+	Close-Combat& jump	
+
+Location:
+	Pollen type-population dup OldPop <> if
+		OldPop!
+		TypeID OldPop mod OldPop / PercentLocation!
+	else
+		drop
+	then
+	Pollen type-population 1 = if
+		.5 PercentLocation!
+	then
+	7 read PercentLocation * 6 read + MyAngle!
+	RadiusTweak Border + 51 read + MyAngle AngleTweak + polar-to-rect 99 vread v+ vDest!
+	return
+
+
+
+;<----------------------------WORKER BEE---------------------------->
+#type WorkerBee
+#color 00FF00
+#decoration 00FF00 x
+; Industrious member, tries to feed everyone else.  Cooperates a lot with others
+
+; This type is a necessity.  Without the Bee, growth in the begining is slow, the defenders get hungry,
+;	other eaters invade the colony, and other bad mojo.  Petals cannot perform to capacity without the Worker Bee
+
+;Behaviours:
+;	Gathers food, when full, searches for anyone with a flag to give food to.
+;	Avoids fighting over food in a simple manner.  If there is a WorkerBee closer to the food than I am, go elsewhere.
+;  If shot at, dodges perpendicular to the shot to minimize hits.
+;	Runs away from cells that are cooling down or are bombs.
+;	Uses flag to ask for food if low.  Doesn't act the best when empty.
+
+;[2-17-05] Concept Change: Bees do not try to daisy-chain resources to Bud
+;[4-09-06] The Bee would retreat home when hurt to repair in safety.  Mostly this brought aggresive fighters to my
+;				Flower, which ends up killing me.  Now repairs in place.
+
+;TODO
+; When being fired on, Should decided whether to retreat to colony.  Run into an empty area, or find a non-aggresive
+;	cell of a different side to run towards, hopefully loosing its pursuer
+; Don't Fire food sensor while eating
+; Accept Multiple Food sensor resuls and give preference to closer ones.
+
+
+#hardware
+engine .15
+processor 20
+solar-cells .04
+energy 400 20
+robot-sensor 10 6
+syphon 5 8
+food-sensor 12
+shot-sensor 6
+armor 80
+eater 3
+radio read
+repair-rate .25
+
+#code
+#var GoAngle 0
+#vector vDest 0 0
+
+#var Action 0
+#var PrevAct
+#const ActNone 0
+#const ActGiveEnergy 1
+#const ActFindFriend 2
+#const ActRunAway 3
+#const ActRepair 4
+
+#var EnemyNear 0
+#vector SyphonTarget 0 0
+#var range 0
+#var r
+#var i
+
+
+#start init
+init:
+	1 robot-sensor-sees-friends!
+	0 robot-sensor-sees-enemies!
+	WorkerBee read 1 + dup WorkerBee write TypeID! ;Count which WorkerBee I am
+	pi 5 * 6 / TypeID * 2pi mod GoAngle! ; Angle to search for food
+	30 GoAngle polar-to-rect 99 vread v+ vDest! ; distance to search
+;<([--MAIN--])>
+Main:
+	;Check-Comms^
+	Resource-Management^
+	Run-From-Danger^
+	Am-I-Hurt^
+	Navigate^
+	Main& jump	
+;<([--END MAIN--])>
+
+Am-I-Hurt:
+	max-armor armor > if
+	max-energy .3 * energy > EnemyNear not and
+	max-energy .3 * energy < 
+	or and-if
+		0 syphon-rate!
+		max-repair-rate repair-rate!
+		EnemyNear Action ActRepair ifev Action!
+		max-energy .25 * energy > flag!
+	else
+		0 repair-rate!
+		0 flag!
+		ActRepair Action = if ActNone Action! then	
+	then
+	return
+
+Navigate:
+	energy 1 < if 0 engine-power! sync sync sync sync ActNone Action! return then
+	Action not .1 9 ifev range!
+	Action ActRepair = if 8 range! then
+	Action ActRunAway = if .5 range! then
+	vdest In-World^ nif
+		world-width 10 / dup world-width swap - random-int
+		world-height 10 / dup world-height swap - random-int
+		vdest!
+		GoAngle pi 2 / + GoAngle!
+	then
+	vdest position range in-range nif
+		vdest seek-location
+	else
+		position seek-location
+	then
+	return
+	
+Locate-Candidate: 
+	0 robot-sensor-sees-enemies!
+	1 robot-sensor-sees-friends!
+	
+	99 vread 2dup seek-location vDest!
+	fire-robot-sensor sync
+	robot-found nifr
+
+	do
+		robot-flag LC-Success& ifg
+	next-robot
+	while-loop
+	return
+LC-Success:
+	0 engine-power!
+	position vdest!
+	robot-position SyphonTarget!
+	ActGiveEnergy Action!
+	return
+
+
+Give-Energy:
+;	Action ActRunAway = Action ActRepair or ifr
+	SyphonTarget position v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate negate syphon-rate!
+	sync
+	syphoned negate syphon-max-rate < if ActFindFriend Action! then
+	energy 40 <= if 0 syphon-rate! ActNone Action! then
+	return
+	
+Find-Food:
+	Action ActRunAway = Action ActRepair = or ifr
+	max-energy .9 * energy < if ActFindFriend Action! return then 
+	food-sensor-firing-cost robot-sensor-firing-cost + 2 * energy > ifr
+	0 robot-sensor-sees-enemies!
+	1 robot-sensor-sees-friends!		
+	fire-food-sensor 
+	fire-robot-sensor sync 
+	
+	food-found nif Set-Search-Dest^ return then
+	robot-found nif food-position vdest! return then
+	food-position position dist range!
+	do
+		robot-type WorkerBee = FF-Next-Result& nifg
+		robot-position food-position dist range < if
+			Set-Search-Dest^ return
+		then
+		
+FF-Next-Result:
+		next-robot
+	while-loop
+	food-position vdest!
+	return
+
+Resource-Management:
+	
+	energy 10 < flag!
+	Action ActRepair = ifr
+	Action ActRunAway = ifr
+	Action ActFindFriend = Locate-Candidate& ifc
+	Action ActGiveEnergy = Give-Energy& ifc
+	Action ActNone = Find-Food& ifc	
+	return
+	
+Run-From-Danger:
+	energy 10 < ifr
+	time shot-sensor-time 3 + <= ifr
+	1 robot-sensor-sees-enemies!
+	0 robot-sensor-sees-friends!
+	fire-robot-sensor fire-shot-sensor sync
+	shot-found 0 = if 
+		robot-found 0 = if
+			0 EnemyNear!
+			Action ActRunAway = PrevAct Action ifev Action!
+			return
+		then
+	then
+	ActRunAway Action = nif Action PrevAct! then
+	shot-found if shot-type 2 shot-type 4 = or <= and-if
+		1 EnemyNear!
+		3 shot-position position v- angle pi + 2pi mod polar-to-rect position v+ vdest!
+		ActRunAway Action!
+		return
+	then
+	robot-found if
+		do
+			robot-reloading robot-bomb or if
+				1 EnemyNear!
+				robot-position 20 read 1 + dup 20 write 3 3 send
+				3 robot-position position v- angle pi 5 * 4 / + 2pi mod polar-to-rect position v+ vdest!
+				ActRunAway Action!
+				return
+			then
+			next-robot
+		while-loop
+	then
+	PrevAct Action!
+	return
+
+Set-Search-Dest:
+	5 GoAngle polar-to-rect position v+ vdest!
+	return
+
+;<----------------------------LEAF---------------------------->
+#type Leaf
+#color F2B1FC
+#decoration F2B1FC dot
+;Likes basking in the sun
+;Type is simple so far
+
+; Forms a ring of six Leaves to every Petal using simple Mod math, and a Type-Count (Something I use for all my Types)
+; Checks a time indicator in shared memory to be sure the Petal it is suppose to feed is still alive.
+;	Changes TypeID, and therefore petal to feed if it dies.
+
+;	Looks for food requests from Pollens, to help them repair faster when Retreating.
+
+
+#hardware
+engine .05
+processor 20
+radio read
+solar-cells .4
+syphon .55 2
+armor 10
+energy 100 0
+
+#code
+#var SpacingAngle 0
+#var SpacingDist 1.9
+#var FeedPollen 0
+#vector vPollen
+#var PetalToFeed
+#var Point
+#vector Home 0 0
+
+#start init
+init:
+	Leaf read 1 + dup Leaf write TypeID! ;Count which Leaf I am
+	do
+		TypeID 6 / floor 2 * 201 + PetalToFeed! sync
+		TypeID 6 / floor 1 + Petal read >
+	while-loop
+	TypeID 1 - 6 mod Point!
+	2pi 6 / Point * SpacingAngle!
+	syphon-max-rate negate syphon-rate!
+;<([--MAIN--])>
+Main:
+	Formate^
+	Check-Comm^
+	Aim-Syphon^
+	time PetalToFeed 400 + read 40 + > init& ifg
+	Main& jump	
+;<([--END MAIN--])>
+
+Check-Comm:
+	do
+		2 messages
+	while
+		2 receive drop 2dup vPollen!
+		position 2.4 in-range if
+			time 20 + FeedPollen!
+			return
+		then
+	loop
+	return
+
+Aim-Syphon:
+	time FeedPollen < if
+		vPollen position v- rect-to-polar syphon-direction! syphon-distance!
+	else
+		PetalToFeed vread position v- rect-to-polar syphon-direction! syphon-distance!
+	then
+	return
+
+Formate:
+	SpacingDist SpacingAngle polar-to-rect PetalToFeed vread v+ Home!
+	Home seek-location
+	return
+
+#end

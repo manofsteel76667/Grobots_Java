@@ -1,0 +1,208 @@
+#side Symphony
+#author Zacechawa
+
+;Although it is very similiar to revenge garden, I started from scratch....
+;except for the random destinations....
+#color 08f
+#seed 3 1 2 4 2 2 2
+#type Net
+#color 088
+#decoration 800 circle
+#hardware
+  solar-cells .1
+  armor 100
+  processor 25
+  enemy-syphon 5 6
+  robot-sensor 5 5
+  constructor .1
+  energy 25 5
+;hardware
+#code
+
+syphon:
+  robot-distance enemy-syphon-distance!
+  robot-direction enemy-syphon-direction!
+  enemy-syphon-rate!
+return
+
+#start begin
+
+begin:
+#var is-found 0
+1 robot-sensor-sees-friends!
+1 robot-sensor-sees-enemies!
+do
+  armor max-armor < if max-repair-rate repair-rate! else 0 repair-rate! then
+  50 periodic-robot-sensor drop
+  robot-found if
+    0 is-found!
+    do
+	  robot-type 3 = robot-side side = or if 1 is-found! then
+	  next-robot
+	while-loop
+  else
+    0 is-found!
+  then
+  robot-found robot-side side <> and if
+    enemy-syphon-max-rate syphon^
+  else robot-found if
+    robot-type 1 = if
+      next-robot drop
+	then robot-type 2 = if
+	  enemy-syphon-max-rate syphon^
+	then robot-type 3 = if
+	  enemy-syphon-max-rate negate syphon^
+	then robot-type 4 = if
+	  enemy-syphon-max-rate syphon^
+	then
+  else
+    0 enemy-syphon-rate!
+	0 enemy-syphon-direction!
+	0 enemy-syphon-distance!
+  then then
+  robot-found if
+    0 is-found!
+    do
+	  robot-type 3 = if 1 is-found! then
+	  next-robot
+	while-loop
+  else
+    0 is-found!
+  then
+  constructor-type nif
+	is-found not if 3 constructor-type! else 2 constructor-type! then
+  then
+  autoconstruct
+forever
+;code
+;type
+#type Fisherman
+#color f80
+#decoration 0f0 triangle
+#hardware
+  armor 100
+  engine .1
+  solar-cells .25
+  constructor .3
+  processor 25
+  energy 100 0
+  eater 1.25
+  food-sensor 5
+  robot-sensor 10
+;hardware
+#code
+
+#start begin
+
+begin:
+#vector food-post
+#var food-there
+1 robot-sensor-sees-friends!
+0 robot-sensor-sees-enemies!
+do
+  food-collision nif
+   25 periodic-food-sensor if
+    food-found if
+      food-position food-post!
+	  1 food-there!
+    else
+      0 engine-power!
+	  0 food-there!
+    then
+   then
+  then
+  food-there nif
+    100 periodic-robot-sensor drop
+    robot-found robot-type 4 = robot-type 1 = or and if
+      robot-position seek-location
+    then
+  then
+  food-there if
+    food-post seek-location
+  else
+    0 engine-power!
+  then
+  constructor-type nif
+    3 type-population 1 < if 3 constructor-type! else 4 constructor-type! then
+  then
+  autoconstruct
+forever
+;code
+;type
+#type Center
+#color f00
+#decoration f00 square
+#hardware
+  armor 100
+  solar-cells 1
+  constructor 1
+  processor 5
+  energy 100 0
+;hardware
+#code
+#start begin
+begin:
+#var missles-made 0
+do
+  constructor-type nif
+    2 type-population 1 type-population < 2 1 ifev constructor-type!
+	missles-made 2 < if 4 constructor-type! missles-made 1 + missles-made! then
+  then
+  autoconstruct
+forever
+;code
+;type 
+#type Missles
+#color f00
+#decoration f00 dot
+#hardware
+  engine .2
+  solar-cells .04
+  armor 100
+  processor 25
+  robot-sensor 20
+  energy 20 0
+  bomb 1000
+;hardware
+#code
+#vector dest
+  new-dest:
+    0 world-width random 0 world-height random dest!
+  return
+#start begin
+
+begin:
+new-dest^
+#vector target-position
+#vector target-velocity
+#var target
+1 robot-sensor-sees-enemies!
+0 robot-sensor-sees-friends!
+do
+  constructor-type nif 4 constructor-type! then autoconstruct
+  100 periodic-robot-sensor drop
+  robot-found if
+    0 target!
+    do
+	  robot-mass 10 * robot-bomb + robot-reloading 1000 0 ifev + dup target > if
+	    target!
+		robot-position target-position!
+		robot-velocity target-velocity!
+	  then
+	  next-robot
+	while-loop
+    robot-position robot-velocity seek-moving-location
+	3 robot-distance > if die then
+  else energy 5 > if
+	dest seek-location
+	position dest 5 in-range new-dest& ifc
+  else
+    0 engine-power!
+  then then
+  enemy-collision if die then
+  constructor-type nif 4 constructor-type! then
+  autoconstruct
+forever
+;code
+;type
+#end 

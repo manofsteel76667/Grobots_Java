@@ -1,0 +1,862 @@
+#side Cyclops
+#seed 1 2 4 3 2 4 2 2 4 2 3 2
+#author Warren
+#color 0cf
+
+Key ideas:
+
+1a) It seems that the sides which survive are usually the ones in the corner. Therefore, start out heavily armed and charges the nearest corner at the beginning.
+
+1b) Feeding an army is hard, so use enemy-syphons to feed yourself and starve your enemy (inspired by Weird Men C)
+
+2) Decoys. Not a new idea of course, but these decoys are well organized and actually work!
+
+3) Central spotter with robot sensor that communicates to fighters. Also an old idea that wasn't successful very often.
+
+4) The army stays in one group in a formation. This is great early on, but multiple groups would probably be better in the late game.
+
+
+Types:
+
+Eye (fires range ~15 robot sensor a lot. Has constructor for emergencies and burning excess energy)
+Fighter (range ~15 enemy-syphons and grenades)
+Decoy (goal: over 1/2 of cost is armor)
+Gatherer (also has the main constructors)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Shared Code ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#code
+
+;;list of types
+
+#const EYE_TYPE 1
+#const FIGHTER_TYPE 2
+#const DECOY_TYPE 3
+#const GATHER_TYPE 4
+
+;;;;;;;;;;;; Message Passing
+
+#const CIVILIAN_HURT_CHANNEL 1 ;format: x y
+
+
+;;;;;;;;;;;;;shared memory and related;;;;;;;;;;;;;;;;;;;;;
+;;1-100 are misc, shared by all armies
+
+;101-300 are food claims
+
+#const FOOD_CLAIM_BASE 101
+#const NUM_FOOD_CLAIMS 100
+#const FOOD_CLAIM_SIZE 2
+
+;301-400 are missile claims
+
+#const NUM_ROBOT_CLAIMS 100
+#const ROBOT_CLAIM_BASE 301
+
+
+#const MAX_NUM_ARMIES 5 ;;
+#const ARMY_RECORD_SIZE 100 ;;data storage per army
+
+;;;;;;;;;;;;;; 501 - 600 are for the first army; 601-700 for second up to 901-1000 for 5th
+;where is the army? Used for many things
+
+
+#const ARMY_POS 501
+#const ARMY_VEL 503
+#const ARMY_TIME 505
+#const ARMY_RADIUS 508
+
+#const  DANGER_DIR 509 ;;direction danger is from
+#const DECOY_DIR 510  ;;decoy direction
+
+#const HOME_CORNER 511 ;;;;0/1 indicators
+
+;where's the syphon target?
+
+#const SYPHON_TARGET_POS 513
+#const SYPHON_TARGET_VEL 515
+#const SYPHON_TARGET_TIME 517
+
+;where's the grenades target?
+
+#const GRENADE_TARGET_POS 519
+#const GRENADE_TARGET_VEL 521
+#const GRENADE_TARGET_TIME 523
+
+#const WANDER_CENTER 525
+
+#const MISSILE_TIME 527
+
+;;which decoy is where?
+;;store: time+id/2048
+#const DECOY_BASE 550
+
+;;active eye claims such
+#const ACTIVE_EYE 850
+
+;;;;;;;;;;;;;;;;;;; other constants ;;;;
+
+#const MISSILE_GROW_FACTOR 1.8
+;;;;;;;;;;;;;;;;;;;;;;;;; code-like shared code ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+recent-missile: ;; -- bool
+MISSILE_TIME read 80 + time >
+return
+
+;;local copies of ARMY_*
+#vector army-pos
+#vector army-vel
+#var army-time
+#vector army-current-pos
+
+
+read-army:
+sync
+ARMY_POS vread army-pos!
+ARMY_VEL vread army-vel!
+ARMY_TIME read army-time! 
+return
+
+write-army:
+sync
+army-pos ARMY_POS vwrite
+army-vel ARMY_VEL vwrite
+army-time ARMY_TIME write
+return
+
+update-stats:
+FIGHTER_TYPE type-population 1 + sqrt 0.6 * ARMY_RADIUS write
+army-vel time army-time - vs* army-pos v+ army-current-pos!
+return
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;; Eye ;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#type Eye
+#color 99d
+#decoration 800 circle
+#hardware
+energy 330 40
+armor 175
+processor 40
+engine 0.05
+solar-cells 0.23
+robot-sensor 15.32 5
+shot-sensor 8.3 1
+repair-rate 0.1
+constructor 0.22
+
+#code
+
+restrict-location: ;x y -> x y
+world-height 5 - min 5 max swap
+world-width 5 - min 5 max swap
+return
+
+;;rot a b c -- b c a "sv-swap"
+
+;;rrot a b c -- c a b "vs-swap"
+
+#var syphon-target-quality
+#var temp-syphon-quality
+#vector syphon-target-position
+#vector syphon-target-velocity
+
+#var grenade-target-quality
+#var temp-grenade-quality
+#vector grenade-target-position
+#vector grenade-target-velocity
+
+#var danger-direction ;;cache of DANGER_DIR
+;-1/1 indicators of where are home corner is
+
+#var corner-left-right
+#var corner-bottom-top
+#vector corner-position
+#vector hide-posn ;;where to hide when not the official eye
+
+eye-adjust-posn:
+update-stats^
+army-current-pos 
+recent-missile^ -5 -0.4 ifev
+ danger-direction polar-to-rect v+ army-vel seek-moving-location
+return
+
+map-*: ;x y a b -- x*a y*b
+rot * rrot * swap ;; How unintuitive
+return
+
+;convert real coords to home-centric ones
+real-to-my-posn: ; x y - x y
+corner-position v- corner-left-right corner-bottom-top map-*
+return
+
+;inverse
+my-posn-to-real: ; x y - x y
+corner-left-right corner-bottom-top map-* corner-position v+
+return
+
+;convert a relative vector in our coords to real or back again
+;(the same because -1*-1=1)
+my-relative-to-real:
+real-to-my-relative:
+corner-left-right corner-bottom-top map-*
+return
+
+#const CLEAR_CORNER_MISSION 2
+#const REG_MISSION 1
+#var have-mission 0
+#vector army-dest
+
+head-to-army-dest: ; speed --
+army-pos army-vel time army-time - vs* v+ army-pos! ;;update
+position army-pos 2 in-range not if
+	position army-pos! 
+then
+time army-time!
+army-dest position v- unitize rot ;sv-swap
+vs* army-vel!
+
+write-army^
+return
+
+#var last-armor 0
+#var cry-time -100
+cry-if-hurt:
+	armor last-armor <
+	armor last-armor!
+	if
+	time 15 - cry-time > and-if
+		time cry-time!
+		position 2 CIVILIAN_HURT_CHANNEL send
+	then
+return
+
+
+#vector cry-posn
+adjust-mode:
+
+have-mission not robot-found not and if
+energy max-energy / 0.1 > and-if
+;;listen for cries
+	do
+  CIVILIAN_HURT_CHANNEL receive
+	while
+		;stack: received position
+		restrict-location^ cry-posn!
+		have-mission if
+		cry-posn corner-position dist army-dest corner-position dist > and-if
+			;got better, ignore it
+		else
+			cry-posn restrict-location^ army-dest!
+			REG_MISSION have-mission!
+		then
+	loop
+else
+;;don't clear the messages. When we're done with current assignment we'll
+;;clear out areas where enemies were seen
+;;;	CIVILIAN_HURT_CHANNEL clear-messages
+then
+
+;check to see if we're done with this call
+have-mission if
+	army-dest corner-position population sqrt 9 * in-range not
+	army-dest position 3 in-range robot-found not and
+	or if
+		0 have-mission!
+		position army-dest!
+	then
+then
+
+;compute default location
+have-mission nif
+	population sqrt 6 * dup my-posn-to-real^ army-dest!
+then
+
+population sqrt 4.5 * dup my-posn-to-real^ WANDER_CENTER vwrite
+
+
+;update army heading
+army-dest position 2 in-range robot-found or if
+	0
+else
+	have-mission REG_MISSION = 0.08 0.025 ifev 
+then head-to-army-dest^
+
+
+return
+
+set-corner-stuff: ;; a b -- where a,b are 0/1 indicators of which corner we have
+2dup HOME_CORNER vwrite
+;stack: nearest corner in 0/1 for each
+2dup world-height * swap world-width * swap corner-position!
+-2 vs* 1 1 v+ corner-bottom-top! corner-left-right!
+return
+
+#var temp
+#var my-mark
+claim-active: ; -- bool
+	ACTIVE_EYE dup ;;;stays on stack for a while
+	read temp!
+
+	temp time <
+	temp my-mark - is-integer or if
+;;it's old or it's mine
+		time my-mark +
+		swap dup
+		;stack: mark addr addr
+		temp swap sync read = if
+			write 1
+		else
+			drop drop 0
+		then
+	else
+		drop 0
+	then
+return
+
+;;;;;;;;;;
+
+#start
+id 1000 / 35 + my-mark! ;;the 35 is the expiration time
+time 10 > if
+	HOME_CORNER vread set-corner-stuff^
+	read-army^ 
+else
+
+;;init corner module
+
+	position world-height / round swap world-width / round swap set-corner-stuff^
+	read-army^
+;;init army stats
+	6 6 my-posn-to-real army-dest!
+	CLEAR_CORNER_MISSION have-mission!
+;	0.07 head-to-army-dest^
+;	
+;	army-vel angle dup DANGER_DIR write DECOY_DIR write
+
+then ;;No init
+
+1 population sqrt 5 * random 0 pi/2 random polar-to-rect my-posn-to-real^ hide-posn!
+
+do ;infinite loop
+ 
+constructor-type nif
+	EYE_TYPE type-population 30 * population < if EYE_TYPE else 
+	FIGHTER_TYPE type-population population / 0.21 >
+	GATHER_TYPE FIGHTER_TYPE ifev
+	then
+	constructor-type!
+;;doesn't build decoys currently
+then
+
+energy max-energy / 0.45  > constructor-max-rate 0 ifev constructor-rate!
+
+energy 20 > max-repair-rate 0 ifev repair-rate!
+
+claim-active^ if
+-999 syphon-target-quality!
+-999 grenade-target-quality!
+fire-robot-sensor sync
+robot-found if
+	do
+		robot-bomb 100 > if
+			time MISSILE_TIME write
+		then
+		robot-distance 5 / 1 + reciprocal ;between 1/7th and 1
+		robot-energy 1000 / + ; roughly 0-0.5 depending on target
+;;; robot-energy 30 > 0.05 0 ifev + ;;0.05 max
+		robot-shield-fraction *
+		temp-syphon-quality!
+		temp-syphon-quality syphon-target-quality > if
+		temp-syphon-quality syphon-target-quality!
+		robot-position syphon-target-position!
+		robot-velocity syphon-target-velocity!
+	then 
+	robot-shield-fraction robot-distance / temp-grenade-quality!
+	temp-grenade-quality grenade-target-quality >
+	robot-shield-fraction 0.5 > and if
+		temp-grenade-quality grenade-target-quality!
+		robot-position grenade-target-position!
+		robot-velocity grenade-target-velocity!
+	then 
+
+	next-robot while-loop 
+
+	sync ;so writes happen atomically.
+	syphon-target-position SYPHON_TARGET_POS vwrite
+	syphon-target-velocity SYPHON_TARGET_VEL vwrite
+	robot-sensor-time SYPHON_TARGET_TIME write
+	grenade-target-quality 0 > if
+		grenade-target-position GRENADE_TARGET_POS vwrite
+		grenade-target-velocity GRENADE_TARGET_VEL vwrite
+		robot-sensor-time GRENADE_TARGET_TIME write
+	then
+then
+
+adjust-mode^
+eye-adjust-posn^
+
+;Adjust decoys to be where shots are coming from, army is going, or last target was seen.
+DANGER_DIR read danger-direction!
+;No point adjusting decoy positioning if population is large
+
+12 periodic-shot-sensor if
+	shot-found if
+		shot-velocity vnegate angle danger-direction - reorient 0.6 * danger-direction + danger-direction!
+	else
+		GRENADE_TARGET_TIME read time 20 - > if
+			grenade-target-position position v- angle danger-direction - reorient 0.38 * danger-direction + danger-direction!
+		else
+			army-vel norm if
+				army-vel angle danger-direction - reorient 0.2 * danger-direction + danger-direction!
+			else
+			;;point to center for lack of a better idea
+				world-size 2 vs/ position v- angle danger-direction - reorient 0.15 * danger-direction + danger-direction!
+			then ;army-vel norm
+		then ;grenade target recent
+	then ;shot-found
+
+	danger-direction DANGER_DIR write
+
+	DECOY_TYPE type-population 4 <= if
+		danger-direction DECOY_DIR write
+	then
+then
+
+do
+	time robot-sensor-time - 
+	robot-found 8 20 ifev < energy robot-sensor-firing-cost < or
+while 
+	sync sync
+	energy robot-sensor-firing-cost < if
+		;; stop moving to conserve energy
+		0 head-to-army-dest^
+	then
+	eye-adjust-posn^
+loop
+
+else ;active or not
+;;just hide in corner
+hide-posn seek-location
+0 have-mission!
+cry-if-hurt^
+read-army^
+sync sync sync sync sync sync sync sync sync 
+then ;;if we're active or not
+
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;; Fighter ;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#type Fist
+#color faa
+#hardware
+;eater 0
+;food-sensor 13 1
+radio send receive
+
+energy 300 50
+armor 130
+processor 18
+engine 0.03
+solar-cells 0.065
+
+grenades 18 15 18
+
+syphon 0.17 5
+enemy-syphon 1.6 15
+#code 
+
+#vector my-offset ;my coordinate relative to the army position
+
+adjust-position:
+update-stats^
+friendly-collision if
+army-current-pos my-offset v+ position 1 in-range and-if
+	;someone else must want our spot. Choose a new one based on our position relative to desired
+	army-current-pos my-offset v+ 
+	position v- unitize -0.25 Vs* ;stack: vector from where we are to where we want to be
+	;stack: where to go to avoid hitting someone
+	position army-current-pos v- v+ my-offset! 
+	;; random-angle polar-to-rect my-offset!
+else
+	my-offset norm
+	ARMY_RADIUS read > if
+		my-offset 0.95 vs* my-offset!
+	then
+then
+
+recent-missile^ if
+	army-current-pos my-offset MISSILE_GROW_FACTOR vs* v+ army-vel seek-moving-location
+else
+	army-current-pos my-offset v+ army-vel seek-moving-location
+then ; recent missile
+
+return
+
+#start
+#vector delta_pos
+do
+time GRENADE_TARGET_TIME read - 12 < if
+	GRENADE_TARGET_POS vread GRENADE_TARGET_VEL vread lead-grenade
+	SYPHON_TARGET_VEL vread time 4 + SYPHON_TARGET_TIME read - vs* delta_pos!
+	SYPHON_TARGET_POS vread position v- delta_pos v+
+	rect-to-polar enemy-syphon-direction! enemy-syphon-distance!
+	enemy-syphon-max-rate enemy-syphon-rate!
+else
+	0 enemy-syphon-rate!
+then
+
+sync
+read-army^
+adjust-position^
+
+energy max-energy / 0.25 > syphon-max-rate negate 0 ifev syphon-rate!
+my-offset vnegate rect-to-polar syphon-direction! syphon-distance!
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;; Decoy ;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#type Stone
+#decoration 000 cross
+#color f0f
+#hardware
+energy 450 25 ;most of the energy storage is for syphon-resistance, not for our own use
+armor 450
+processor 18
+;radio send receive read write
+engine 0.10
+
+syphon .22 11
+robot-sensor 3.8 2
+;shot-sensor 4 1
+
+blaster 8 4 20 ;for attracting attention
+
+repair-rate 0 ;cheaper to replace than repair!
+
+#code
+
+
+#var last-armor
+#var last-damage-time -999
+
+#var my-mark
+#var temp
+#var my-index 0
+#var my-angle
+
+;try reserving spot
+try-address: ; addr -- bool
+	dup ;;;stays on stack for a while
+	read temp!
+
+	temp time <
+	temp my-mark - is-integer or if
+;;it's old or it's mine
+		time my-mark +
+		swap dup
+		;stack: mark addr addr
+		temp swap sync read = if
+			write 1
+		else
+			drop drop 0
+		then
+	else
+		drop 0
+	then
+
+return
+
+adjust-location:
+
+;see if spot below is free
+
+my-index if
+	my-index 1 - DECOY_BASE + try-address^ if my-index 1 - my-index! return then
+then
+
+my-index DECOY_BASE + try-address^ if my-index my-index! return then
+my-index 1 + DECOY_BASE + try-address^ drop ;advance index regardless of result
+my-index 1 + my-index!
+return
+
+#vector vel-temp
+
+#start
+id 1000 / 20 + my-mark!
+;typical range-8 shot in air for about 18 frames
+; typical enemy (untouch, seg eat) 10-30 reload time
+do
+
+armor last-armor < if
+time last-damage-time!
+then
+armor last-armor!
+
+adjust-location^
+ARMY_VEL vread time ARMY_TIME read - vs* ARMY_POS vread v+ army-current-pos!
+
+my-index DECOY_TYPE type-population / 2pi * DECOY_DIR read + my-angle!
+ARMY_RADIUS read 2.5 + recent-missile^ if MISSILE_GROW_FACTOR * then my-angle polar-to-rect army-current-pos v+ 
+ARMY_VEL vread
+;stack: my spot, army vel
+time 90 - last-damage-time < if
+#var dir
+time 40 mod 20 < if 0.1 Else -0.1 Then dup dir!
+my-angle pi/2 + polar-to-rect v+ vel-temp!
+2dup position 2.5 In-range nif position v- unitize 0.1 vs* vel-temp v+ else 2drop vel-temp then
+engine-velocity!
+engine-max-power engine-power! ;override seek-m-l, turn engine on
+;my-angle fire-blaster
+else
+2swap position v- rect-to-polar swap 0.05 * 0.15 min swap polar-to-rect v+ engine-velocity!
+engine-max-power engine-power! 
+then
+;stack empty
+
+time GRENADE_TARGET_TIME read - 9 < if
+	GRENADE_TARGET_POS vread position 2.1 in-range
+	GRENADE_TARGET_POS vread position v- army-current-pos position v- dot 0 <
+or and-if ;don't shoot in direction of army
+	GRENADE_TARGET_POS vread GRENADE_TARGET_VEL vread lead-blaster
+	GRENADE_TARGET_VEL vread 10 vs* GRENADE_TARGET_POS vread v+ position 3 in-range if
+		do
+			3 periodic-robot-sensor if
+				ARMY_VEL vread time ARMY_TIME read - vs* ARMY_POS vread v+ army-current-pos!
+			then
+			robot-found if
+				robot-position army-current-pos position v- unitize v+ robot-velocity 0.6 vs* seek-moving-location
+				robot-position robot-velocity lead-blaster
+			then
+		robot-found army-current-pos position 9 in-range and while-loop
+	then
+then
+
+energy max-energy / 0.13 > if
+	0 syphon-rate!
+else
+	0 ARMY_RADIUS read random random-angle polar-to-rect army-current-pos v+ position v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate syphon-rate!
+then
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;#################################################################################;;;;;;
+;;; Gatherer ;;;;;;
+;;;#################################################################################;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Goat
+
+#color 0f0
+#hardware
+energy 500 50
+armor 130
+processor 10
+;radio send receive read write
+engine 0.07
+
+;robot-sensor 5.4 1
+shot-sensor 5.9 1
+food-sensor 8.5 4
+eater 1.8
+
+constructor 0.95
+;;syphon 0.1 28
+
+;;repair-rate 0.08
+
+#code
+#var last-armor -98
+#var cry-time -100 ;time last cried for help
+
+;copied from Walled City 2
+#var food-hash
+#var food-y
+claim-food:
+;;#const FOOD_CLAIM_BASE 1
+;;#const NUM_FOOD_CLAIMS 100
+;first time, then y
+food-position food-y! world-width /
+;stack: between 0 and 1
+NUM_FOOD_CLAIMS * floor
+;stack: probably between 0 inclusive and NUM_FOOD_CLAIMS exclusive
+0 max NUM_FOOD_CLAIMS 1 - min FOOD_CLAIM_SIZE * FOOD_CLAIM_BASE + food-hash!
+food-hash sync read
+dup 0 > swap time 400 - > and if
+;valid time claim already
+0 ;TODO: check y
+else
+;claim expired
+time food-hash write food-y food-hash 1 + write
+1
+then
+return
+
+
+construct:
+energy 1 < if 0 constructor-type! then ;abort if low on energy
+
+EYE_TYPE type-population 0 = if
+;eye died! try to rebuild.
+;;but first, stop the army from wandering off. (Put here because if we're out of gatherer's we're sterile so it doesn't matter what else happens in that case)
+0 0 ARMY_VEL vwrite
+;if haven't gotten very far so far, abort!
+constructor-remaining constructor-progress > constructor-type EYE_TYPE <> and if 0 constructor-type! then
+;build an eye
+constructor-type nif EYE_TYPE constructor-type! then
+else
+;abort extra eye?
+constructor-type EYE_TYPE = if
+EYE_TYPE type-population 3 >= 
+constructor-remaining 300 > and and-if
+0 constructor-type!
+then
+
+constructor-type nif
+	DECOY_TYPE type-population population 0.15 * population sqrt min < if
+		DECOY_TYPE
+	else
+		GATHER_TYPE type-population population / 0.48 >= FIGHTER_TYPE GATHER_TYPE ifev
+	then
+	constructor-type!
+;;don't build eyes or gatherers yet
+then
+then
+
+energy 40 > constructor-max-rate 0 ifev constructor-rate!
+return
+
+
+#var wander-radius 8
+#vector wander-pos
+read-army2:
+read-army^
+army-vel time army-time - vs* army-pos v+ army-current-pos!
+GATHER_TYPE type-population sqrt 8 * wander-radius!
+return
+
+restrict-location: ;x y -> x y
+world-height 5 - min 5 max swap
+world-width 5 - min 5 max swap
+return
+
+new-wander-pos:
+read-army2^
+wander-radius random-angle polar-to-rect WANDER_CENTER vread v+ restrict-location^ wander-pos!
+return
+
+check-damage: ;; -- damaged-p
+armor last-armor <
+armor last-armor!
+return
+
+#start
+#vector corner-position
+
+;;wait for army position to be written
+do time 5 <= while-loop
+
+;;get corner
+HOME_CORNER vread
+;stack: nearest corner in 0/1 for each
+world-height * swap world-width * swap corner-position!
+
+new-wander-pos^
+
+Follow: ;;;;;;;;;;;;;;;;;;;;;;
+do 
+check-damage Run& ifg
+
+40 periodic-food-sensor if
+	food-found if
+		Food-check-loop:
+		food-velocity norm nif
+		claim-food^ and-if
+			Eat& jump
+		else
+			next-food Food-check-loop& ifg
+		then
+	then ;food-found
+then
+
+read-army2^
+
+army-current-pos wander-pos wander-radius 2 * in-range not
+wander-pos position 3 in-range or
+if
+new-wander-pos^
+then
+
+energy 5 > if
+	wander-pos position v- unitize energy 30 > 0.1 0.06 ifev vs* engine-velocity!
+	engine-max-power engine-power!
+else
+	0 engine-power!
+then
+
+construct^
+
+forever
+
+Eat: ;;;;;;;;;;;;;;;;;;;;;;
+do 
+check-damage if
+	Run& jump
+then
+
+food-position seek-location
+
+enemy-collision cry-for-help& ifc
+
+food-position position radius in-range
+eaten not and if
+	Follow& jump
+then
+construct^
+forever
+
+cry-for-help:
+	time 15 - cry-time > if
+		time cry-time!
+		position 2 CIVILIAN_HURT_CHANNEL send
+	then
+return
+
+Run: ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+cry-for-help^
+do
+construct^
+check-damage^ cry-for-help& ifc
+
+read-army2^
+army-current-pos seek-location
+army-current-pos position 4 in-range if
+	new-wander-pos^
+	Follow& jump
+then
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; THE END ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#end
+
+
+

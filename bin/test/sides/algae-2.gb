@@ -1,0 +1,32 @@
+#side algae
+#author Devon
+#date 6 Feb 2002
+
+(20030314) Shrank.
+
+#color 070
+
+#type algae cell
+#color 0f0
+
+Just sits there and reproduces.
+
+#hardware
+processor 2
+solar-cells .4
+constructor .4
+energy 15 1
+armor 40
+
+#code
+
+do
+	energy 10 >= if
+		1 constructor-type!
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+forever
+
+#end

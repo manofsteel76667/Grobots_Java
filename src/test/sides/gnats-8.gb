@@ -1,0 +1,349 @@
+#side Gnats
+#author Matt Burkholder
+#date 11/8/2
+#color 000
+
+#type Gnat
+#color fff
+#hardware
+	processor 15
+	engine 0.2
+	constructor 2.5
+	energy 300 40
+	solar-cells 0.008
+	eater 3
+	syphon 1.5
+	robot-sensor 7
+	food-sensor 8.5
+	shot-sensor 2
+	armor 300
+	repair-rate 0.05
+	blaster 15.0 1.5 5
+ radio read write
+
+#code
+
+#const gnat 1
+#const tree 2
+#const Swarm-range 35
+#const target-valid-time 200
+#const robot-sensor-delay 35
+#const food-sensor-delay 50
+#const shot-sensor-delay 5
+
+#var target-sender 0
+#var target-found 0
+#var wander-angle 0
+#var destx 0
+#var desty
+#var LastEnergy 0
+#var LastTime 0
+#var LastDamage 0
+#var food-sensor-now 0
+#var robot-sensor-now 0
+#var shot-sensor-now 0
+
+time 5 < if 0 1 write 0 4 write 0 7 write then
+time 10 + robot-sensor-now!
+
+CheckForDanger^
+pi 3 / id * dup wander-angle!
+;time 50 + food-sensor-now!
+Movement:
+0.05 engine-power!				
+0.2 wander-angle polar-to-rect engine-velocity! 
+wander-angle food-sensor-focus-direction!
+food-sensor-range 0.5 * food-sensor-focus-distance!
+;shot-sensor-range shot-sensor-focus-distance!
+
+Buzz:
+do
+		do 
+					energy food-sensor-firing-cost > if
+								time food-sensor-now > if
+											fire-food-sensor sync
+											food-found if
+														food-position desty! destx!
+														0 engine-power! 
+											else 
+													  50 50 position v- 2dup abs 40 > swap abs 40 > or if
+                   0 1 random 0.2 > if
+	                      2drop position 10 < swap 90 < and if
+                          0 wander-angle! 
+                       else position swap 10 < if
+                           pi 1.5 * wander-angle! drop
+                       else 90 > if
+                           pi wander-angle! 
+                       else pi 0.5 * wander-angle! then then then
+							             else angle wander-angle! then else 2drop then
+															0.2 wander-angle polar-to-rect engine-velocity! 
+											then 
+           time food-sensor-delay + food-sensor-now!
+								then
+								CheckDamage^
+								CheckComms^  
+	       energy 50 > CheckForDanger& ifc
+								energy 0.008 - engine-power!
+						else Recharge^	then 
+      energy constructor-remaining 2 * > constructor-max-rate 0 ifev constructor-rate!
+			destx until-loop
+
+			do
+						destx desty Snake-location^ sync
+						CheckDamage^
+						CheckComms^
+      CheckForDanger^
+						energy 2 < Recharge& ifc
+      energy constructor-remaining 2 * > constructor-max-rate 0 ifev constructor-rate!
+			destx desty position v- norm radius > while-loop 
+						
+    0 0 engine-velocity!
+   do 
+						gnat constructor-type!
+      energy 250 > energy constructor-remaining > or
+      constructor-max-rate 0 ifev constructor-rate!
+      CheckDamage^
+						CheckComms^
+						CheckForDanger^
+						;destx desty Snake-location^ sync
+			eaten while-loop
+			0 destx! 0 desty!
+			0 constructor-rate! 0 repair-rate!
+		  random-angle wander-angle! 
+forever
+
+Pregnant:
+		constructor-progress constructor-remaining 1 + / 3 > return
+
+CheckForDanger:
+			energy 5 < ifr
+   time robot-sensor-now > if
+		 	fire-robot-sensor 
+    time robot-sensor-delay + robot-sensor-now! then
+			time shot-sensor-now > if
+     fire-shot-sensor
+     time shot-sensor-delay + shot-sensor-now! then
+		 sync
+			robot-found BFound& ifg
+			shot-found SFound& ifg
+return
+
+CheckDamage:
+			LastDamage armor dup LastDamage! max-armor < if
+								max-repair-rate repair-rate! 
+								armor > CheckForDanger& ifg 
+			else drop 0 repair-rate!  then
+return
+
+
+CheckComms:
+		energy 50 < Pregnant^ or ifr
+	1 read time > if
+		1 target-sender!
+		2 read 
+		3 read 
+		Swarm^  then
+	4 read time > if
+		4 target-sender!
+		5 read 
+		6 read 
+		Swarm^  then 
+	7 read time > if
+		7 target-sender!
+		8 read 
+		9 read 
+		Swarm^  then
+		10 read time > if
+				10 target-sender!
+				11 read
+				12 read
+				Rescue^ 2drop then
+   13 read time > if
+      13 target-sender!
+      SwarmNoCheck^ then
+return
+
+Snake-location:
+			position v- 2dup norm dup 5 > if
+						drop rect-to-polar 
+					0.3 time pi * 20 / sin * + polar-to-rect 
+						engine-velocity! engine-max-power engine-power!
+			else
+						radius < if
+									0 0 engine-velocity! engine-max-power engine-power! 2drop
+						else
+									4 vs/ engine-velocity! engine-max-power 0.5 * engine-power!
+			then then
+return
+
+
+Swarm:
+	 position v- norm Swarm-Range > blaster-cooldown or ifr
+	 SwarmNoCheck: rdrop  rdrop 
+	0 constructor-rate!
+do
+	target-sender 1 + read target-sender 2 + read Snake-location^
+	energy robot-sensor-firing-cost > time robot-sensor-now > and if
+		fire-robot-sensor sync 
+		robot-found Attack& ifg 
+		time robot-sensor-delay + robot-sensor-now! then
+time target-sender read > until-loop
+	 0 target-sender!
+		0 target-found!
+		0 destx! 
+	Buzz& jump
+
+
+SFound: rdrop 
+		0 constructor-rate!
+  shot-velocity norm if
+				shot-position shot-velocity 2dup norm -12 / vs/ v+
+				2dup desty! destx! BroadCast^  
+		else 
+     shot-position 2dup desty! destx!   
+     BroadCast^ then
+  shot-direction blaster-cooldown Pregnant^ or energy 50 < or Retreat& ifg
+  shot-sensor-focus-direction!
+		time robot-sensor-delay + robot-sensor-now!
+Scout:
+		do
+				time robot-sensor-now > if
+       fire-robot-sensor sync
+	      time robot-sensor-delay + robot-sensor-now! 
+       robot-found Attack& ifg then
+    time shot-sensor-now > if
+       fire-shot-sensor sync
+							shot-found shot-velocity norm and if				
+          shot-position shot-velocity 2dup norm  -12 / vs/ v+
+		        2dup desty! destx!
+          target-found 2 + write
+          target-found 1 + write
+          time target-valid-time + target-found write
+      then 
+						time shot-sensor-delay + shot-sensor-now!
+    then	
+    armor max-armor < max-repair-rate 0 ifev repair-rate! 
+    destx desty snake-location^ sync
+speed while-loop
+;time target-found read < while-loop
+		;0 target-found write
+  0 target-found!
+  0 destx! 
+Buzz& jump
+
+
+BroadCast:
+	1 read time < if
+		1 target-found!
+		3 write 2 write
+		time target-valid-time + 1 write 
+		return then
+	4 read time < if
+		4 target-found!
+		6 write 5 write
+		time target-valid-time + 4 write 
+		return then
+	7 read time < if
+		7 target-found!
+		9 write 8 write
+		time target-valid-time + 7 write 
+		return then
+ 	10 target-found! 2drop
+return
+
+
+BFound: 
+		0 constructor-rate!
+		robot-position 2dup desty! destx!
+		BroadCast^ 
+  Pregnant^ blaster-cooldown or robot-distance 3.5 > and ifr rdrop
+Attack: 
+	Robot-Direction syphon-direction! 
+	syphon-max-rate syphon-rate!
+	;engine-max-power engine-power!
+	do 
+	  robot-distance syphon-range min syphon-distance!
+	  robot-direction syphon-direction! 
+			blaster-cooldown nif
+	  	energy blaster-firing-cost > robot-distance blaster-range  radius robot-radius + + <  and if
+		   	robot-direction fire-blaster then 0 constructor-rate!
+ 			else energy 290 > constructor-max-rate 0 ifev constructor-rate! then
+			robot-position robot-velocity robot-distance speed 0.1 max / vs* v+ 
+   robot-position position v- robot-distance -0.8 * vs/ v+ seek-location
+	  armor max-armor < max-repair-rate 0 ifev repair-rate! 
+	  target-found if
+							robot-found 25 > if
+          0 target-found write
+          13 target-found! then
+				  time target-valid-time + target-found write
+				  robot-position target-found 2 + write
+				  target-found 1 + write
+		  else  
+      target-sender read time < if
+								target-sender target-found!
+  	     0 target-sender! then 
+    then
+		energy 5 < Buzz& ifg
+	 fire-robot-sensor sync
+robot-found while-loop
+target-found if
+	0 target-found write
+	0 target-found 1 + write
+	0 target-found 2 + write
+	0 target-found! then
+ target-sender if
+ 0 target-sender write
+ 0 target-sender!  then
+	0 syphon-rate!
+ 0 syphon-distance!
+ 0 destx! 0 desty! 0 engine-power! 
+ sync sync sync
+Buzz& jump
+
+#var Extra-Time 0
+#var Starve-Time
+
+Recharge:
+		0 engine-power!
+		0 constructor-rate!
+		0 Extra-Time!
+  time 1000 + Starve-Time! 
+  syphon-max-rate syphon-rate!
+  random-angle syphon-direction!
+  syphon-range syphon-distance!
+  do speed while-loop
+		do 
+			time 10 read id + > time Extra-Time > and if
+					time 75 + 10 write 
+					position 12 write 11 write
+				 time 100 + Extra-Time! then
+					Extra-Time 10 read < if 0 Extra-Time! then  
+     syphoned nif syphon-direction 0.8 + syphon-direction! then
+     time Starve-Time > if 0 constructor-type! then
+     sync sync sync sync sync
+		energy 20 < while-loop
+		Extra-Time if 0 10 write then
+  0 syphon-distance! 0 syphon-rate!
+return
+
+Retreat:
+				 pi + wander-angle!
+				time 150 + food-sensor-now!
+				0 destx!
+Movement jump
+
+Rescue:
+  2dup position v- norm swarm-range > energy 100 < or ifr
+		desty! destx! 0 10 write
+  0 constructor-rate!
+	do
+		destx desty 2dup seek-location
+		position v- 2dup
+		angle syphon-direction!
+		syphon-range syphon-distance!
+		norm dup 3 < syphon-max-rate negate 0 ifev syphon-rate!
+	radius > while-loop
+	0 syphon-distance! 0 syphon-rate!
+Buzz& jump
+
+#end

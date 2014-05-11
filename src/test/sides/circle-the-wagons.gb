@@ -1,0 +1,186 @@
+
+#side Circle-the-Wagons
+#author Matt Burkholder
+#date 10 Nov 2002 
+
+#seed 2 1 2 2 
+
+#color FF0 
+#type Fire
+#color F00 
+Forms a ring
+
+Channels
+1 Home X
+2 Home Y
+3 Threat Distance
+4 Threat Direction
+5 Defense Offset
+
+
+#hardware 
+processor 10 
+solar-cells .2 
+constructor .15 
+energy 200 2 
+armor 100
+engine 0.04
+robot-sensor 20
+grenades 30 20 30
+repair-rate 0.05 
+radio read write
+
+#code 
+
+#vector Home
+#vector Dest
+#var TypeID 
+#var TypeCount
+#var OtherCount
+#var SideCount
+#var ThreatDistance
+#var ThreatDirection
+#var Robot-sensor-Now
+
+1 type-population id min TypeID!
+ID 1 = if position 2 write 1 write then
+;constructor-type nif 2 constructor-type! then
+
+
+do 
+   constructor-type nif 0 SideCount random-int TypeCount < 2 1 ifev constructor-type! then 
+   energy 199 > constructor-max-rate 0 ifev constructor-rate! 
+   GetData^
+   friendly-collision Dest position 3 in-range and if
+      1 robot-sensor-sees-friends!
+      fire-robot-sensor sync
+      robot-type type = if robot-id id > and-if TypeID TypeID 1 - TypeCount ifev TypeID! 
+         Home Dest! then
+      0 robot-sensor-sees-friends!
+   else
+      TypeCount 1 - OtherCount 4 - max  ;circle radius
+      TypeID 2pi * pi - TypeCount / ThreatDirection +  ;orientation
+      polar-to-rect Home v+ Dest!
+   then 
+   Dest seek-location sync sync 
+   time robot-sensor-now < grenades-cooldown or nif
+       fire-robot-sensor sync
+       robot-found if
+          robot-position position v-
+          robot-velocity robot-distance grenades-speed / vs* v+
+          rect-to-polar fire-grenade
+       else 
+          time 60 + robot-sensor-now! then
+   then
+         
+forever 
+
+GetData:
+  1 read 2 read Home!
+  3 read ThreatDistance!
+  4 read ThreatDirection!
+  1 type-population TypeCount!
+  2 type-population OtherCount!
+  TypeCount OtherCount + SideCount!
+return
+
+
+
+#type Shield
+#color 00F 
+Forms a ring
+
+Channels
+1 Home X
+2 Home Y
+3 Threat Distance
+4 Threat Direction
+5 Defense Offset
+
+
+#hardware 
+processor 10 
+solar-cells .2 
+constructor 0.15 
+energy 200 2 
+armor 200
+engine 0.035
+robot-sensor 5 
+shot-sensor 3
+shield 0.6
+repair-rate 0.05
+radio read write
+
+#code 
+
+#vector Home
+#vector Dest
+#var TypeID 
+#var TypeCount
+#var OtherCount
+#var SideCount
+#var ThreatDistance
+#var ThreatDirection
+#var DefenseOffset 0
+#var shot-sensor-now
+#var robot-sensor-now
+#var Danger 0
+#var SwitchTime 0
+
+2 type-population id min  TypeID!
+ID 1 = if position 2 write 1 write then
+;constructor-type nif 2 constructor-type! then
+1 shot-sensor-sees-friendly!
+
+do 
+   constructor-type nif 0 SideCount random-int TypeCount < 1 2 ifev constructor-type! then 
+   energy 199 > constructor-max-rate 0 ifev constructor-rate! 
+   GetData^
+   friendly-collision Dest position 3 in-range and if
+      1 robot-sensor-sees-friends!
+      fire-robot-sensor sync
+      robot-type type = if robot-id id > and-if TypeID TypeID 1 - TypeCount ifev TypeID! 
+         Home Dest! then
+      0 robot-sensor-sees-friends!
+   else
+      TypeCount OtherCount max 5 + ;circle radius
+      TypeID DefenseOffset + 2pi * pi - TypeCount / ThreatDirection +  ;orientation
+      polar-to-rect Home v+ Dest!
+   then 
+   Dest seek-location sync sync 
+   time shot-sensor-now > if
+      fire-shot-sensor 
+      ;time 10 + robot-sensor-now!
+      time 15 + shot-sensor-now!      
+      Danger 1 - 0 max Danger! 
+      shot-found if
+          max-shield shield!
+          6 Danger!
+      then
+   else time robot-sensor-now > if
+      fire-robot-sensor 
+      time 30 + robot-sensor-now!
+      ;time 20 + shot-sensor-now!
+      Danger 1 - 0 max Danger!      
+      robot-found if
+          max-shield shield!
+          6 Danger!
+   then then then
+   Danger if armor 50 < energy 75 < or and-if 
+      time SwitchTime > Dest position 3 in-range and and-if
+         DefenseOffset 1 + 5 write 
+         Time 200 + SwitchTime! then
+   Danger max-shield 0 ifev shield!
+   armor max-armor < energy 10 > and max-repair-rate 0 ifev repair-rate!
+forever 
+
+GetData:
+  1 read 2 read Home!
+  3 read ThreatDistance!
+  4 read ThreatDirection!
+  2 type-population TypeCount!
+  1 type-population OtherCount!
+  5 read DefenseOffset!
+  TypeCount OtherCount + SideCount!
+return
+#end 

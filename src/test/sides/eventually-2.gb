@@ -1,0 +1,146 @@
+#side Eventually...
+#author Devon
+#date September 20-22 2002
+#color ef0
+
+Autotroph; once it's built enough economy it starts cranking out missiles. Hundreds of them.
+(20020922) Added Sentinel for defense.
+
+Feel free to steal/modify parts of this side.
+
+#type Economy
+#color 0b0
+
+#hardware
+  solar-cells .5
+  constructor .49
+  processor 4
+  energy 5 0
+  armor 90
+
+#code
+
+new-baby:
+  time 9000 > if   ;should use type-population when it's fixed
+    0 3 random-int 2 1 ifev
+  else
+    -6 3 random-int 1 max
+  then constructor-type!
+  constructor-max-rate constructor-rate!
+return
+
+#start
+  new-baby
+  do
+    constructor-type not new-baby& ifc
+  forever
+
+
+#type Safety Missile
+#author Devon
+#color f00
+
+"Safety" because it won't detonate close to home.
+
+(20020922) All destinations now at edges.
+(20020922) Should no longer need recharging.
+
+#hardware
+  engine .06   ;c 60
+  bomb 1000   ;c 150 ;could be bigger
+  armor 80
+  processor 10
+  energy 10 5
+  solar-cells .08   ;c 144 :-(
+  robot-sensor 10   ;c 26
+
+#code
+
+#vector dest
+#vector home
+#const home-dist 15
+#const edge-space 7 ;close enough to see corners
+#var right
+#var top
+
+new-dest: ; --
+  0 1 random-int if
+    0 1 random-int edge-space right ifev
+    edge-space top random
+    dest!
+  else
+    edge-space right random
+    0 1 random-int edge-space top ifev
+    dest!
+  then
+  dest home home-dist in-range new-dest& ifg
+return
+
+#start
+  world-size drop edge-space - right!
+  world-size nip edge-space - top!
+  position home!
+  new-dest
+  do
+    fire-robot-sensor sync
+    robot-found position home home-dist in-range not and if
+      ;maybe use enemy-collision?
+      robot-distance 3 < if
+        die sync
+      else
+        robot-position dest!
+      then
+    else
+      dest seek-location
+      position dest 1.5 in-range new-dest& ifc
+      sync sync sync sync sync sync sync sync sync sync
+      sync sync sync sync sync sync sync sync sync sync
+    then
+    dest seek-location
+    position dest 1.5 in-range new-dest& ifc
+    sync sync sync sync sync sync sync sync sync sync
+    sync sync sync sync sync sync sync sync sync sync
+  forever
+
+#type Sentinel
+#color 606
+
+Can shoot even radially moving targets (like incoming missiles).
+
+#hardware
+  processor 15
+  armor 200
+  grenades 30 16 30
+  robot-sensor 16
+  energy 100 0
+  solar-cells .4
+  constructor .38
+#code
+
+#var next-scan
+
+#start
+  time 20 + next-scan!
+do
+  constructor-type nif
+    1 constructor-type!
+  then
+  energy 50 >= if
+    constructor-max-rate
+  else
+    0
+  then constructor-rate!
+  time next-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      robot-velocity 2dup
+        robot-distance grenades-speed / vs* robot-position v+
+        position dist grenades-speed / vs* robot-position v+
+        position v- rect-to-polar fire-grenade
+      time grenades-reload-time + next-scan!
+    else
+      time 41 + next-scan!
+    then
+  then
+forever
+#end

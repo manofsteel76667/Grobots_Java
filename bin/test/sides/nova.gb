@@ -1,0 +1,408 @@
+#side Nova
+#author Tyson & Ryan
+; Blah...
+#color FFF
+
+
+;Concept: Big fortresses secure area, and are fed by other cells.
+
+;Channel 1 is used for targets.
+;Channel 2 is used for Food-Requests.
+
+;Shared-Mem:
+;1&2 - builder locations.
+;3 - number of builders
+
+
+#seed 4 2 3 4 
+
+#type Fortress
+   ;immobile long range attacker
+
+#color 00F
+
+#hardware
+processor 20
+radio send receive
+energy 2000 400
+armor 300
+grenades 60 30 20
+solar-cells .16
+
+#code
+
+
+#vector Target_loc 0 0
+#vector Target_vel 0 0
+#var lowest 25
+#vector vlowest 0 0
+#vector vlowestvel 0 0
+#var range 0
+#var last-call 0
+
+#start
+
+Main:
+   Check-Energy^ 
+   Choose_target^    ; find closest target
+   lowest 30 < Fire& ifc  ; shoot closest target
+   Main& jump
+
+Check-Energy:
+    energy 100 < if 
+      last-call 100 + time < if 
+         time last-call! position 2 2 send 
+      then
+   then ;if low energy, signal that a refill is needed (once every 100 frames)
+   return
+
+Choose_target:
+   40 lowest!
+Next_target: ;While there are messages, scroll through targets
+   1 messages 0 = ifr
+
+   1 receive drop Target_vel! Target_loc!
+   Target_loc + Next_target& nifg
+   Target_loc position dist range! ;get target range
+   range 3.5 > Next_target& nifg  ; don't shoot close
+   range 30 < Next_target& nifg ; don't shoot what I can't hit
+   lowest range > Next_target& nifg ; make sure its the closest thing to hit
+   range lowest!
+   Target_loc vlowest!
+   Target_vel vlowestvel!
+   Next_target& jump
+   
+Fire:
+   ;lowest vlowest position v- angle fire-grenade ;stupid shoot at close target algorithim
+   vlowestvel lowest grenades-speed / vs* vlowestvel!
+   
+   vlowest vlowestvel v+ 2dup position dist lowest! vlowest!
+   lowest vlowest position v- angle fire-grenade
+   
+   
+;   vlowest vlowestvel lead-grenade 
+   return;
+   
+
+#type Eater
+#color A5974B
+
+#hardware
+processor 20
+radio read send receive
+engine .15
+energy 300 20
+solar-cells .1
+eater 3
+syphon 5 6
+robot-sensor 10 6
+food-sensor 10 
+shot-sensor 10 
+armor 20
+
+#code
+
+#var fenergy 1000
+#var loop-enter 0 
+#var range 0
+#var lowest 0
+#vector vlowest 500 500
+#vector vfriend 0 0
+#vector vdest 10 10
+#vector loc 0 0
+#var mode 1
+;Modes: 1=Find Food, 2=Give energy, 3=Find recipient, 4=power gen, 5=run away
+#var counter 10
+#vector home 0 0
+
+
+
+#start
+   world-width 1 10 random-int / 
+   world-height 1 10 random-int / home!
+   syphon-range syphon-distance!
+   0 syphon-rate!
+   1 shot-sensor-sees-friendly!
+   1 shot-sensor-sees-enemy!
+   1 robot-sensor-sees-friends!
+   0 robot-sensor-sees-enemies!
+Main:
+   energy max-energy / .25 < if 1 mode! then
+   energy 10 < if 4 mode! then
+   vdest vprint
+   
+   check-shots^
+   mode 4 = Power-Gen& ifc
+   mode 1 = Find-Food& ifc
+   mode 3 = Find-Friend& ifc
+   mode 2 = Give-Energy& ifc
+   Main& jump
+
+check-shots:
+   ;power-gen^
+   ;fire-shot-sensor
+   return
+
+
+
+Power-Gen:
+   energy 5 > ifr
+   0 engine-power!   
+   sync sync sync sync sync sync sync sync
+   Power-Gen& jump
+
+Go-Random:
+      10 -10 random-int 10 -10 random-int position v+ seek-location
+      sync sync sync sync sync sync sync sync
+      return
+
+Go-Home:
+   home seek-location
+   home vdest!
+   sync sync sync sync sync sync sync sync sync sync
+   return
+
+Go-Builder:
+   1 vread 2dup seek-location
+   vdest!
+   sync sync sync sync sync sync sync sync sync sync
+   return
+
+Find-Friend:
+   2 messages 0 = Search& ifg
+   world-width lowest!
+   vdest vfriend!
+Request-List:
+   2 receive drop loc!
+   loc position dist range!
+   lowest range > if range lowest! loc vfriend! then
+   2 messages 0 = Request-List& nifg
+   vfriend seek-location
+   ;2 mode!
+   ;return 
+
+Search:
+   fire-robot-sensor sync
+   robot-found 0 = if Go-Builder^ Find-Friend& jump then
+   1000 fenergy!
+Search-List:
+   robot-type 2 = Search-Next& ifg
+   robot-type 3 = Search-Next& ifg
+   fenergy robot-energy > if robot-energy fenergy! robot-position vfriend! then
+Search-Next:
+   next-robot 0 = Search-List& nifg 
+   vfriend 2dup + nif drop drop 1 vread then 
+   2dup vdest!
+   seek-location
+   2 mode!
+   return
+
+
+
+
+Give-Energy:
+   2 clear-messages
+   vdest seek-location
+   vdest position dist range!
+   range syphon-range > Give-Energy& ifg
+   ;search^
+   position seek-location
+   range syphon-distance!
+   syphon-max-rate negate syphon-rate!
+   vdest position v- angle syphon-direction!
+Energy-Wait:
+   energy max-energy / .25 < if 1 mode! return then
+   syphoned negate 0 > if 5 counter! sync Energy-Wait& jump then
+   counter 1 - counter!
+   counter 0 < if 3 mode! return then
+   Energy-Wait& jump
+
+
+Find-Food:
+   0 syphon-rate!
+   2 clear-messages
+   energy food-sensor-firing-cost < if Power-Gen^ Find-Food& jump then
+   fire-food-sensor sync
+   food-found 0 = if Go-Home^ return then
+   time loop-enter!
+   food-position loc!
+   do loc position .35 in-range until
+   food-position - 0 = if home loc! else food-position loc! then
+   loc seek-location
+   energy 10 < if Power-Gen^ then
+   loop-enter 20 + time < Find-Food& ifg
+   loop
+   energy max-energy / .9 > if 3 mode! return then
+   Find-Food& jump
+
+
+#type Relay
+#color 763285
+
+#hardware
+processor 30
+radio send
+energy 8 8
+solar-cells .08
+robot-sensor 35 10
+
+
+#code
+   0 robot-sensor-sees-friends!
+   1 robot-sensor-sees-enemies!
+   do
+      fire-robot-sensor sync
+      robot-found 0 = Broadcast& nifc 
+   forever
+
+Broadcast:
+   robot-position robot-velocity 4 1 send
+   next-robot 0 = Broadcast& nifg
+   return
+
+
+
+#type Builder
+   ;constructor
+#color AAF
+
+#hardware
+engine .01
+processor 20
+radio read write send
+constructor 1.25
+energy 1000 0
+armor 100
+repair-rate .1
+solar-cells .5
+#code
+
+#var Eaters 0
+#var Builders 0
+#var Fortress 0
+#var Relays 0
+#var last-call 0
+#var make 0
+start:
+   3 read 1 + 3 write
+   ;3 read 5 mod start2& nifg
+  
+   4 constructor-type!
+   constructor-max-rate constructor-rate!
+start1:
+   1 vread seek-location
+   Construct& call  ;determine construction needed
+   constructor-max-rate constructor-rate!
+   energy 100 < if last-call 100 + time < if time last-call! position 2 2 send then then ;if low energy, signal that a refill is needed (once every 30 frames)
+   time 50 mod id 50 mod = if position 1 vwrite then
+   start1& jump
+ 
+start2: 
+   5 constructor-type! 
+start3:
+   constructor-max-rate constructor-rate!
+   energy 100 < if last-call 100 + time < if time last-call! position 2 2 send then then ;if low energy, signal that a refill is needed (once every 30 frames)
+   time 50 mod id 50 mod = if position 1 vwrite then
+   construct2^
+   start3& jump
+
+Construct:
+
+   constructor-remaining 0 = nifr
+   1 type-population Fortress!
+   2 type-population Eaters!
+   3 type-population Relays!
+   4 type-population Builders!
+   Relays 0 = if 3 constructor-type! return then
+   Fortress 0 = if 1 constructor-type! return then
+   Eaters Builders Fortress + 1.5 * < if 2 constructor-type! return then
+   Relays Fortress 3 / < if 3 constructor-type! return then
+   Builders 5 +  Fortress > if 1 constructor-type! return then
+   4 constructor-type! return
+construct2:
+   constructor-remaining 0 = nifr
+   make 0 = if 5 constructor-type! 1 make! return then
+   
+   make 3 > if 1 constructor-type! 0 make! return then 
+   5 constructor-type!
+   make 1 + make! 
+   return
+
+#type BattleCruiser
+#hardware
+processor 30
+radio read send receive
+engine .15
+energy 300 20
+eater 3
+robot-sensor 25 6
+food-sensor 10 3
+shot-sensor 10 10
+armor 100
+blaster 40 25 15
+repair-rate .3
+
+#code
+
+#Vector Loc 0 0
+
+#var Captains-orders 0
+;o=no orders
+;200=eat food
+
+init:
+
+Main:
+	Check-energy^
+	;Repair^
+	;Check-orders^
+	;Keep-the-Peace^
+	;Check-enemy^
+	;Engage-enemy^
+	;Captains-prerogative^
+
+	Main& jump
+
+Check-energy:
+	
+	Energy 200 > Captains-orders 200 = and if
+		0 Captains-orders!
+	then
+	Energy 150 > ifr
+	200 Captains-orders!
+	Find-food^
+	
+	
+	
+
+	Return
+
+Find-food:
+
+   fire-food-sensor sync
+   food-found 0 = ifr
+   ;time loop-enter!
+   food-position loc!
+   do 
+   	loc position .35 in-range 
+   until
+   	food-position - 0 = if 
+   		;home loc! 
+   	else 
+   		food-position loc! 
+   	then
+   	loc seek-location
+   	energy 10 < if 
+   		;Power-Gen^ 
+   	then
+   	;loop-enter 20 + time < Find-Food& ifg
+   loop
+   energy max-energy / .9 > if 
+   	;3 mode!
+   	return 
+   then
+   Find-Food& jump
+
+	Return
+
+#end

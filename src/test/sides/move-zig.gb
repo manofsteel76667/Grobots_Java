@@ -1,0 +1,176 @@
+#side Move Zig!
+#color FD4
+#seed 1 1 1 2
+
+#author ziggystar
+
+This site has some solar Eggmen slowly heading for an edge that start to spit out deadly Zigs. The Zigs wield 
+a short range blaster, eat plants, (try to) chase shots and try to stay close to the Eggmen in the beginning.
+Maybe add some "walk along the sides if we are loosing late" to eliminate hiding sides.
+
+#type Eggman
+#hardware
+  solar-cells .4
+  engine 0.05
+  constructor .4
+  armor 50
+  processor 20
+#code
+
+do
+
+  ;home position averaging
+  1 vread 2dup position v- -1 1 type-population / vs* v+ 1 vwrite
+
+  ;find nearest corner
+  position world-height / 0.5 > if world-height else 0 then swap
+  world-width / 0.5 > if world-width else 0 then swap
+
+  2dup position 1 1 type-population + in-range not if seek-location else 2drop 0 engine-power! then
+  
+  ;after some initial growth of eggman, make some more eggmen than zigs
+  constructor-progress 0 = 1 type-population 5 > and if
+    1 type-population 1 + dup 2 type-population 1 + + / 0.7 * random-bool if
+      2 constructor-type!
+    else
+      1 constructor-type!
+    then
+  then
+    
+  autoconstruct
+forever
+
+#type Zig
+#decoration F00 square
+#hardware
+  solar-cells .02
+  engine 0.2
+  eater 0.8
+  armor 100
+  energy 300 50
+  blaster 10 2 10
+  robot-sensor 8
+  food-sensor 10
+  shot-sensor 5
+  processor 100
+  repair-rate 0.1
+
+#code
+
+#vector dest  ;where to go
+#vector avoid ;don't stay here
+#const avoid-range 10 
+
+#var dest_time_stamp
+
+#var fighting ;are we fighting (actually kill everything on sight)
+
+
+new-dest:   ;try to stay closer to home if less zigs are alife
+  time 30 < if position else 1 vread then
+  2dup 0 world-width random 0 world-height random v- 2 type-population sqrt 5 / 1 min vs* v- dest!
+  time dest_time_stamp!  
+return
+
+
+wander:
+  dest seek-location
+  0.1 engine-power!
+  position dest 3 in-range new-dest& ifc
+return
+
+seek-food:
+
+  food-collision if       ;fire weapon when eating
+    blaster-reload-time periodic-robot-sensor robot-found and if
+      robot-position robot-velocity lead-blaster
+     then
+  else
+    30 periodic-food-sensor drop
+  then
+
+  food-found food-position avoid food-sensor-range in-range not and if
+    food-position seek-location
+  else
+    wander
+  then
+
+return
+
+
+attack-robot:
+  time robot-sensor-time - 3 < if
+    robot-position robot-velocity lead-blaster
+  then
+    robot-position robot-velocity seek-moving-location
+return
+
+#start
+
+0 robot-sensor-sees-friends!
+1 robot-sensor-sees-enemies!
+0 shot-sensor-sees-friendly!
+
+new-dest
+
+do
+
+ friendly-collision food-collision and if
+   position avoid!
+ then
+
+ shot-collision if
+   energy 50 > if
+     1 fighting!
+   else
+     position avoid!
+   then
+ then
+
+ ;don't go to avoid
+ dest avoid food-sensor-range in-range new-dest& ifc
+
+ time dest_time_stamp - 1000 > if
+   new-dest
+ then
+
+ energy 50 < if
+   0 fighting!
+ then
+
+ energy max-energy 10 - > if
+   1 fighting!
+ then
+
+ energy 50 > max-armor armor - 0 > and if
+   max-repair-rate repair-rate!
+ else
+   0 repair-rate!
+ then
+
+
+
+ fighting if
+
+   ;shot chasing
+   3 periodic-shot-sensor drop
+   shot-found if
+     shot-position shot-velocity -10 vs* v+ dest!
+   then 
+
+
+   blaster-reload-time periodic-robot-sensor drop
+
+   robot-found if
+     attack-robot
+   else
+     wander
+   then
+ else
+   seek-food
+ then
+
+forever
+
+#end
+

@@ -1,0 +1,56 @@
+#side Fly Swatter
+Throws grenades, and uses a force field to make the target
+come to the grenade. We thought of this idea long before the
+game was implemented.
+#author Warren
+#color af0
+#type Fly Swatter
+#color 946
+
+(Devon 20020325) Added minimum firing range to reduce friendly fire.
+(Devon 20030325) Leads shots linearly. The forcefield moves.
+(Devon 20020325) No longer uses forcefields if the target is stationary.
+(Devon 20020410) Various fixes for recent brain changes
+
+#hardware
+processor 10
+constructor 0.399
+energy 50 0
+solar-cells 0.4 ;c 720
+armor 150
+
+robot-sensor 24
+grenades 50 24 80
+force-field .2 24
+
+#code
+#var shot-arrive-time 0
+#var target-x
+#var target-y
+
+do
+	1 constructor-type!
+	energy max-energy 20 - < 0 constructor-max-rate ifev constructor-rate!
+	time robot-sensor-time 40 + < grenades-cooldown or nif
+		fire-robot-sensor
+		sync
+		robot-found if
+			robot-velocity robot-distance 2 max grenades-speed / .75 * vs*
+				robot-position v+
+				2dup target-y! target-x!
+			position v- rect-to-polar fire-grenade
+			time robot-distance grenades-speed / + shot-arrive-time!
+		then
+	else
+		sync
+	then
+	time shot-arrive-time 5 - < robot-velocity or and if
+			target-x target-y position v-
+			robot-velocity shot-arrive-time time - -.75 * vs* v+
+			rect-to-polar force-field-direction! force-field-distance!
+		force-field-max-power force-field-power!
+	else
+		0 force-field-power!
+	then
+forever
+#end

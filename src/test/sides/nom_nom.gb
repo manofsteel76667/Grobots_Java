@@ -1,0 +1,1068 @@
+#side nom nom
+#author elel
+#color 000
+#seed 1 7 6 8 3 1 1 2 4 4 2
+
+#code									;section for declaring global variables and constants
+
+;;;;;;;;;;UNIVERSAL VARIABLES;;;;;;;;;;;;;;;;
+
+;types of bots in this side - for construction
+
+#const KONQUERER 1
+#const NOMS 2
+#const SPIN-OFF 3
+#const HONEY-POT 4
+#const BATTLESHIP 5
+#const MASTERMIND 6
+#const MUTANT-NOM 7
+#const CHAIN-GUN 8
+#const H-BOMB 9
+
+;;;;;;;;;;;;UNIVERSAL CODE;;;;;;;;;;;;;;
+
+
+
+;50-99 is for locations
+
+#const M_ENEMY_POS_0 50					;first memory location for relaying enemy positions - it actually takes memory location 50 AND 51 (for vector)
+
+#const M_ENERGY_NEEDED_0 60
+
+;850-1000 position claims
+#const M_CHAIN_GUN_MEM_START 850
+#const M_CHAIN_GUN_MEM_END 939
+#const U_CHAIN_GUN_SKIP 3
+
+#const M_SPIN_OFF_MEM_START 940
+#const M_SPIN_OFF_MEM_END 1000
+#const U_SPIN_OFF_SKIP 3
+
+#var U_LOOP_COUNTER						;counter for loops which need to run a set number of times
+#var U_MEM_ADDRESS
+#var U_RANDOM_PICK
+
+;bot_start konquerer
+#type konquerer
+#color f16
+#decoration f18 triangle
+#hardware
+
+processor 10
+;solar-cells 0.04
+engine 0.15
+robot-sensor 4 1
+shot-sensor 6 1
+energy 200 200
+armor 70
+bomb 500
+
+#code
+
+#var L_ZAG_LEG							;-1 or 1 showing which leg of the evasion pattern we are on
+
+#vector L_INTERCEPT_POINT				;holds location of trouble position
+#vector L_EVASION_TARGET				;holds vector which is used to set engine velocity on attack path
+#vector L_EVASION_NUDGE					;holds vector to add to L_EVASION_TARGET to keep the bot on a curved path
+
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:
+;code which runs only once
+0.5 random-bool L_ZAG_LEG!				;randomly chose the first direction it will evade when it is shot at
+L_ZAG_LEG nif
+	-1 L_ZAG_LEG!
+	then
+r_seek_random^
+do
+	r_ka_boom^							;blow up if there is an enemy
+	U_LOOP_COUNTER nif					;check if counter has run out for a new random direction - if so, re-set it and go a new direction
+		r_seek_random^
+		then
+	U_LOOP_COUNTER 1 - U_LOOP_COUNTER!	;decrement loop counter to count	
+	80 periodic-robot-sensor
+	15 periodic-shot-sensor
+	2drop
+	energy 20 < if										;code should go here to go back to a place to fill up on energy
+
+		then
+	robot-found robot-mass 1300 > and if					;go after a robot only if it is bigger than a certain size
+		r_hunt_mode^
+		then
+	shot-found if	
+		r_shot_follow_mode^
+		then
+	r_intercept_message_check^
+	wall-collision if					;change direction if there is a wall in the way
+		r_seek_random^
+		then
+forever 
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+r_first_responder_mode:
+	L_INTERCEPT_POINT seek-location		;seek trouble spot
+	0.02 engine-power!					;turn down engine so we have energy when we get
+	do energy 3 > while					;look for enemies
+		wall-collision if				;if you touch the wall, you have gone too far. Stop.
+			return
+			then	
+		50 periodic-robot-sensor
+		20 periodic-shot-sensor
+		2drop
+		r_ka_boom^
+		robot-found if					;check for enemies
+			r_hunt_mode^
+			then
+		shot-found if
+			r_shot_follow_mode^
+			then
+		loop
+return
+
+r_hunt_mode:							;hunt down and blow up enemys
+	do robot-position + while
+		robot-position seek-location
+		r_ka_boom^
+		10 periodic-robot-sensor
+		drop
+		loop
+return
+
+r_shot_follow_mode:
+do
+	L_ZAG_LEG negate L_ZAG_LEG!				;whenever this loop is run, we should be starting on a new leg in a new direction
+	shot-velocity vnegate unitize rect-to-polar ;get velocity of offending shot, negate and convert to polar representation to make thinking about it easier
+	2dup															;get us two coppies - we need two different results
+	pi/2 1.3 / L_ZAG_LEG *							;scale to pi/2 radians (90 deg) and negate if necessary
+	+ polar-to-rect 20 vs*								;add in the +-90 deg (in radian measure) and convert back to rect vector - scale to a large number to make it easy to move slowly sideways with the curve factor
+	L_EVASION_TARGET!								;write the first result to the first variable - there is still a copy of the original vector on the stack
+	pi 4 / L_ZAG_LEG negate *						;start on the next vector - this one is pi/4 (45 deg) and should rotate the opposite direction of the last vector
+	+ polar-to-rect 0.5 vs*								;add in the factor we just calculated and convert back to radians - scale to a small number !!WHICH IS THE NUMBER TO ADJUST TO CHANGE HOW TIGHT OF A CURVE THE BOT FOLLOWS!!!
+	L_EVASION_NUDGE!									;write to a variable - this is the nudge factor which moves the seek point to create a curved track
+	13 U_LOOP_COUNTER!								;set the loop counter for how long before the next leg is started on !!THIS IS THE NUMBER TO ADJUST TO CHANGE HOW FAR THE CURVE GOES BEFORE IT SWITCHES DIRECTION!!
+	do
+		L_EVASION_TARGET engine-velocity! 	;go for the picked target
+		engine-max-power engine-power!			;go fast
+		20 periodic-robot-sensor drop				;scan for bots
+		robot-found if										;check for bots
+			r_hunt_mode^
+			then
+		L_EVASION_TARGET L_EVASION_NUDGE v+ L_EVASION_TARGET!
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		U_LOOP_COUNTER while-loop
+	fire-shot-sensor sync
+	shot-found while-loop				;keep looking as long as there are shots visible
+return
+
+
+;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;	
+
+r_intercept_message_check:				;check for messages from other bots about enemies
+	M_ENEMY_POS_0 vread + if 			;check for enemy sightings
+		M_ENEMY_POS_0 vread L_INTERCEPT_POINT! ;store the position to be intercepted in a local variable, since it will be erased shortly
+		0 0 M_ENEMY_POS_0 vwrite		;clear the memory location
+		r_first_responder_mode^			;act on the message
+		then
+return
+	
+r_ka_boom:								;checks whether there is an enemy to blow up  >:}
+	enemy-collision if
+		die
+		then
+return
+
+r_seek_random:							;goes to a random position
+	100 U_LOOP_COUNTER!
+	1 world-width random-int
+	1 world-height random-int
+	seek-location
+	0.02 engine-power!
+return
+
+;bot_end
+
+;bot_start noms
+#type noms
+#color 2f9
+#decoration f22 hline
+#hardware
+
+processor 10
+solar-cells 0.02
+eater 2
+engine 0.015
+constructor 2
+food-sensor 8 1
+energy 50 0
+armor 50
+
+#code
+
+#var L_ALREADY_HIT 1					;variable prevents the bot from reporting being hit more than once - ever
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		30 periodic-food-sensor			;fire food sensor only after waiting 30 cycles
+		drop
+		then
+	food-found if						;check if food is found and get it if it is
+			food-position
+			seek-location
+			then
+	energy 10 < if
+		0 constructor-rate!
+		then
+	food-found speed or nif				;if we are stationary and there is no food, find some
+		new_pastures^
+		then
+	friendly-collision 2 >= wall-collision or if ;if we are touching more than 2 friendlies, move
+		new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, call in re-enforcements
+		position M_ENEMY_POS_0 vwrite
+		new_pastures^
+		then
+	last-hit if							;check if the bot has been hit
+		last-hit side <> L_ALREADY_HIT and if ;check if the bot has been hit by an enemy and if it has already used its only shout
+			position M_ENEMY_POS_0 vwrite
+			0 L_ALREADY_HIT!
+			then
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+		constructor-type nif			;if nothing is being built
+			0.2 random-bool if			;build honey-pots with a 20% probability
+				HONEY-POT constructor-type!
+					else				;otherwise build mutants
+				MUTANT-NOM constructor-type!
+				then
+			then
+		constructor_rate_limit^			;don't run out of energy
+		loop
+return
+
+new_pastures:
+	80 U_LOOP_COUNTER!
+	0 world-width random-int 0 world-height random-int
+	seek-location
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+;bot_end
+
+;bot_start spin-off
+#type spin-off
+#color f92
+#decoration f16 square
+#hardware
+
+processor 10
+solar-cells 0.05
+constructor 0.6
+energy 300 0
+armor 50
+engine 0.015
+
+#code
+
+#start boot
+
+boot:
+
+;pre-start code
+
+2 flag!									;set a flag so honey pots can know which bots to transfer to
+SPIN-OFF constructor-type!
+constructor-max-rate constructor-rate!
+r_get_address^							;get assigned an address
+construction_loop& jump
+
+main_loop:
+
+do
+	energy 10 > if
+		0.5 random-bool if
+			CHAIN-GUN constructor-type!
+			constructor-max-rate constructor-rate!
+			construction_loop& jump
+				else
+			KONQUERER constructor-type!
+			construction_loop& jump
+			then
+		then
+	energy 10 < if						;request energy
+		position M_ENERGY_NEEDED_0 vwrite
+		2 flag!
+		then
+	r_align^
+	flag print
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;
+
+construction_loop:
+
+do
+	constructor-max-rate constructor-rate!
+	energy 10 < if						;shut off constructor and request energy if it goes low
+		0 constructor-rate!
+		position M_ENERGY_NEEDED_0 vwrite
+		2 flag!
+		then
+	energy 290 > if						;stop receiving energy if we are full
+		0 flag!
+		then
+	constructor-type nif				;go back to main loop (with construct choosing code) if there is nothing being built
+		main_loop& jump
+		then
+	r_align^							;take up position assigned by the mastermind
+	sync								;slow processor and use less energy
+forever
+
+r_get_address:							;get a main memory section to communicate with the mastermind through - scheme: 3 locations 1: com 2: x 3:y
+
+M_SPIN_OFF_MEM_START U_MEM_ADDRESS!		;get the starting address of the section assigned
+do
+	U_MEM_ADDRESS read					;read what's in the current com position
+	nif									;if it's not empty, skip on
+		100 199 random U_RANDOM_PICK!	;pick a random number
+		U_RANDOM_PICK U_MEM_ADDRESS write ;write it to the com location
+		1 20 random-int U_LOOP_COUNTER!	;pick another random number
+		do U_LOOP_COUNTER while			;wait for that random number of loops
+			U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+			loop
+		U_MEM_ADDRESS read				;read back the random number
+		U_RANDOM_PICK = if				;if it's the same as the one put in, the memory slot is yours!
+			1 U_MEM_ADDRESS write		;store the location and go to the main loop
+			return
+			then
+		then
+	U_MEM_ADDRESS U_SPIN_OFF_SKIP + U_MEM_ADDRESS! ;if the memory wasn't empty, go on to the next one
+	M_SPIN_OFF_MEM_END 3 - U_MEM_ADDRESS < if ;check to see if we're overrunning the end of the memory section
+		M_SPIN_OFF_MEM_START U_MEM_ADDRESS!
+		then
+forever
+
+;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;
+
+r_align:								;go to the location the mastermind has put in the memory
+
+U_MEM_ADDRESS 1 + vread					;offset the position to be read 1 above the start of the assigned memory area, and read a vector
+seek-location
+return
+
+
+;bot_end
+
+;bot_start honey pot
+#type honey pot
+#color 2ec
+#decoration 0ad circle
+
+#hardware
+
+processor 5
+armor 60
+energy 150 1
+solar-cells 0.15
+syphon 0.5 5
+engine 0.01
+robot-sensor 5 4
+
+#code
+
+#var L_THIS_DIST
+#var L_LAST_DIST
+
+#vector L_PARKING
+
+#start boot
+
+boot:
+
+1 robot-sensor-sees-friends!			;set the sensor to see only friends, since that's who we'll be transferring to
+0 robot-sensor-sees-enemies!
+
+main_loop:
+
+do
+	0 syphon-rate!						;turn off the syphon
+	energy 10 > if						;only give energy if we have over 50
+		sync
+		M_ENERGY_NEEDED_0 vread 2dup + if ;check if anyone is calling for energy - duplicate the memread result now to make sure that there is no chance of other bots writing zeros to it before it is read again
+			L_PARKING!					;store location of beacon (from 2dup results)
+			0 0 M_ENERGY_NEEDED_0 vwrite ;erase beacon for re-use
+			L_PARKING seek-location		;go to location of beacon
+			0 c_go_to_parking_mode& jump ;go to the energy target - it's from the main loop, so pass the call mode a zero (no need to drop from the return stack)
+			then
+		2drop							;drop the early duplication if it turns out that there is nothing on the channel
+		then
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;;
+
+c_go_to_parking_mode:					;go to the bot which needed energy
+if										;return clear function
+	rdrop
+	then
+0 syphon-rate!							;turn off the syphon
+1000 L_LAST_DIST!						;set the distance comparason reference to a number bigger than anything it would normally hold so the loop doesn't exit on the first run
+do
+	position L_PARKING dist				;find the distance to the destination
+	dup L_THIS_DIST!					;make two coppies of distance, one (stored) for range checking and the other for regression checking
+	2.5 < if							;if it is less than 2.5, stop and start transfering energy
+		0 engine-power!
+		fire-robot-sensor
+		sync
+		r_transfer_energy_mode^
+		then
+	L_THIS_DIST L_LAST_DIST > if		;if we have moved farther from our target, we have probably missed it and should check if it still needs energy
+		main_loop& jump
+			else
+		L_THIS_DIST L_LAST_DIST!		;store the current distance for reference next loop
+		then
+forever
+
+r_transfer_energy_mode:
+do energy 10 > r_robot_type_check^ and while ;only do the loop while there is more than 10 energy in the banks and there is a friendly robot in range
+	40 periodic-robot-sensor			;find exactly where to target the syphon
+	drop
+	robot-distance syphon-distance! 	;target the syphon
+	robot-direction syphon-direction!
+	syphon-max-rate negate syphon-rate!	;start it up
+	loop
+	0 0 L_PARKING!
+return
+
+;;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;
+
+r_robot_type_check:						;check if a robot has been found, and what flag it has set. Return different numbers depending on the flag
+	robot-found nif						;if there are no robots, return with a zero
+		0 return
+		then
+	do									;step through results to find a robot which needs energy
+		robot-flag 2 = if
+			1 return
+			then
+		next-robot while-loop
+0 return
+
+;bot_end
+
+;bot_start battleship
+#type battleship
+#color 888
+#decoration 888 dot
+
+#hardware
+
+processor 10
+solar-cells 0.15
+robot-sensor 20 1
+grenades 20 20 20
+energy 100 0
+armor 200
+engine 0.05
+repair-rate 0.03
+
+#code
+
+2 flag!
+
+do
+	energy 30 > if
+		30 periodic-robot-sensor
+		drop
+		robot-found if
+			robot-position robot-velocity
+			lead-grenade 
+			then
+		then
+	armor max-armor <> if
+		max-repair-rate repair-rate!
+			else
+		0 repair-rate!
+		then
+	sync
+forever
+
+;bot_end
+
+;bot_start mastermind
+#type mastermind
+#color 000
+
+#hardware
+
+processor 60
+solar-cells 0.05
+energy 40 5
+armor 200
+repair-rate 0.03
+engine 0.02
+
+#code
+
+#var L_CORNER_X							;x coordinate of the corner chosen
+#var L_CORNER_Y							;y coordinate of the corner chosen
+#var L_CORNER_DISPLACE_X				;whether away from the wall is left or right
+#var L_CORNER_DISPLACE_Y				;whether away from the wall is up or down
+#var L_X								;current x position for memory walk loops
+#var L_Y								;current y position for memory walk loops
+#var L_MEM								;current mem position for memory walk loops
+#var L_RAD								;current radian angle measure for memory walk loops
+#var L_MAG								;current magnitude of polar coordinate for memory walk loops
+#var L_PLACE_SKIP						;skip distance for placing loops
+#var L_CHAIN_GUN_NUM					;number of chain guns available
+
+#start boot
+
+boot:
+
+r_pick_corner^							;determine which is the nearest corner
+L_CORNER_X L_CORNER_Y seek-location		;go to it
+r_arange_spin_off^						;fill in memory with location assignments for spin-offs in the chosen corner
+r_arange_chain_gun^
+
+main_loop:
+
+do
+	armor max-armor <> if				;top out armor
+		max-repair-rate repair-rate!
+			else
+		0 repair-rate!
+		then
+	wall-collision if					;stop when the corner is reached
+		0 engine-power!
+		then
+	time 120 rem nif					;if the number of cycles since the start is divisible by the literal number, arange the chain guns !!SET HOW OFTEN THE CHAIN-GUNS ARE ARANGED!!
+		r_arange_chain_gun^
+		then
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;;
+
+r_arange_spin_off:						;fill in the assigned memory for spin-offs with a square patern - should not need to be re-done
+
+L_CORNER_X L_CORNER_DISPLACE_X 8 * + L_X! ;get corner coordinates from master variables and store them after moving them out 8 spaces
+L_CORNER_Y L_CORNER_DISPLACE_Y 8 * + L_Y!
+M_SPIN_OFF_MEM_START 1 + L_MEM!			;get the memory start point and shift it one to hit on the coordinates locations
+1 L_PLACE_SKIP!							;start out with a side length of one
+
+L_X L_Y L_MEM vwrite					;write the center location
+do
+	L_PLACE_SKIP U_LOOP_COUNTER!		;set to loop as many times as points are needed on the side
+	do
+		L_MEM U_SPIN_OFF_SKIP + L_MEM!	;shift the memory location
+		M_SPIN_OFF_MEM_END 3 - L_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_X 2 + L_X!					;move the point over 2
+		L_X L_Y L_MEM vwrite			;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop	
+	L_PLACE_SKIP U_LOOP_COUNTER!
+	do
+		L_MEM U_SPIN_OFF_SKIP + L_MEM!	;shift the memory location
+		M_SPIN_OFF_MEM_END 3 - L_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_Y 2 + L_Y!					;move the point up 2
+		L_X L_Y L_MEM vwrite			;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SKIP 1 + L_PLACE_SKIP!
+	L_PLACE_SKIP U_LOOP_COUNTER!
+	do
+		L_MEM U_SPIN_OFF_SKIP + L_MEM!	;shift the memory location
+		M_SPIN_OFF_MEM_END 3 - L_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_X 2 - L_X!					;move the point back 2
+		L_X L_Y L_MEM vwrite			;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SKIP U_LOOP_COUNTER!
+	do
+		L_MEM U_SPIN_OFF_SKIP + L_MEM!	;shift the memory location
+		M_SPIN_OFF_MEM_END 3 - L_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_Y 2 - L_Y!					;move the point down 2
+		L_X L_Y L_MEM vwrite			;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SKIP 1 + L_PLACE_SKIP!		;extend the side length by one
+	L_PLACE_SKIP U_LOOP_COUNTER!		;re-set loop counter
+forever
+
+r_arange_chain_gun:
+
+r_refresh_chain_gun^					;count the number of chain guns available (temp placing - shoud be in main loop)
+L_CHAIN_GUN_NUM nif						;if there are no chain guns, don't arange then (prevents division by zero)
+	return
+	then
+L_CORNER_DISPLACE_X 1 = if				;if we are on the left side of the map, arc should point right
+	0 L_RAD!
+		else							;otherwise to the left (180 deg or pi rad)
+	pi L_RAD!
+	then
+17 L_CHAIN_GUN_NUM						;put base distance from corner and number of bots to be aranged on the stack !!NUMBER TO ADJUST TO SET HOW FAR FROM THE CORNER THE ARC STARTS!!
+2.5 * + L_MAG!							;multiply number by scaling factor and add to base; result is the magnitude of the polar vector which builds the arc !!ADJUST TO CHANGE HOW FAST THE ARC GROWS WITH MORE BOTS!!
+M_CHAIN_GUN_MEM_START L_MEM!			;start the memory writes at the proper location
+pi/2 L_CHAIN_GUN_NUM 1 + / L_PLACE_SKIP!;set the skip (for how far in rads to change the angle each bot) to 1/4 circle divided by the number of bots plus one
+L_CHAIN_GUN_NUM U_LOOP_COUNTER!			;loop as many times as ther are bots to be placed
+
+do
+	L_MAG								;put the magnitude of the polar vector on the stack first since the conversion command takes (mag dir) input
+	L_RAD L_PLACE_SKIP					;put numbers on stack for later
+	L_CORNER_DISPLACE_X L_CORNER_DISPLACE_Y * ;multiply the two numbers which tell where the walls are; if the wall directions have different signs, we will be going clockwise, if same counterclockwis
+	* + dup								;set the skip number based on the previous calc, then add it to the starting angle - duplicate the result
+	L_RAD!								;write one of the duplicates to the starting variable so that the next bot is moved over from the position of this one
+	polar-to-rect						;change the resulting polar to a rectangular coordinate
+	L_CORNER_X L_CORNER_Y v+			;add resulting vector to origin of our corner
+	L_MEM 1 + vwrite					;write the vector to the current memory location
+	U_CHAIN_GUN_SKIP L_MEM + L_MEM!		;move the memory pointer the correct amount farther along in memory
+	U_LOOP_COUNTER 1 - U_LOOP_COUNTER!	;decrement the loop counter
+	U_LOOP_COUNTER while-loop
+do
+	M_CHAIN_GUN_MEM_END 3 - L_MEM < if	;if we have reached the end of assigned memory, return
+		return
+		then
+	L_MEM read							;check to see whether there is another chain gun outside of the new arc (like if there is a hole in the middle and we assigned the hole one of the positions)
+	nif									;return if the claim mem is empty
+		return
+		then
+	L_MEM 1 write						;write a one to it to free it (and force any bot which has it to re-claim a position, hopefully filling a hole)
+	U_CHAIN_GUN_SKIP L_MEM + L_MEM!		;move the memory pointer the correct amount farther along in memory
+forever
+
+r_refresh_chain_gun:					;count the number of chain guns available and free slots where the gun has been killed
+
+M_CHAIN_GUN_MEM_START L_MEM!			;get starting mem position for memory to walk through
+0 L_CHAIN_GUN_NUM!						;reset the counter
+
+do
+	L_MEM read nif						;if the next section of memory isn't claimed, return
+		return
+		then
+	L_MEM read dup						;get two coppies of the memory contents for the next check
+	6 = swap 1 = or if					;if the claim has not been maintained or if it has been previously cleared, clear it and set the bot counter backwards (to counteract the addition later)
+		L_MEM 1 write					;write that the position is unclaimed (1 rather than 0 to allow the arrange loop know that there are more bots after a gap)
+		L_CHAIN_GUN_NUM 1 - L_CHAIN_GUN_NUM! ;step the counter backwards to counter the foreward step below
+		then
+	L_CHAIN_GUN_NUM 1 + L_CHAIN_GUN_NUM! ;increment the counter
+	L_MEM 6 write						;write a temporary number to the claim location to see if the gun is alive enough to change it back
+	L_MEM U_CHAIN_GUN_SKIP + L_MEM!		;and move to next mem location
+	M_CHAIN_GUN_MEM_END 3 - L_MEM < if	;if we have reached the end of assigned memory, return
+		return
+		then
+	forever
+
+r_pick_corner:							;pick the nearest corner, and store where that is
+
+world-size 2 vs/
+position rot swap
+> if
+	0 L_CORNER_Y!
+	1 L_CORNER_DISPLACE_Y!
+		else
+	world-height L_CORNER_Y!
+	-1 L_CORNER_DISPLACE_Y!
+	then
+> if
+	0 L_CORNER_X!
+	1 L_CORNER_DISPLACE_X!
+		else
+	world-width  L_CORNER_X!
+	-1 L_CORNER_DISPLACE_X!
+	then
+return
+
+
+;bot_end
+
+;bot_start mutant nom
+#type mutant nom
+#color 1f1
+#decoration 1f1 hline
+#hardware
+
+processor 10
+solar-cells 0.05
+eater 1.5
+engine 0.02
+constructor 1.3
+food-sensor 10 1
+energy 100 0
+armor 100
+blaster 2 2 4
+robot-sensor 2
+repair-rate 0.03
+
+#code
+
+#var L_ALREADY_HIT 1					;variable prevents the bot from reporting being hit more than once - ever
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		r_food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		50 periodic-food-sensor			;fire food sensor only after waiting 50 cycles
+		30 periodic-robot-sensor		;fire robot sensor
+		2drop
+		then
+	food-found if						;check if food is found
+			food-position
+			seek-location
+			then
+	energy 50 < if
+		0 constructor-rate!
+		then
+	friendly-collision 2 >= wall-collision or if ;if we are touching more than 2 friendlies, move
+		r_new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, deal with it!
+		position M_ENEMY_POS_0 vwrite
+		r_go_crazy^
+		then
+	last-hit if							;check if the bot has been hit
+		last-hit side <> L_ALREADY_HIT and if ;check if the bot has been hit by an enemy and if it has already used its only shout
+			position M_ENEMY_POS_0 vwrite
+			0 L_ALREADY_HIT!
+			then
+		then
+	robot-found if
+		r_go_crazy^
+		then
+	armor max-armor = nif
+		max-repair-rate repair-rate!
+			else
+		0 repair-rate!
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+r_food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+		constructor-type nif			;if nothing is being built
+			0.07 random-bool if			;build honey-pots with a 5% probability
+				HONEY-POT constructor-type!
+					else				;otherwise build your own type
+				NOMS constructor-type!
+				then
+			then
+		r_constructor_rate_limit^		;don't run out of energy
+		enemy-collision if 				;if an enemy is involved, do something about it
+			position M_ENEMY_POS_0 vwrite
+			r_go_crazy^
+			then
+		30 periodic-robot-sensor drop
+		robot-found if
+			r_go_crazy^
+			then
+		loop
+return
+
+r_new_pastures:
+	80 U_LOOP_COUNTER!
+	0 world-width random-int 0 world-height random-int
+	seek-location
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+r_go_crazy:
+do 
+	5 periodic-robot-sensor
+	drop
+	robot-direction fire-blaster
+	robot-position seek-location
+	robot-found while-loop
+return
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+r_constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+;bot_end
+
+;bot_start chain gun
+#type chain gun
+#color f00
+#decoration bbb vline
+
+#hardware
+
+processor 10
+armor 200
+repair-rate 0.02
+solar-cells 0.1
+blaster 14 6 6
+engine 0.02
+energy 300 10
+robot-sensor 6 1
+
+#code
+
+#start boot
+
+boot:
+
+r_get_address^
+
+main_loop:
+do
+	30 periodic-robot-sensor
+	drop
+	robot-found if
+		robot-position robot-velocity
+		lead-blaster
+		then
+	armor max-armor <> if
+		max-repair-rate repair-rate!
+			else
+		0 repair-rate!
+		then
+	U_MEM_ADDRESS read 6 = if			;if the mastermind is checking this mem location to see if it is claimed, write to renew claim
+		U_MEM_ADDRESS 2 write
+		then
+	U_MEM_ADDRESS read 2 <> if			;if the memory has been freed, get a new address
+		r_get_address^
+		then
+	r_align^
+forever
+
+;;;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;;;
+
+r_get_address:							;get a main memory section to communicate with the mastermind through - scheme: 3 locations 1: com 2: x 3:y
+M_CHAIN_GUN_MEM_START U_MEM_ADDRESS!	;get the starting address of the section assigned
+do
+	U_MEM_ADDRESS read dup				;read what's in the current com position and duplicate it for two tests
+	0 = swap 1 = or if					;if there is a zero or a 1 (it's up for grabs) try to take the position
+		100 199 random U_RANDOM_PICK!	;pick a random number
+		U_RANDOM_PICK U_MEM_ADDRESS write ;write it to the com location
+		8 20 random-int U_LOOP_COUNTER!	;pick another random number
+		do U_LOOP_COUNTER while			;wait for that random number of loops
+			U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+			loop
+		U_MEM_ADDRESS read				;read back the random number
+		U_RANDOM_PICK = if				;if it's the same as the one put in, the memory slot is yours!
+			2 U_MEM_ADDRESS write		;store the location and go to the main loop
+			return
+			then
+		then
+	U_MEM_ADDRESS U_CHAIN_GUN_SKIP + U_MEM_ADDRESS! ;if the memory wasn't empty, go on to the next one
+	M_CHAIN_GUN_MEM_END 3 - U_MEM_ADDRESS < if ;check to see if we're overrunning the end of the memory section
+		M_CHAIN_GUN_MEM_START U_MEM_ADDRESS!
+		then
+forever
+
+r_align:								;go to the location the mastermind has put in the memory
+	U_MEM_ADDRESS 1 + vread				;offset the position to be read 1 above the start of the assigned memory area, and read a vector
+	seek-location
+return
+
+;bot_end
+
+;bot_start h-bomb
+#type h-bomb
+#color fff
+#decoration 600 x
+
+#hardware
+
+processor 10
+solar-cells 0.04
+engine 0.1
+robot-sensor 4 1
+shot-sensor 6 1
+energy 100 20
+armor 150
+bomb 1000
+
+#code
+
+#var L_ZAG_LEG							;-1 or 1 showing which leg of the evasion pattern we are on
+
+#vector L_INTERCEPT_POINT				;holds location of trouble position
+#vector L_EVASION_TARGET				;holds vector which is used to set engine velocity on attack path
+#vector L_EVASION_NUDGE					;holds vector to add to L_EVASION_TARGET to keep the bot on a curved path
+
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:
+0.5 random-bool L_ZAG_LEG!				;randomly chose the first direction it will evade when it is shot at; prevents opponents from guessing where it will go the first time
+L_ZAG_LEG nif							;convert a zero answer to negative 1 to make later parts easier
+	-1 L_ZAG_LEG!
+	then
+r_seek_random^
+do
+	r_ka_boom^							;blow up if there is an enemy
+	U_LOOP_COUNTER nif					;check if counter has run out for a new random direction - if so, re-set it and go a new direction
+		r_seek_random^
+		then
+	U_LOOP_COUNTER 1 - U_LOOP_COUNTER!	;decrement loop counter to count
+	energy 5 > if						;fire sensors
+		80 periodic-robot-sensor
+		15 periodic-shot-sensor
+		2drop
+		then
+	robot-found if						;look for actual enemies
+		r_hunt_mode^
+		then
+	shot-found if						;look for shots
+		r_shot_follow_mode^
+		then
+	r_intercept_message_check^
+	wall-collision if					;change direction if there is a wall in the way
+		r_seek_random^
+		then
+forever 
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+r_first_responder_mode:
+	L_INTERCEPT_POINT seek-location		;seek trouble spot
+	0.02 engine-power!					;turn down engine so we have energy when we get
+	do energy 3 > while					;look for enemies
+		wall-collision if				;if you touch the wall, you have gone too far. Stop.
+			return
+			then	
+		50 periodic-robot-sensor
+		20 periodic-shot-sensor
+		2drop
+		r_ka_boom^
+		robot-found if					;check for enemies
+			r_hunt_mode^
+			then
+		shot-found if
+			r_shot_follow_mode^
+			then
+		loop
+return
+
+r_hunt_mode:								;hunt down and blow up enemys
+	do robot-position + while
+		robot-position seek-location
+		r_ka_boom^
+		10 periodic-robot-sensor
+		drop
+		loop
+return
+
+r_shot_follow_mode:
+do
+	L_ZAG_LEG negate L_ZAG_LEG!			;whenever this loop is run, we should be starting on a new leg in a new direction
+	shot-velocity vnegate unitize rect-to-polar ;get velocity of offending shot, negate and convert to polar representation to make thinking about it easier
+	2dup								;get us two coppies - we need two different results
+	pi/2 L_ZAG_LEG *					;scale to pi/2 radians (90 deg) and negate if necessary
+	+ polar-to-rect 20 vs*				;add in the +-90 deg (in radian measure) and convert back to rect vector - scale to a large number to make it easy to move slowly sideways with the curve factor
+	L_EVASION_TARGET!					;write the first result to the first variable - there is still a copy of the original vector on the stack
+	pi 4 / L_ZAG_LEG negate *			;start on the next vector - this one is pi/4 (45 deg) and should rotate the opposite direction of the last vector
+	+ polar-to-rect 1.5 vs*				;add in the factor we just calculated and convert back to radians - scale to a small number !!WHICH IS THE NUMBER TO ADJUST TO CHANGE HOW TIGHT OF A CURVE THE BOT FOLLOWS!!!
+	L_EVASION_NUDGE!					;write to a variable - this is the nudge factor which moves the seek point to create a curved track
+	20 U_LOOP_COUNTER!					;set the loop counter for how long before the next leg is started on !!THIS IS THE NUMBER TO ADJUST TO CHANGE HOW FAR THE CURVE GOES BEFORE IT SWITCHES DIRECTION!!
+	do
+		L_EVASION_TARGET engine-velocity! ;go for the picked target
+		engine-max-power engine-power!	;go fast
+		20 periodic-robot-sensor drop	;scan for bots
+		robot-found if					;check for bots
+			r_hunt_mode^
+			then
+		L_EVASION_TARGET L_EVASION_NUDGE v+ L_EVASION_TARGET!
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		U_LOOP_COUNTER while-loop
+	fire-shot-sensor sync
+	shot-found while-loop				;keep looking as long as there are shots visible
+return
+
+
+;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;	
+
+r_intercept_message_check:				;check for messages from other bots about enemies
+	M_ENEMY_POS_0 vread + if 			;check for enemy sightings
+		M_ENEMY_POS_0 vread L_INTERCEPT_POINT! ;store the position to be intercepted in a local variable, since it will be erased shortly
+		0 0 M_ENEMY_POS_0 vwrite		;clear the memory location
+		r_first_responder_mode^			;act on the message
+		then
+return
+	
+r_ka_boom:								;checks whether there is an enemy to blow up  >:}
+	enemy-collision if
+		die
+		then
+return
+
+r_seek_random:							;goes to a random position
+	100 U_LOOP_COUNTER!
+	1 world-width random-int
+	1 world-height random-int
+	seek-location
+	0.02 engine-power!
+return
+
+#end

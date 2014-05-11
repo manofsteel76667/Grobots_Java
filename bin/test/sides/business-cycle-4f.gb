@@ -1,0 +1,402 @@
+#side Business Cycle
+#author Matt Burkholder
+#date 6 Aug 2002
+
+1-15-03 uses world size.  Day traders build more while the count is low.
+1-19-03 Small T-Bills
+3-1-03  Added sweeper.  Day traders don't build as many more daytraders.
+3-5-03 Bigger T-Bills.  Bigger Day trader constructors.
+
+
+#color 0CC 
+#type T-Bill 
+#color 0f0 
+;Just sits there and reproduces. 
+
+#hardware 
+processor 2 
+solar-cells 0.6 
+constructor 0.6 
+energy 2 0 
+armor 150 
+repair-rate 0.1
+radio read write send
+
+#code
+#var LastArmor
+#var LastCount
+
+armor LastArmor!
+position 2 write 1 write 
+constructor-type nif 1 constructor-type! then
+constructor-max-rate constructor-rate! 
+max-repair-rate repair-rate!
+do 
+  constructor-type nif 
+     time 15000 > if 
+         4 constructor-type!
+     else  3 type-population 4 < if
+          1 3 random-int constructor-type!
+     else
+         0 1 type-population 2 type-population + random-int
+         2 type-population < 1 2 ifev constructor-type! 
+   then then then
+  Armor LastArmor < enemy-collision or if
+     position 2 3 send then
+  Armor LastArmor! 
+  1 type-population LastCount <> if
+     1 type-population dup dup LastCount! 
+     1 vread rot vs* position v+ rot 1 + vs/ 1 vwrite
+  then
+ 
+  Armor LastArmor < enemy-collision or if
+     position 2 3 send then
+  Armor LastArmor! 
+forever 
+
+#type Day Trader
+#color 800
+
+#hardware
+processor 20
+constructor 0.6
+energy 500 50
+eater 1.0
+armor 400
+engine 0.15
+repair-rate 0.2
+food-sensor 10
+robot-sensor 7
+shot-sensor 5
+blaster 20 6 8
+radio read write send receive
+
+
+#code
+
+#var food-sensor-now
+#var robot-sensor-now
+#var Damage-Time
+#var targetDirection
+#var take-a-shot
+#vector dest 
+#vector target
+#vector Home
+#var LastArmor
+
+ Armor LastArmor!
+ 0 100 random-int 0 100 random-int target!
+ food-sensor-range 0.6 * food-sensor-focus-distance!
+ 
+Feed: 
+   0 engine-power!
+			do
+						energy 200 > energy constructor-remaining 1.3 * > or 
+      constructor-max-rate 0 ifev constructor-rate!
+						constructor-type nif 
+         1 type-population 2 type-population 1 < 2 4 ifev 1 ifev constructor-type! then
+						armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+      1 read 2 read  Home!
+
+						time robot-sensor-now < blaster-cooldown or energy 21 < or nif
+								fire-robot-sensor sync
+        robot-found energy 100 > and if 
+           robot-position target! Transmit^ Attack^
+        else 
+											time 50 + robot-sensor-now!
+		         0 take-a-shot!
+        then then
+					
+						time food-sensor-now > friendly-collision or eaten not and if 
+        friendly-collision random-angle
+        Home position  v- angle ifev food-sensor-focus-direction!
+								fire-food-sensor sync
+								food-found if
+										18000 food-sensor-now!
+										 food-position 2dup seek-location sync sync sync sync
+								else 
+											time 50 + food-sensor-now!  0 0 then
+								dest!
+						then 
+						dest * if 
+		      dest position radius in-range nif
+								   dest seek-location 
+        else 0 0 engine-velocity! 0.05 engine-power! then
+					 else
+        target seek-location
+					then
+
+     time Damage-Time < energy 100 > and if
+         fire-shot-sensor sync
+         shot-found if
+            shot-position shot-velocity unitize -15 vs* v+ target! Transmit^ Track^
+     then then
+ 
+     Check^
+
+     Armor LastArmor < if
+        position Home 1 type-population 2.5 * 10 max in-range if
+           time robot-sensor-now!
+           time 150 + Damage-Time!
+        else
+            home position v- 0.5 vs* position v+ dest!
+     then then armor LastArmor!
+ 
+	    speed eaten or nif
+       time food-sensor-now! 
+		     5 15 random-int 5 15 random-int position v+ 
+       2 max world-height 2 - min swap 2 max world-width 2 - min swap target!
+     then
+			forever
+
+Transmit:
+    target home 1 type-population 2 * in-range if target 2 3 send then
+return
+
+Check:
+    3 receive energy 100 > and if
+        target! stack dropn
+    else
+        stack dropn return
+    then
+
+Track:
+    target seek-location sync sync
+    do
+       time robot-sensor-now > if
+          fire-robot-sensor sync
+          robot-found if
+             robot-position target! Transmit^ Attack& jump
+          else
+             fire-shot-sensor sync
+             shot-found  if 
+                shot-position shot-velocity unitize -15 vs* v+ target!
+       then then time 10 + robot-sensor-now! then
+       target seek-location
+    target position 5 in-range not energy 100 > and while-loop
+    0 food-sensor-now!
+return
+
+Attack:
+ 0 constructor-rate!
+	do 
+			 blaster-cooldown nif
+       fire-robot-sensor sync robot-found not ifr
+	  	   energy blaster-firing-cost > robot-distance blaster-range < and if
+		   	     robot-position position v- 
+											robot-velocity 0.85 vs* velocity v- 
+											robot-distance blaster-speed / vs* v+ 
+											rect-to-polar fire-blaster drop then 
+       robot-position robot-velocity robot-distance speed 0.25 max / vs* v+ 
+       robot-position position v- robot-distance 
+       position home 7 in-range -0.9 -0.2 ifev * vs/ v+ target!
+     then
+ 			 target seek-location
+	    armor max-armor < max-repair-rate 0 ifev repair-rate! 
+  energy 20 > while-loop
+  0 food-sensor-now!
+return
+
+#type Sweeper 
+#color bf0 
+
+(Devon 20030520) Reversed direction of forcefield, since that bug in the engine was fixed.
+                 Moves forcefield faster.
+
+#hardware 
+processor 10 
+solar-cells .1  
+energy 50 9 
+armor 100 
+food-sensor 30
+force-field 0.1 30
+eater 0.5
+constructor 0.25
+repair-rate 0.1
+radio send
+
+#code 
+
+#const speed-factor 7
+
+#var field-distance
+#var field-step
+#var food-sensor-now
+#var LastArmor
+
+ max-repair-rate repair-rate!
+	do 
+  2 constructor-type!
+  energy 10 >= if 
+		  do
+      energy 10 > constructor-max-rate 0 ifev constructor-rate!
+      time 5 + food-sensor-now! do time food-sensor-now < while-loop
+      random-angle food-sensor-focus-direction!
+      food-sensor-range food-sensor-focus-distance!
+      fire-food-sensor sync 
+    food-found food-distance 10 > and food-velocity norm 0 = and until-loop
+    force-field-max-power food-mass 1 + sqrt / speed-factor * field-step!
+    food-distance 1.5 + field-distance!
+    food-direction pi + force-field-angle!
+    food-direction force-field-direction!
+    force-field-max-power force-field-power!
+    do
+       field-distance force-field-distance!
+       field-distance field-step - dup field-distance!
+       energy 10 > constructor-max-rate 0 ifev constructor-rate!
+       Armor LastArmor < enemy-collision or if
+           position 2 3 send then
+       Armor LastArmor! 
+    eaten 7 2 ifev < until-loop 
+    sync sync sync
+    0 force-field-power!
+	  else 
+    sync 
+    energy 10 > constructor-max-rate 0 ifev constructor-rate!
+    Armor LastArmor < enemy-collision or if
+       position 2 3 send then
+    Armor LastArmor! 
+    then 
+	forever 
+
+
+
+#type Dot-Com
+#color F05
+
+#hardware
+processor 5
+energy 70 70
+armor 40
+engine 0.15
+robot-sensor 13
+bomb 750
+solar-cells 0.01
+radio read write send receive
+
+#code
+
+#var robot-sensor-now
+#vector target 0 0
+#vector Home 0 0
+
+1 vread Home!
+
+do 
+   time robot-sensor-now > if
+    fire-robot-sensor sync
+    robot-found 3 > if
+      robot-distance-overall  robot-direction-overall polar-to-rect position v+ target!
+      time 5 + robot-sensor-now!
+      robot-distance-overall 4 < energy 0.5 < or if 
+         robot-position 4 write 3 write sync die then
+   else robot-found if
+      robot-position target!
+	     time 5 + robot-sensor-now!
+      robot-distance 2 < if 
+								 robot-position 4 write 3 write sync die then
+   else 
+      time 50 + robot-sensor-now!
+      target or nif
+         time 16000 > PickDest& ChooseDest& ifec
+      then
+  then then
+  else check^ then
+  energy 10 > robot-found or if
+      target seek-location
+   else 0 engine-power! then
+forever
+
+#var counter 0
+#var end-wait-now 0
+#const Return-wait 25
+#var random-height
+#var random-width
+
+Check:
+    1 receive counter!
+    do counter 0 > while
+        counter 3 - counter!
+        target 1 in-range if
+            1 2 send else drop then
+    loop
+return
+
+
+PickDest:
+				target + 3 read 0 = or nif
+				   3 read 10 / round 1 max 9 min 10 *
+				   4 read 10 / round 1 max 9 min 10 *
+       0 3 write
+				else
+       1 world-width 10.1 / floor random-int 10 *  dup 20 mod
+       1 world-height 20.1 / ceiling random-int 20 * 10 -
+		     1 world-height 20.1 / floor random-int 20 * ifev
+				then
+    target! target Home 20 in-range PickDest& ifg
+    id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = PickDest& ifg
+        loop
+    loop
+    stack dropn
+return
+
+ChooseDest: 
+    1 vread Home!
+    World-Width 11 - Random-Width!
+    World-Height 11 - Random-Height!
+    Home 11 max Random-Height min 10 / round dup
+    2 mod if
+        10 * swap 20 / floor 20 * 10 + swap
+    else
+        10 * swap 11 max Random-Width min 20 / round 20 * swap
+    then 
+WaitDest: 
+    Target! id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = WalkDest& ifg
+        loop
+    loop
+    stack dropn
+return
+ 
+WalkDest:
+    Target dup 10 Random-Height random-int > -10 10 ifev +
+    swap dup 10 Random-Width random-int > -10 10 ifev +
+    swap 
+WaitDest& jump
+ 
+EdgeDest:
+    1 vread Home!
+    World-Width 10.1 / floor Random-Width!
+    World-Height 10.1 / floor Random-Height!
+    0 1 random-int if
+        1 Random-Width random-int 10 *
+        0 1 random-int 1 Random-Height ifev 10 *
+    else
+        0 1 random-int 1 Random-Width ifev 10 *
+        1 Random-Height random-int 10 *
+    then
+    Target! id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = EdgeDest& ifg
+        loop
+    loop
+    stack dropn
+return
+
+
+#end 

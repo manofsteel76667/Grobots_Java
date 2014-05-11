@@ -1,0 +1,718 @@
+#side nom nom 1.2
+#author elel
+#color 00f
+#seed 7 7 6 3 4 1 4
+
+#code									;section for declaring global variables and constants
+
+;;;;;;;;;;UNIVERSAL VARIABLES;;;;;;;;;;;;;;;;
+
+;types of bots in this side - for construction
+
+#const KONQUERER 1
+#const NOMS 2
+#const SPIN-OFF 3
+#const HONEY-POT 4
+#const PLASMA-CANNON 5
+#const MASTERMIND 6
+#const MUTANT-NOM 7
+
+;;;;;;;;;;;;UNIVERSAL CODE;;;;;;;;;;;;;;
+
+
+
+;50-99 is for locations
+
+#const M_ENEMY_POS_0 50					;first memory location for relaying enemy positions - it actually takes memory location 50 AND 51 (for vector)
+
+#const M_ENERGY_NEEDED_0 60
+
+;900-1000 spin off position claims
+
+#const M_SPIN_OFF_MEM_START 900
+#const M_SPIN_OFF_MEM_END 1000
+#const U_SPIN_OFF_SKIP 3
+
+#var U_LOOP_COUNTER						;counter for loops which need to run a set number of times
+
+;bot_start konquerer
+#type konquerer
+#color f16
+#decoration f18 triangle
+#hardware
+
+processor 10
+solar-cells 0.06
+engine 0.03
+robot-sensor 10 1
+energy 50 1
+armor 100
+bomb 600
+
+#code
+
+
+
+#vector L_INTERCEPT_POINT
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;for now search for food
+seek_random^
+do
+	ka_boom^							;blow up if there is an enemy
+	U_LOOP_COUNTER nif					;check if counter has run out for a new random direction - if so, re-set it and go a new direction
+		seek_random^
+		then
+	U_LOOP_COUNTER 1 - U_LOOP_COUNTER!	;decrement loop counter to count
+	energy 5 > if						;fire robot sensor
+		50 periodic-robot-sensor
+		drop
+		then
+	robot-position + if					;look for enemies
+		hunt_mode^
+		then
+	intercept_message_check^
+	wall-collision if					;change direction if there is a wall in the way
+		seek_random^
+		then
+forever 
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+first_responder_mode:
+	L_INTERCEPT_POINT seek-location		;seek trouble spot
+	0.02 engine-power!					;turn down engine so we have energy when we get
+	do energy 3 > while					;look for enemies
+		wall-collision if				;if you touch the wall, you have gone too far. Stop.
+			return
+			then	
+		50 periodic-robot-sensor
+		drop
+		ka_boom^
+		robot-position + if				;check for enemies
+			hunt_mode^
+			then
+		loop
+return
+
+hunt_mode:								;hunt down and blow up enemys
+	do robot-position + while
+		robot-position seek-location
+		ka_boom^
+		10 periodic-robot-sensor
+		drop
+		loop
+return
+
+;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;	
+
+intercept_message_check:				;check for messages from other bots about enemies
+	M_ENEMY_POS_0 vread + if 			;check for enemy sightings
+		M_ENEMY_POS_0 vread L_INTERCEPT_POINT! ;store the position to be intercepted in a local variable, since it will be erased shortly
+		0 0 M_ENEMY_POS_0 vwrite		;clear the memory location
+		first_responder_mode^			;act on the message
+		then
+return
+	
+ka_boom:								;checks whether there is an enemy to blow up  >:}
+	enemy-collision if
+		die
+		then
+return
+
+seek_random:							;goes to a random position
+	100 U_LOOP_COUNTER!
+	1 world-width random-int
+	1 world-height random-int
+	seek-location
+	0.02 engine-power!
+return
+
+;bot_end
+
+;bot_start noms
+#type noms
+#color 2f9
+#decoration f22 hline
+#hardware
+
+processor 10
+solar-cells 0.03
+eater 1
+engine 0.015
+constructor 1
+food-sensor 10 1
+energy 100 0
+armor 20
+
+#code
+
+#var L_ALREADY_HIT 1					;variable prevents the bot from reporting being hit more than once - ever
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		30 periodic-food-sensor			;fire food sensor only after waiting 30 cycles
+		drop
+		then
+	food-found if						;check if food is found and get it if it is
+			food-position
+			seek-location
+			then
+	energy 10 < if
+		0 constructor-rate!
+		then
+	friendly-collision 2 >= wall-collision or if ;if we are touching more than 2 friendlies, move
+		new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, call in re-enforcements
+		position M_ENEMY_POS_0 vwrite
+		then
+	last-hit if							;check if the bot has been hit
+		last-hit side <> L_ALREADY_HIT and if ;check if the bot has been hit by an enemy and if it has already used its only shout
+			position M_ENEMY_POS_0 vwrite
+			0 L_ALREADY_HIT!
+			then
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+		constructor-type nif			;if nothing is being built
+			0.07 random-bool if			;build honey-pots with a 5% probability
+				HONEY-POT constructor-type!
+					else 0.5 random-bool if
+				MUTANT-NOM constructor-type!
+					celse				;otherwise build your own type
+				NOMS constructor-type!
+				then
+			then
+		constructor_rate_limit^			;don't run out of energy
+		loop
+return
+
+new_pastures:
+	80 U_LOOP_COUNTER!
+	0 world-width random-int 0 world-height random-int
+	seek-location
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+;bot_end
+
+;bot_start spin-off
+#type spin-off
+#color f92
+#decoration f16 square
+#hardware
+
+processor 10
+solar-cells 0.1
+constructor 0.6
+energy 300 0
+armor 50
+engine 0.015
+
+#code
+
+#var L_MEMORY_ADDRESS
+#var L_RANDOM_PICK
+
+#start boot
+
+boot:
+
+;pre-start code
+
+2 flag!									;set a flag so honey pots can know which bots to transfer to
+PLASMA-CANNON constructor-type!
+constructor-max-rate constructor-rate!
+r_get_address^							;get assigned an address
+construction_loop& jump
+
+main_loop:
+
+do
+	energy 10 > if
+		0.3 random-bool if
+			SPIN-OFF constructor-type!
+			constructor-max-rate constructor-rate!
+			construction_loop& jump
+				else
+			KONQUERER constructor-type!
+			construction_loop& jump
+			then
+		then
+	energy 10 < if						;request energy
+		position M_ENERGY_NEEDED_0 vwrite
+		2 flag!
+		then
+	r_align^
+	flag print
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;
+
+construction_loop:
+
+do
+	constructor-max-rate constructor-rate!
+	energy 10 < if						;shut off constructor and request energy if it goes low
+		0 constructor-rate!
+		position M_ENERGY_NEEDED_0 vwrite
+		2 flag!
+		then
+	energy 290 > if						;stop receiving energy if we are full
+		0 flag!
+		then
+	constructor-type nif				;go back to main loop (with construct choosing code) if there is nothing being built
+		main_loop& jump
+		then
+	r_align^							;take up position assigned by the mastermind
+	sync								;slow processor and use less energy
+forever
+
+r_get_address:							;get a main memory section to communicate with the mastermind through - scheme: 3 locations 1: com 2: x 3:y
+
+M_SPIN_OFF_MEM_START L_MEMORY_ADDRESS!	;get the starting address of the section assigned
+do
+	L_MEMORY_ADDRESS read				;read what's in the current com position
+	nif									;if it's not empty, skip on
+		100 199 random L_RANDOM_PICK!	;pick a random number
+		L_RANDOM_PICK L_MEMORY_ADDRESS write ;write it to the com location
+		1 20 random-int U_LOOP_COUNTER	;pick another random number
+		do U_LOOP_COUNTER while			;wait for that random number of loops
+			U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+			loop
+		L_MEMORY_ADDRESS read			;read back the random number
+		L_RANDOM_PICK = if				;if it's the same as the one put in, the memory slot is yours!
+			1 L_MEMORY_ADDRESS write	;store the location and go to the main loop
+			return
+			then
+		then
+	L_MEMORY_ADDRESS U_SPIN_OFF_SKIP + L_MEMORY_ADDRESS! ;if the memory wasn't empty, go on to the next one
+	M_SPIN_OFF_MEM_END 6 - L_MEMORY_ADDRESS < if ;check to see if we're overrunning the end of the memory section
+		M_SPIN_OFF_MEM_START L_MEMORY_ADDRESS!
+		then
+forever
+
+;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;
+
+r_align:								;go to the location the mastermind has put in the memory
+
+L_MEMORY_ADDRESS 1 + vread				;offset the position to be read 1 above the start of the assigned memory area, and read a vector
+seek-location
+return
+
+
+;bot_end
+
+;bot_start honey pot
+#type honey pot
+#color 2ec
+#decoration 0ad circle
+
+#hardware
+
+processor 5
+armor 60
+energy 200 1
+solar-cells 0.2
+syphon 0.5 5
+engine 0.01
+robot-sensor 5 4
+
+#code
+
+#var L_THIS_DIST
+#var L_LAST_DIST
+
+#vector L_PARKING
+
+#start boot
+
+boot:
+
+1 robot-sensor-sees-friends!			;set the sensor to see only friends, since that's who we'll be transferring to
+0 robot-sensor-sees-enemies!
+
+main_loop:
+
+do
+	0 syphon-rate!						;turn off the syphon
+	energy 50 > if						;only give energy if we have over 50
+		sync
+		M_ENERGY_NEEDED_0 vread 2dup + if ;check if anyone is calling for energy - duplicate the memread result now to make sure that there is no chance of other bots writing zeros to it before it is read again
+			L_PARKING!					;store location of beacon (from 2dup results)
+			0 0 M_ENERGY_NEEDED_0 vwrite ;erase beacon for re-use
+			L_PARKING seek-location		;go to location of beacon
+			0 c_go_to_parking_mode& jump ;go to the energy target - it's from the main loop, so pass the call mode a zero (no need to drop from the return stack)
+			then
+		2drop							;drop the early duplication if it turns out that there is nothing on the channel
+		then
+forever
+
+;;;;;;;;;;;;;;START OF SUB MODES;;;;;;;;;;;;;;;;;
+
+c_go_to_parking_mode:					;go to the bot which needed energy
+if										;return clear function
+	rdrop
+	then
+0 syphon-rate!							;turn off the syphon
+1000 L_LAST_DIST!						;set the distance comparason reference to a number bigger than anything it would normally hold so the loop doesn't exit on the first run
+do
+	position L_PARKING dist				;find the distance to the destination
+	dup L_THIS_DIST!					;make two coppies of distance, one (stored) for range checking and the other for regression checking
+	2.5 < if							;if it is less than 2.5, stop and start transfering energy
+		0 engine-power!
+		fire-robot-sensor
+		sync
+		r_transfer_energy_mode^
+		then
+	L_THIS_DIST L_LAST_DIST > if		;if we have moved farther from our target, we have probably missed it and should check if it still needs energy
+		main_loop& jump
+			else
+		L_THIS_DIST L_LAST_DIST!		;store the current distance for reference next loop
+		then
+forever
+
+r_transfer_energy_mode:
+do energy 10 > r_robot_type_check^ and while ;only do the loop while there is more than 10 energy in the banks and there is a friendly robot in range
+	40 periodic-robot-sensor			;find exactly where to target the syphon
+	drop
+	robot-distance syphon-distance! 	;target the syphon
+	robot-direction syphon-direction!
+	syphon-max-rate negate syphon-rate!	;start it up
+	loop
+	0 0 L_PARKING!
+return
+
+;;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;
+
+r_robot_type_check:						;check if a robot has been found, and what flag it has set. Return different numbers depending on the flag
+	robot-found nif						;if there are no robots, return with a zero
+		0 return
+		then
+	do									;step through results to find a robot which needs energy
+		robot-flag 2 = if
+			1 return
+			then
+		next-robot while-loop
+0 return
+
+;bot_end
+
+;bot_start plasma cannon
+#type plasma cannon
+#color e93
+#decoration e93 dot
+
+#hardware
+
+processor 10
+solar-cells 0.1
+robot-sensor 20 1
+grenades 20 20 20
+energy 40 0
+armor 200
+
+#code
+
+2 flag!
+
+do
+	energy 30 > if
+		20 periodic-robot-sensor
+		drop
+		robot-found if
+			robot-position robot-velocity
+			lead-grenade 
+			then
+		then
+	sync
+forever
+
+;bot_end
+
+;bot_start mastermind
+#type mastermind
+#color 000
+
+#hardware
+
+processor 10
+solar-cells 0.05
+energy 40 5
+armor 20
+engine 0.02
+
+#code
+
+#var L_CORNER_X							;x coordinate of a position 8 spaces out from the corner chosen
+#var L_CORNER_Y							;y coordinate of a position 8 spaces out from the corner chosen
+#var L_CORNER_DISPLACE_X
+#var L_CORNER_DISPLACE_Y
+#var L_PLACE_X
+#var L_PLACE_Y
+#var L_PLACE_MEM
+#var L_PLACE_SIDE
+
+#start boot
+
+boot:
+
+
+r_pick_corner^							;determine which is the nearest corner
+L_CORNER_X L_CORNER_Y seek-location		;go to it
+r_arange_spin_off^						;fill in memory with location assignments for spin-offs in the chosen corner
+
+main_loop:
+
+do
+	
+forever
+
+;;;;;;;;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;;;;;;;;
+
+r_arange_spin_off:						;fill in the assigned memory for spin-offs with a square patern - should not need to be re-done
+
+sync
+sync
+sync
+sync
+sync
+
+
+L_CORNER_X L_CORNER_DISPLACE_X 8 * + L_PLACE_X! ;get corner coordinates from master variables and store them after moving them out 8 spaces
+L_CORNER_Y L_CORNER_DISPLACE_Y 8 * + L_PLACE_Y!
+M_SPIN_OFF_MEM_START 1 + L_PLACE_MEM!	;get the memory start point and shift it one to hit on the coordinates locations
+1 L_PLACE_SIDE!							;start out with a side length of one
+
+L_PLACE_X L_PLACE_Y L_PLACE_MEM vwrite	;write the center location
+do
+	L_PLACE_SIDE U_LOOP_COUNTER!		;set to loop as many times as points are needed on the side
+	do
+		L_PLACE_MEM U_SPIN_OFF_SKIP + L_PLACE_MEM! ;shift the memory location
+		M_SPIN_OFF_MEM_END 6 - L_PLACE_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_PLACE_X 2 + L_PLACE_X!		;move the point over 2
+		L_PLACE_X L_PLACE_Y L_PLACE_MEM vwrite ;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop	
+	L_PLACE_SIDE U_LOOP_COUNTER!
+	do
+		L_PLACE_MEM U_SPIN_OFF_SKIP + L_PLACE_MEM! ;shift the memory location
+		M_SPIN_OFF_MEM_END 6 - L_PLACE_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_PLACE_Y 2 + L_PLACE_Y!		;move the point up 2
+		L_PLACE_X L_PLACE_Y L_PLACE_MEM vwrite ;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SIDE 1 + L_PLACE_SIDE!
+	L_PLACE_SIDE U_LOOP_COUNTER!
+	do
+		L_PLACE_MEM U_SPIN_OFF_SKIP + L_PLACE_MEM! ;shift the memory location
+		M_SPIN_OFF_MEM_END 6 - L_PLACE_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_PLACE_X 2 - L_PLACE_X!		;move the point back 2
+		L_PLACE_X L_PLACE_Y L_PLACE_MEM vwrite ;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SIDE U_LOOP_COUNTER!
+	do
+		L_PLACE_MEM U_SPIN_OFF_SKIP + L_PLACE_MEM! ;shift the memory location
+		M_SPIN_OFF_MEM_END 6 - L_PLACE_MEM < if ;check if we are at the end of the task
+			return
+			then
+		L_PLACE_Y 2 - L_PLACE_Y!		;move the point down 2
+		L_PLACE_X L_PLACE_Y L_PLACE_MEM vwrite ;write current position to current memory
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER! ;decrement loop counter
+		U_LOOP_COUNTER while-loop
+	L_PLACE_SIDE 1 + L_PLACE_SIDE!		;extend the side length by one
+	L_PLACE_SIDE U_LOOP_COUNTER!		;re-set loop counter
+forever
+
+
+r_pick_corner:							;pick the nearest corner, and store where that is
+
+world-size 2 vs/
+position rot swap
+> if
+	0 L_CORNER_Y!
+	1 L_CORNER_DISPLACE_Y!
+		else
+	world-height L_CORNER_Y!
+	-1 L_CORNER_DISPLACE_Y!
+	then
+> if
+	0 L_CORNER_X!
+	1 L_CORNER_DISPLACE_X!
+		else
+	world-width  L_CORNER_X!
+	-1 L_CORNER_DISPLACE_X!
+	then
+return
+
+;bot_end
+
+;bot_start mutant nom
+#type mutant nom
+#color 1f1
+#decoration 1f1 hline
+#hardware
+
+processor 10
+solar-cells 0.05
+eater 1
+engine 0.02
+constructor 0.8
+food-sensor 10 1
+energy 100 0
+armor 100
+blaster 2 2 4
+robot-sensor 2
+repair-rate 0.03
+
+#code
+
+#var L_ALREADY_HIT 1					;variable prevents the bot from reporting being hit more than once - ever
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		r_food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		50 periodic-food-sensor			;fire food sensor only after waiting 50 cycles
+		30 periodic-robot-sensor		;fire robot sensor
+		2drop
+		then
+	food-found if						;check if food is found
+			food-position
+			seek-location
+			then
+	energy 50 < if
+		0 constructor-rate!
+		then
+	friendly-collision 2 >= wall-collision or if ;if we are touching more than 2 friendlies, move
+		r_new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, deal with it!
+		position M_ENEMY_POS_0 vwrite
+		r_go_crazy^
+		then
+	last-hit if							;check if the bot has been hit
+		last-hit side <> L_ALREADY_HIT and if ;check if the bot has been hit by an enemy and if it has already used its only shout
+			position M_ENEMY_POS_0 vwrite
+			0 L_ALREADY_HIT!
+			then
+		then
+	robot-found if
+		r_go_crazy^
+		then
+	armor max-armor = nif
+		max-repair-rate repair-rate!
+			else
+		0 repair-rate!
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+r_food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+		constructor-type nif			;if nothing is being built
+			0.07 random-bool if			;build honey-pots with a 5% probability
+				HONEY-POT constructor-type!
+					else				;otherwise build your own type
+				NOMS constructor-type!
+				then
+			then
+		r_constructor_rate_limit^			;don't run out of energy
+		enemy-collision if 					;if an enemy is involved, do something about it
+			position M_ENEMY_POS_0 vwrite
+			r_go_crazy^
+			then
+		30 periodic-robot-sensor drop
+		robot-found if
+			r_go_crazy^
+			then
+		loop
+return
+
+r_new_pastures:
+	80 U_LOOP_COUNTER!
+	0 world-width random-int 0 world-height random-int
+	seek-location
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+r_go_crazy:
+do 
+	5 periodic-robot-sensor
+	drop
+	robot-direction fire-blaster
+	robot-position seek-location
+	robot-found while-loop
+return
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+r_constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+;bot_end
+
+#end

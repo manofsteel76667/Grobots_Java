@@ -1,0 +1,193 @@
+#side Shield + Cowards 2g
+;Build ID: 108
+#seed 1 3 3 3
+#author Alexander (aka nfwu)
+
+1/2/08 Modifications by Matt Burkholder
+I started by noticing that this side used around 10% of its energy for engines when it really
+didn't ever move.  If you look you can see the Defenders jostling each other and fighting for position.
+I reduced this by giving them more latitude on where they stopped.  If they are within 3.5 of their
+dest they shut off the engines.  I also restricted the position of the seeds dest so it didn't bash
+itself into the corner the whole time.
+
+Second, I noticed that the side used a lot of energy for sensors that all covered the same area.  To reduce
+this I made the defenders fire robot-sensors less often as thier number grew.  When one detects an enemy it
+sends a message that tells all the others to fire sensors so they can shoot at it.  I had some trouble with 
+this part.  They would want to fire sensors constantly when one cell could see a target but the others couldn't.
+
+Third, I  saw that the Coward type has 600 armor and decided it should be placed near the front of the 
+formation to absorb damage instead of at the rear.  I changed its dest pattern to move it out front.
+This probably won't make much difference.  Not many of these usually get built and the side rarely
+dies after it starts producing them anyway.
+
+Fourth, Reduced the size of the 'Seed' type so the side can seed two full grown defenders.  This had the desired
+effects.  If reduced early death rates, increased survival, and increased early score.  Unfortunately it reduced
+fraction enough that the score is actually lower.  Then I changed the constructor formula so it made Constructors
+first and then switched to Defender which helped.
+
+
+#type Seed
+#color 000000
+;#decoration 
+#hardware
+;;Basics:
+  processor 1
+  constructor 0.77  ; 1.01   ;0.77   
+;;Energy:
+  energy 25 0
+  solar-cells 0.76   ;1.00   ;.76   
+  engine .05
+  armor 350
+#code
+#vector home
+#start
+position world-width 2 / world-height 2 / v-
+position world-height / 0.5 > if world-height else 0 then swap
+world-width / 0.5 > if world-width else 0 then swap
+2 restrict-position
+home!
+;1 constructor-type!
+do
+  home seek-location 
+  constructor-type nif
+  	2 type-population 2 < if
+  		2 constructor-type!
+  	else
+  		3 type-population 6 < if   ;Changed a Greater than (>) to less than (<)
+  			3 constructor-type!
+  		else
+  			2 constructor-type!
+  		then
+  	then
+  then
+  3 type-population 3 < if 3 constructor-type! then
+  constructor-max-rate constructor-rate!
+forever
+
+#type Constructor
+#color 000000
+;#decoration 
+#hardware
+;;Basics:
+  processor 1
+  constructor .61
+;;Energy:
+  energy 25 0
+  solar-cells .6
+  armor 300
+#code
+#vector home
+#start
+do
+  constructor-type nif
+  	0.7 random-bool if
+	  		3 constructor-type!
+	  	else
+	  		4 constructor-type!
+  	then
+  	1 type-population nif 0.5 random-bool and-if 2 constructor-type! then
+  then
+  constructor-max-rate constructor-rate!
+  3 type-population 12 < if 3 constructor-type! then
+  ;1 type-population nif 6 constructor-type! then
+forever
+
+#type Defender
+#decoration 000000 hline
+#color FF0000
+#hardware
+  solar-cells .2
+  engine .02
+  constructor .2
+  robot-sensor 15
+  energy 300 4
+  processor 10
+  armor 150
+  grenades 32 14 20
+#code
+ #var robot-sensor-time
+#vector dest
+#vector home
+new-dest:
+  home 8 random-angle polar-to-rect v+ 5 3 type-population 4 / + restrict-position dest!
+return
+
+#start
+position world-height / 0.5 > if world-height else 0 then swap
+world-width / 0.5 > if world-width else 0 then swap
+home!
+new-dest
+do
+  constructor-type nif
+    0.9 random-bool if 3 else 4 then constructor-type! 
+    ;0.05 random-bool if 6 constructor-type! then
+  then
+  1 type-population nif 2 constructor-type! emergency^ then
+  autoconstruct
+   1 receive if drop robot-sensor-time 20 > if -10 robot-sensor-time! 1 clear-messages then then
+  robot-sensor-time abs periodic-robot-sensor if
+  robot-found if
+    robot-position robot-velocity lead-grenade
+     robot-sensor-time 0 > if id 1 1 send then 
+     -20 robot-sensor-time!
+   else
+     robot-sensor-time 0 > if
+	3 type-population 10 * 20 max robot-sensor-time!
+     else
+	10 id * robot-sensor-time!
+     then
+  then then
+  position dest 3 in-range if 0 engine-power! else dest seek-location then
+forever
+
+emergency:
+do
+  2 constructor-type!
+  home 2 restrict-position seek-location
+  autoconstruct
+  ;30 periodic-robot-sensor drop
+  ;robot-found if
+  ;  robot-position robot-velocity lead-grenade
+  ;then
+2 type-population 2 > until-loop
+return
+
+#type Coward
+#decoration 000000 cross
+#color 000000
+#hardware
+processor 2
+armor 600
+constructor .2
+engine .02
+solar-cells .2
+energy 1 0
+#code
+#vector home
+ #vector center
+ #var d
+ world-width world-height 0.5 vs* center!
+position world-height / 0.5 > if world-height else 0 then swap
+world-width / 0.5 > if world-width else 0 then swap
+2 restrict-position
+home!
+do
+    3 type-population 4 / 6 + d!
+    position home d 1 - in-range if
+	friendly-collision if
+		position home position home dist restrict-position v- unitize engine-velocity!
+		engine-max-power engine-power!
+    	else
+		center seek-location
+	then
+    else
+	position home d 1 + in-range nif
+		home seek-location
+	else
+		0 engine-power!
+	then
+    then
+   4 constructor-type!
+   constructor-max-rate constructor-rate!
+forever
+#end

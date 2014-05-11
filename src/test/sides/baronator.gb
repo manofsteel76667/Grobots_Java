@@ -1,0 +1,136 @@
+#side Baronator
+#author Hector
+#color 5A2
+#comment
+
+Baronator is a pretty simple side. The Defaults (which are basically ripped from the tutorial) protect themselves from
+more advanced sides with Missiles (which I designed from scratch). The main focus here are the Missiles. If allowed
+to get a decent head start, enough of them will rack up to discourage attack. The imprinting protocols could be fine-
+tuned, if necessary, to further customize the choices the Missiles can make regarding target selection.
+
+Works well against newbie sides and colonies. Sorry if it's not modular enough. (I'm new at this!) :P
+-Hector, 3/18/2012
+
+#type Default ;Summary: Wanders around eating and spawning self or missiles if low, used for missile host as well
+#hardware
+	engine .05
+	constructor 1
+	eater 2
+	solar-cells .1
+	armor 200
+	repair-rate .1
+	processor 10
+	energy 100 15
+	grenades 30 15 34 ;Only defense besides missiles
+	robot-sensor 15
+	food-sensor 8
+#code
+#vector dest
+
+new-dest:
+	0 world-width random 0 world-height random dest!
+return
+
+#start
+new-dest
+do
+	1 type-population 3 >= if
+		.7 2 balance-type ;Keeps proportion at roughly 1:2 most of the time
+	else
+		1 constructor-type!
+	then
+	autoconstruct
+	armor max-armor < if
+		max-repair-rate repair-rate!
+	else
+		0 repair-rate!
+	then
+  	grenades-reload-time periodic-robot-sensor if
+		robot-found if
+			robot-position robot-velocity lead-grenade
+		then
+	then
+	44 periodic-food-sensor drop
+	food-found if
+		food-position seek-location
+	else
+		dest seek-location
+		position dest 3 in-range new-dest& ifc
+	then
+forever
+
+#type Missile ;NEEDS OPTIMIZATION (code and hardware!): Sticks to an imprinted friendly host and locks on enemies
+#comment
+
+Stats (UPDATE OFTEN):
+Effective range: ~15 units
+Mass: 12.32 units
+Cost: 669.1
+
+#decoration 050 dot
+#hardware
+	engine .15
+	syphon 2 5
+	armor 100 ;Takes a few hits
+	processor 35 ;Imprinting and recognization protocols take a lot of steps
+	bomb 500 ;cost 125
+	energy 50 30 ;cost 35
+	robot-sensor 20 10 ;cost 130: Multiple results needed for imprinting to work, long range useful
+#code
+#var target ;Used to keep track of imprinted host or enemy
+#vector dest
+
+new-dest:
+	0 world-width random 0 world-height random dest!
+return
+
+#start
+1 robot-sensor-sees-friends!
+1 robot-sensor-sees-enemies!
+new-dest
+do
+	10 periodic-robot-sensor if
+		robot-found if
+			do
+				robot-side side = not robot-mass 22 > and if ;Home in on the enemy forever if it is big enough
+					0 syphon-rate!
+					robot-id target! ;Imprints enemy
+					do
+						enemy-collision energy 1 <= or if
+							die
+						then
+						10 periodic-robot-sensor if
+							robot-found if
+								do
+									robot-side side = not robot-id target = and if
+										robot-position robot-velocity seek-moving-location
+									then
+								next-robot
+								while-loop
+							then
+						then
+					forever
+				else
+					0 target = robot-type type = not and if ;Imprints friendly host
+						robot-id target!
+					then
+					robot-id target = if
+						robot-position 2 - robot-velocity seek-moving-location ;Stay 2 units below the target
+						robot-distance syphon-range <= energy 40 <= and if
+							robot-direction syphon-direction!
+							robot-distance syphon-distance!
+							syphon-max-rate syphon-rate!
+						else
+							0 syphon-rate!
+						then
+					then
+				then
+			next-robot
+			while-loop
+		else
+			0 target!
+			0 syphon-rate!
+		then
+	then
+forever
+#end

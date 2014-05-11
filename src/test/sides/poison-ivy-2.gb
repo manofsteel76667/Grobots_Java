@@ -1,0 +1,79 @@
+#side Poison Ivy
+#Author Warren
+#date Started June 12 2002
+
+A two-type plant. Algae clones, and gunner clones.
+
+#color 7a0
+
+#type Ivy
+#color 0f1
+#hardware
+energy 10 0
+armor 100
+processor 2
+
+constructor 0.501 ;c 50
+solar-cells 0.5 ;c a lot
+
+#code
+#start
+do
+ constructor-type nif
+  1 2 random-int constructor-type!
+ then
+ energy 1 > constructor-max-rate 0 ifev constructor-rate!
+forever
+
+#type Poison
+#color fa1
+
+#hardware
+energy 200 0
+armor 300
+processor 20
+
+constructor 0.47
+solar-cells 0.5
+
+robot-sensor 22
+grenades 50 22 50
+
+
+#code
+#var tti
+#var accel-x
+#var accel-y
+do
+ constructor-type nif
+  1 2 random-int constructor-type!
+ then
+ energy 100 > constructor-max-rate 0 ifev constructor-rate!
+ robot-sensor-time time 45 - < grenades-cooldown not and energy 50 > and if
+  fire-robot-sensor sync
+  robot-found if
+   0 1 random-int if
+    robot-velocity robot-id
+    fire-robot-sensor sync
+    robot-found if
+     robot-id = if
+      robot-velocity v- vnegate accel-y! accel-x!
+     else
+      2drop 0 0 accel-y! accel-x!
+     then ;robot-id =
+     robot-distance grenades-speed / tti!
+     accel-x accel-y 0.3 tti 15 min square *  vs*
+     robot-velocity tti 25 min 0.9 * vs* v+
+     robot-position v+ position v-
+     rect-to-polar fire-grenade
+    else
+     2drop drop
+    then
+   else ;try an unlead shot once in a while
+    robot-distance robot-direction fire-grenade
+   then ;random
+  then ;robot-found
+ then
+forever
+
+#end

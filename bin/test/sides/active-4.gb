@@ -1,0 +1,430 @@
+#side Active 4
+#author Warren
+#color f08
+
+(20021231) Improved eat-and-move copied from haystack.
+(Devon 20030104) Only make missiles when populous.
+(20030502) Shorter range, and more energy storage.
+           More cautious about crusades, and more prone to running away.
+           More position slop.
+					 Added decorations.
+
+A predator with active dodging.
+
+ToDo:
+-identify source of shots and target (cross-product trickery, similar to dodging)
+-missile defense
+-add a rat type that runs away (experimental)
+
+#type Dodger
+#decoration fcc circle
+#color fff
+#hardware
+energy 500 100
+armor 120
+processor 35 ;to dodge in 2 frames
+radio send receive
+eater 1.8
+engine 0.15
+
+robot-sensor 10
+shot-sensor 9 3
+food-sensor 8 5
+
+constructor 0.9
+repair-rate 0.1
+
+grenades 35 9 25
+
+;blaster 0.1 5 3
+
+#code
+
+#const TARGET_CHANNEL 1
+
+;communication with Dodge-and-move:
+#vector desired-velocity 0 0
+#var speed-slop 0.01
+
+;communication with Eat-and-move:
+#var position-slop 3
+#vector desired-position
+
+random-position:
+	0 world-width random 0 world-height random
+return
+
+;returns distance to nearest wall
+wall-distance: ; -> dist
+	position min
+	world-size position v- min
+	min return
+
+food-sense: ;t ->
+food-sensor-time food-sensor-time -1000 ifev + time < if
+	;too old
+	fire-food-sensor sync
+	return	
+else return ;previous sensing is new enough
+then
+
+restrict-location: ;x y -> x y
+world-height min 0 max swap
+world-width min 0 max swap return
+
+;in: desired-position, position-slop
+;out: desired-velocity, speed-slop
+#vector current-food
+#var have-current-food 0
+#const MAX_SPEED 0.15
+#vector wander-loc
+#var wander-time
+eat-and-move:
+	food-sensor-time 30 + time < if
+	position-slop 0.5 > and-if ;don't waste sensor firing if pos-slop tiny
+		have-current-food if
+		current-food desired-position dist position-slop < and-if
+			current-food
+		else
+			desired-position
+			position-slop food-sensor-range min 0.5 * random-angle polar-to-rect v+
+			;add a little randomness
+		then
+		position v- rect-to-polar
+		food-sensor-focus-direction! food-sensor-focus-distance!
+		fire-food-sensor sync
+		0 have-current-food!
+		food-found if
+			Food-check-loop:
+			food-position desired-position dist position-slop < if
+				food-position current-food!
+				1 have-current-food!
+			else
+				next-food Food-check-loop& ifg
+			then
+		then ;food-found
+	then ;time to fire
+	have-current-food if
+		current-food
+	else
+		position-slop food-sensor-range > if ;no point wandering if we can see it already
+			desired-position wander-loc dist position-slop >
+			wander-loc position 2 in-range
+			or if
+				position-slop random-angle polar-to-rect
+				desired-position v+
+				restrict-location^ wander-loc!
+			then
+			wander-loc	
+		else
+			desired-position
+		then
+	then
+	position v- rect-to-polar
+	swap 0.05 * MAX_SPEED min swap
+	polar-to-rect desired-velocity!
+	radius 0.05 * speed-slop!
+return ;end of eat-and-move
+
+#start
+	random-position wander-loc!
+
+#const MAX_FIGHT_POSITION_SLOP 7
+#const MIN_FIGHT_POSITION_SLOP 3
+#const FIGHT_DISTANCE 7
+#const CRUSADE_DIST 25
+#const MIN_CRUSADE_DIST 12
+
+#var have-crusade 0
+#var crusade-time
+#vector crusade-position
+
+Begin-normaling:
+do
+	energy max-energy / 0.2 > No-target& nifg
+	robot-sensor-time grenades-reload-time + time < if fire-robot-sensor sync
+		robot-found if
+			armor max-armor < if
+				robot-position robot-sensor-time 3 TARGET_CHANNEL send
+			then
+			grenades-cooldown nif
+				robot-position position v-
+				robot-velocity time robot-sensor-time - vs* v+
+				;stack: current relative position of enemy
+				
+				robot-velocity velocity v-
+				robot-distance grenades-speed / vs* v+
+				rect-to-polar fire-grenade
+			then
+			position robot-position v- unitize FIGHT_DISTANCE vs*
+			robot-position v+ desired-position!
+			MAX_FIGHT_POSITION_SLOP
+			energy max-energy / MAX_FIGHT_POSITION_SLOP MIN_FIGHT_POSITION_SLOP - *
+			- position-slop!
+			Done-targeting& jump
+		else ;no robot found
+			No-target& jump
+		then ;found
+	else
+		Done-targeting& jump
+	then ;time to fire
+	
+	No-target:
+	have-crusade if
+	crusade-position position robot-sensor-range 0.8 * in-range 
+	time crusade-time - 200 > or
+	and-if
+			0 have-crusade!
+	then
+	
+	have-crusade nif
+	shot-found and-if
+	shot-velocity norm and-if
+		shot-position shot-velocity -100 vs* v+ crusade-position!
+		shot-sensor-time crusade-time!
+		1 have-crusade!
+	then
+	
+	have-crusade nif
+		TARGET_CHANNEL messages 2 - 0 max 0 random-int TARGET_CHANNEL skip-messages
+		do
+			TARGET_CHANNEL receive
+		while
+			;stack: x y t
+			crusade-time! crusade-position!
+			time crusade-time - 100 < if ;newish
+			crusade-position position dist CRUSADE_DIST < and-if
+			crusade-position position dist MIN_CRUSADE_DIST > and-if
+				1 have-crusade!
+				done-chatting& jump
+			then ;acceptable crusade
+		loop Done-chatting:
+	then ;have-crusade not
+
+	have-crusade if
+	energy max-energy / 0.3 > and-if
+	armor max-armor / 0.6 > and-if
+	constructor-type not constructor-remaining 200 > or and-if
+		crusade-position desired-position!
+		5 position-slop!
+	else
+		infinity position-slop!
+		position desired-position!
+	then ;have crusade
+	
+	Done-targeting:
+	Dodge-and-move^
+	constructor-type nif
+		1 type-population 10 > if 1 2 random-int
+		else 1 then constructor-type!
+	then
+	energy 100 > max-repair-rate 0 ifev repair-rate!
+	max-energy 0.7 * constructor-remaining min energy <
+	constructor-max-rate 0 ifev constructor-rate!
+	eat-and-move^
+	Dodge-and-move^
+	
+	shot-found if ;run away
+	shot-velocity norm and-if
+	energy max-energy / 0.05 > and-if
+	energy max-energy / 0.2 <
+	armor max-armor / 0.45 < or and-if
+		shot-velocity 60 vs* position v+ restrict-location^ desired-position!	
+		Begin-running& jump
+	then
+forever
+
+;desired-position is set before entering running
+Begin-running:
+do
+	energy 100 > max-repair-rate 0 ifev repair-rate!
+	
+	energy max-energy / 0.2 < nif
+	robot-sensor-time grenades-reload-time + time < and-if
+	grenades-cooldown not and-if
+		fire-robot-sensor sync
+	robot-found and-if
+		robot-position position v-
+		robot-velocity time robot-sensor-time - vs* v+
+		;stack: current relative position of enemy
+		
+		robot-velocity velocity v-
+		robot-distance grenades-speed / vs* v+
+		rect-to-polar fire-grenade
+	then ;shooting
+
+	5 position-slop!
+	eat-and-move^
+	Dodge-and-move^
+	desired-position position dist position-slop < if
+		Begin-normaling& jump
+	then
+forever
+
+#const Flee-angle 1.5 ;angle between shot velocity and fleeing.
+#const MIN_MISS_DIST 2.5
+#const flee-speed 0.1
+#const ASSUMED_ROBOT_SLOWDOWN_FACTOR 0.4
+#const DODGE_OVERKILL_FACTOR 1.2
+#var miss
+#vector dv
+#vector assumed-robot-velocity
+#vector go-dir
+
+;Dodge has inputs:
+;-desired-velocity, the desired medium-term engine velocity
+;-speed-slop, the amount the velocity can differ before engine is used
+;Dodge then sets engine-velocity and power to avoid shots.
+Dodge-and-move:
+	do
+		shot-sensor-time time 4 - <	
+	until
+		sync
+	loop
+	;do as much computation as possible before firing shot sensor to get up-to-date info
+	
+	energy max-energy / 
+	2 * ; armor max-armor = 1 2 ifev * 
+	time shot-sensor-time - 20 / +
+	energy max-energy / 6 * min
+	armor max-armor / < Obey-user& ifg
+	
+	velocity ASSUMED_ROBOT_SLOWDOWN_FACTOR vs*
+	2dup desired-velocity dist 0.05 <= if
+		2drop desired-velocity
+	else
+		2dup
+		desired-velocity v- unitize -0.05 vs* v+ ;expected velocity
+	then
+	assumed-robot-velocity!
+	
+	assumed-robot-velocity rect-to-polar shot-sensor-focus-direction!
+	3 * shot-sensor-focus-distance!
+	
+	fire-shot-sensor sync
+	shot-found Obey-User& nifg
+	shot-process-loop:
+		shot-velocity norm if
+			shot-velocity assumed-robot-velocity v- dv!
+			dv shot-position position v- dot
+			0 < and-if
+		else
+			next-shot shot-process-loop& obey-user& ifeg				
+		then
+	dv unitize
+	shot-position position v-
+	cross miss!
+	;positive means the shot will miss to our right (when facing the incoming shot)
+	dv angle
+	miss 0 > Flee-angle Flee-angle negate ifev -
+	dup 1 swap polar-to-rect go-dir!
+	MIN_MISS_DIST miss abs - 0 max ;dist to move
+	shot-distance 3 max / shot-velocity norm * DODGE_OVERKILL_FACTOR * ;this line: flee speed
+	swap polar-to-rect
+	assumed-robot-velocity v+ 2dup ;2 copies of engine-vel on stack
+	desired-velocity v- go-dir dot ;negative if desired deviation from calculated is ok
+	0 < if
+		2drop Obey-User& jump
+	then
+	;2dup angle fire-blaster
+	engine-velocity!
+	engine-max-power engine-power!
+	return
+	Obey-User:
+	desired-velocity engine-velocity!
+	velocity desired-velocity v- norm speed-slop < 0 engine-max-power ifev engine-power!
+	return
+;end of Dodge subroutine
+
+;a second version of above, different strategy
+Dodge-and-move2:
+
+#comment
+
+
+#type Missile
+#color f00
+#decoration fcc circle
+#hardware
+processor 15
+energy 300 300
+armor 150
+
+engine 0.15
+
+shield 0.4
+
+bomb 1300
+
+robot-sensor 10
+shot-sensor 8
+
+solar-cells 0.05
+
+#code
+#vector target
+#vector target-v
+#vector wander-loc
+
+#const shot-chase-distance 10
+
+new-wander-loc:
+	-20 world-width 20 + random -20 world-height 20 + random
+	restrict-position^ wander-loc! return
+
+restrict-position: ; vector -> vector
+world-height min 0 max swap world-width min 0 max swap return
+
+set-shot-chase: ;stack: empty -> empty
+			shot-chase-distance
+			shot-velocity -100 vs* shot-position position v- v+ angle
+			polar-to-rect position v+
+			restrict-position^ target! 0 0 target-v!
+return
+
+choose-next-state: ; ->
+	robot-sensor-time 20 + time < if
+		fire-robot-sensor fire-shot-sensor sync
+		armor max-armor / 0.5 > if
+		shot-found and-if
+		shot-velocity norm and-if
+			set-shot-chase^
+			drop charge& jump
+		then
+		robot-found 1 > robot-mass 30 > or if
+			robot-distance 2 < if die sync then
+			robot-position target!
+			robot-velocity target-v!
+			drop charge& jump
+		then
+		drop wander& jump
+	then ;time to scan
+jump
+	
+#start
+new-wander-loc^
+begin-wandering:
+wander:
+	0 shield!
+	wander-loc position v- rect-to-polar swap 0.05 * 0.1 min swap polar-to-rect
+	target-v v+ engine-velocity!
+	engine-max-power engine-power!
+	wander-loc position dist 5 < new-wander-loc& ifc
+	energy max-energy / 0.1 < begin-nursing& ifg
+wander& choose-next-state& jump
+
+begin-charging:
+charge:
+	target seek-location
+	energy 30 > max-shield 0 ifev shield!
+charge& choose-next-state& jump
+
+begin-nursing:
+	0 engine-power!
+	0 shield!
+do
+	sync sync sync sync sync sync sync sync sync sync
+	energy max-energy / 0.4 > begin-wandering& ifg
+forever
+
+#end

@@ -1,0 +1,47 @@
+#side Simple Turret
+#author Devon
+#date 6 Feb 2002
+
+(20020409) removed 0 0 focus
+(20020410) No longer fires sensor every frame :)
+
+#color 0df
+
+#type turret
+Looks for and shoots at things.
+
+#color c70
+#hardware
+blaster 25 20 50
+robot-sensor 20
+energy 110 10
+solar-cells .2 ;c 270
+processor 10
+armor 200
+constructor .199
+
+#code
+
+do
+	energy 10 > scan& ifc
+	energy 100 > if
+		constructor-type nif
+			1 constructor-type!
+		then
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+	sync
+forever
+
+scan:
+	time robot-sensor-time 50 + < ifr
+	fire-robot-sensor sync
+	robot-found if
+		robot-position robot-velocity robot-distance blaster-speed / .8 * vs* v+
+		position v- angle fire-blaster
+	then
+return
+
+#end

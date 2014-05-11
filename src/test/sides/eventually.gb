@@ -1,0 +1,95 @@
+#side Eventually...
+#author Devon
+#date September 20-21 2002
+#color ef0
+
+Autotroph; once it's built enough economy it starts cranking out missiles. Hundreds of them.
+Has a problem with getting killed early.
+Needs another type for short-range defense.
+
+#type grower
+#color 0b0
+
+#hardware
+  solar-cells .5
+  constructor .5
+  processor 4
+  energy 5 0
+  armor 90
+
+#code
+
+new-baby:
+  time 9000 > if   ;should use type-population when it's fixed
+    0 3 random-int 2 1 ifev
+  else
+    0 9 random-int 1 2 ifev
+  then constructor-type!
+  constructor-max-rate constructor-rate!
+return
+
+#start
+  new-baby
+  do
+    constructor-type not new-baby& ifc
+  forever
+
+
+#type Safety Missile
+#author Devon
+#color f00
+
+"Safety" because it won't detonate close to home.
+
+Feel free to steal/modify this type.
+
+#hardware
+  engine .06
+  bomb 1000   ;could be bigger
+  armor 80
+  processor 10
+  energy 40 20
+  solar-cells .06
+  robot-sensor 10
+
+#code
+
+#vector dest
+#vector home
+#const home-dist 15
+#var recharging 0
+
+new-dest: ; --
+  0 world-size drop random 0 world-size nip random dest!
+  dest home home-dist in-range new-dest& ifg
+return
+
+#start
+  position home!
+  new-dest
+  do
+    fire-robot-sensor sync
+    robot-found if
+      robot-distance 3 < position home home-dist in-range not and if
+        die sync
+      else
+        robot-position dest!
+      then
+    then
+    energy 5 < if
+      1 recharging!
+    else energy 35 > if
+      0 recharging!
+    then then
+    recharging if
+      0 engine-power!
+    else
+      dest seek-location
+      position dest 1.5 in-range new-dest& ifc
+    then
+    sync sync sync sync sync
+    sync sync sync sync sync
+    sync sync sync sync sync
+  forever
+  
+#end

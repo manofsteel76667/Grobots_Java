@@ -1,0 +1,39 @@
+#side Gunner
+Based on a hard-coded side.
+#author Warren
+#date March 1 2002
+#color c0f
+
+(20020409 Devon) Fixed for changes (removed focus, sensor cooldown)
+#type Gunner
+#color d00
+#hardware
+processor 5
+constructor 0.399
+energy 40 0
+solar-cells 0.4
+armor 200
+
+robot-sensor 20
+grenades 50 20 50
+
+#code
+
+#const scan-interval 70
+
+do
+	1 constructor-type!
+	energy max-energy 10 - < 0 constructor-max-rate ifev constructor-rate!
+	time robot-sensor-time scan-interval + < grenades-cooldown or nif
+		fire-robot-sensor
+		sync
+		robot-found if
+			robot-position robot-velocity robot-distance grenades-speed / 0.8 *
+				vs* v+ position v-
+				rect-to-polar fire-grenade
+		then
+	else
+		sync
+	then
+forever
+#end

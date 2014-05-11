@@ -1,0 +1,206 @@
+#side Bacteria 4
+
+Originally intended as a Microb clone, this is a simple skittish gatherer.
+
+(20030428) Don't seed any cyanobacteria.
+(20040104) Added Bdellovibrio.
+
+#author Devon
+#color AFA
+#seed 2 2 3 2
+
+#type Cyanobacterium
+#color 0FF
+#hardware
+  solar-cells .18
+  constructor .18
+  armor 10
+  processor 1
+#code
+do
+  constructor-type nif
+    1 3 random-int constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+forever
+
+#type Escherichia
+#color 970
+
+(20030418) Bigger eater and constructor.
+           Flee away from shot as well as parallel to it.
+(20030428) Wander more locally.
+           Scan for food more often.
+(20030517) Don't starve self gestating.
+(20030104) Bugfix: could try to run outside non-square world.
+           Build Bdellovibrios when shot at.
+           Better destinations when running.
+
+#hardware
+  eater 1.5
+  constructor 1
+  energy 200 10
+  armor 90
+  processor 8
+  food-sensor 6
+  shot-sensor 5
+  engine .02
+#code
+
+#vector dest
+#const wander-range 40
+#var scared?  ;have we been shot at lately?
+
+new-dest:
+  position swap
+    dup wander-range - 0 max swap wander-range + world-width min random
+    swap dup wander-range - 0 max swap wander-range + world-height min random
+    dest!
+return
+
+construct:
+  constructor-type if
+    energy 180 constructor-remaining 15 + min >=
+      constructor-max-rate 0 ifev constructor-rate!
+  else energy 180 > if
+    scared? 3 1 2 random-int ifev constructor-type!
+    0 scared?!
+    constructor-max-rate constructor-rate!
+  then then
+return
+
+#start
+main:
+  new-dest
+do
+  eaten nif time food-sensor-time 60 + >= and-if
+    fire-food-sensor sync
+  then
+  food-found if
+    food-position seek-location
+  else 
+    position dest 5 in-range if new-dest then
+    dest seek-location
+  then
+  energy 10 > if time shot-sensor-time 10 + >= and-if
+    fire-shot-sensor sync
+    shot-found run& ifg
+  then
+  construct
+forever
+
+run:
+  shot-velocity unitize -8 vs* shot-position v+ position v- unitize -12 vs* position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+  1 scared?!
+do
+  dest seek-location
+  construct
+position dest 4 in-range until-loop
+main& jump
+
+#type Bdellovibrio
+#color F00
+
+A tiny predator with a short-range blaster.
+Intended to kill enemy gatherers and missiles, and put up some resistance to attacks.
+No coordination whatsoever, for now.
+
+#hardware
+  processor 10
+  engine .04
+  energy 200 10
+  eater .4
+  food-sensor 6
+  shot-sensor 5
+  robot-sensor 5.5
+  blaster 15 .8 17
+  armor 150
+  repair-rate .05
+#code
+
+
+#vector dest
+#const wander-range 40
+
+new-dest:
+  position swap
+    dup wander-range - 0 max swap wander-range + world-width min random
+    swap dup wander-range - 0 max swap wander-range + world-height min random
+    dest!
+return
+
+repair: energy 50 > max-repair-rate 0 ifev repair-rate! return
+
+find-robot:
+  fire-robot-sensor sync
+  robot-found nif 0 return then
+  do
+    robot-shield-fraction .3 > if 1 return then
+  next-robot while-loop
+0 return
+
+#start
+main:
+  new-dest
+do
+  eaten nif time food-sensor-time 60 + >= and-if energy max-energy 10 - < and-if
+    fire-food-sensor sync
+  then
+  food-found if energy max-energy 10 - < armor 50 < or and-if
+    food-position seek-location
+  else 
+    position dest 5 in-range if new-dest then
+    dest seek-location
+  then
+  energy 10 > if time shot-sensor-time 10 + >= and-if
+    fire-shot-sensor sync
+    shot-found if energy armor min 60 < run& chase-shot& ifeg then
+  then
+  energy 30 > if time robot-sensor-time 57 + >= and-if
+    find-robot fight& ifg
+  then
+  repair
+forever
+
+run:
+  shot-velocity unitize -8 vs* shot-position v+ position v- unitize -12 vs* position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  repair
+position dest 2 in-range until-loop
+main& jump
+
+chase-shot:
+  shot-velocity unitize -15 vs* shot-position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  repair
+  energy armor min 20 < run& ifg
+  time robot-sensor-time 53 + >= if
+    find-robot fight& ifg
+  then
+  time shot-sensor-time 53 + >= if
+    fire-shot-sensor sync
+    shot-found run& ifg
+  then
+position dest 2 in-range until-loop
+main& jump
+
+fight:
+do
+  robot-position robot-velocity seek-moving-location
+  energy 10 < main& ifg
+  repair
+  time robot-sensor-time blaster-reload-time + >= if
+    find-robot main& nifg
+    robot-distance .6 robot-radius + <= if
+      robot-velocity velocity v- 3 vs* robot-position v+ position v- angle fire-blaster sync
+    then
+  then
+robot-found while-loop
+main& jump
+
+#end

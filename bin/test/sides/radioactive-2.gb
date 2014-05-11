@@ -1,0 +1,96 @@
+#side Radioactive
+#author Devon
+#date 6 Feb 2002
+
+Contains several silly example types.
+
+(20020409) various fixes
+
+#type radiator
+
+blasts aimlessly
+
+#color f00
+#hardware
+armor 200
+blaster 2 15 4
+solar-cells .25
+processor 1
+energy 20 5
+
+#code
+do
+	random-angle fire-blaster
+forever
+
+#type hazard
+Shoots things, but only at very short range.
+#color 00f
+#hardware
+	grenades 10 6.5 5
+	robot-sensor 6
+	processor 10
+	energy 100 10
+	solar-cells .12
+	armor 100
+#code
+
+scan:
+	fire-robot-sensor sync
+	robot-found if
+		robot-distance robot-direction fire-grenade
+		sync
+	else
+		15 wait^
+	then return
+
+#start
+do
+	energy grenades-firing-cost 1 + > grenades-cooldown not and scan& ifc
+	sync
+forever
+
+wait: ; frames --
+	do dup 0 > while
+		sync
+		1 -
+	loop drop return
+
+#type Runner
+#date 1 Nov 2001; revised 8 Feb 2002
+Runs in straight lines very fast. Picks a new random
+direction if it gets stuck.
+#hardware
+	processor 5 ;don't need much for this
+	engine .1
+	solar-cells .11
+	armor 100
+#code
+
+#var start-time 0
+#const min-time 30
+#const min-speed .2
+
+new-direction:
+	engine-max-power engine-power!
+	1 random-angle polar-to-rect engine-velocity!
+	time start-time!
+return
+
+time-running: ; -- time
+	time start-time - return
+
+stuck:
+	time-running min-time >= speed min-speed < and
+return
+
+#start
+do
+	new-direction
+	do
+		stuck until
+		sync
+	loop
+forever
+
+#end

@@ -1,0 +1,294 @@
+#side Productive Plus 5
+#author DvF and Devon
+
+Original by Daniel Von Fange
+September 25th 2002
+http://www.braino.org  - blog. :)
+botman@daniel-labs.com
+
+My first ever Grobot!
+The Factories talk to each other to spread themselves out in a curve.
+The bombs talk to each other so the new bombs run into areas where bombs are not (ie, enemy areas)
+And the little factorys just kinda spread out from the main factory line.
+
+Really just designed to duel Telbot. :)
+
+(20020927) Added MiniBombs just for Eventually
+(Devon 20021216) Added radio to Factory, and reduced size.
+                 Changed Factory color so it looks different.
+                 Shortened name.
+(Warren 20021216) Now uses world-size, width and height.
+(Devon and Warren 20021216) Various simplifications.
+(Devon 20021220) Removed useless shields and repairs from both missiles.
+                 Shrank AuxFactory, and made it produce different types at different times.
+                 Removed randomness from line forming.
+(Devon 20030113) Factories now don't make missiles, and AuxFactories only make missiles.
+(Devon 20030329) Now only builds a limited number of Factories.
+                 Added decorations.
+(Devon 20030527) BombBot now ignores small targets.
+(Devon 20040104) Replaced MiniBombBot with Bdellovibrio (from Bacteria, enlarged).
+                 Build a constant number of Bdellovibrio.
+                 Smaller Factory, somewhat simplified.
+                 Smaller, more efficient BombBot.
+(Devon 20060322) Reduced BombBot's solar cells; stop to charge battery.
+                 Improved Bdello fire-control.
+                 Bdellos don't wander far from the colony.
+
+#seed 1
+
+Fixed Channels
+ 2-3 BombBot public home
+ 4-5 Factory public home
+
+#color 962000
+
+#type Factory
+
+#color 999
+#decoration 999 cross
+#hardware
+	processor 7 
+	armor 50
+	constructor .45
+	repair-rate 0.01
+	engine .05
+	solar-cells .45
+	radio read write
+
+#code
+#vector myHome
+#const spacing 2.5
+
+#start
+constructor-max-rate constructor-rate!
+max-repair-rate repair-rate!
+
+newHomeAsDestination:
+	position swap
+	world-width 2 / < .1 world-width .1 - ifev
+	swap
+	world-height 2 / < .1 world-height .1 - ifev
+	sync 4 read if 2drop else 4 vwrite then
+	world-size 2 vs/ 4 vread v- unitize spacing vs*
+		sync 4 vread v+ 2dup 4 vwrite myHome!
+do
+	myHome seek-location
+	constructor-type nif
+		4 type-population 3 < if .3 random-bool and-if
+			4
+		else
+			1 type-population 10 < .2 random-bool and 1 3 ifev
+		then constructor-type!
+	then
+forever
+
+
+#type BombBot
+
+#color FFFFFF
+#decoration fff cross
+#hardware
+	energy 25 15 
+	processor 10
+	armor 200 
+	robot-sensor 15
+	engine 0.15
+	solar-cells 0.05
+	bomb 1300
+	radio write read
+
+#code
+#vector myHome
+#vector myDestination
+#const HOME_RADIUS 10
+#start
+robot-sensor-firing-cost print
+
+getNewHome^
+myHome + getRandomNewHome& nifc
+checkPublicHome^
+
+ramble:
+	do
+		0 engine-power!
+		do energy 10 < while-loop
+		myHome myDestination!
+		goToDestination^
+		sync
+		getRandomNewHome^
+	forever
+
+seek:
+	do
+		robot-position robot-velocity seek-moving-location
+		enemy-collision if position 4 vread 10 in-range not and-if die then
+		sync sync
+		time robot-sensor-time 33 + >= if
+			fire-robot-sensor sync
+			robot-found nifr
+		then
+	energy 2 > while-loop 
+	robot-distance 3 > ifr
+	position 4 vread 10 in-range ifr
+	die sync
+
+goToDestination:
+	do
+		myDestination seek-location
+		.05 engine-power!
+		myDestination position radius in-range ifr
+		sync sync sync sync
+		time robot-sensor-time 47 + >= if
+			fire-robot-sensor sync
+			robot-found if robot-mass 15 >= and-if
+				robot-position 4 vread 10 in-range seek& nifc
+			then
+		then
+		checkPublicHome^
+	forever
+
+;
+; Functions
+;
+
+checkPublicHome:
+	2 read 3 read
+	myHome HOME_RADIUS in-range nifr
+	1 world-width 1 - random 2 write
+	1 world-height 1 - random 3 write
+	return
+	
+getNewHome:
+	2 read 3 read myHome!
+	return
+
+getRandomNewHome:
+	1 world-width 1 - random 1 world-height 1 - random myHome!
+	return
+
+
+#type AuxFactory
+
+#color 962000
+#decoration 0f0 cross
+#hardware
+	processor 2 
+	armor 50
+	constructor .44
+	solar-cells .45
+
+#code
+constructor-max-rate constructor-rate!
+do
+	constructor-type nif
+		4 type-population 8 < .5 random-bool and 4 2 ifev constructor-type!
+	then
+forever
+
+
+#type Bdellovibrio
+#author Devon
+4 January 2004
+#color F00
+
+A tiny predator with a short-range blaster.
+Intended to kill enemy gatherers and missiles, and put up some resistance to attacks.
+No coordination whatsoever, for now.
+
+#hardware
+  processor 12
+  engine .06
+  energy 200 20
+  eater .4
+  food-sensor 6
+  shot-sensor 5
+  robot-sensor 6.5 3
+  blaster 19 .8 17
+  armor 200
+  repair-rate .05
+#code
+
+#vector dest
+#const wander-range 20
+
+new-dest:
+  4 vread swap
+    dup wander-range - 0 max swap wander-range + world-width min random
+    swap dup wander-range - 0 max swap wander-range + world-height min random
+    dest!
+return
+
+repair: energy 50 > max-repair-rate 0 ifev repair-rate! return
+
+find-robot:
+  fire-robot-sensor sync
+  robot-found nif 0 return then
+  do
+    robot-shield-fraction .3 > if 1 return then
+  next-robot while-loop
+0 return
+
+#start
+main:
+  new-dest
+do
+  eaten nif time food-sensor-time 60 + >= and-if energy max-energy 10 - < and-if
+    fire-food-sensor sync
+  then
+  food-found if energy max-energy 10 - < armor 50 < or and-if
+    food-position seek-location
+  else 
+    position dest 5 in-range if new-dest then
+    dest seek-location
+  then
+  energy 10 > if time shot-sensor-time 10 + >= and-if
+    fire-shot-sensor sync
+    shot-found if energy armor min 60 < run& chase-shot& ifeg then
+  then
+  energy 30 > if time robot-sensor-time 57 + >= and-if
+    find-robot fight& ifg
+  then
+  repair
+forever
+
+run:
+  shot-velocity unitize -8 vs* shot-position v+ position v- unitize -12 vs* position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  repair
+position dest 2 in-range until-loop
+main& jump
+
+chase-shot:
+  shot-velocity unitize -15 vs* shot-position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  repair
+  energy armor min 20 < run& ifg
+  time robot-sensor-time 53 + >= if
+    find-robot fight& ifg
+  then
+  time shot-sensor-time 53 + >= if
+    fire-shot-sensor sync
+    shot-found run& ifg
+  then
+position dest 2 in-range until-loop
+main& jump
+
+fight:
+do
+  robot-position robot-velocity time robot-sensor-time - vs* v+ robot-velocity seek-moving-location
+  energy 10 < main& ifg
+  repair
+  time robot-sensor-time blaster-reload-time + >= if
+    find-robot main& nifg
+    robot-distance 1 robot-radius + <= if
+      robot-velocity velocity v- 3 vs* robot-position v+ position v- angle fire-blaster sync
+    then
+  then
+robot-found while-loop
+main& jump
+
+#end

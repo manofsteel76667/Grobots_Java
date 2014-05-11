@@ -1,0 +1,104 @@
+#side Far Garden
+#author Devon
+
+Ordinary autotrophs have a doubletime of worse than 2100.
+Centralizing construction in a few cells lets new cells be
+finished in less than a doubletime. This allows faster growth,
+theoretically.
+
+Garden's Crops sit still and the Gardener syphons their energy
+away. This is the reverse of Sunflower's approach.
+
+Problems:
+  No defense yet. (This is ok in a demo side. I'll make an
+    armed variant.)
+
+#color 6c0
+#seed 2 1 1 1 1 1 1 1
+
+#type Crop
+
+(20030104) Smaller.
+
+#color 0f0
+#hardware
+  armor 40
+  solar-cells .3
+  energy 300 0
+
+;; That's all. No brain even.
+
+#type Gardener
+
+(20030104) Larger weight on distance.
+           Cost reduction.
+           Gestate earlier.
+(20030529) Use long-range syphons instead of moving.
+(20030721) Fixed for syphon renaming and range change.
+
+#color c03
+#hardware
+  energy 200 5
+  syphon 4 5.8
+  constructor 2.5
+  robot-sensor 6 20
+  
+  processor 15
+  armor 60
+  solar-cells .01
+
+#code
+
+#vector target
+#var score
+#var best-score
+
+construct:
+  energy 100 constructor-remaining 20 + min >
+    constructor-max-rate 0 ifev constructor-rate!
+return
+
+#start
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+do
+  constructor-type nif
+    1 type-population 2 type-population / 7 < 1 2 ifev constructor-type!
+    ;energy 100 > 2 1 ifev constructor-type!
+  then
+  construct
+  fire-robot-sensor sync
+  pick^
+  best-score 0 > if
+    suck^
+    0 syphon-rate!
+  else
+    construct
+    sync sync sync sync sync sync sync sync sync sync
+    sync sync sync sync sync sync sync sync sync sync
+  then
+forever
+
+pick:
+  0 best-score!
+  do
+    robot-type 1 = if
+      robot-energy robot-distance 10 * - score!
+      score best-score > if 
+        robot-position target!
+        score best-score!
+      then
+    then
+    construct
+  next-robot while-loop
+return
+
+suck:
+  target position v- rect-to-polar syphon-direction! syphon-distance!
+  syphon-max-rate syphon-rate!
+  do
+    construct
+  syphoned syphon-max-rate < until-loop
+return
+
+#end

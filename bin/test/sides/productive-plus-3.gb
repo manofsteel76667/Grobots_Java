@@ -1,0 +1,271 @@
+#side Productive Plus 3
+
+My first ever Grobot!
+The Factories talk to each other to spread themselves out in a curve.
+The bombs talk to each other so the new bombs run into areas where bombs are not (ie, enemy areas)
+And the little factorys just kinda spread out from the main factory line.
+
+Really just designed to duel Telbot. :)
+
+(20020927) Added MiniBombs just for Eventually
+(Devon 20021216) Added radio to Factory, and reduced size.
+                 Changed Factory color so it looks different.
+                 Shortened name.
+(Warren 20021216) Now uses world-size, width and height.
+(Devon and Warren 20021216) Various simplifications.
+(Devon 20021220) Removed useless shields and repairs from both missiles.
+                 Shrank AuxFactory, and made it produce different types at different times.
+                 Removed randomness from line forming.
+(Devon 20030113) Factories now don't make missiles, and AuxFactories only make missiles.
+(Devon 20030329) Now only builds a limited number of Factories.
+                 Added decorations.
+(Devon 20030527) BombBot now ignores small targets.
+
+#author Daniel Von Fange
+http://www.braino.org  - blog. :)
+botman@daniel-labs.com
+
+Fixed Channels
+ 2-3 BombBot public home
+ 4-5 Factory public home
+
+#date September 25th 2002
+#color 962000
+
+#type Factory
+
+#color 999
+#decoration 999 cross
+#hardware
+	processor 10 
+	armor 100
+	constructor 1.595
+	repair-rate 0.01
+	shot-sensor 4
+	engine .2
+	solar-cells 1.6
+	radio read write
+
+#code
+#vector myHome
+#start
+constructor-max-rate constructor-rate!
+max-repair-rate repair-rate!
+
+newHomeAsDestination^
+do
+	myHome seek-location
+	constructor-type nif
+		.2 random-bool 1 type-population 8 < and 1 3 ifev constructor-type!
+	then
+forever
+
+
+newHomeAsDestination:
+	sync
+	4 vread myHome!
+	myHome + 1 < pickInitialHome& ifc
+	
+	;Get angle to center of world
+	world-size 2 vs/ myHome v- angle
+	4 swap polar-to-rect
+	myHome v+
+	4 vwrite
+return
+	
+pickInitialHome:
+	position swap
+	world-width 2 / < 1 world-width 1 - ifev
+	swap
+	world-height 2 / < 1 world-height 1 - ifev
+	2dup myHome!
+	4 vwrite
+return
+
+
+#type BombBot
+
+#color FFFFFF
+#decoration fff cross
+#hardware
+	energy 25 0 
+	processor 10
+	armor 200 
+	constructor 0 
+	robot-sensor 20 2
+	engine 0.2
+	eater 0
+	solar-cells 0.3
+	bomb 1300
+	radio write read
+
+#code
+#vector myHome
+#vector myDestination
+#const HOME_RADIUS 10
+#start
+
+engine-max-power engine-power!
+
+getNewHome^
+myHome + 1 < getRandomNewHome& ifc
+checkPublicHome^
+
+ramble:
+	do
+		myHome myDestination!
+		goToDestination^
+		sync
+		getRandomNewHome^
+	forever
+
+seek:
+	do
+		robot-position seek-location
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync
+		enemy-collision if die then
+		sync
+		fire-robot-sensor
+		sync
+		robot-found ramble& nifg
+	forever
+
+goToDestination:
+	do
+		myDestination seek-location
+		myDestination position radius in-range ifr
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync
+		fire-robot-sensor sync
+		robot-found robot-mass 15 >= and seek& ifg
+		checkPublicHome^
+	forever
+
+;
+; Functions
+;
+
+checkPublicHome:
+	2 read 3 read
+	myHome HOME_RADIUS in-range nifr
+	1 world-width 1 - random 2 write
+	1 world-height 1 - random 3 write
+	return
+	
+getNewHome:
+	2 read 3 read myHome!
+	return
+
+getRandomNewHome:
+	1 world-width 1 - random 1 world-height 1 - random myHome!
+	return
+
+
+#type AuxFactory
+
+#color 962000
+#decoration 0f0 cross
+#hardware
+	processor 2 
+	armor 50
+	constructor .5
+	solar-cells .5
+
+#code
+constructor-max-rate constructor-rate!
+do
+	constructor-type nif
+		.4 random-bool 2 4 ifev constructor-type!
+	then
+forever
+
+
+#type MiniBombBot
+
+#color FFFFFF
+#decoration fff cross
+#hardware
+	energy 25 0 
+	processor 10
+	armor 20 
+	robot-sensor 10 1
+	engine 0.02
+	solar-cells 0.05
+	bomb 130
+	radio write read
+
+#code
+#vector myHome
+#vector myDestination
+#const HOME_RADIUS 10
+#start
+
+max-shield shield!
+engine-max-power engine-power!
+
+getNewHome^
+myHome + 1 < getRandomNewHome& ifc
+checkPublicHome^
+
+
+
+ramble:
+	do
+		myHome myDestination!
+		goToDestination^
+		sync
+	forever
+
+seek:
+	do
+		robot-position seek-location
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync
+		enemy-collision if die then
+		sync
+		fire-robot-sensor
+		sync
+		robot-found ramble& nifg
+	forever
+
+goToDestination:
+	do
+		myDestination seek-location
+		myDestination position radius in-range ifr
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync sync
+		sync sync sync sync
+		fire-robot-sensor sync
+		robot-found seek& ifg
+		checkPublicHome^
+	forever
+
+;
+; Functions
+;
+
+checkPublicHome:
+	
+	2 read 3 read
+	myHome HOME_RADIUS in-range not ifr
+	1 world-width 1 - random 2 write
+	1 world-height 1 - random 3 write
+	return
+	
+getNewHome:
+	2 read 3 read myHome!
+	return;
+
+getRandomNewHome:
+	1 world-width 1 - random 1 world-height 1 - random myHome!
+	return
+
+#end

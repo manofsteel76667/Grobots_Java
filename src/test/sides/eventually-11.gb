@@ -1,0 +1,202 @@
+#side Eventually...
+#author Devon
+#date September 20-22 2002
+#color ef0
+
+Autotroph; once it's built enough economy it starts cranking out missiles. Hundreds of them.
+(20020922) Added Sentinel for defense.
+(20021111) Don't seed any sentinels - they're not enough to defend successfully, and they provoke enemies.
+
+Feel free to steal/modify parts of this side.
+
+#seed 1
+
+#type Economy
+#color 0b0
+
+(20020923) Build more Sentinels early.
+(20021003) Don't inadvertently abort when seeded.
+(20021025) Price reduction and nifc.
+(20021026) A little more armor and less economy.
+(20021030) Less armor (and processor, slightly) and more economy.
+(20021030) Bugfix: cell with initial fetus now gestates.
+(20021111) Now uses population instead of a timer to switch modes.
+(20021111) Build more sentinels to compensate for none being seeded.
+(20021113) Now build economy, then sentinels, then mixture.
+
+#hardware
+  solar-cells .47
+  constructor .47
+  processor 3
+  energy 5 0
+  armor 75
+
+#code
+
+new-baby:
+  3 type-population 5 >= if
+    population 32 > if
+      0 3 random-int 2 1 ifev
+    else
+      -3 4 random-int 1 max 3 min
+    then
+  else
+    1 type-population 4 <= if
+      1
+    else
+      3
+    then
+  then constructor-type!
+  constructor-max-rate constructor-rate!
+return
+
+#start
+  constructor-type new-baby& nifc
+  constructor-max-rate constructor-rate!
+do
+  constructor-type new-baby& nifc
+forever
+
+
+#type Safety Missile
+#author Devon
+#color 666
+
+"Safety" because it won't detonate close to home.
+
+(20020922) All destinations now at edges.
+(20020922) Should no longer need recharging.
+(20020923) More armor and engine.
+(20021002) Ignore small cells, to resist B&F's decoys.
+(20021002) Now goes off on contact instead of at short range.
+(20021025) Bigger engine, only used when charging.
+(20021025-6) Movement and detonation changes.
+(20021031) Also detonate at short range.
+(20021106-13) Now communicate target locations.
+
+#hardware
+  engine .1   ;c 100 m 2
+  bomb 1000   ;c 150 m 4.5 ;could be bigger
+  armor 120   ;c 120 m 3.6
+  processor 10
+  energy 20 5
+  solar-cells .07   ;c 126 m 5.04 :-(
+  robot-sensor 10   ;c 26
+  radio read write
+
+#code
+
+#vector dest
+#var shared
+#vector home
+#const home-dist 15
+#const edge-space 6 ;close enough to see corners
+#var right
+#var top
+
+new-dest: ; --
+;try shared dest
+  0 2 random-int nif
+    1 read 2 read dest!
+    1 shared!
+    dest or ifr
+  then
+random-dest:
+  0 1 random-int if
+    0 1 random-int edge-space right ifev
+    edge-space top random
+    dest!
+  else
+    edge-space right random
+    0 1 random-int edge-space top ifev
+    dest!
+  then
+  dest home home-dist in-range random-dest& ifg
+  0 shared!
+return
+
+steer:
+  dest position v- unitize 4 vs/ engine-velocity!
+  position dest 1.5 in-range if
+    shared if 0 1 write 0 2 write then   ;erase since nobody's here
+    new-dest& jump
+  then
+  shared if position dest 20 in-range and-if
+    engine-max-power engine-power!
+  then
+return
+
+#start
+  world-width edge-space - right!
+  world-height edge-space - top!
+  position home!
+  new-dest
+  do
+    position home home-dist in-range no-target& ifg
+    enemy-collision if
+      die sync
+    then
+    fire-robot-sensor sync
+    robot-found if robot-mass 9 > and-if
+      robot-distance robot-radius - 2 < if die sync then
+      robot-position dest!
+      energy robot-sensor-firing-cost > engine-max-power .03 ifev engine-power!
+      robot-position 2 write 1 write
+    else
+    no-target:
+      .05 engine-power!
+      steer
+      sync sync sync sync sync sync sync sync sync sync
+      steer
+      sync sync sync sync sync sync sync sync sync sync
+    then
+    steer
+    sync sync sync sync sync sync sync sync sync sync
+    steer
+    sync sync sync sync sync sync sync sync sync sync
+  forever
+
+#type Sentinel
+#color 909
+
+Can shoot even radially moving targets. Doesn't kill incoming missiles fast enough, though.
+
+(20020923) Slight range increase.
+(20021002) More weapon, to kill incoming missiles. And a little less growth and armor, to save cost.
+(20021002) Shorter sleep time.
+(20021003) Reduced useless max energy.
+(20021025-6) Reduced cost (armor, economy, reload time).
+(20021030) Reduced armor and unnecessary constructor. (The sensors take a lot of energy.)
+(20021112) Slightly randomized sleep time.
+
+#hardware
+  processor 15
+  armor 100
+  grenades 30 17 35
+  robot-sensor 17
+  energy 40 0
+  solar-cells .3
+  constructor .26
+#code
+
+#var next-scan
+
+#start
+  time 20 + next-scan!
+do
+  constructor-type nif 1 constructor-type! then
+  energy 35 >= constructor-max-rate 0 ifev constructor-rate!
+  time next-scan >= if
+    fire-robot-sensor sync
+    robot-found if
+      robot-velocity 2dup
+        robot-distance grenades-speed / vs* robot-position v+
+        position dist grenades-speed / vs* robot-position v+
+        position v- rect-to-polar fire-grenade
+      time grenades-reload-time + next-scan!
+    else
+      time 30 40 random-int + next-scan!
+    then
+  then
+forever
+#end

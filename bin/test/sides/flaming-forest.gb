@@ -1,0 +1,613 @@
+#side Flaming Forest
+#seed 7 2 9
+#author Alexander
+
+List of Names to use:
+Academy
+Archery Range
+Barracks
+Dock
+Government Center
+Granary
+Market
+Stable
+Storage Pit
+Temple
+House
+Wonder
+Small Wall
+Medium Wall
+Watch Tower
+Ballista Tower
+
+decoration 015 hline : Sets a type's decoration, which is one of none, dot, circle, square, triangle, cross, x, hline, vline, slash, or backslash.  
+
+#color FF0000
+#seed 1
+
+23rd April 2006: Began Coding
+23rd Apirl 2006: Various minor upgrates
+24th April 2006: Added Wanderer and Sentry Tower to allow side to expand its territory.
+24th April 2006: Removed Fortification, now produces Sentry Tower instead
+24th April 2006: Removed useless engines, made various improvements and changed seed
+25th April 2006: Modified Exploration Team
+
+Flaming Forest is a modification of the originial Wood's Empire, after realising the potential of combining Empire and Dark Forest.
+
+22/05/2006: Created Flaming Forest. Added Villager, extended Energy Transfer System, Removed Town Center.
+
+#code
+;Header Code
+
+;;Base Cells:
+#const type-towncenter 1
+#const type-farm 2
+#const type-fortification 7 ;;Actually Sentry Tower
+;;Exploration Cells:
+#const type-explorer 6
+#const type-sentrytower 7
+#const type-watchtower 8
+#const type-villager 9
+;;Battle Cells:
+;Suicide Strategy:
+#const type-seigeworkshop 5
+#const type-suicide 4
+;Crowd Strategy:
+#const type-Cavalry 10
+
+;;Food Priority
+#const foodp-towncenter 30
+#const foodp-explorer 45
+#const foodp-explorer-that-is-eating 90
+#const foodp-sentrytower 70
+#const foodp-seigeworkshop 40
+#const foodp-suicide 80
+#const foodp-Cavalry 100
+
+;;I have no idea what the documentation is talking about channel 1, so better use channel 2 onwards...
+#const radio-food 2 ;;Msg: Robot Location, Priority
+#const radio-enemy 3 ;;Msg: Robot Location, Bomb Size
+#const radio-crowd-sync 4 
+
+
+#type Town Center
+#color 000000 
+#decoration 000000 hline
+Type: Building
+23rd April 2006: Basic Implementation
+23rd April 2006: Added Armor
+24th April 2006: Now tries to keep at it's birthplace
+24th April 2006: Removed useless engines + armor repair + reduced unnessary energy storage + increased constructor
+25th April 2006: Further reduced unnessessary storage.
+25th April 2006: Removed solar cells, increased constructor. (Cost: 1829.1)
+25th April 2006: Cutting down on costs, completely re-wrote hardware section. (Cost: 1004.5)
+25th April 2006: larger armor and added repair-rate (Cost: 1383.0 / 1796.6)
+22/05/2006: No longer in use.
+#hardware
+  energy 300 0
+  constructor 1
+  radio send
+  solar-cells 0.35
+  processor 3
+  armor 400
+  repair-rate 1
+#code
+#vector home
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position foodp-towncenter 3 radio-food send
+  time foodp-towncenter + food-next-call-time!
+return
+#start
+position home!
+do
+  max-repair-rate repair-rate!
+  armor max-armor 20 - < if energy 10 > max-repair-rate 0 ifev repair-rate! then
+  constructor-type nif
+    type-fortification type-population type-farm type-population 2dup + ;;fort, farm, total
+	2dup ;;fort, farm, total, farm, total
+	/ ;;fort, farm, total, farm%
+	0.6 < if type-farm constructor-type! then
+	;;fort, farm, total
+	swap drop / ;;fort%
+	0.4 < if type-fortification constructor-type! then
+	;;empty stack	
+	0 1 random 0.05 < if type-towncenter type-population 3 < and-if type-towncenter constructor-type! then
+	type-seigeworkshop type-population 1 < if type-seigeworkshop constructor-type! then
+	type-sentrytower type-population 1 < if type-sentrytower constructor-type! then
+	type-watchtower type-population 1 < if type-watchtower constructor-type! then
+  then
+  constructor-max-rate constructor-rate!
+  energy 20 < if 
+	call-for-food^
+  then
+forever
+#type Farm
+#color AA6644 
+#decoration AA6644 hline
+Type: Building
+23rd April 2006: Basic Implementation
+23rd April 2006: Added Constructor + Armor
+24th April 2006: Removed useless engines.
+24th April 2006: Removed Armor repair + reduced solar cells
+24th April 2006: Removed useless constructor + futhur reduced solar cells
+25th April 2006: Reduced storage + increased syphon. (Cost: 1202.4)
+25th April 2005: Reducde Processor increase storage. (Cost: 1186.8)
+#hardware
+  processor 3
+  armor 40
+  energy 100 0
+  radio receive
+  solar-cells 0.5
+  syphon 0.7 12
+#code
+#vector friend-pos
+#var friend-pri
+#var radio-msgs
+#var friend-time
+#vector home
+#start
+position home!
+do
+  armor max-armor 20 - < if energy 10 > max-repair-rate 0 ifev repair-rate! then
+  radio-food messages radio-msgs!
+  radio-msgs 5 > if
+	beep radio-msgs print ;;Debugging... Alert that alot of people are low on energy...
+	1 4 random-int radio-food skip-messages
+  then
+  radio-food receive if
+    friend-pri! friend-pos!
+  then
+  friend-pos position dist syphon-range < if
+    friend-pos position v- rect-to-polar syphon-direction! syphon-distance!
+    syphon-max-rate negate syphon-rate!
+  then
+  radio-enemy clear-messages
+forever
+
+#type Fortification
+#color 880000
+#decoration 880000 hline
+Type: Building
+23rd April 2006: Basic Implementation
+23rd April 2006: Added Armor Repair & modified values for calling for food
+23rd April 2006: Modified Food Calling further and added randomizer to constructor
+24th April 2006: Reduced Constructor from .4 to .25
+24th April 2006: No longer using Fortification. Leaving it here for future reference.
+
+#hardware
+  solar-cells .25	
+  processor 10
+  energy 100 10
+  armor 250
+  repair-rate .1
+  constructor .25
+  grenades 80 23 50
+  robot-sensor 23
+  radio send
+#code
+#var food-next-call-time
+#var food-call-flag
+call-for-food:
+  time food-next-call-time < ifr
+  position energy 3 radio-food send
+  time 60 + food-next-call-time!
+return
+#start
+do
+  armor max-armor 20 - < if energy 10 > max-repair-rate 0 ifev repair-rate! then
+  type-farm type-population 2 > if 
+	constructor-type nif 
+	  0 1 random 0.7 < if 
+	    type-fortification constructor-type! 
+	  else 
+	    type-farm constructor-type! 
+	  then
+	then
+	energy 60 > 1 energy 20 > 0.5 0 ifev ifev constructor-rate!
+	call-for-food^
+  else
+    autoconstruct
+  then
+  50 periodic-robot-sensor if
+	fire-robot-sensor sync
+	robot-found energy 20 > and if
+	  robot-velocity robot-distance grenades-speed / vs* robot-position v+
+	  position v- rect-to-polar fire-grenade
+	  robot-position robot-bomb 3 radio-enemy send
+	then
+  then
+forever
+
+#type Suicide
+#color 880000
+#decoration 880000 dot
+Type: Unit
+(From Forest by Alexander)
+23rd April 2006: Adapted for Wood's Empire.	
+				Renamed to Suicide.
+23rd April 2006: Added radio to prevent Suicide from stopping in front of us and
+				blowing up when we least expect it. (Cost: 964.3)
+25th April 2006: Modified Launching Technique to reduce costs (Cost: 759.0)
+22/05/2006: Reduced Engine, reduced bomb, added solar cell, modified movement technique (Cost: 666.9)
+#hardware
+  solar-cells .1
+  engine .3
+  robot-sensor 10
+  energy 200 0
+  processor 1
+  bomb 500
+  radio send receive
+#code
+#vector dest
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position energy 3 radio-food send
+  time 80 + food-next-call-time!
+return
+#start
+do
+  radio-enemy receive if dest! drop then
+  position foodp-suicide 3 radio-food send
+  robot-found 5 40 ifev periodic-robot-sensor drop
+  robot-found if
+    energy 1 < if die then
+    robot-position robot-velocity seek-moving-location
+    robot-distance robot-radius - 2 < if die then
+  else
+    dest = nif dest seek-location then ;;Stupid, but it works...
+  then
+forever
+
+#type Siege Workshop
+#color 0000FF 
+#decoration 0000FF hline
+Type: Building
+23rd April 2006: Basic Implementation
+24th April 2006: Removed useless engines + modified construction code
+25th April 2006: Removed unnessesary armour-repair + reduced unnessessary storage. (Cost: 1089.4)
+25th April 2006: Cutting down on costs, completely re-wrote hardware section. (Cost: )
+#hardware
+  solar-cells .35
+  energy 300 0
+  constructor 1
+  radio send
+  processor 3
+  armor 100
+#code
+#vector home
+#var food-call-flag
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position foodp-seigeworkshop 3 radio-food send
+  time foodp-seigeworkshop + food-next-call-time!
+return
+#start
+position home!
+do
+  home seek-location
+  armor max-armor 20 - < if energy 10 > max-repair-rate 0 ifev repair-rate! then
+  constructor-type nif 
+    type-suicide constructor-type! 
+	type-seigeworkshop type-population 2 < if 
+	  type-seigeworkshop constructor-type! 
+	then
+  then
+  constructor-max-rate constructor-rate!
+  energy 20 < if 1 food-call-flag! then
+  food-call-flag if
+	call-for-food^
+	home seek-location
+	energy 60 > 0 1 ifev repair-rate!
+  then
+forever
+
+#type Explorer
+#color 000000
+#decoration 000000 backslash
+Type: Unit
+24th April 2006: Modified Forest's Herbivore for Wood's Empire
+				Modified Constructor selection code
+24th April 2006: Added Food Hashtable
+24th April 2006: Got fed up seeing them dying... focused their 
+		food scans towards "home" so that they have higher 
+		chances of going towards safety. 
+24th April 2006: Removed home-hugging attitude + hashtable. (Cost: 633.2)
+
+#hardware
+	processor 5
+	energy 300 25
+	armor 150
+	engine 0.05
+	constructor 1
+	eater 2
+	food-sensor 10
+	radio send
+#code
+#var food-call-flag
+#var food-next-call-time
+
+#vector home
+#vector dest
+new-dest:
+  0 world-width random 0 world-height random dest!
+return
+call-for-food:
+  time food-next-call-time < ifr
+  position foodp-explorer 3 radio-food send
+  time foodp-explorer + food-next-call-time!
+return
+call-for-food-2:
+  time food-next-call-time < ifr
+  position foodp-explorer-that-is-eating 3 radio-food send
+  time foodp-explorer-that-is-eating + food-next-call-time!
+return
+#start
+sync sync sync sync sync sync sync sync sync sync
+position home!
+new-dest
+do
+  constructor-type nif
+    0.3 type-explorer balance-type
+    0.7 type-sentrytower balance-type
+  then
+  autoconstruct
+  ;home position v- unitize ;;Direction of home from here.
+  ;rect-to-polar ;;Stack: Distance (Magnitude), Direction (Angle)
+  ;robot-sensor-focus-direction! drop
+  15 periodic-food-sensor drop
+  food-found if 
+	;;claim-food energy 20 < or if
+	do
+	  15 periodic-food-sensor drop
+	  food-position seek-location
+	  autoconstruct
+	  call-for-food-2^ ;;In the unlikely event that a farm may be near.
+	food-found while-loop
+	;else
+	  ;dest seek-location
+	  ;position dest 3 in-range new-dest& ifc
+	;;then
+  else
+    ;dest seek-location
+    ;position dest 3 in-range new-dest& ifc
+	0 engine-power! ;;Wait for food
+  then
+  call-for-food^ ;;In the unlikely event that a farm may be near.
+forever
+
+#type Sentry Tower
+#color 00FFFF
+#decoration 00FFFF backslash
+Type: Building
+24th April 2006: Modified version of Fortification (Cost: 1700+)
+25th April 2006: Added enemy-syphon (Cost: 2017.5)
+25th April 2006: Tweaked hardware and added blaster. (Cost: 2007.3)
+25th April 2006: Transfered Syphon to Watch Tower, increased armor (Cost: 1818.5)
+22/05/2006: Modified Hardware and construction code. (Cost: )
+#hardware
+	processor 15
+	energy 400 0
+	armor 500
+	solar-cells 0.2
+	constructor 1
+	grenades 40 23 50
+	repair-rate 2
+	robot-sensor 21
+	radio send
+#code
+#var food-call-flag
+#var food-next-call-time
+#vector home
+#var num-of-units-constucted
+#var enemy-here-flag 0
+call-for-food:
+  time food-next-call-time < ifr
+  position foodp-sentrytower 3 radio-food send
+  time foodp-sentrytower + food-next-call-time!
+return
+#start
+;sync sync sync sync sync sync sync sync sync sync
+position home!
+do
+    max-repair-rate repair-rate!
+    ;armor max-armor 20 - < if energy 10 > max-repair-rate 0 ifev repair-rate! then
+    call-for-food^ ;;In the unlikely event that a farm may be near.
+	constructor-type nif 
+	  type-SentryTower type-population type-farm type-population 2dup + ;;fort, farm, total
+	  2dup ;;fort, farm, total, farm, total
+	  / ;;fort, farm, total, farm%
+	  0.6 < if type-farm constructor-type! then
+	  ;;fort, farm, total
+	  swap drop / ;;fort%
+	  0.4 < if type-SentryTower constructor-type! then
+	  ;;empty stack	
+	  0 1 random 0.1 < type-villager type-population 3 < or if type-villager constructor-type! then
+	  type-seigeworkshop type-population 1 < if type-seigeworkshop constructor-type! then
+	  type-watchtower type-population type-SentryTower type-population < if type-watchtower constructor-type! then
+	then
+	autoconstruct
+  enemy-here-flag 0 = if 30 periodic-robot-sensor and-if
+    robot-found if 1 enemy-here-flag! robot-position robot-bomb 3 radio-enemy send then
+  then
+  enemy-here-flag if
+     10 periodic-robot-sensor if
+	robot-found if
+	  ;robot-velocity robot-distance grenades-speed / vs* robot-position v+
+	  ;position v- rect-to-polar fire-grenade
+	  robot-position robot-velocity lead-grenade
+	  robot-position robot-bomb 3 radio-enemy send
+	else
+	  0 enemy-here-flag!
+	then
+     then
+  then
+forever
+#type Watch Tower
+#color 00FF00
+#decoration 00FF00 backslash
+Type: Building
+25th April 2006: Take some weight off the Sentry tower's shoulders. (Cost: 838.9)
+22/05/2006: Changed to grenades (Cost: )
+
+#hardware
+	processor 3
+	armor 100
+	energy 1000 5
+	grenades 20 8 50
+	robot-sensor 21
+	enemy-syphon 1 20
+	radio send receive
+#code
+#var food-call-flag
+#var food-next-call-time
+#vector home
+#var enemy-here-flag 0
+call-for-food:
+  time food-next-call-time < ifr
+  position foodp-sentrytower 3 radio-food send
+  time foodp-sentrytower + food-next-call-time!
+return
+#start
+;sync sync sync sync sync sync sync sync sync sync
+position home!
+do
+  constructor-type nif 
+    0 1 random 0.3 < if 
+      type-watchtower constructor-type! 
+    else
+      type-farm constructor-type!
+    then
+  then
+  autoconstruct
+  enemy-here-flag 0 = if 30 periodic-robot-sensor and-if
+    robot-found if 1 enemy-here-flag! robot-position robot-bomb 3 radio-enemy send then
+  then
+  energy 30 < if call-for-food^ then
+  enemy-here-flag if
+     10 periodic-robot-sensor if
+	robot-found if
+	  robot-position robot-velocity lead-grenade
+	  robot-position robot-bomb 3 radio-enemy send
+	  robot-position position v- rect-to-polar
+	  enemy-syphon-direction! enemy-syphon-distance! 
+	  enemy-syphon-max-rate enemy-syphon-rate!
+	else
+	  0 enemy-here-flag!
+	  0 enemy-syphon-rate!
+	then
+     then
+  then
+forever
+
+#type Villager
+0.1 - Original Version
+0.2 - Modified from parent lock on to optional lock on.
+22/05/2006: Transfered from Dark Forest to Flaming Forest. Renamed from Initiate to Villager (Cost: )
+#color 000000
+#decoration 000000 cross
+#hardware
+engine 0.05    ;;c 
+processor 10   ;;c  20
+energy 600 50  ;;c  80
+armor 150      ;;c  80
+repair-rate .2 ;;c 250
+food-sensor 5  ;;c
+eater 2
+syphon 2 2
+radio receive send
+#code
+#vector home-location
+#vector wander-location
+#var last-armor
+
+#var food-next-call-time
+call-for-food:
+  time food-next-call-time < ifr
+  position id 3 radio-food send
+  time 20 0 5 random-int + + food-next-call-time!
+return
+
+armor-repair: 80 energy < max-repair-rate 0 ifev repair-rate! return
+new-wander-location: 0 world-width random 0 world-height random wander-location! return
+
+check-armor:
+armor-repair^
+armor last-armor < if
+  position 100 3 radio-enemy send ;;Send enemy notice
+  go-to-safety^ ;;Scram!!!
+then
+armor last-armor!
+return
+
+#start
+;;Init
+position home-location!
+new-wander-location^
+armor last-armor!
+
+get-food:
+0 syphon-rate!
+do
+  check-armor^
+  eaten not if 44 periodic-food-sensor drop then ;;If last fired is more than 44 frames and has not eaten, fire food sensor
+  food-found if
+    food-position seek-location
+  else
+    wander-location seek-location
+    position wander-location 3 in-range if new-wander-location^ then
+  then
+energy 400 > until-loop
+feed& jump
+
+go-to-safety:
+do
+  call-for-food^
+  armor-repair^
+  home-location position 10 in-range nif 
+    home-location seek-location
+  else
+    0 engine-power!
+  then
+armor 110 < while-loop
+armor last-armor!
+return
+
+#var friend-id
+#vector friend-position
+#var lock-id
+#var forced-lock-on
+feed:
+0 lock-id!
+disable-lock-on^
+syphon-max-rate negate syphon-rate!
+do
+  disable-lock-on^ ;;Just in case we are syphoning to somewhere that does not exist.
+  armor-repair^
+  radio-food messages if
+    radio-food receive drop friend-id! friend-position!
+	lock-id friend-id = feed-need-to-change& ifg
+	forced-lock-on feed-no-need-to-change& ifg
+	0.3 random-bool if 1 forced-lock-on! feed-need-to-change& jump then ;;Give chance...
+	friend-position position dist wander-location position dist > feed-no-need-to-change& ifg
+	feed-need-to-change:
+	friend-position wander-location!
+	friend-id lock-id!
+	feed-no-need-to-change:
+  then
+  position wander-location v- unitize 2 vs* wander-location v+ seek-location
+  wander-location position v- rect-to-polar syphon-direction! syphon-distance!
+energy 100 < until-loop
+radio-food clear-messages
+get-food& jump
+
+#var next-check-time
+disable-lock-on:
+  time next-check-time < ifr
+  syphoned nif 0 forced-lock-on! then
+  time 200 + next-check-time!
+return
+#end

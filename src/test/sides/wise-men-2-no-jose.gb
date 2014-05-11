@@ -1,0 +1,574 @@
+#side Wise Men (without Jose)
+#author Matt Burkholder
+#date 23 July 2003
+(July 24) Started with Day Trader and began writing this side.  The idea is to have three wanderer types all based off of Day Trader.  They will hang around the 'home' position but since they are all wanders it will move.  It should create kind of a nomadic swarm.  One type will be a gatherer/constructor.  The second will be a fighter type. And the third a shielded blocker.
+
+
+2/9/4 All cells have been shrunk from thier previous sizie.
+2/9/4 Constructors now have small robot sensor. They fire it when they are damaged and run away.
+2/9/4 Fighters now inspect targets in two passes.  In the first they ignore all shielded targets.  In the second they ignore heavely shielded targets.  
+ 2/9/4 Blockers have an enemy-syphon and use it to steal energy from enemies.  They continue t o track targets and steal energy when no shots are being fired, but they drop shields.
+2/9/4  Improved and used fight-while-eating on both fighter and blocker type.
+2/14/4  Trying duel weapons on fighters.
+2/14/4  Gathers now detect friendly shots to try to avoid combat areas.
+2/17/7  More Improvements to fight while eating.
+Devon 11/13/5 Removed Jose.
+Devon 11/14/5 Removed extra 0 in Jack's Construct, which was causing stack overflow.
+
+#seed 1 2
+
+Gatherer/Builder type
+
+#color B06
+#type Jim
+#color 800
+
+#hardware
+processor 20
+constructor 0.66
+energy 300 50
+eater 1.5
+solar-cells 0.02
+armor 180
+engine 0.07
+repair-rate 0.08
+food-sensor 9 1
+robot-sensor 2 1
+shot-sensor 4.5 1
+radio send receive
+
+
+#code
+
+#var food-sensor-now
+#var robot-sensor-now
+#var shot-sensor-now
+#var side-population
+#var high-population
+#var food-scan-distance
+#var Damage-Time
+#var Last-Armor
+#var World-Radius
+#var shot-firing-delay
+#var No-Shots
+
+#vector Dest 
+#vector Target
+#vector Target-Velocity
+#vector Home
+#vector Center
+#vector aim-point
+
+#const min-construct-energy 50
+#const min-scan-energy 20
+#const min-fight-energy 10
+#const Home-Channel 1
+#const Target-Channel 2
+
+  1 shot-sensor-sees-friendly!
+ Armor Last-Armor!
+ position Home! 
+ World-width 2 / world-height 2 / Center!
+ Center min 5 - World-Radius!
+ position target!
+ ;0 World-Width random-int 0 World-Height random-int target!
+ Food-sensor-range 0.7 * food-scan-distance!
+ Initial-Construct^
+ 
+Feed: 
+   0 engine-power!
+     Do
+          Construct^
+          Repair^
+          Read-Home^
+          Scan-Robots^
+          Scan-Food^
+          Seek-Dest^
+          Scan-Shots^
+          ;Check-Comms^
+          Check-Damage^
+     forever
+
+Check-Damage:
+     Armor Last-Armor < if
+          position Home side-population 2.5 * 10 max in-range if
+               time robot-sensor-now!
+               time 350 + Damage-Time!
+          else
+               home position v- 0.5 vs* position v+ dest!
+     then then 
+     armor Last-Armor!
+return
+
+Transmit:
+          target 2 Target-Channel send target vprint
+return
+
+Check-Comms:
+    Target-Channel receive energy min-fight-energy > and if
+        target! stack dropn
+    else
+        stack dropn return
+    then
+
+
+
+Initial-Construct:
+     construct^
+return
+
+Construct: 
+     2 type-population dup high-population!
+     1 type-population + side-population!
+     energy min-construct-energy > energy constructor-remaining 1.3 * > or
+     constructor-max-rate 0 ifev constructor-rate!
+     constructor-type nif 
+          0 side-population random-int dup 1 type-population >= if
+               1 constructor-type! 
+          else
+               2 constructor-type!
+          then then
+return 
+
+Repair:
+     armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+Return
+
+Read-Home:
+     Home-Channel messages nifr
+     Home-Channel messages 2 - Home-Channel skip-messages
+     Home-Channel receive if
+          Home!
+     Then
+Return
+
+Write-Home:
+     Home side-population vs* position v+ 
+     side-population 1 + vs/ 2dup Home!
+     2 Home-Channel send
+return
+
+
+Scan-Food:
+     time food-sensor-now < friendly-collision not and 
+     energy food-sensor-firing-cost < eaten or or ifr 
+     write-home
+     friendly-collision if
+          random-angle food-sensor-focus-direction!
+          Food-scan-distance food-sensor-focus-distance!
+     Else
+          Home position  v- rect-to-polar food-sensor-focus-direction!
+          Side-population sqrt - food-sensor-focus-distance!
+     then
+     fire-food-sensor sync
+     food-found if
+          18000 food-sensor-now!
+          Do food-position seek-location sync speed until-loop 
+          Food-position dest!
+     else 
+          time 50 + food-sensor-now!  
+          0 0 dest! 
+   then
+Return
+
+
+Scan-Shots:
+   time shot-sensor-now < energy min-scan-energy < or ifr
+   fire-shot-sensor sync
+   shot-found if 
+       shot-side side = if
+          shot-velocity unitize vnegate 2dup ;two unit vectors oposite shot-velocity
+          swap negate 2dup ;two unit vectors perpendicular to shot-velocity
+          shot-position position v- dot 0 > if vnegate then
+          v+ 8 vs* position v+ dest! Seek-Dest^
+       else
+          shot-velocity unitize 2dup shot-distance vs*
+          shot-position v+ aim-point!
+          -12 vs* shot-position v+ target!
+          target position v- unitize swap negate 2dup
+          aim-point position v- dot 0 > if vnegate then
+          10 shot-distance - vs*
+          position target  v- unitize shot-distance 4 + vs* v+
+          position v+ dest!
+          Seek-Dest^ Transmit^
+       then then
+    time 10 + shot-sensor-now!
+   18000 food-sensor-now!
+return 
+
+Scan-Robots:
+   time robot-sensor-now < armor max-armor = or enemy-collision not and
+   energy min-scan-energy < or ifr
+   fire-robot-sensor sync
+   robot-found if
+      robot-position target!
+      position robot-position v- unitize 2 vs*
+      robot-velocity v- position home v- unitize v+
+      5 vs* position v+ dest!
+      Seek-Dest^ Transmit^
+   then
+   time 20 + robot-sensor-now!
+   18000 food-sensor-now!
+return      
+
+
+Seek-Dest:
+     energy 1 < if 0 engine-power! return then
+     dest or if 
+          dest position radius in-range nif
+               dest seek-location 
+          else 
+               0 0 engine-velocity! 0.05 engine-power! then
+     else
+          target seek-location
+     then
+     speed eaten or wall-collision not and nif
+          time food-sensor-now!  
+          position center World-radius in-range if
+              -10 10 random-int -10 10 random-int
+          else
+              10 15 random-int center position v- angle random-angle 3 / + polar-to-rect
+          then 
+          position v+
+          2 max world-height 2 - min swap 2 max world-width 2 - min swap target!
+     then
+return
+
+Tangent:   ;Tangent to target Towards the Center
+     Target position v- unitize swap negate 2dup
+     Center position v- dot 0 < if vnegate then
+return
+
+Tangent2:  ;Tangent to Center Away from Target
+     Center position v- unitize swap negate 2dup
+     Target position v- dot 0 > if vnegate then
+Return
+
+Tangent3:  ;Tangent to target Away from dest
+     Target position v- unitize swap negate 2dup
+     Dest position v- dot 0 > if vnegate then
+return
+
+
+;Fighter type
+
+#type Jack
+#color 804
+
+#hardware
+processor 20
+energy 500 50
+eater 1.0
+solar-cells 0.02
+armor 300
+engine 0.10
+repair-rate 0.14
+food-sensor 10
+robot-sensor 14 5
+shot-sensor 5
+;for grenade weapons
+;blaster 0.01 10 1
+;grenades 10 10 5
+;for blaster weapons
+;grenades 0.0001 10 10
+;blaster 16 10 8
+;for both weapons
+grenades 10 10 10
+blaster 10 10 10
+radio send receive
+
+
+#code
+
+#var food-sensor-now
+#var robot-sensor-now
+#var shot-sensor-time
+#var side-population
+#var high-population
+#var food-scan-distance
+#var robot-scan-distance
+#var Damage-Time
+#var Last-Armor
+#var World-Radius
+#var shot-firing-delay
+#var No-Shots
+
+#vector Dest 
+#vector Target
+#vector Target-Velocity
+#vector Home
+#vector Center
+
+#const min-construct-energy 400
+#const min-scan-energy 20
+#const min-fight-energy 200
+#const min-help-energy 450
+#const Home-Channel 1
+#const Target-Channel 2
+
+
+ Armor Last-Armor!
+ position Home! 
+ World-width 2 / world-height 2 / Center!
+ Center min 5 - World-Radius!
+ position target!
+ Food-sensor-range 0.7 * food-scan-distance!
+ robot-sensor-range 0.6 * robot-scan-distance!
+ Initial-Construct^
+ 
+Feed: 
+   0 engine-power!
+     Do
+          Construct^
+          Repair^
+          Read-Home^
+          Scan-Robots^
+          Scan-Food^
+          Seek-Dest^
+          Scan-Shots^
+          Check-Comms^
+          Check-Damage^
+     forever
+
+Check-Damage:
+     Armor Last-Armor < if
+          position Home side-population 2.5 * 10 max in-range if
+               time robot-sensor-now!
+               time 350 + Damage-Time!
+          else
+               home position v- 0.5 vs* position v+ dest!
+     then then 
+     armor Last-Armor!
+return
+
+Transmit:
+          target 2 Target-Channel send target vprint
+return
+
+Check-Comms:
+    Target-Channel receive energy min-help-energy > and if
+        target! stack dropn
+    else
+        stack dropn return
+    then
+
+Track:
+    target seek-location sync sync
+    do
+       time robot-sensor-now > if
+          fire-robot-sensor sync
+          robot-found if
+             robot-position target! 
+                     Transmit^ Attack& jump
+          else
+             fire-shot-sensor sync
+             shot-found  if 
+                shot-position shot-velocity unitize -15 vs* v+ target!
+       then then 
+           time 10 + robot-sensor-now! then
+       target seek-location
+    target position 5 in-range energy min-fight-energy < or until-loop
+    0 food-sensor-now!
+return 
+
+Attack:
+     0 constructor-rate!
+     0 shot-firing-delay!
+     0 No-Shots!
+     do 
+          ;grenades-cooldown shot-firing-delay <= if
+          blaster-cooldown shot-firing-delay <= if
+               fire-robot-sensor sync robot-found nifr
+               do 
+                    robot-shield-fraction 0.95 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop 
+               ;grenades-cooldown shot-firing-delay <= if
+               blaster-cooldown shot-firing-delay <= if
+                   do
+                      robot-shield-fraction 0.3 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop then
+
+               robot-scan-distance robot-sensor-focus-distance!
+               home position v- angle robot-sensor-focus-direction!
+
+               Robot-position 2dup position v- unitize 
+               blaster-range 0.9 * vs* v- target!
+               Position center robot-position center dist World-Radius max in-range if 
+                    robot-velocity target-velocity!
+               Else
+                    Tangent^ target-velocity!
+               then
+          then
+          target target-velocity seek-moving-location
+        Repair^
+     energy 20 < No-Shots 10 > or until-loop
+     0 food-sensor-now!
+     energy 20 < if Home dest! then
+     0 robot-sensor-focus-distance!
+Return
+
+Check-Next-Bot:
+     Next-robot dup not No-Shots + No-Shots! return
+
+;Fire-Shot: ;grenades
+     robot-direction fire-blaster
+     robot-position position v- 2dup
+     robot-velocity robot-distance grenades-speed / vs* v+ 
+     norm grenades-speed / robot-velocity velocity v- rot vs* v+
+     rect-to-polar over grenades-range > if
+         2drop 0 return then
+     do grenades-cooldown while-loop
+     fire-grenade
+     time robot-sensor-time - shot-firing-delay! 
+     0 No-Shots!
+0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+;Fire-Shot: ;blaster
+     robot-position position v- 2dup
+     robot-velocity robot-distance blaster-speed / vs* v+ 
+     norm blaster-speed / robot-velocity velocity v- rot vs* v+
+     rect-to-polar swap blaster-range > if
+         drop 0 return then
+     do blaster-cooldown while-loop
+     fire-blaster
+     time robot-sensor-time - shot-firing-delay! 
+     0 No-Shots!
+0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+Fire-Shot: ;dual
+     robot-position position v- 2dup
+     robot-velocity robot-distance grenades-speed / vs* v+ 
+     norm grenades-speed / robot-velocity velocity v- rot vs* v+
+     rect-to-polar over grenades-range > if
+         2drop 0 return then
+     do grenades-cooldown while-loop
+     dup fire-blaster fire-grenade
+     time robot-sensor-time - shot-firing-delay! 
+     0 No-Shots!
+0 return  ;Leave a zero on the stack so the robot-loop drops out
+
+Fight-While-Eating: 
+     0 shot-firing-delay!
+     Do
+          Repair^
+          Scan-Food^
+          Seek-Dest^
+          blaster-cooldown shot-firing-delay <=
+          energy robot-sensor-firing-cost blaster-firing-cost + 5 + >
+          time robot-sensor-now > and and if
+               fire-robot-sensor sync robot-found nifr
+               do 
+                    robot-shield-fraction 0.3 > Fire-Shot& Check-Next-Bot& ifec 
+               while-loop 
+               robot-distance robot-sensor-focus-distance!
+               Robot-direction robot-sensor-focus-direction!
+          Then
+     energy min-fight-energy < while-loop
+return
+  
+
+Initial-Construct:
+     ;constructor-type nif 1 constructor-type! then
+return
+
+Construct: 
+     2 type-population dup high-population!
+     1 type-population + side-population!
+return
+
+Repair:
+     armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+Return
+
+Read-Home:
+     Home-Channel messages nifr
+     Home-Channel messages 2 - Home-Channel skip-messages
+     Home-Channel receive if
+          Home!
+     Then
+Return
+
+Write-Home:
+     Home side-population vs* position v+ 
+     side-population 1 + vs/ 2dup Home!
+     2 Home-Channel send
+return
+
+Scan-Robots:
+     time robot-sensor-now < energy min-scan-energy < or ifr
+     fire-robot-sensor sync
+     robot-found if do
+        robot-shield-fraction 0.3 > if
+            robot-position target!  Transmit^
+            energy min-fight-energy > Attack& Fight-While-Eating& ifeg
+        then
+     next-robot while-loop then 
+     time 50 + robot-sensor-now!
+return 
+
+Scan-Food:
+     time food-sensor-now < friendly-collision not and 
+     energy food-sensor-firing-cost < energy max-energy 10 - > eaten or or or ifr 
+     write-home
+     friendly-collision if
+          random-angle food-sensor-focus-direction!
+          Food-scan-distance food-sensor-focus-distance!
+     Else
+          Home position  v- rect-to-polar food-sensor-focus-direction!
+          Side-population sqrt - food-sensor-focus-distance!
+     then
+     fire-food-sensor sync
+     food-found if
+          18000 food-sensor-now!
+          Do food-position seek-location sync speed until-loop 
+          Food-position dest!
+     else 
+          time 50 + food-sensor-now!  
+          0 0 dest! 
+   then
+Return
+
+
+Scan-Shots:
+   time Damage-Time > energy min-scan-energy < or ifr
+   fire-shot-sensor sync
+   shot-found if
+          shot-position shot-velocity unitize -15 vs* v+ target! 
+          Transmit^ 
+          Energy min-fight-energy > Track& ifg
+     then
+return
+
+Seek-Dest:
+     energy 1 < if 0 engine-power! return then
+     dest or if 
+          dest position radius in-range nif
+               dest seek-location 
+          else 
+               0 0 engine-velocity! 0.05 engine-power! then
+     else
+          target seek-location
+     then
+     speed eaten or wall-collision not and nif
+          time food-sensor-now! 
+          position center World-radius in-range if
+              -15 15 random-int -15 15 random-int
+          else
+              10 15 random-int center position v- angle random-angle 3 / + polar-to-rect
+          then
+           position v+ 2 max world-height 2 - min swap 2 max world-width 2 - min swap target!
+     then
+return
+
+Tangent2:
+     Center position v- unitize negate 2dup
+     Target position v- dot 0 > if vnegate then
+Return
+
+Tangent:
+     Target position v- unitize negate 2dup
+     Center position v- dot 0 < if vnegate then
+return
+
+
+#end 

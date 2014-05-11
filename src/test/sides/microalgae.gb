@@ -1,0 +1,50 @@
+#side MicroAlgae
+#author Tyson Hoffman
+#date Begun on 3/2/06
+
+#color A0FFA0
+
+#seed 1
+
+#type MicroAlgae
+
+#hardware
+processor 5
+solar-cells .15
+armor 20
+energy 2 0
+constructor .15
+force-field .05 .25
+#code
+#var life;
+#var dir;
+	max-armor life!
+
+Main:
+	1 constructor-type!
+	constructor-max-rate constructor-rate!
+	
+	armor life < if
+		armor life!
+		0 constructor-rate!
+		position 2 1 send
+		random-angle dir!
+		position dir set-force-field
+		sync sync sync sync sync sync sync sync sync sync
+		0 force-field-power!
+		1 clear-messages
+	then
+
+	1 messages 0 > if
+		1 receive drop 2dup position v- angle pi + dir!
+		position dist 20 > Main& ifg
+		0 constructor-rate!
+		position dir set-force-field
+		sync sync sync sync sync sync sync sync sync sync
+		0 force-field-power!
+		1 clear-messages
+	then
+	
+	Main& jump
+
+#end

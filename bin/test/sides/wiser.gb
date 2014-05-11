@@ -1,0 +1,230 @@
+#side Wiser
+#author Warren
+#date Started 11/29/02
+#color 999
+
+#type It Runs Away
+#color 999
+#hardware
+
+constructor 1
+eater 1.9
+solar-cells 0.02
+food-sensor 15 1
+
+energy 500 50
+armor 200
+processor 15
+engine 0.05
+
+grenades 15 9 20
+robot-sensor 9 1
+
+repair-rate 0.03
+shot-sensor 10 1
+
+#code
+
+#vector better-place
+#var migration-priority
+
+construct:
+constructor-type nif
+	1 type-population
+	time 1000 / +
+	world-size 25 vs/ *  ;16 for standard world
+	0 10 random +
+	< 1 2 ifev constructor-type!
+then
+
+energy 200 > constructor-max-rate 0 ifev constructor-rate!
+return
+
+defend:
+ energy armor > max-repair-rate 0 ifev repair-rate!
+ shot-sensor-time time 20 - < energy 30 > and if
+  fire-shot-sensor sync
+  #const shot-run-distance 10
+  shot-found if
+   shot-run-distance
+   shot-velocity -100 vs* shot-position position v- v+ vnegate angle
+   polar-to-rect better-place v+
+   5 restrict-position^ better-place!
+   migration-priority 10 armor 50 / - + migration-priority!
+  then
+ then
+return
+
+fight:
+ robot-sensor-time time 20 - < energy 40 > and if
+  fire-robot-sensor sync
+  robot-found if
+   #const robot-run-distance 8
+   robot-run-distance
+   robot-velocity -10 vs* robot-position position v- v+ vnegate angle
+   polar-to-rect better-place v+
+   5 restrict-position^ better-place!
+   4 shot-found 2 0 ifev + armor 50 / -
+   0 max migration-priority + migration-priority!
+   1 robot-direction polar-to-rect robot-velocity dot 0.01 <
+   shot-found or if
+    robot-position
+    robot-velocity velocity v- robot-distance grenades-speed / vs* v+
+    position v- rect-to-polar fire-grenade
+   then ;closing or firing
+  then ;found
+ then ;time-to-fire
+return
+
+think:
+; better-place position v- rect-to-polar fire-grenade
+ migration-priority 0.98 * migration-priority!
+ better-place 0.99 vs* position 0.01 vs* v+
+ 0.1 random-angle polar-to-rect v+
+ 5 restrict-position better-place!
+return
+
+#var border
+restrict-position:  ;x y border -> x' y'
+ border!
+ border max world-height border - min
+ swap
+ border max world-width border - min
+ swap
+return
+
+#start
+position 10 random-angle polar-to-rect v+ 5 restrict-position^ better-place!
+0 migration-priority!
+
+#var meal-ready
+Begin-browsing:
+0 meal-ready!
+Loop:
+ food-sensor-time time 30 - <
+ meal-ready not and if
+  better-place position v- rect-to-polar food-sensor-focus-direction! food-sensor-focus-distance!
+  fire-food-sensor sync
+  food-found if 1 meal-ready! then
+ then
+ meal-ready if
+  food-position seek-location
+  food-position position dist radius 0.1 + < eaten not and if
+   0 meal-ready!
+  then
+ else
+  0 engine-power!
+ then
+ think^
+ defend^
+ fight^
+ construct^
+ migration-priority 15 >
+ better-place position dist 10 > and if
+  Begin-running& jump
+ else
+  Loop& jump
+then
+
+Begin-running:
+
+Run-loop:
+ better-place position v- 0.05 vs* engine-velocity!
+ engine-max-power engine-power!
+ think^
+ defend^
+ fight^
+ construct^
+  better-place position dist 5 <
+  migration-priority 10 <
+ or if
+  Begin-browsing& jump 
+ else
+  Run-loop& jump
+then
+
+#type Missile
+#color f00
+#hardware
+processor 15
+energy 300 300
+armor 150
+
+engine 0.15
+
+shield 0.4
+
+bomb 1300
+
+robot-sensor 10
+shot-sensor 8
+
+solar-cells 0.05
+
+#code
+#vector target
+#vector target-v
+#vector wander-loc
+
+#const shot-chase-distance 10
+
+new-wander-loc:
+	-20 world-width 20 + random -20 world-height 20 + random
+	restrict-position^ wander-loc! return
+
+restrict-position: ; vector -> vector
+world-height min 0 max swap world-width min 0 max swap return
+
+set-shot-chase: ;stack: empty -> empty
+			shot-chase-distance
+			shot-velocity -100 vs* shot-position position v- v+ angle
+			polar-to-rect position v+
+			restrict-position^ target! 0 0 target-v!
+return
+
+choose-next-state: ; ->
+	robot-sensor-time 20 + time < if
+		fire-robot-sensor fire-shot-sensor sync
+		armor max-armor / 0.5 > if
+		shot-found and-if
+		shot-velocity norm and-if
+			set-shot-chase^
+			drop charge& jump
+		then
+		robot-found 1 > robot-mass 30 > or if
+			robot-distance 2 < if die sync then
+			robot-position target!
+			robot-velocity target-v!
+			drop charge& jump
+		then
+		drop wander& jump
+	then ;time to scan
+jump
+	
+#start
+new-wander-loc^
+begin-wandering:
+wander:
+	0 shield!
+	wander-loc position v- rect-to-polar swap 0.05 * 0.1 min swap polar-to-rect
+	target-v v+ engine-velocity!
+	engine-max-power engine-power!
+	wander-loc position dist 5 < new-wander-loc& ifc
+	energy max-energy / 0.1 < begin-nursing& ifg
+wander& choose-next-state& jump
+
+begin-charging:
+charge:
+	target seek-location
+	energy 30 > max-shield 0 ifev shield!
+charge& choose-next-state& jump
+
+begin-nursing:
+	0 engine-power!
+	0 shield!
+do
+	sync sync sync sync sync sync sync sync sync sync
+	energy max-energy / 0.4 > begin-wandering& ifg
+forever
+
+#end

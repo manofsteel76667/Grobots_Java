@@ -1,0 +1,84 @@
+#side Bacteria
+
+A simple Microb clone.
+
+#author Devon
+#color AFA
+#seed 1 2 2
+
+#type Cyanobacterium
+#color 0FF
+#hardware
+  solar-cells .18
+  constructor .18
+  armor 10
+  processor 1
+#code
+do
+  constructor-type nif
+    1 2 random-int constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+forever
+
+#type Escherichia
+#color 970
+#hardware
+  eater 1
+  constructor .7
+  energy 200 10
+  armor 90
+  processor 8
+  food-sensor 6
+  shot-sensor 5
+  engine .02
+#code
+
+#vector dest
+
+new-dest:
+  0 world-width random 0 world-height random dest!
+return
+
+construct:
+  constructor-type if
+    energy 180 constructor-remaining 20 - min >=
+      constructor-max-rate 0 ifev constructor-rate!
+  else energy 180 > if
+    1 2 random-int constructor-type!
+    constructor-max-rate constructor-rate!
+  then then
+return
+
+#start
+main:
+  new-dest
+do
+  eaten nif time food-sensor-time 90 + >= and-if
+    fire-food-sensor sync
+  then
+  food-found if
+    food-position seek-location
+  else 
+    position dest 5 in-range if
+      new-dest
+    then
+    dest seek-location
+  then
+  energy 10 > if time shot-sensor-time 10 + >= and-if
+    fire-shot-sensor sync
+    shot-found run& ifg
+  then
+  construct
+forever
+
+run:
+  shot-velocity unitize 15 vs* position v+
+    0 max world-width min swap 0 max world-height min swap dest!
+do
+  dest seek-location
+  construct
+position dest 4 in-range until-loop
+main& jump
+
+#end

@@ -1,0 +1,368 @@
+#side Unproductive 3
+#author Devon
+May-June 2006 (with predecessors since 2003)
+#color 933
+
+Inspired by Productive, of course. Also influenced by MicroAlgae
+and several unfinished sides of mine.
+
+Productive's corner-hiding is very effective, but it often runs
+into enemies and dies on the way. Unproductive's factories hide
+next to walls only when the wall is close enough that there won't
+be anyone in the way. They also run from shots, enemies, and
+injuries (like MicroAlgae).
+
+I made several attempts at sides that stay away from enemies,
+mostly using long-range robot-sensors, which were too expensive.
+I started one that ran away from spotters' reports, but didn't
+finish it until MicroAlgae demonstrated it could be effective.
+
+The factories need someone to watch for enemies, so I used
+fighter/gatherers. These two functions haven't often been combined
+in one type, but it works surprisingly well. The fighters are
+well-fed, and the gatherers aren't helpless. The downside is that
+every lost battle cripples the economy. The cost pressure of
+having combat + eating + syphon in one type is also annoying.
+
+The medium-short range blaster has most of the advantages of very
+short range: it's cheap,  it's hard to miss with, and longer-range
+enemies tend to run away while trying to keep their distance. It
+can hit medium-range opponents, and can kill Commune's Revenge from a
+safe distance. Because the fighters rigidly control their range,
+friendly fire is only a minor problem.
+
+I first tried these short-range fighter/gatherers in another side,
+which even in an unfinished state could stand up to the Top Nine.
+Then I completely broke it in an attempt to add active dodging. :(
+I've recreated its fighter/gatherers here (with syphons, since
+there's no one else to syphon from them).
+
+
+To do:
+	Fighters are too aggressive early, and tend to run off and get
+	  killed. This accounts for the bad early score. They should be
+	  more skittish (also when hurt). They should also be less
+	  agressive when far from their factories.
+	Fighters sometimes ignore an ongoing fight when it's moved.
+	Repair fighters?
+	Better fleeing in corners.
+	Factories could get more shy with increasing population.
+
+(20060604) Bugfix: when starting near the center, factories went to the wall.
+           Reduced engine power when wandering.
+(20060606) Now flees from shot-position, not estimated shot origin.
+           Improved top comments.
+           Now flees no farther than necessary.
+(20060616) Not so willing to go to the center.
+(20100103) Added food-sharing.
+           Faster wandering.
+           Smarter choice of which factory to feed.
+           Remembers hostile sides, so we don't ignore incoming Revenges etc.
+           Factories now snuggle against walls when fleeing near them.
+           Less prone to attack innocent bystanders when small.
+           Heavier armor on factories.
+
+#code
+
+;Channels:
+#const ouch 4
+#const facts 5
+;Shared memory stores hostility at side IDs
+
+#var last-armor
+
+check-armor:
+	armor last-armor < if
+		position 2 ouch send
+		time last-hit write
+	then
+	armor last-armor!
+return
+
+#var next-call
+#const interval 71
+call:
+	time next-call < ifr
+	speed ifr
+	energy position 3 facts send
+	time interval + next-call!
+return
+
+#type invisible factory
+#color 999
+#decoration 999 cross
+#hardware
+	armor 100
+	engine .03
+	solar-cells .3
+	constructor .8
+	processor 5
+	energy 200 0
+
+#code
+
+#vector dest
+
+#const close-to-wall 20
+
+;If we're close to a wall, get closer.
+snuggle: ; x y -- x y
+	over close-to-wall < if
+		nip 0 swap
+	else over world-width close-to-wall - > if
+		nip world-width swap
+	then then
+	dup close-to-wall < if
+		drop 0
+	else dup world-height close-to-wall - > if
+		drop world-height
+	then then
+return
+
+;This is quick and sloppy wall-avoidance. It could be much smarter
+; about moving along walls and away from corners.
+#const flee-range 18
+#vector threat
+flee: ;x y --
+	2dup threat!
+	position flee-range in-range nifr
+	position threat v- unitize flee-range vs* position v+
+		swap 2 max world-width 2 - min swap 2 max world-height 2 - min
+		;TODO turn along wall instead of shortening
+		position v- unitize flee-range position threat dist - vs* position v+
+		swap 2 max world-width 2 - min swap 2 max world-height 2 - min
+		snuggle dest!
+return
+
+#start
+armor last-armor!
+population 10 < if
+	;Going to the center because it's never seeded is egregious
+	; exploitation of an unintended rule, but it's silly so I
+	; couldn't resist.
+	position world-size 2 vs/ world-size + 8 / in-range if
+		world-size 2 vs/ dest!
+	else position snuggle dest! then
+else
+	position dest!
+then
+
+do
+	constructor-type nif energy max-energy .8 * > and-if
+		1 type-population 2 type-population > .3 .7 ifev random-bool
+		1 2 ifev constructor-type!
+		constructor-max-rate constructor-rate!
+	else
+		energy 25 > constructor-max-rate * constructor-rate!
+	then
+	check-armor
+	ouch receive if flee then
+	position dest 3 in-range if
+		0 engine-power!
+		position dest!
+	else
+		dest seek-location
+	then
+	call^
+forever
+
+
+#type sentry
+#color FF0
+#decoration FF0 backslash
+
+#hardware
+	energy 400 25
+	eater .8
+	syphon .7 10
+	engine .14
+	blaster 23 4 15
+	armor 333
+	robot-sensor 7
+	shot-sensor 6
+	food-sensor 6.5 5
+	processor 12
+
+#comment   Food hashing
+
+Keep a hashtable of position -> (time, x-position) showing who claims this food.
+Ignore foods other people have claimed recently.
+(x-position is used to confirm this is the right food.)
+Collisions are ignored; at worst they lead to pushing matches.
+Food hashing was first used in YAR, a not-yet-released side by Warren.
+
+#code
+#const hashtable-size 100
+#const hashtable-base 101
+#const claim-time 240
+
+food-hash:   ;(-- hash-address)
+  food-position + dup floor - epsilon / floor hashtable-size mod hashtable-base +
+return
+
+claim-food:   ;(-- claimed?)
+  do
+    food-velocity or nif
+      ;preload with (time t-addr x-pos x-addr time-threshold t-addr x-pos x-addr)
+      time food-hash dup hashtable-size + food-position drop swap
+      time claim-time - 2over over hashtable-size +
+      sync
+      read = if
+        read > if write write 1 return
+        else 2drop 2drop then
+      else
+        2drop write write 1 return
+      then
+    then
+  next-food while-loop
+0 return
+
+
+#vector dest
+#var delivering
+#var eating
+#vector hungriest-factory
+#var hungriest-energy
+#vector closest-factory
+#vector factory ;some factory to guard
+#var factory-energy
+
+#const edge 5
+#var wander-radius 10
+
+new-dest:
+	;wander to any factory, at an increasing distance
+	wander-radius population 4 / 10 + max wander-radius!
+	do
+		wander-radius random-angle polar-to-rect factory v+ dest!
+		dest dup edge > swap world-height edge - < and
+		swap dup edge > swap world-width edge - < and
+	and until-loop
+	wander-radius 5 + wander-radius!
+return
+
+set-syphon: ; x y -- syphoned
+	position velocity 3 vs* v+ v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate negate syphon-rate!
+	sync syphoned
+return
+
+#start
+position factory!
+new-dest
+eat:
+do
+	energy max-energy 15 - > if
+		1 delivering!
+		0 eating!
+	else energy 200 < if
+		0 delivering!
+	then then
+	delivering if hungriest-factory or and-if
+		position hungriest-factory syphon-range in-range if
+			0 engine-power!
+		else
+			position hungriest-factory v- unitize syphon-range vs* hungriest-factory v+ seek-location
+		then
+	else eating if
+		food-position seek-location
+		eaten nif position food-position radius in-range and-if
+			0 eating!
+			0 engine-power!
+		then
+	else ;look for food
+		33 periodic-food-sensor if food-found and-if claim-food energy 20 < or and-if
+			1 eating!
+			10 wander-radius!
+			food-position seek-location
+		else ;wander
+			dest seek-location
+			.08 engine-power!
+			position dest 3 in-range new-dest& ifc
+		then
+	then then
+	energy armor min 33 > if
+		49 periodic-robot-sensor if robot-found and-if
+			robot-bomb robot-reloading or if
+				robot-position 2 ouch send
+				time robot-side write
+				robot-position attack-robot^
+			else robot-position factory population sqrt 5 * in-range robot-side read or if
+				robot-position attack-robot^
+			then then
+		then
+		17 periodic-shot-sensor if shot-found and-if
+			shot-position 2 ouch send
+			time shot-side write
+			shot-velocity unitize -20 vs* shot-position v+ attack^
+		then
+		energy armor min 100 > if ouch receive and-if
+			2dup position 30 in-range if
+				attack^
+			else 2drop then
+		then
+	then
+	ouch clear-messages
+	check-armor
+	facts receive if
+		factory! factory-energy!
+		closest-factory nor factory position dist syphon-range closest-factory position dist max < or if
+			factory closest-factory!
+		then
+		hungriest-factory nor
+		factory-energy factory position dist 10 * +
+			hungriest-energy hungriest-factory position dist 10 * + <= or
+		factory hungriest-factory 0.6 in-range or if
+			factory hungriest-factory!
+			factory-energy hungriest-energy!
+		then
+	then
+	energy 180 > if
+		hungriest-factory or if position hungriest-factory syphon-range in-range and-if
+			hungriest-factory set-syphon nif
+				0 0 hungriest-factory!
+			else syphoned abs syphon-max-rate < if
+				200 hungriest-energy!
+			then then
+		else closest-factory or if position closest-factory syphon-range in-range and-if
+			closest-factory set-syphon nif 0 0 closest-factory! then
+		else
+			0 syphon-rate!
+		then then
+	else
+		0 syphon-rate!
+	then
+	energy nif call^ then
+forever
+
+;;Go to a location and kill any enemies seen
+ ;takes target as an argument
+attack-robot: ; tx ty --
+	robot-position robot-velocity lead-blaster
+attack: ; tx ty --
+  dest!
+  0 syphon-rate!
+  do
+    robot-found if
+      dest robot-velocity seek-moving-location
+    else
+      dest seek-location
+    then
+    blaster-reload-time periodic-robot-sensor if
+      robot-found if
+        robot-position robot-velocity lead-blaster
+        position robot-position v- unitize 3 vs*
+          robot-position v+ robot-velocity 10 vs* v+ dest!
+      else
+        position dest 2 in-range ifr ; nobody here - give up
+      then
+    then
+    robot-found nif 13 periodic-shot-sensor and-if shot-found and-if
+      shot-velocity unitize -20 vs* shot-position v+ dest!
+    then
+  energy armor min 20 > while-loop
+  ouch clear-messages
+  new-dest
+return
+
+#end

@@ -1,0 +1,654 @@
+#side Untouchable 3
+#color aa6
+#author Warren
+#date started 6/29/03
+#seed 1 2 2 4 2 1 2 4
+
+Types:
+1   Flyswatter
+2   Outlet 
+3   Solar Outlet
+4   Zapper
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;; Flyswatter ;;;;;;;;;;;;;;;;;;;;
+#type Flyswatter
+Type nubmer 1.
+
+#color ff0
+#decoration 00f cross
+#hardware
+processor 20
+armor 175
+
+engine 0.05
+
+solar-cells 0.01
+
+radio send receive
+
+energy 500 0
+
+force-field 0.18 20
+
+constructor 1.9
+
+food-sensor 20.1 5
+robot-sensor 15 5
+
+repair-rate 0.1
+
+#code
+;;;;;HEADER;;;;
+#const enemy-channel 1
+#const food-request-channel 2
+#const location-channel 3
+
+colony-radius:
+       population sqrt 1 * 5 +
+return
+
+#vector enemy-position
+#vector enemy-velocity
+#vector enemy-destination
+
+#vector home
+
+#vector colony-location
+#var location-announce-time
+
+
+
+;;;;;;
+#var enemy-time 0
+
+#var force-fielding-enemy
+
+#start
+position colony-location!
+
+position home!
+do
+    constructor-type nif
+        0.4 random-bool if
+            1 4 random-int
+        else
+	            1 type-population population / 0.17 < if
+	                1
+	            else
+	                4 type-population population / 0.2 < if
+	                    4
+	                else
+	                    2 type-population 3 >= 0.8 0.2
+	                    ifev random-bool 3 2 ifev
+	                then
+	            then
+        then    ;random    
+        constructor-type!
+    then
+    
+    energy max-energy / 0.5 > constructor-max-rate 0 ifev constructor-rate!
+    
+    energy max-energy / 0.4 > max-repair-rate 0 ifev repair-rate!
+    
+    energy max-energy / 0.1 > if 
+    time robot-sensor-time - 40 > and-if
+        fire-robot-sensor sync
+        robot-found if
+            robot-position enemy-position!
+            robot-velocity enemy-velocity!
+            robot-sensor-time enemy-time!
+        robot-shield-fraction 0.5 > and-if
+			robot-position robot-velocity robot-sensor-time 5 enemy-channel send
+		then
+	then
+    
+    0
+        enemy-channel messages 2 - 0 max
+        random-int enemy-channel skip-messages
+    
+    enemy-channel receive if
+        enemy-time! enemy-velocity! enemy-position!
+    time enemy-time - 15 < and-if
+    enemy-position position dist force-field-range 0.6 1 random * < and-if
+        1 force-fielding-enemy!
+    else
+        time enemy-time - 35 > if
+        force-fielding-enemy and-if
+            0 force-fielding-enemy!
+            0 force-field-power!
+        then
+    then ;valid rx
+    
+    force-fielding-enemy if
+        enemy-position position v- unitize 40 vs* position v+ enemy-destination!
+        enemy-destination
+            enemy-position enemy-velocity time enemy-time - 15 + vs* v+ 
+            v- 2dup angle force-field-angle!
+            ;stack: direction of push
+       unitize 0.05 0.2 random vs* enemy-velocity 0.8 vs* v+
+        time enemy-time - vs* enemy-position v+ position v- rect-to-polar force-field-direction!
+        1 - 
+        dup force-field-range < if
+            3 max force-field-distance!
+            force-field-max-power force-field-power!
+        else
+            drop
+            0 force-field-power!
+        then
+    then
+    
+    force-fielding-enemy not if
+    energy max-energy / 0.4 > and-if
+    2 type-population and-if
+        time food-sensor-time - 
+            3 1 type-population + 25 *
+        > if
+            force-field-range 1.5 * food-sensor-focus-distance!
+            random-angle food-sensor-focus-direction!
+            fire-food-sensor sync
+        then
+        food-found if
+        food-energy 150 > and-if
+        time food-sensor-time - 80 < and-if
+            food-position colony-location v- unitize -0.16 vs*
+            2dup angle force-field-angle!
+            time food-sensor-time - vs*
+            ;stack: vector food has moved
+            food-position v+ 2dup
+             position v- rect-to-polar force-field-direction!
+            colony-radius^
+            > if
+                ;stack: location of food
+                position dist 0.8 + force-field-distance!
+                force-field-max-power force-field-power!
+            else
+                2drop
+                0 force-field-power!                    
+            then
+        else
+            0 force-field-power!                    
+        then
+    else
+        force-fielding-enemy not if
+            0 force-field-power!
+        then
+    then
+    
+    energy max-energy / 0.2 > if
+    position home dist 2 > and-if
+        home seek-location
+    else
+        0 engine-power!
+    then
+
+    
+    #var food-request-time
+    energy max-energy / 0.8 < if
+    velocity norm not and-if
+    time food-request-time - 100 110 random > and-if
+        position time 3 food-request-channel send
+        time food-request-time!
+    then
+    
+    time location-announce-time - 100 > if
+        position 2 location-channel send
+        position 0.05 vs* colony-location 0.95 vs* v+ colony-location!
+        time location-announce-time!
+    then
+    do
+        location-channel receive
+    while
+        0.05 vs* colony-location 0.95 vs* v+ colony-location!
+    loop
+forever
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Outlet
+#color 0c0
+
+(Devon 20030721) Fixed for syphon renaming and range change.
+
+#hardware
+
+processor 15
+armor 150
+energy 400 20
+engine 0.04
+
+radio receive
+
+solar-cells 0.02
+
+eater 2.5
+
+syphon 1.5 14
+
+food-sensor 11 1
+
+repair-rate 0.08
+
+#code
+;;;;;HEADER;;;;
+#const enemy-channel 1
+#const food-request-channel 2
+#const location-channel 3
+
+#vector enemy-position
+#vector enemy-destination
+
+colony-radius:
+       population sqrt 1 * 5 +
+return
+
+;;;;;;
+
+#var last-armor
+#var last-armor-time
+#var last-damage-time
+#var recent-damage-rate
+#vector colony-location
+
+#vector friend-position
+#var friend-time
+#var recent-bumps 0
+
+#vector food-focus 0 0
+
+#var wanderer
+#vector wander-position
+
+#const edge-space 4
+;this subroutine copied from eventually 12
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+
+#start
+0.7 random-bool wanderer!
+armor last-armor!
+time last-armor-time!
+-1000 last-damage-time!
+position colony-location!
+
+
+Begin-foraging:
+    random-edge-position^ wander-position!
+do
+    friendly-collision recent-bumps + 0.95 * recent-bumps!
+            position wander-position 5 in-range if
+                random-edge-position^ wander-position!
+            then
+
+    time food-sensor-time - 30 > if
+        recent-bumps 3 > if
+            food-focus 3 random-angle polar-to-rect v+ 0.9 vs* food-focus!
+            food-focus rect-to-polar food-sensor-focus-direction! food-sensor-focus-distance!
+        else
+            position colony-location dist colony-radius^ > if
+                colony-location position v- rect-to-polar
+                food-sensor-focus-direction!
+                0.3 * food-sensor-focus-distance!
+            else
+                0 food-sensor-focus-distance!
+            then
+        then
+        fire-food-sensor sync
+    then
+    food-found if
+    food-velocity norm not and-if
+        food-position seek-location     
+    else
+        wanderer if
+            wander-position seek-location
+        else
+            0 engine-power!
+        then
+    then
+    empty-energy^
+    
+    energy max-energy / 0.1 > max-repair-rate 0 ifev repair-rate!
+        
+    do
+        location-channel receive
+    while
+        0.05 vs* colony-location 0.95 vs* v+ colony-location!
+    loop
+    
+    update-defense-stats^
+    recent-damage-rate 0.1 > if
+    energy max-energy / 0.1 > and-if
+         Begin-fleeing& jump
+    then
+    
+    energy max-energy / 0.95 > if
+    eaten eater / 0.1 < and-if
+    position colony-location dist syphon-range > and-if
+        Begin-go-home& jump
+    then
+forever
+
+update-defense-stats: ; -> damge/frame
+last-armor armor dup last-armor!
+
+- time last-armor-time - / recent-damage-rate!
+time last-armor-time!
+recent-damage-rate if
+    time last-damage-time!
+then
+return
+
+Begin-Go-home:
+do
+        0.15 colony-location position v- angle polar-to-rect engine-velocity!
+        engine-max-power engine-power!
+        empty-energy^
+	    update-defense-stats^
+        max-repair-rate repair-rate!
+        
+	    energy max-energy / 0.5 < if
+	        Begin-foraging& jump
+	    then
+forever
+
+#vector flee-location
+Begin-fleeing:
+colony-location position v- unitize colony-radius vs* colony-location v+ flee-location!
+do
+    flee-location seek-location
+    empty-energy^
+    update-defense-stats^
+    time last-damage-time - 150 > if
+        Begin-foraging^ jump
+    then
+    energy max-energy / 0.05 < if
+        Begin-foraging^ jump
+    then
+    position flee-location dist 3 < if
+        Begin-foraging& jump
+    then
+forever
+
+#vector circle-location
+Begin-circling:
+position circle-location!
+do
+    circle-location position v- 0.01 vs* ;correction to make us circle the same spot
+    0.2 time 0.1 * reorient polar-to-rect v+ engine-velocity!
+    engine-max-power engine-power!
+
+       empty-energy^
+    update-defense-stats^
+ 
+     time last-damage-time - 100 > if
+        Begin-foraging^ jump
+    then
+    energy max-energy / 0.05 < if
+        Begin-foraging^ jump
+    then   
+forever
+
+empty-energy:
+    energy max-energy / 0.2 > if
+        food-request-channel messages 5 > if
+            0 food-request-channel messages 2 - random-int food-request-channel skip-messages
+        then
+      Next-Friend:
+        food-request-channel receive if
+            friend-time! friend-position!
+        then
+        
+        time friend-time - 100 < if
+        friend-position position dist syphon-range radius + < and-if
+                friend-position
+                position velocity 3 vs* v+
+            v- rect-to-polar syphon-direction! syphon-distance!
+            syphon-max-rate negate syphon-rate!
+        else
+            food-request-channel messages next-friend& ifg
+            0 syphon-rate!
+       then
+    else
+        0 syphon-rate!
+    then
+return
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Solar Outlet
+#color 0ff
+
+(Devon 20030721) Fixed for syphon renaming and range change.
+
+#hardware
+
+processor 7
+armor 40
+energy 100 0
+
+radio receive
+
+solar-cells 0.4
+
+syphon 0.47 10
+
+#code
+;;;;;HEADER;;;;
+#const enemy-channel 1
+#const food-request-channel 2
+
+#const quantum 10
+
+#vector enemy-position
+#vector enemy-destination
+
+
+;;;;;;
+#vector friend-position
+#var friend-time
+#start
+
+do
+    empty-energy^
+forever
+
+empty-energy:
+    energy max-energy / 0.05 > if
+        food-request-channel messages 5 > if
+            0 food-request-channel messages 2 - random-int food-request-channel skip-messages
+        then
+      Next-Friend:
+        food-request-channel receive if
+            friend-time! friend-position!
+        then
+        
+        time friend-time - 200 < if
+        friend-position position dist syphon-range radius + < and-if
+            friend-position position v- rect-to-polar syphon-direction! syphon-distance!
+            syphon-max-rate negate syphon-rate!
+        else
+            food-request-channel messages next-friend& ifg
+            0 syphon-rate!
+       then
+    else
+        0 syphon-rate!
+    then
+return
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type Zapper
+
+Kinda a revenge clone, but with friendly-fire prevention and long range.
+
+#color f00
+
+#hardware
+processor 20
+energy 500 10
+armor 270
+radio send receive
+engine 0.08
+
+robot-sensor 14 5
+
+grenades 45 9 30
+
+repair-rate 0.08
+
+#code
+
+;;;;;HEADER;;;;
+#const enemy-channel 1
+#const food-request-channel 2
+#const location-channel 3
+
+colony-radius:
+       population sqrt 1 * 5 +
+return
+
+#vector enemy-position
+#vector enemy-velocity
+#var enemy-time
+
+#vector colony-location
+#var location-announce-time
+
+;;;;;;
+
+shieldless-robot-found: ;returns 1 if a non-shielded robot is found, 0 otherwise. Leaves robot cursor on non-shielded target.
+robot-found if
+  do
+    robot-shield-fraction 0.5 > if
+      1 return
+    then
+  next-robot while-loop
+then
+0 return
+
+#var hungry-announce-time -1000
+#vector home
+
+#start
+position home!
+
+Begin-sleeping:
+0 engine-power!
+do
+    energy max-energy / 0.1 > max-repair-rate 0 ifev repair-rate!
+
+    home position dist 7 > if
+    energy 20 > and-if
+        Begin-running& jump
+    then
+
+    energy max-energy / 0.9 < if
+    time hungry-announce-time - 50 90 random > and-if
+    velocity norm not and-if
+        position time 3 food-request-channel send
+        time hungry-announce-time!
+    then
+    
+    energy max-energy / 0.3 > if
+    armor max-armor / 0.3 > and-if
+        time robot-sensor-time - 70 > if
+	        0 robot-sensor-sees-friends!
+	        1 robot-sensor-sees-enemies!
+	        0 robot-sensor-focus-distance!
+	        fire-robot-sensor sync
+	        shieldless-robot-found if
+	            robot-position enemy-position!
+	            robot-velocity enemy-velocity!
+	            robot-sensor-time enemy-time!
+	            enemy-position enemy-velocity enemy-time 5 enemy-channel send
+            then
+        then
+        
+        energy max-energy / 0.5 > if
+        armor max-armor / 0.5 > and-if
+            0 enemy-channel messages 2 - 0 max random-int enemy-channel skip-messages
+            enemy-channel receive if
+                enemy-time! enemy-velocity! enemy-position!
+                Begin-killing& jump
+            then ;valid rx
+        then
+    then
+   
+forever
+
+Begin-running:
+
+do
+    home position v- unitize 0.3 vs* engine-velocity!
+    engine-max-power engine-power!
+    home position dist 5 < 
+    energy 10 < or if
+        Begin-sleeping& jump
+    then
+forever
+
+#var enemy-distance
+#vector target-delta
+#vector expected-shot-velocity
+Begin-killing: ;precondition: enemy-* set
+
+do
+    position enemy-position v- unitize grenades-range 0.7 * vs* enemy-position v+
+    ;stack: good place to be
+    position v- 0.05 vs* enemy-velocity v+ 
+    ;2dup norm 0.3 < if
+    ;;0.1 time 0.1 * reorient polar-to-rect v+
+    time 40 / 2Pi * reorient 0 > if
+        enemy-position position v- angle Pi 2 / + 0.1 swap polar-to-rect v+ 
+    else
+        enemy-position position v- angle Pi 2 / - 0.1 swap polar-to-rect v+     
+    then
+    ;then
+    engine-velocity!
+    engine-max-power engine-power!
+
+    time robot-sensor-time - grenades-reload-time -1 1 random-int + > if
+	    0 robot-sensor-sees-friends!
+	    1 robot-sensor-sees-enemies!
+	    0 robot-sensor-focus-distance!
+	    fire-robot-sensor sync
+	    shieldless-robot-found if
+	        robot-position enemy-position!
+	        robot-velocity enemy-velocity!
+	        robot-sensor-time enemy-time!
+	        enemy-position enemy-velocity enemy-time 5 enemy-channel send
+	    robot-distance grenades-range < and-if
+	        robot-distance enemy-distance!
+
+	        enemy-position enemy-velocity time enemy-time - vs* v+
+	        ;stack: enemy location now
+	        2dup 2dup position dist grenades-speed /
+	        enemy-velocity velocity v- rot vs* v+ position v-
+	        ;stack: enemy-position-now, delta
+	        
+	        norm grenades-speed / enemy-velocity velocity v- rot vs* v+ position v- 
+	        
+	        rect-to-polar fire-grenade
+	  
+	        No-Shoot:
+        then ;enemies found    
+    then ;time to sense
+
+    
+    energy max-energy / 0.12 <
+    armor max-armor / 0.3 < or
+    time enemy-time - 150 > or if
+        Begin-running& jump
+    then
+    
+forever
+
+#end
+

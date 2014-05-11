@@ -1,0 +1,431 @@
+; This land belongs to Bloops
+
+#side Bloopers-4
+#author Gigatron
+#seed 1 1 1 2 2
+#color 32006F
+#code
+;------- global code ---------
+#const bloop 1
+#const bloopx 2
+#const help-ch 5
+#const FOOD-BASE 1
+#const FOOD-SIZE 400
+#const LAND-BASE 501
+#const LAND-SIZE 100
+#var phash
+#var nhash
+#var claim-timer
+food-hash: ;x,y -> hash
+	53 * swap 79 * + FOOD-SIZE mod round FOOD-BASE +
+return
+claim-food: ; x,y -> 1 or 0
+	food-hash nhash!
+	phash nhash = if
+		claim-timer 1 + claim-timer!
+		claim-timer 10 > if
+			time nhash write ;reclaim
+			0 claim-timer!
+		then
+		1
+	else
+		nhash read 0 = if
+			time nhash write ;claim it
+			nhash phash!
+			1 ;return 1
+		else
+			nhash read time 400 - > if ;check time
+				0	;is already taken
+			else
+				time nhash write ;claim it
+				nhash phash!
+				1 ;return 1
+			then
+		then
+	then
+return
+
+;find a random dest to wander
+; -- x y
+find-dest:
+	position swap
+	-25 25 random + swap
+	-25 25 random +
+	3 restrict-position
+return
+
+#var totpop
+check-my-belly:
+	constructor-type nif
+		bloop type-population
+		bloopx type-population
+		+ totpop!
+		1
+		bloopx type-population totpop / 100 *
+		40 < if drop 2 then
+		time 1000 < if drop 1 then
+		constructor-type!
+	then
+	energy max-energy 0.4 * > constructor-rate!
+return
+
+; --
+call-for-help:
+	time 5 mod nif
+		robot-position 2 help-ch send
+	then
+return
+
+#var land-id
+#var pland-id
+#var ptime-id
+buy-land: ; x y -- 1 or 0
+	food-position 5 / floor swap 5 / floor swap
+	20 * + LAND-BASE + land-id!
+	pland-id land-id = if
+		land-id read ptime-id = if ;yes this is my time id
+			time 20 mod 0 = if
+				time ptime-id!
+				ptime-id land-id write
+			then
+			1 ;my land
+		else	;time id is not mine
+			land-id read time 200 - > if
+				0 ;owned
+			else
+				time ptime-id!
+				ptime-id land-id write
+				land-id pland-id!
+				1 ;times up its mine now
+			then
+		then
+	else
+		land-id read 0 = if
+			time ptime-id!
+			ptime-id land-id write
+			land-id pland-id!
+			1 ;first owner
+		else
+			land-id read time 200 - > if
+				0 ;owned
+			else
+				time ptime-id!
+				ptime-id land-id write
+				land-id pland-id!
+				1 ;times up its mine now
+			then
+		then
+	then
+return
+
+;find closest land to buy
+#var fland-id
+#var fland-x
+#var fland-y
+#var fland-xx
+#var fland-yy
+#vector fland-xy
+#vector close-land-xy
+#var close-land-id
+#vector new-land-xy
+#var new-land-dist
+#var min-land-dist 1000
+#var rand-tries
+#vector dest
+find-land:
+	position 5 / floor swap 5 / floor swap
+	fland-xy!
+	fland-xy 3 - fland-y! 3 - fland-x!
+	fland-x 7 + fland-xx!
+	fland-y 7 + fland-yy!
+	1000 min-land-dist!
+	5 rand-tries!
+	do rand-tries 0 > while
+		fland-x 0 7 random-int + fland-xx!
+		fland-y 0 7 random-int + fland-yy!
+		fland-xx 0 >= fland-xx 20 < and
+		fland-yy 0 >= fland-yy 20 < and
+		and if
+			fland-yy 20 * fland-xx + LAND-BASE + fland-id!
+			fland-id read time 400 - < if
+				fland-xx 5 * 2 + fland-yy 5 * 2 + new-land-xy!
+				position new-land-xy dist new-land-dist!
+				new-land-dist min-land-dist < if
+					new-land-dist min-land-dist!
+					new-land-xy close-land-xy!
+					fland-id close-land-id!
+				then
+			then
+		then
+		rand-tries 1 - rand-tries!
+	loop
+	min-land-dist 1000 < if
+		time ptime-id!
+		ptime-id close-land-id write
+		close-land-id pland-id!
+		close-land-xy dest!
+		1 return ;found land return
+	then
+	0 ;no-land
+return
+
+#type bloop
+#color 000
+#hardware
+	processor 15
+	engine .03
+	constructor 1
+	energy 255 25
+	eater 1.5
+	food-sensor 10 1
+	robot-sensor 5 1
+	armor 100
+	solar-cells 0.03
+	repair-rate 0.02
+	radio send receive
+#code
+#var rwait
+
+scan-for-food:
+	20 periodic-food-sensor drop
+	food-found
+return
+
+scan-for-robots: ; -- x
+	20 periodic-robot-sensor drop
+	robot-found
+return
+
+#start
+Begin-wakeup:
+1 10 random round rwait!
+do rwait 0 > while rwait 1 - rwait! sync loop
+find-dest dest!
+fire-food-sensor sync
+Begin-wandering:
+do
+	check-my-belly^
+	scan-for-robots^ if Begin-running& jump then
+	energy max-energy 0.7 * > armor max-armor < and repair-rate!
+	scan-for-food^ buy-land^ and Begin-eating& ifg
+	dest seek-location
+	dest position 2 in-range if
+		energy 50 > find-land^ and nif
+			find-dest dest!
+		then
+	then
+forever
+Begin-eating:
+do
+	check-my-belly^
+	energy max-energy 0.9 * > armor max-armor < and repair-rate!
+	scan-for-robots^ if Begin-running& jump then
+	scan-for-food^ buy-land^ and if
+		food-position claim-food if
+			food-position seek-location
+		else
+			Begin-wandering& jump
+		then
+	else
+		Begin-wandering& jump
+	then
+forever
+Begin-running:
+do
+	scan-for-robots^ if
+		call-for-help^
+		position robot-position v- 4 vs* position v+ dest!
+		dest seek-location
+	else
+		Begin-wandering& jump
+	then
+forever
+
+#type bloopx
+#color 000
+#decoration FFF x
+#hardware
+	processor 15
+	engine .04
+	energy 400 20
+	eater 1
+	food-sensor 9 1
+	armor 200
+	solar-cells 0.04
+	robot-sensor 10 1
+	;grenades 18 8 15
+	blaster 18 8 15
+	repair-rate 0.02
+	;constructor 0.1
+	radio send receive
+#code
+#vector dest
+#var cornerid
+#var nrg-ratio
+
+; -- x
+scan-for-food:
+	20 periodic-food-sensor drop
+	food-found
+return
+
+; -- x
+scan-for-bots:
+	20 periodic-robot-sensor drop
+	robot-found
+return
+
+check-damage-repair:
+	armor max-armor < energy max-energy 0.5 * > and repair-rate!
+return
+
+; -- x
+check-energy:
+	energy max-energy /
+return
+
+; -- x
+check-health:
+	energy max-energy /
+	armor max-armor /
+	+ 2 /
+return
+
+#start
+find-dest^ dest!
+Begin-wander:
+do
+	;check-my-belly^
+	check-damage-repair^
+	check-health^ nrg-ratio!
+	nrg-ratio 0.4 > scan-for-bots^ and Begin-war& ifg
+	check-energy^ 0.8 < scan-for-food^ and Begin-eating& ifg
+	nrg-ratio 0.8 > 1 20 random-int 1 = and Begin-check-corners& ifg
+	nrg-ratio 0.5 > Begin-check-helpmsg& ifg
+	dest seek-location
+	dest position 2 in-range if
+		find-dest^ dest!
+	then
+forever
+
+Begin-eating:
+do
+	;check-my-belly^
+	check-damage-repair^
+	energy max-energy 0.9 * > if
+		scan-for-bots if
+			Begin-war& jump
+		else
+			Begin-wander& jump
+		then
+	then
+	scan-for-food^ if
+		food-position claim-food if
+			food-position seek-location
+		else
+			Begin-wander& jump
+		then
+	else
+		Begin-wander& jump
+	then
+forever
+
+Begin-war:
+;0 constructor-rate!
+do
+	check-damage-repair^
+	call-for-help^
+	
+	;grenades-cooldown nif
+	blaster-cooldown nif
+		robot-position robot-velocity lead-blaster ;grenade
+	then
+	
+	robot-position 2dup position v- unitize 2dup
+	;grenades-range 0.8 * vs*
+	blaster-range 0.8 * vs*
+	2swap negate swap ; normal
+	time 80 mod 39 > 3 -3 ifev vs*
+	v+ v- seek-location
+	
+	check-health^ 0.3 < Begin-running& ifg
+	scan-for-bots^ Begin-wander& nifg
+forever
+
+Begin-running:
+;0 constructor-rate!
+do
+	check-damage-repair^
+	call-for-help^
+	position 2dup robot-position v- 4 vs* v+ seek-location
+	scan-for-bots^ if
+		energy max-energy 0.5 * > if
+			Begin-war& jump
+		then
+	else
+		Begin-wander& jump
+	then
+forever
+
+Begin-check-corners:
+check-energy^ 0.25 < Begin-wander& ifg
+;0 constructor-rate!
+do
+	1 4 random-int cornerid!
+	cornerid 1 = if	5 5 dest! then
+	cornerid 2 = if	95 5 dest! then
+	cornerid 3 = if	5 95 dest! then
+	cornerid 4 = if	95 95 dest! then
+	do dest position 2 in-range until
+		dest seek-location
+		check-energy^ nrg-ratio!
+		nrg-ratio 0.25 > if
+			scan-for-bots^ if
+				Begin-war& jump
+			then
+		else
+			Begin-wander& jump
+		then
+	loop
+forever
+
+Begin-check-helpmsg:
+do
+	help-ch messages if
+		help-ch messages 1 - help-ch skip-messages
+		help-ch receive if
+			dest!
+			dest position dist 80 < if
+				check-health^ nrg-ratio!
+				do	nrg-ratio 0.5 >
+					scan-for-bots^ not and
+					dest position 2 in-range not and
+				while
+					dest seek-location
+				loop
+				
+				scan-for-bots^ Begin-war& ifg
+				dest position 2 in-range Begin-wander& ifg
+				nrg-ratio 0.5 < Begin-wander& ifg
+			else
+				Begin-wander& jump
+			then
+		then
+	then
+	Begin-wander& jump
+forever
+#end
+
+;---log---
+;added bloop and bloopx
+;add food hashing
+;figured out how to write state based code
+;owns hasher2
+;modified bloop acordingly
+;added passive dodging
+;added land buying. an eater owns land 5x5 size
+;eater still has to claim food before eating
+;fighter can eat anywhere but still have to claim food
+;eater: increase eater 1.5 and adjusted energy . prev it was wasting
+;noticed segregated-eater finds empty spot to move
+;guess enemey position over time

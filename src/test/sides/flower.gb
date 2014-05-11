@@ -1,0 +1,986 @@
+#side Flower
+#author Tyson Hoffman < Tilendor@tiltech.net >
+#color E01D97
+#date Begun on 2/15/06
+
+
+
+
+;<-------------------------------- Concept -------------------------------->
+;Experimental side using large solar generators, syphons, single-cell control, and mines.
+
+;Side note, which sides aren't experimental?
+
+;Guiding principles - Specialization + Return on investment
+;I am trying to acheive a significant level of specialization.
+;a cell that tries to do everything must make compromises, if you can makes types that
+;do what you need *very* well, you can makes gains by not needing to compromise.
+
+;Bud - Huge cell, against guiding Grobot-design principles, I know.  But building Big Cells
+;takes a lot of time, so there is a trade off.  If I had one big cell with big solar collectors
+;and had it build another one you would earn X energy/frame.  When the second is built, you get 2X
+;Now think if you had one big cell and it built ten small cells all 1/10 its cost, and solar-cells
+;each small cell would contribute as soon as it was built.  When you were finished, you would still
+;earn 2X energy, but the first cell would have been producing for 90% of the build time, the second
+;for 80%, the 3rd for 70%, etc...
+
+;Now the point I just made - big cells can delay returns, why have one?
+;Get one for free when you seed, and the build time is not an issue.  Thats why.
+;Small cell disadvantage - can be killed more easily.
+;Lets see how this works out.
+
+;For some rambling comments, see end of file
+;<-------------------------------- Changes -------------------------------->
+;[02-20-06] Removed Mine-layer type
+;[03-02-06] Attempted to make Buds Formate as well. Changed Pollen patrol patterns.
+;<-------------------------------- Reference -------------------------------->
+;Shared Memory
+; 1 - # of Buds produced
+; 2 - # of Petals produced
+; 3 - # of Pollens produced
+; 4 - # of Worker-Bees produced
+; 5 - # of Leaves produced
+; 6 - # of cells total
+
+; 10 - # of Idle petals
+; 11 - # of Buds to build
+; 12 - # of Petals to build
+; 13 - # of Pollens to build
+; 14 - # of Worker-Bees to build
+; 15 - # of Leaves to build
+; 17 - Current Build Phase
+; 18 - Current Building Stage
+
+; 98 - Width of Central Bud Formation
+; 99,100 - Flower home
+; 101+ - desired x,y pairs for successive Buds.
+; 201+ - Actual x,y pairs for successive Buds
+
+;Communication Channels
+; 2 - Production information
+; 3 - Bee Talk
+; 10 - Bud announce
+
+
+;Commands:
+; 1 - Petals announce current production
+
+#seed 1 2 4 5 5 5 5 5 5 
+
+
+
+;<----------------------------BUD---------------------------->
+#type Bud
+#color 831280
+#decoration ED81EA circle
+;Bud is a nice guy.  He's willing to share with everyone, and is an excellent communicator
+;However, he is very controlling, so only one will be in charge at any time.
+; Uses Channel 1 to command, and channel 2 to get feedback
+
+#hardware
+processor 60 20
+radio read write send receive
+energy 1000 1
+solar-cells .5
+syphon 10 10
+robot-sensor 10 30
+armor 200
+repair-rate .1
+engine .05
+
+#code
+#const Bud 1
+#const Petal 2
+#const Pollen 3
+#const WorkerBee 4
+#const Leaf 5
+#const PetalMax 480
+#const PetalMin 50
+
+#var LeafMin 10
+
+#var backup 1
+#var possiblyPrimary 0
+#var lastPrimary
+#var TypeID
+#var ProductionRequestTime 0
+#var Jumpto 0
+#var BudCount 1
+#var Range 0
+#var TestRange 0
+#var x 0
+#var y 0
+#var tenth 0
+#var step 0
+#var frame
+#var LocOffset
+#var rtop
+#var rleft
+#var rright
+#var rbottom
+init:
+   1 robot-sensor-sees-friends!
+   0 robot-sensor-sees-enemies!
+   Bud read 1 + dup Bud write TypeID! ;Count which Bud I am
+	TypeID 2 * 99 + LocOffset!
+	parent-id nif ;Initial quota
+		position 99 vwrite
+		0 17 write ; BuildPhase
+		1 18 write ; BuildStage
+		0 backup!
+		BuildStage1^
+		Choose-Home^
+		Get-There^
+	then
+
+;<([--MAIN--])>
+Main:
+	
+	
+	Once-Per-Frame^		
+	Feed-Friends^ ;Feed Petals + Spores
+	Harvest-Leaves^ ;Grab energy from leaves
+	Main& jump
+;<([--END MAIN--])>
+
+Once-Per-Frame:
+	time frame = ifr
+	time frame!
+	Bud type-population BudCount >= if
+		Bud type-population BudCount!
+	else
+		TypeID 1 10 send ;announce my build order to all buds.
+		sync sync sync sync sync
+		Establish-Primary^
+	then
+
+	backup  nif
+		Tweak-Home^
+		Tally-Cells^
+		Determine-Construction^ ;evaluate how many of what we need to build
+	then
+	Am-I-Hurt^ ; Move if in danger + repair
+	Formate^
+	Get-There^
+	return
+
+
+Determine-Construction:
+	2 messages nifr ; If no one is idle, exit
+	2 clear-messages
+	
+	Bud 10 + read
+	Petal 10 + read
+	Pollen 10 + read
+	WorkerBee 10 + read
+	Leaf 10 + read
+	+ + + + 0 <= nifr ; If we haven't completed building, exit
+	
+	;pause
+	18 read 1 = if
+		BuildStage1& 17 read 10 * + jump
+	else 18 read 2 = if
+		BuildStage2& jump
+	celse 18 read 3 = if
+		BuildStage3& jump
+	celse
+	then
+
+BuildStage1: ; Building up to one Bud
+;  1  4  5  3  2  Build Order
+;  B  Pe Po W  L  Types
+	0  1  0  0  1  Announce-Construct& jump nop nop nop
+	0  0  1  1  1  Announce-Construct& jump nop nop nop
+	0	1	0	0	2	Announce-Construct& jump nop nop nop
+	0  0  2  0  0  Announce-Construct& jump nop nop nop
+	0  1  1  2  2  Announce-Construct& jump nop nop	nop
+	1  2  4  1  4  Announce-Construct& jump nop nop nop
+;T 1  5  8  4  10
+BuildStage2:
+	0  3 10  2  5  Announce-Construct& jump nop nop nop
+
+BuildStage3:
+	1  1 40  1  2
+Announce-Construct:
+	Leaf 10 + write ; Leaf
+	WorkerBee 10 + write ; WorkerBee
+	Pollen 10 + write ; Pollen
+	Petal 10 + write ; Petal
+	Bud 10 + write ; Bud
+	17 read 1 + 17 write
+	
+	18 read 1 = if 
+		17 read 6 = if
+			2 18 write
+			0 17 write
+		then
+	then
+	18 read 2 = if 
+		17 read 1 = if
+			3 18 write
+			0 17 write
+		then
+	then
+	
+	
+	return
+
+Formate:
+	Bud type-population 1 = if
+		99 vread LocOffset vwrite
+	else
+		98 read 2pi Bud read / TypeID * polar-to-rect 99 vread v+ LocOffset vwrite
+		5 robot-sensor-focus-distance!
+		2pi Bud read / TypeID * robot-sensor-focus-direction!
+	then
+	return
+
+Tweak-Home:
+	Bud type-population 1 = if
+		0 98 write
+	else
+		Bud read radius 2 * * pi / 2 / 1 + 98 write ;Writes radius of circle dependant on # of buds built
+	then
+
+	position rbottom! rleft!
+	world-size position v- rtop! rright!
+	rright rleft < if
+		rtop rbottom < if
+			rright rtop < if
+				world-width 10 - 98 read - 99 write
+			else
+				world-height 10 - 98 read - 100 write
+			then
+		else
+			rright rbottom < if
+				world-width 10 - 98 read - 99 write
+			else
+				10 98 read + 100 write
+			then
+		then
+	else
+		rtop rbottom < if
+			rleft rtop < if
+				10 98 read + 99 write
+			else
+				world-height 10 - 98 read - 100 write
+			then
+		else
+			rleft rbottom < if
+				10 98 read + 99 write
+			else
+				10 98 read + 100 write
+			then
+		then
+	then
+	;This codes stays 10 + the inner circle radius from wall
+	return
+
+
+Get-There:
+		position LocOffset 100 + vwrite
+		LocOffset vread seek-location
+	return
+
+
+Choose-Home:
+	World-Width range!
+	World-Width 10 / tenth!
+	World-Height 10 / y!
+	1 step!
+	do
+		tenth step * x!
+		x y position dist TestRange!
+		TestRange Range < if
+			TestRange Range!
+			x y 101 vwrite
+		then
+		step 1 + step!
+		step 10 =
+	until-loop
+	World-Height World-Height 10 / - y!
+	1 step!
+	do
+		tenth step * x!
+		x y position dist TestRange!
+		TestRange Range < if
+			TestRange Range!
+			x y 101 vwrite
+		then
+		step 1 + step!
+		step 10 =
+	until-loop
+	tenth x!
+	World-Height 10 / tenth!
+	1 step!
+	do
+		tenth step * y!
+		x y position dist TestRange!
+		TestRange Range < if
+			TestRange Range!
+			x y 101 vwrite
+		then
+		step 1 + step!
+		step 10 =
+	until-loop
+	World-Width World-Width 10 / - x!
+	1 step!
+	do
+		tenth step * y!
+		x y position dist TestRange!
+		TestRange Range < if
+			TestRange Range!
+			x y 101 vwrite
+		then
+		step 1 + step!
+		step 10 =
+	until-loop
+	101 vread 99 vwrite	
+	return
+
+Establish-Primary:
+	time 100 - > lastPrimary if
+		0 PossiblyPrimary!
+	then
+	time lastPrimary!
+	do
+		10 messages
+	while
+		10 receive drop TypeID < ifr
+	loop
+	possiblyPrimary 1 + dup possiblyPrimary! 10 <= ifr ; 20 Frames for Primary change
+	2 clear-messages
+	0 backup!
+	return
+	
+Tally-Cells:
+	Bud type-population
+	Petal type-population
+	Pollen type-population
+	WorkerBee type-population
+	Leaf type-population
+	+ + + + 7 write ; writes to 7 the side-population
+	return
+	
+Am-I-Hurt:
+	max-armor armor > if
+		max-repair-rate repair-rate!
+	else
+		0 repair-rate!
+	then
+	return
+	
+Feed-Friends:
+	fire-robot-sensor sync
+	robot-found nifr
+	energy 20 <= ifr
+	do
+		robot-type Petal = FF-Next-Result& nifg
+		robot-type Petal = if robot-energy PetalMin > FF-Next-Result& ifg then
+		robot-position Send-Energy^
+	
+FF-Next-Result:	
+	
+		next-robot energy 10 > and
+	while-loop
+	0 syphon-rate!
+	return
+
+Send-Energy:
+	position v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate negate syphon-rate!
+	do	
+		sync
+		syphoned negate 10 < energy 10 <= or
+	until-loop
+	return
+	
+Get-Energy:
+	position v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate syphon-rate!
+	do
+		sync
+		syphoned 10 < max-energy .8 * energy < or
+	until-loop
+	return
+	
+Harvest-Leaves:
+	Leaf type-population 14 >= if 
+		140 LeafMin!
+	else
+		Leaf type-population 10 * LeafMin!
+	then
+	fire-robot-sensor sync
+	robot-found nifr
+	do
+		robot-type Leaf = HL-Next-Result& nifg
+		robot-energy LeafMin < HL-Next-Result& ifg
+		robot-position Get-Energy^
+HL-Next-Result:
+		next-robot max-energy .8 * energy > and 
+	while-loop
+	return
+
+
+;<----------------------------PETAL---------------------------->
+#type Petal
+#color FFFF00
+
+; The Petal is really Small, but pretty to look at.  It likes circles.  Its really productive
+
+
+#hardware
+processor 20
+engine .05
+constructor 1.5
+energy 500 20
+radio read write send receive
+armor 20
+solar-cells .01
+repair-rate .1
+
+#code
+#const Bud 1
+#const Petal 2
+#const Pollen 3
+#const WorkerBee 4
+#const Leaf 5
+
+#var TypeID 0
+#var build 0
+#var CellAngle 0
+#var SpacingAngle 0
+#var SpacingDist 3
+#var Range 0
+#var a
+#var b
+#vector temp 0 0
+#var LastBudCount
+#var CloseBud
+
+init:
+;	0 constructor-type!
+	pi 5 * 6 / CellAngle!	;30 degrees of separation
+	Petal read 1 + dup Petal write TypeID! ;Count which Petal I am
+	CellAngle TypeID * SpacingAngle!
+	parent-id nif sync sync sync sync sync then ; Wait for init by Bud
+	Bud read LastBudCount!
+	99 CloseBud!
+;<([--MAIN--])>
+Main:
+
+	Formate^
+	Produce^
+	Am-I-Hurt^
+
+	Main& jump
+;<([--END MAIN--])>
+
+Am-I-Hurt:
+	max-armor armor > if
+		0 constructor-rate!
+		max-repair-rate repair-rate!
+	else
+		constructor-max-rate constructor-rate!
+		0 repair-rate!
+	then
+	return
+
+Produce:
+	energy 10 > constructor-max-rate 0 ifev constructor-rate!
+	constructor-remaining ifr
+	Bud build!
+Produce-check:
+	build 10 + read 0 > if
+		build constructor-type!
+		constructor-max-rate constructor-rate!
+		build 10 + read 1 - build 10 + write
+		return
+	then
+	build Pollen = if 0 1 2 send return then ;No build instructions, ask for some.
+	build Petal = if Pollen build! then
+	build WorkerBee = if Petal build! then
+	build Leaf = if WorkerBee build! then
+	build Bud = if Leaf build! then
+	Produce-check& jump
+	;build order = Bud, Leaf, WorkerBee, Petal, Pollen
+
+	return
+
+Formate:
+		Bud read LastBudCount!
+		0 b!
+		100 Range!
+		do
+			101 b + vread position dist a!
+			a Range < if
+				a Range! 
+				b 101 + CloseBud!
+			then
+			b 2 + b!
+			Bud read b 2 / >
+		while-loop
+	SpacingDist SpacingAngle polar-to-rect CloseBud vread v+ seek-location
+
+
+	return
+	
+	
+	
+;<----------------------------POLLEN---------------------------->
+#type Pollen
+#color FF0000
+#decoration FF0000 triangle
+; Keep your distance.
+;
+
+#hardware
+processor 20
+solar-cells .03
+robot-sensor 5
+bomb 400
+energy 10 5
+engine .01
+radio read write
+armor 30
+
+#code
+#const Bud 1
+#const Petal 2
+#const Pollen 3
+#const WorkerBee 4
+#const Leaf 5
+
+#vector vDest
+#var TypeID 0
+#var SafetyDistance 11
+#var PatrolDistance 14
+#var Armed 0
+#var Range 6
+#var Step
+#var temp
+#var MyAngle
+#var x
+#var y
+init:
+	0 robot-sensor-sees-friends!
+	1 robot-sensor-sees-enemies!
+	Pollen read 1 + dup Pollen write TypeID! ;Count which Pollen I am
+	99 vread position v- angle pi + MyAngle!
+	1 19 / pi * Step!
+	TypeID 2 mod if
+		Step negate Step!
+		5 PatrolDistance + PatrolDistance!
+	then
+	do
+		MyAngle Step + 2pi mod MyAngle!
+		Calc-Dest^ In-World^
+	until-loop
+	Calc-Dest^ vDest! 
+;<([--MAIN--])>
+Main:
+	Check-Safety^
+	Go-There^
+	;Drift^
+	Find-Target^
+	Main& jump	
+;<([--END MAIN--])>
+
+Calc-Dest:
+	PatrolDistance MyAngle polar-to-rect 99 vread v+
+	return
+
+Go-There:
+	vDest seek-location
+	vDest position 1 in-range nifr
+	MyAngle Step + MyAngle!
+	Calc-Dest^ In-World^ nif
+		10 PatrolDistance + PatrolDistance!
+		Step negate Step!
+		MyAngle Step + MyAngle!
+		do
+			MyAngle Step + 2pi mod MyAngle!
+			Calc-Dest^ In-World^
+		until-loop
+	then
+	Calc-Dest^ vDest!
+	return
+	
+In-World:
+	y! x!
+	x 1 < if 0 return then
+	x world-width 1 - > if 0 return then
+	y 1 < if 0 return then
+	y world-width 1 - > if 0 return then
+	1 return
+
+Check-Safety:
+	99 vread	position SafetyDistance in-range 0 1 ifev Armed!
+	Armed nif
+		6 Range!
+		99 vread position v- angle pi + MyAngle!
+	then
+	return
+	
+Find-Target:
+	Armed nifr
+	0 robot-sensor-sees-friends!
+	1 robot-sensor-sees-enemies!
+	0 robot-sensor-focus-distance!
+	fire-robot-sensor sync
+	robot-found nifr
+	robot-position vDest!
+	robot-position position dist dup temp!
+	Range <= if
+		temp Range!
+		return
+	then
+	die
+	return
+
+
+;<----------------------------WORKER BEE---------------------------->
+#type WorkerBee
+#color 00FF00
+#decoration 00FF00 x
+; Industrious member, tries to feed everyone else.  Cooperates a lot with others
+;Not currently scared enough of Shots
+
+; 2-17-05 Concept Change: Bees do not try to daisy-chain resources to Bud
+
+
+#hardware
+engine .4 
+processor 20
+solar-cells .04
+energy 400 20
+robot-sensor 10 6
+syphon 5 10
+food-sensor 10
+shot-sensor 5
+armor 80
+eater 3
+radio read
+repair-rate .1
+
+#code
+#const Bud 1
+#const Petal 2
+#const Pollen 3
+#const WorkerBee 4
+#const Leaf 5
+
+#var TypeID 0
+#var GoAngle 0
+#vector vDest 0 0
+
+#var Action 0
+#var PrevAct
+#const ActNone 0
+#const ActGiveEnergy 1
+#const ActFindFriend 2
+#const ActRunAway 3
+#const ActRepair 4
+
+#vector SyphonTarget 0 0
+#var range 0
+#var r
+#var x
+#var y
+#var CloseBud
+#var i
+init:
+	1 robot-sensor-sees-friends!
+	0 robot-sensor-sees-enemies!
+	WorkerBee read 1 + dup WorkerBee write TypeID! ;Count which WorkerBee I am
+	pi 5 * 6 / TypeID * 2pi mod GoAngle!
+	parent-id nif sync sync sync sync then
+	30 GoAngle polar-to-rect 99 vread v+ vDest!
+	201 CloseBud!
+;<([--MAIN--])>
+Main:
+	;Check-Comms^
+	Resource-Management^
+	Run-From-Danger^
+	Navigate^
+	Am-I-Hurt^
+	Main& jump	
+;<([--END MAIN--])>
+
+Am-I-Hurt:
+	max-armor armor > if
+		99 vread vdest!
+		max-repair-rate repair-rate!
+		ActRepair Action!
+	else
+		0 repair-rate!
+		ActRepair Action = if ActNone Action! then	
+	then
+	return
+
+Check-Comms:
+	do
+		3 messages
+	while
+		3 receive drop id = nif drop CC-Next-Result& jump then
+		nif
+			0 engine-power!
+			position vdest!
+			ActFindFriend Action!
+		then
+		ActNone Action!
+CC-Next-Result:
+	loop
+	return
+
+Navigate:
+	energy 1 < if 0 engine-power! sync sync sync sync ActNone Action! return then
+	Action not .1 10 ifev range!
+	Action ActRepair = if 8 range! then
+	Action ActRunAway = if .5 range! then
+	vdest In-World^ nif
+		world-width 10 / dup world-width swap - random-int
+		world-height 10 / dup world-height swap - random-int
+		vdest!
+		GoAngle pi 2 / + GoAngle!
+	then
+	vdest position range in-range nif
+		vdest seek-location
+	else
+		position seek-location
+	then
+	return
+	
+Locate-Candidate: 
+	0 i!
+	100 range!
+	do
+		201 i + vread position dist r!
+		r range < if
+			r range!
+			i 201 + CloseBud!
+		then
+		i 2 + i!
+		Bud read i 2 / >
+	while-loop
+		
+		
+	CloseBud vread position dist 10 < if
+		0 engine-power!
+		position vdest!
+		CloseBud vread SyphonTarget!
+		ActGiveEnergy Action!
+		return
+	then
+	CloseBud vread vdest!
+	return
+
+Give-Energy:
+;	Action ActRunAway = Action ActRepair or ifr
+	SyphonTarget position v- rect-to-polar syphon-direction! syphon-distance!
+	syphon-max-rate negate syphon-rate!
+	sync
+	syphoned negate syphon-max-rate < if ActFindFriend Action! then
+	energy 40 <= if 0 syphon-rate! ActNone Action! then
+	return
+	
+Find-Food:
+	Action ActRunAway = Action ActRepair = or ifr
+	max-energy .9 * energy < if ActFindFriend Action! return then 
+	food-sensor-firing-cost robot-sensor-firing-cost + 2 * energy > ifr
+	0 robot-sensor-sees-enemies!
+	1 robot-sensor-sees-friends!		
+	fire-food-sensor 
+	fire-robot-sensor sync 
+	
+	food-found nif Set-Search-Dest^ return then
+	robot-found nif food-position vdest! return then
+	food-position position dist range!
+	do
+		robot-type WorkerBee = FF-Next-Result& nifg
+		robot-position food-position dist range < if
+			Set-Search-Dest^ return
+		then
+		
+FF-Next-Result:
+		next-robot
+	while-loop
+	food-position vdest!
+	return
+
+Resource-Management:
+	
+	;energy 20 < if 0 syphon-rate! ActNone Action! then
+	Action ActRepair = ifr
+	Action ActRunAway = ifr
+	Action ActFindFriend = Locate-Candidate& ifc
+	Action ActGiveEnergy = Give-Energy& ifc
+	Action ActNone = Find-Food& ifc	
+	return
+	
+Run-From-Danger:
+	energy 20 < ifr
+	1 robot-sensor-sees-enemies!
+	0 robot-sensor-sees-friends!
+	fire-robot-sensor fire-shot-sensor sync
+	ActRunAway Action = nif Action PrevAct! then
+	shot-found 0 = if 
+		robot-found 0 = if
+			PrevAct Action!
+			return
+		then
+	then
+	shot-found if
+		3 shot-position position v- angle pi + 2pi mod polar-to-rect position v+ vdest!
+		ActRunAway Action!
+		return
+	then
+	robot-found if	robot-reloading robot-bomb or and-if
+		4 robot-position position v- angle pi + 2pi mod polar-to-rect position v+ vdest!
+		ActRunAway Action!
+		return
+	then
+	PrevAct Action!
+	return
+
+Set-Search-Dest:
+	5 GoAngle polar-to-rect position v+ vdest!
+	return
+
+In-World:
+	y! x!
+	x 1 < if 0 return then
+	x world-width 1 - > if 0 return then
+	y 1 < if 0 return then
+	y world-width 1 - > if 0 return then
+	1 return
+
+
+;<----------------------------LEAF---------------------------->
+#type Leaf
+#color F2B1FC
+#decoration F2B1FC dot
+;Likes basking in the sun
+
+#hardware
+engine .01
+processor 10
+radio read
+solar-cells .25
+armor 10
+energy 200 0
+
+#code
+#const Bud 1
+#const Petal 2
+#const Pollen 3
+#const WorkerBee 4
+#const Leaf 5
+
+#var TypeID 0
+#var CellAngle 0
+#var SpacingAngle 0
+#var SpacingDist 6
+#vector Home 0 0
+init:
+	Leaf read 1 + dup Leaf write TypeID! ;Count which Leaf I am
+;<([--MAIN--])>
+Main:
+	Formate^
+	Main& jump	
+;<([--END MAIN--])>
+
+Formate:
+	;dup + pi * Leaf type-population / CellAngle!
+	2pi Leaf type-population / CellAngle!
+	CellAngle TypeID * 2pi mod SpacingAngle!	
+	5 98 read + SpacingDist!
+	SpacingDist SpacingAngle polar-to-rect 99 vread v+ Home!
+	Home position 1 in-range if 0 engine-power! return then
+	Home seek-location
+	return
+
+#end
+;So, I'm going to ramble on about development, features etc...
+
+
+;Bud:
+;Features:
+;1. Big Solar Generator
+;2. Fast Syphon
+;3. Decides home location
+;4. Operates in two modes, Primary and Backup
+;5. Redirects Energy From Leaves to Petals
+;6. Controls Production through shared memory
+;7. Keeps track of what is being built, talks to petals.
+
+;Production is done in what I feel is currently a unique manner for Grobots.
+;The Cell deciding what to build is completely separate from the cells doing the building.
+;Additionally, what to build isn't determined in a formulaic manner, it is hard-coded through the use of a jump table.
+;By observing how Flower grows, its easy for me to see when its starved or imblanced.  I can instruct my colony to 
+;build in an optimal manner.  Addtionally, I have both Phases and Stages.  The Stages will likely
+;correlate to Specific goals: Growth, Defense, Offense.  A phase is just a single step of completing a Stage.
+;Because I have Stages, this means I can change strategies and methods when I feel I must.
+
+;TODO - Move to an edge and announce for better WorkerBee, Spore, and Pollen distribution
+
+;Changes:
+
+
+;Petal:
+;Features:
+;1. No Power Generation
+;2. Fast Construction
+;3. Limited movement
+;4. Cheap
+
+;Petal Merely forms in a circle centered on Bud and builds.  Not very remarkable, except for the extremely low price.
+
+;TODO - Detect if Bud is dead and recover
+
+;Changes:
+
+
+;Spore:
+;Features:
+;1. Primarily the offensive constructor.
+;2. Puts distance between itself and the colony to safely build missles
+
+;Detect if Bud & Petals are dead and recover
+
+;Changes
+
+;Pollen:
+;Features:
+;1. Inexpensive Bomb
+;2. Short sighted.
+;3. Does not detonate within range of colony
+
+;TODO - seek out enemy, maybe in waves?
+
+;Changes
+
+;WorkerBee
+;Features:
+;1. Only Gatherer
+;2. Avoids food that Another WorkerBee is close to
+;3. Feeds Either Bud or Spore
+;4. Runs from shots
+;5. Long range syphon
+;6. Good energy storage
+
+;WorkerBee is a serious workhorse and does an excellant job of getting food efficiently 
+
+;TODO - If Bud dies, start feeding Petals
+
+;Changes
+
+;Leaf
+;Features
+;1. Solar cell generator.
+;2. Relatively inexpensive
+;3. Forms a ring around Bud
+
+;Really simple, just makes energy
+
+;Changes

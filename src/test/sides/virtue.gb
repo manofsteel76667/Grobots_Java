@@ -1,0 +1,318 @@
+#side Virtue
+#author Devon
+#color 9cf
+
+Similar to Homesick and Noffee, but with syphons as the basis of the economy.
+Charity is the point here; the other types are rather arbitrary.
+
+To do:
+  Have Hope call for missiles when it sees many enemies.
+
+#seed 3
+
+#type Faith
+  A syphon-powered shot-chasing missile.
+#color 000
+#hardware
+  bomb 1600
+  armor 120
+  engine .25
+  processor 10
+  energy 100 10
+  radio send
+  shot-sensor 6.6
+  robot-sensor 8
+#code
+
+#const alms-ch 2
+#var next-call
+#vector dest
+
+call-for-alms:
+  time next-call < ifr
+  speed ifr
+  position 2 alms-ch send
+  time 277 + next-call!
+return
+
+#start
+idle:
+  0 engine-power!
+do
+  energy 5 > if time robot-sensor-time 41 + >= and-if
+    fire-robot-sensor sync
+    robot-found 2 > robot-reloading or charge& ifg
+  then
+  energy 10 > if time shot-sensor-time 11 + >= and-if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  call-for-alms
+forever
+
+chase-shot:
+  shot-position shot-velocity unitize 18 vs* v+ dest!
+do
+  dest seek-location
+  time robot-sensor-time 21 + >= if
+    fire-robot-sensor sync
+    robot-found charge& ifg
+  then
+  time shot-sensor-time 15 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+dest position 2 in-range until-loop
+idle& jump
+
+charge:
+do
+  robot-position-overall seek-location
+  time robot-sensor-time 21 + >= if
+    fire-robot-sensor sync
+    robot-found idle& nifg
+    robot-distance-overall 2 < if die sync then
+  then
+  sync
+forever
+
+#type Hope
+  Stationary syphon-fed blaster turret.
+#color FF0
+#hardware
+  processor 20
+  radio send
+  energy 200 10
+  solar-cells .02
+  robot-sensor 20 4
+  blaster 71 20 55
+  armor 200
+
+#code
+
+#const alms-ch 2
+#var next-call
+
+call-for-alms:
+  time next-call < ifr
+  speed ifr
+  position 2 alms-ch send
+  time 277 + next-call!
+return
+
+#var target-direction
+#var target-distance
+#vector blast-velocity
+
+shoot:
+  do
+    robot-shield-fraction energy 100 > 0.3 0.6 ifev > if
+      robot-velocity robot-distance blaster-speed / 2 + vs* robot-position v+
+      position v- rect-to-polar target-direction! target-distance!
+    target-distance blaster-range robot-radius + <= and-if
+      blaster-speed target-direction polar-to-rect blast-velocity!
+    ;look for friends in the way
+      1 robot-sensor-sees-friends! 0 robot-sensor-sees-enemies!
+      robot-distance 2 / robot-sensor-focus-distance!
+      target-direction robot-sensor-focus-direction!
+      fire-robot-sensor sync
+      robot-found if
+        do
+          robot-position position v- 2dup
+          blast-velocity robot-velocity v- unitize dot dup radius > swap target-distance < and
+          rrot blast-velocity robot-velocity v- unitize cross abs robot-radius .2 + < and ifr
+        next-robot while-loop
+      then
+      target-direction fire-blaster
+      return
+    then
+  next-robot while-loop
+return
+
+#var next-scan
+
+#start
+do
+  energy 40 > if time next-scan >= and-if
+    0 robot-sensor-sees-friends! 1 robot-sensor-sees-enemies!
+    0 robot-sensor-focus-distance!
+    fire-robot-sensor sync
+    robot-found if
+      shoot
+      time blaster-reload-time + next-scan!
+    else time 111 + next-scan! then
+  then
+  call-for-alms
+forever
+
+#type Charity
+  Gatherer that gives energy to the poor. Also reproduces.
+#color f99
+
+#comment   Feed whoever asks
+#code
+#const alms-ch 2   ;positions of hungry
+
+alms:   ;start syphon if possible
+  syphoned ifr
+  speed ifr
+  energy 40 < ifr
+  alms-ch receive nifr
+  2dup position syphon-range in-range if
+    position v- rect-to-polar syphon-direction! syphon-distance!
+    syphon-max-rate negate syphon-rate!
+  else 2drop then
+return
+
+#var next-call
+
+call-for-alms:
+  time next-call < ifr
+  speed ifr
+  position 2 alms-ch send
+  time 257 + next-call!
+return
+
+#comment   Food hashing
+
+Keep a hashtable of position -> (time, x-position) showing who claims this food.
+Ignore foods other people have claimed recently.
+(x-position is used to confirm this is the right food.)
+Collisions are ignored; at worst they lead to pushing matches.
+Food hashing was first used in YAR, a not-yet-released side by Warren.
+
+#code
+#const hashtable-size 100
+#const hashtable-base 1
+#const claim-time 240
+
+food-hash:   ;(-- hash-index)
+  food-position + dup floor - epsilon / floor hashtable-size mod hashtable-base +
+return
+
+claim-food:   ;(-- claimed?)
+  do
+    food-velocity or nif
+      ;preload with (time t-addr x-pos x-addr time-threshold t-addr x-pos x-addr)
+      time food-hash dup hashtable-size + food-position drop swap
+      time claim-time - 2over over hashtable-size +
+      sync
+      read = if
+        read > if write write 1 return
+        else 2drop 2drop then
+      else
+        2drop write write 1 return
+      then
+    then
+  next-food while-loop
+0 return
+
+#comment   
+#code
+#const flight-time 130
+
+hunger:
+  energy 5 > ifr
+  0 engine-power!
+do
+  call-for-alms
+energy 15 > until-loop
+forage& jump
+
+watch-for-shots:
+  time shot-sensor-time 10 + < ifr
+  energy 10 < ifr
+  fire-shot-sensor sync
+  shot-found nifr
+rdrop
+  position shot-position v- unitize shot-velocity unitize v+ unitize engine-velocity!
+  engine-max-power engine-power!
+  time flight-time +
+  0 syphon-rate!
+  do
+    hunger
+  dup time < until-loop
+  drop
+  forage& jump
+
+random-location:
+  0 world-width random 0 world-height random
+return
+
+#var wander-time
+
+wander:
+  time wander-time < ifr
+  random-location position v- engine-velocity!
+  engine-max-power engine-power!
+  time 300 + wander-time!
+return
+
+gestate:
+  energy max-energy 60 - > if
+    constructor-type nif
+      3 type-population population 2 / <=
+        3
+        .8 random-bool 2 1 ifev 
+        ifev constructor-type!
+    then
+    constructor-max-rate
+  else
+    constructor-type if energy constructor-remaining 15 + > and-if
+      constructor-max-rate
+    else 0 then
+  then constructor-rate!
+return
+
+#hardware
+  processor 10
+  radio send receive read write
+  engine .04
+  
+  armor 150
+  shot-sensor 5
+  
+  food-sensor 8.7 3
+  
+  energy 300 20
+  syphon .8 20
+  eater 2
+  constructor 1.2
+
+#comment   Gathering
+#code
+
+#start
+  wander
+forage:
+  0 syphon-rate!
+do
+  time food-sensor-time 53 + >= if
+    fire-food-sensor sync
+    food-found if claim-food energy 20 < or take-food& ifg then
+    wander
+  then
+  watch-for-shots
+  gestate
+  hunger
+forever
+
+#var last-eaten
+
+take-food:
+do
+  food-position seek-location
+  time food-sensor-time 150 + >= forage& ifg ;blocked?
+  watch-for-shots
+  gestate
+engine-power while-loop
+do
+  food-position seek-location
+  alms
+  watch-for-shots
+  gestate
+  eaten if time last-eaten! then
+time last-eaten 30 + < while-loop
+forage& jump
+
+#end

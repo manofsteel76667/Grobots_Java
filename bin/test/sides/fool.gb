@@ -1,0 +1,89 @@
+#side Fool
+#Author Warren
+#date Started May 27 2002
+
+A one-type theotrophe.
+
+#color 362
+#type Foolish
+#color 211
+#hardware
+energy 300 50
+armor 100
+processor 8
+
+constructor 1.2 ;c 120
+eater 2.0 ;c 200
+engine 0.1 ; c 100
+solar-cells 0.02 ;c 36
+
+food-sensor 10
+;robot-sensor 10
+;shot-sensor 10
+
+#code
+#var begin-moving-time
+#start
+0.1
+BeginWandering: ;on stack: speed
+ random-angle polar-to-rect engine-velocity!
+ time begin-moving-time!
+do
+ energy 30 speed 100 * - < 0 engine-max-power ifev engine-power!
+ food-sensor-time 30 + time < time 5 < or energy 20 > and if
+  random-angle food-sensor-focus-direction!
+  0 5 random food-sensor-focus-distance!
+  fire-food-sensor sync
+  food-found BeginFoodCharge& ifg
+ then
+ construct^
+ defend^
+ 0.1 speed 0.08 < time begin-moving-time 10 + > and BeginWandering& ifg drop
+;must have bumped something
+forever
+
+BeginFoodCharge:
+ time begin-moving-time!
+do
+ food-position position v- 0.06 vs* engine-velocity!
+ engine-max-power engine-power!
+ construct^
+ defend^
+ food-position position v- norm radius 0.05 + < BeginEating& ifg
+ 0.15
+ time begin-moving-time - dup 100 > swap 30 > speed 0.03 < and or
+BeginWandering& ifg drop ;must be something in way
+forever
+
+BeginEating:
+ 0 0 engine-velocity!
+ engine-max-power 0.1 * engine-power! ;try and sit still
+ sync ;wait to get in position
+do
+ construct^
+ defend^
+ 0.1 eaten BeginWandering& nifg drop
+forever
+
+BeginRunning:
+1.0 BeginWandering& jump
+do
+
+forever
+
+Construct:
+ 1 constructor-type!
+ energy 50 < 0 constructor-max-rate ifev constructor-rate!
+return
+
+#var last-armor 0
+defend:
+ energy 25 > if
+  armor armor 50 < 1 1.05 ifev * last-armor < if
+   rdrop armor last-armor! BeginRunning& jump
+  then
+ then
+ armor last-armor!
+return
+
+#end

@@ -1,0 +1,114 @@
+#side balun
+#author elel
+#color 0f0
+#seed 1
+
+#code
+
+#var U_LOOP_COUNTER						;counter for loops which need to run a set number of times
+
+#type balanced
+#color ff0
+#decoration 000 square
+
+#hardware
+
+processor 10
+solar-cells 0.05
+constructor 3.5
+eater 4
+food-sensor 10 1
+energy 400 10
+armor 300
+engine 0.04
+blaster 20 30 15
+robot-sensor 30 1
+
+#code
+
+
+#start  main_loop						;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:								;start going in a random direction and then start looking for food
+
+1 world-width random-int				;random start direction (in case food is not immediately in range)
+1 world-height random-int
+seek-location
+
+do
+	food-collision if					;check for food collision and jump to eating code if found
+		food_found_mode^
+		then	
+	energy 0.5 > if						;check to see if there is enough energy to fire the sensor
+		50 periodic-food-sensor			;fire food sensor only after waiting 30 cycles
+		30 periodic-robot-sensor		;fire robot sensor
+		2drop
+		then
+	food-found if						;check if food is found and get it if it is
+			food-position
+			seek-location
+			then
+	energy 10 < if
+		0 constructor-rate!
+		then
+	food-found speed or nif				;if we are stationary and there is no food, find some
+		new_pastures^
+		then
+	friendly-collision 1 >= wall-collision or if ;if we are touching more than 2 friendlies, move
+		new_pastures^
+		then
+	enemy-collision if 					;if an enemy is involved, call in re-enforcements
+		new_pastures^
+		then
+	robot-found if
+		r_go_crazy^
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+food_found_mode:						;eat food and reproduce
+	0 0 engine-velocity!				;don't go past the food
+	do food-collision while
+	30 periodic-robot-sensor
+	drop
+	robot-found if
+		r_go_crazy^
+		then
+	autoconstruct
+constructor_rate_limit^					;don't run out of energy
+		loop
+return
+
+new_pastures:
+	80 U_LOOP_COUNTER!
+	0 world-width random-int 0 world-height random-int
+	seek-location
+	do U_LOOP_COUNTER 0 > while
+		U_LOOP_COUNTER 1 - U_LOOP_COUNTER!
+		sync
+		loop
+return
+
+r_go_crazy:								;attack anything in sight
+do 
+	10 periodic-robot-sensor
+	drop
+	robot-position robot-velocity lead-blaster
+	robot-found while-loop
+return
+
+
+;;;;;;;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;;;;
+
+constructor_rate_limit:					;don't run out of energy when building bots
+	energy 5 < if
+		0 constructor-rate!
+			else
+		constructor-max-rate constructor-rate!
+	then
+return
+
+#end

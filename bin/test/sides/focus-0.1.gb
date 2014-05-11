@@ -1,0 +1,397 @@
+; Focus 0.1-beta 14 august 2012
+; I really like sides with seperate factory/feeder/warrior types,
+; but they seem vulnerable early on, so I added extra "seed" cells.
+; The warrior side is not very clever yet, which I hope will be
+; different in the next version!
+
+#side Focus
+#author Daan
+#seed 3 1 1 4 4 4 4 4 4 4 4 4 4
+#color EF6
+#code
+#const true 1
+#const false 0
+#const QUARTER_PI 0.785398
+#const mem-start-food-position 200
+#const request-mana-spots 100
+#const request-mana-size 3
+#const food-proximity-threshold 0.3
+pick-start-baby:
+4 type-population 3 < if 4 constructor-type! return then
+3 type-population nif 3 constructor-type! return then
+0.4 1 balance-type constructor-type ifr
+2 constructor-type!
+return
+#const mana-channel 1
+#var last-request-index 500
+#var last-request-timeout 0
+#var last-claim-index 0
+#vector mana-recipient-position
+mana-request:
+time last-request-timeout < mana-update-request& ifg
+0 request-mana-spots random-int request-mana-size * 500 + last-request-index!
+last-request-index sync read time > ifr
+mana-update-request:
+position last-request-index 1 + vwrite
+time time 30 20 v+
+last-request-index write
+last-request-timeout!
+last-request-index position 3 mana-channel send
+return
+mana-claim-update:
+last-claim-index read time < claim-timeout& ifg
+last-claim-index 1 + vread mana-recipient-position! return
+claim-timeout:
+0 last-claim-index! return
+#var closest-distance
+mana-try-claim-closest:
+mana-channel clear-messages sync
+mana-channel receive nifr position dist closest-distance! last-claim-index!
+mana-channel receive nifr position dist dup closest-distance < if closest-distance! last-claim-index! else 2drop then
+mana-channel receive nifr position dist dup closest-distance < if closest-distance! last-claim-index! else 2drop then
+mana-channel receive nifr position dist dup closest-distance < if closest-distance! last-claim-index! else 2drop then
+mana-channel receive nifr position dist dup closest-distance < if closest-distance! last-claim-index! else 2drop then
+mana-channel receive nifr position dist dup closest-distance < if closest-distance! last-claim-index! else 2drop then
+return
+#var mana-threshold-low 20
+#var mana-threshold-high 200
+#var auto-manage-mana
+auto-manage-mana-high:
+energy mana-threshold-low > ifr
+auto-manage-mana-low& auto-manage-mana!
+mana-request^ return
+auto-manage-mana-low:
+energy mana-threshold-high > if
+auto-manage-mana-high& auto-manage-mana!
+0 last-request-index write return
+then
+mana-request^ return
+eat-food-seq:
+food-position nor if 0 return then
+food-position seek-location
+food-position position food-proximity-threshold in-range if
+food-collision return
+then
+1 return
+#type Feeder
+#color 000
+#decoration 000 hline
+#hardware
+engine .07
+eater 2
+syphon 2 20
+energy 500 50
+food-sensor 9
+shot-sensor 7
+robot-sensor 4
+processor 30
+armor 100
+#code
+#var gatherer-was-pregnant 0
+#var control-gathering
+#vector last-destination
+search-food:
+30 periodic-food-sensor random-travel& nifg
+food-found nifr
+food-position nip 100 * 200 mod 200 + floor dup time 500 + rrot time swap sync read > if write true else xor then nifr
+food-position seek-location
+travel-to-food& control-gathering!
+return
+random-travel:
+last-destination position 3 in-range if
+0 world-width random 0 world-height random last-destination!
+then
+last-destination seek-location
+return
+travel-to-food:
+food-position nor if
+search-food& control-gathering!
+return
+then
+food-position seek-location
+food-position position food-proximity-threshold in-range nifr
+eat-food& control-gathering!
+constructor-type gatherer-was-pregnant!
+return
+eat-food:
+food-position seek-location
+food-collision ifr
+constructor-type nif
+gatherer-was-pregnant if
+travel-to-food& control-gathering!
+return
+then
+then
+search-food& control-gathering!
+return
+#vector last-danger-position
+evade-if-necessary:
+10 periodic-shot-sensor shot-found and process-shot& ifg
+10 periodic-robot-sensor nifr robot-found nifr
+engine-max-power engine-power!
+position robot-position v- engine-velocity!
+robot-position last-danger-position!
+sync
+evade-robot:
+position robot-position v- engine-velocity!
+4 sync periodic-robot-sensor evade-robot& nifg
+robot-found evade-robot& ifg
+finish-evade& jump
+process-shot:
+engine-max-power engine-power!
+position shot-position v- engine-velocity!
+shot-position last-danger-position! sync
+evade-shot:
+position shot-position v- engine-velocity!
+4 sync periodic-shot-sensor evade-shot& nifg
+shot-found evade-shot& ifg
+finish-evade:
+position last-danger-position v- unitize 30 vs* position v+ last-destination!
+position last-destination! search-food& control-gathering!
+return
+#start
+auto-manage-mana-high& auto-manage-mana!
+syphon-max-rate negate syphon-rate!
+position last-destination! search-food& control-gathering!
+gather-mode:
+control-gathering call
+evade-if-necessary^
+energy 450 > start-feed-mode& ifg
+last-claim-index mana-try-claim-closest& nifc last-claim-index mana-claim-update& ifc
+energy 150 < if
+energy nif
+do
+mana-request^ sync
+energy 100 < while-loop
+then
+else
+last-claim-index if
+mana-recipient-position position syphon-range in-range feed-target-while-eating& ifg
+then
+then
+gather-mode& jump
+start-feed-mode:
+travel-to-target:
+last-claim-index mana-try-claim-closest& nifc last-claim-index mana-claim-update& ifc
+last-claim-index if
+mana-recipient-position seek-location
+then
+evade-if-necessary^
+energy 100 < gather-mode& ifg
+mana-recipient-position position syphon-range in-range travel-to-target& nifg
+mana-recipient-position position v- rect-to-polar syphon-direction! syphon-distance!
+feed-target:
+last-claim-index mana-try-claim-closest& nifc last-claim-index mana-claim-update& ifc
+last-claim-index travel-to-target& nifg
+evade-if-necessary^
+mana-recipient-position position v- rect-to-polar syphon-direction! syphon-distance! 30 periodic-food-sensor if
+food-found if
+food-position mana-recipient-position 15 in-range if
+food-position nip 100 * 200 mod 200 + floor dup time 500 + rrot time swap sync read > if write true else xor then feed-target-while-eating& ifg
+then
+then
+then
+mana-recipient-position position 15 in-range if
+energy 100 < gather-mode& ifg
+position seek-location feed-target& jump
+else
+travel-to-target& jump
+then
+feed-target-while-eating:
+eat-food-seq^ feed-target& nifg
+evade-if-necessary^
+last-claim-index mana-try-claim-closest& nifc last-claim-index mana-claim-update& ifc
+last-claim-index travel-to-target& nifg
+mana-recipient-position position v- rect-to-polar syphon-direction! syphon-distance!
+food-position mana-recipient-position syphon-range in-range feed-target& nifg
+energy 60 > feed-target-while-eating& ifg
+0 syphon-distance! gather-mode& jump
+#type Hunter
+#color 9A3
+#hardware
+engine .15
+energy 400 50
+shot-sensor 9
+robot-sensor 17
+processor 50
+armor 200
+blaster 30 15 20
+#code
+fire-at-robot:
+robot-position robot-velocity lead-blaster sync
+robot-position position v- angle fire-blaster
+return
+#vector destination
+#start
+auto-manage-mana-high& auto-manage-mana!
+180 mana-threshold-low! 350 mana-threshold-high!
+position destination!
+passive-mode:
+30 periodic-robot-sensor robot-found and passive-robot-found& ifg
+20 periodic-shot-sensor shot-found and passive-shot-found& ifg
+mana-request^
+energy 320 > start-active-mode& passive-mode& ifeg
+passive-robot-found:
+position robot-position v- engine-velocity! engine-max-power engine-power! sync
+12 periodic-robot-sensor robot-found not and passive-robot-found& nifg
+0 engine-power! passive-mode& jump
+passive-shot-found:
+position shot-position v- engine-velocity! engine-max-power engine-power! sync
+12 periodic-shot-sensor shot-found not and passive-shot-found& nifg
+0 engine-power! passive-mode& jump
+start-active-mode:
+0 last-request-index write
+active-find-target:
+10 periodic-robot-sensor robot-found and active-target-found& ifg
+position destination 3 in-range if 0 world-width random 0 world-height random destination! then
+destination seek-location
+auto-manage-mana call
+energy 80 < passive-mode& ifg
+active-find-target& jump
+active-target-found:
+blaster-cooldown nif fire-at-robot^ then
+active-fight:
+blaster-cooldown nif
+fire-robot-sensor sync
+robot-found active-find-target& nifg
+fire-at-robot^
+then
+energy 80 < passive-mode& ifg
+15 position robot-position v- angle polar-to-rect robot-position v+ seek-location
+auto-manage-mana call
+active-fight& jump
+#type Factory
+#color FFF
+#hardware
+engine .05
+constructor 3
+energy 500 50
+processor 20
+armor 80
+#code
+#vector base
+#start
+auto-manage-mana-high& auto-manage-mana!
+150 mana-threshold-low! 450 mana-threshold-high!
+constructor-max-rate constructor-rate!
+position world-width world-height 2 vs/ v- 0 < if 0 < if 0 0 else world-width 0 then else 0 < if world-height 0 else world-height world-width then then 10 restrict-position base!
+do
+constructor-type nif
+pick-start-baby^
+then
+auto-manage-mana call
+base seek-location
+forever
+#type Seed
+#color 9A3
+#decoration 000 cross
+#hardware
+eater 1.8
+engine .15
+constructor 1.2
+energy 300 50
+food-sensor 9
+shot-sensor 7
+robot-sensor 4
+processor 30
+solar-cells .02
+armor 100
+#code
+#var control-pregnancy
+pregnancy-none:
+energy 150 > nifr
+constructor-max-rate constructor-rate! pick-start-baby^
+pregnancy-active& control-pregnancy!
+return
+pregnancy-active:
+constructor-type nif
+pregnancy-none& control-pregnancy! return
+then
+energy 100 > ifr
+0 constructor-rate! pregnancy-paused& control-pregnancy!
+return
+pregnancy-paused:
+energy 2 > if
+energy 150 < ifr
+constructor-max-rate constructor-rate!
+pregnancy-active& control-pregnancy!
+return
+else
+0 constructor-type! pregnancy-none& control-pregnancy!
+return
+then
+#var gatherer-was-pregnant 0
+#var control-gathering
+#vector last-destination
+search-food:
+30 periodic-food-sensor random-travel& nifg
+food-found nifr
+food-position nip 100 * 200 mod 200 + floor dup time 500 + rrot time swap sync read > if write true else xor then nifr
+food-position seek-location
+travel-to-food& control-gathering!
+return
+random-travel:
+last-destination position 3 in-range if
+0 world-width random 0 world-height random last-destination!
+then
+last-destination seek-location
+return
+travel-to-food:
+food-position nor if
+search-food& control-gathering!
+return
+then
+food-position seek-location
+food-position position food-proximity-threshold in-range nifr
+eat-food& control-gathering!
+constructor-type gatherer-was-pregnant!
+return
+eat-food:
+food-position seek-location
+food-collision ifr
+constructor-type nif
+gatherer-was-pregnant if
+travel-to-food& control-gathering!
+return
+then
+then
+search-food& control-gathering!
+return
+#vector last-danger-position
+evade-if-necessary:
+10 periodic-shot-sensor shot-found and process-shot& ifg
+10 periodic-robot-sensor nifr robot-found nifr
+engine-max-power engine-power!
+position robot-position v- engine-velocity!
+robot-position last-danger-position!
+0 constructor-rate! pregnancy-paused& control-pregnancy! sync
+evade-robot:
+position robot-position v- engine-velocity!
+4 sync periodic-robot-sensor evade-robot& nifg
+robot-found evade-robot& ifg
+finish-evade& jump
+process-shot:
+engine-max-power engine-power!
+position shot-position v- engine-velocity!
+0 constructor-rate! pregnancy-paused& control-pregnancy!
+shot-position last-danger-position! sync
+evade-shot:
+position shot-position v- engine-velocity!
+energy 10 < if 0 constructor-type! pregnancy-none& control-pregnancy! then
+4 sync periodic-shot-sensor evade-shot& nifg
+shot-found evade-shot& ifg
+finish-evade:
+position last-danger-position v- unitize 30 vs* position v+ last-destination!
+position last-destination! search-food& control-gathering!
+return
+#start
+auto-manage-mana-high& auto-manage-mana!
+normal-mode:
+position last-destination! search-food& control-gathering!
+pregnancy-none& control-pregnancy!
+do
+control-pregnancy call
+control-gathering call
+evade-if-necessary^
+forever
+#end

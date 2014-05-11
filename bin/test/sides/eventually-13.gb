@@ -1,0 +1,243 @@
+#side Eventually... 13
+#author Devon
+Original September 20 2002
+#color ef0
+
+Autotroph; once it's built enough economy it starts cranking out missiles. Hundreds of them.
+(20020922) Added Sentinel for defense.
+(20021111) Don't seed any sentinels - they're not enough to defend successfully, and they provoke enemies.
+(20021114) Now using random-bool.
+(20031220) Now seeds Sentinels again.
+
+Feel free to steal/modify parts of this side.
+
+#seed 1 1 1 3
+
+#type Economy
+#color 0b0
+
+(20020923) Build more Sentinels early.
+(20021003) Don't inadvertently abort when seeded.
+(20021025) Price reduction and nifc.
+(20021026) A little more armor and less economy.
+(20021030) Less armor (and processor, slightly) and more economy.
+           Bugfix: cell with initial fetus now gestates.
+(20021111) Now uses population instead of a timer to switch modes.
+           Build more sentinels to compensate for none being seeded.
+(20021113) Now build economy, then sentinels, then mixture.
+(20031220) Keep some energy around for Sentinels to take.
+           Slightly smaller.
+(20031221) Redid type selection. Now builds Sentinels early.
+
+#hardware
+  solar-cells .42
+  constructor .42
+  processor 3
+  energy 50 0
+  armor 65
+
+#code
+
+new-baby:
+  population 25 > if .8 random-bool and-if
+    2 ;lots of missiles
+  else
+    3 type-population 1 type-population 4 / < .5 .1 ifev random-bool 3 1 ifev  ;1/5 sentinels
+  then constructor-type!
+return
+
+#start
+do
+  constructor-type new-baby& nifc
+  energy 46 < if
+  constructor-remaining energy > and-if
+    0 constructor-rate!
+  else constructor-max-rate constructor-rate! then
+forever
+
+
+#type Safety Missile
+#author Devon
+#color 666
+
+"Safety" because it won't detonate close to home.
+
+(20020922) All destinations now at edges.
+           Should no longer need recharging.
+(20020923) More armor and engine.
+(20021002) Ignore small cells, to resist B&F's decoys.
+           Now goes off on contact instead of at short range.
+(20021025) Bigger engine, only used when charging.
+(20021025-6) Movement and detonation changes.
+(20021031) Also detonate at short range.
+(20021106-13) Now communicate target locations.
+(20021115) Only cancel shared target if it's near us. Give up on cancelled targets.
+
+#hardware
+  engine .1   ;c 100 m 2
+  bomb 1000   ;c 150 m 4.5 ;could be bigger
+  armor 120   ;c 120 m 3.6
+  processor 10
+  energy 20 5
+  solar-cells .07   ;c 126 m 5.04 :-(
+  robot-sensor 10   ;c 26
+  radio read write
+
+#code
+
+#vector dest
+#var shared
+#vector home
+#const home-dist 15
+#const edge-space 6 ;close enough to see corners
+#var right
+#var top
+
+new-dest: ; --
+;try shared dest
+  .3 random-bool if
+    1 read 2 read dest!
+    1 shared!
+    dest or ifr
+  then
+random-dest:
+  0 1 random-int if
+    0 1 random-int edge-space right ifev
+    edge-space top random
+    dest!
+  else
+    edge-space right random
+    0 1 random-int edge-space top ifev
+    dest!
+  then
+  dest home home-dist in-range random-dest& ifg
+  0 shared!
+return
+
+steer:
+  dest position v- unitize 4 vs/ engine-velocity!
+  position dest 1.5 in-range if
+    1 read 2 read position 5 in-range if
+      0 1 write 0 2 write   ;erase since nobody's here
+      then
+    new-dest& jump
+  then
+  shared if
+    1 read 2 read and new-dest& nifc
+  position dest 20 in-range and-if
+    engine-max-power engine-power!
+  then
+return
+
+#start
+  world-width edge-space - right!
+  world-height edge-space - top!
+  position home!
+  new-dest
+  do
+    position home home-dist in-range no-target& ifg
+    enemy-collision if
+      die sync
+    then
+    fire-robot-sensor sync
+    robot-found if robot-mass 9 > and-if
+      robot-distance robot-radius - 2 < if die sync then
+      robot-position dest!
+      energy robot-sensor-firing-cost > engine-max-power .03 ifev engine-power!
+      robot-position 2 write 1 write
+    else
+    no-target:
+      .05 engine-power!
+      steer
+      sync sync sync sync sync sync sync sync sync sync
+      steer
+      sync sync sync sync sync sync sync sync sync sync
+    then
+    steer
+    sync sync sync sync sync sync sync sync sync sync
+    steer
+    sync sync sync sync sync sync sync sync sync sync
+  forever
+
+#type Sentinel
+#color 909
+
+Can shoot even radially moving targets. Doesn't kill incoming missiles fast enough, though.
+
+(20020923) Slight range increase.
+(20021002) More weapon, to kill incoming missiles. And a little less growth and armor, to save cost.
+           Shorter sleep time.
+(20021003) Reduced useless max energy.
+(20021025-6) Reduced cost (armor, economy, reload time).
+(20021030) Reduced armor and unnecessary constructor. (The sensors take a lot of energy.)
+(20021112) Slightly randomized sleep time.
+(20031220) Now suck off Economy (using code from Feudal 3) instead of using own solar cells.
+           Ignore shielded targets.
+
+#hardware
+  processor 15
+  armor 300
+  grenades 39 17 25
+  robot-sensor 17 5
+  energy 100 0
+  solar-cells .02
+  syphon .8 7
+#code
+
+#var next-scan
+
+#start
+  time 20 + next-scan!
+do
+  time next-scan >= if energy grenades-firing-cost robot-sensor-firing-cost + > and-if
+    fire-robot-sensor sync
+    robot-found if
+      next-target:
+      robot-shield-fraction 0.3 > if
+        robot-velocity 2dup
+          robot-distance grenades-speed / vs* robot-position v+
+          position dist grenades-speed / vs* robot-position v+
+          position v- rect-to-polar fire-grenade
+        time grenades-reload-time + next-scan!
+      else
+        next-robot next-target& ifg
+        time 30 + next-scan!
+      then
+    else
+      time 30 40 random-int + next-scan!
+    then
+  then
+  energy max-energy 10 - < if
+    syphoned nif suck^ then
+  else
+    0 syphon-rate!
+  then
+forever
+
+#var best-energy
+#vector target
+
+suck:
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+  fire-robot-sensor sync
+;get results
+  1 robot-sensor-sees-enemies!
+  0 robot-sensor-sees-friends!
+  robot-found nifr
+  0 best-energy!
+  do
+    robot-type 1 = if
+    robot-distance syphon-range <= and-if
+    robot-energy best-energy > and-if
+      robot-position target!
+      robot-energy best-energy!
+    then
+  next-robot while-loop
+  best-energy nifr
+really-suck:
+  target position v- rect-to-polar syphon-direction! syphon-distance!
+  syphon-max-rate syphon-rate!
+return
+
+#end

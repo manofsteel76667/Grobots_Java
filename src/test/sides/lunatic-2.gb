@@ -1,0 +1,54 @@
+#side lunatic
+#author Devon
+#date 6 Feb 2002
+
+#color fff
+
+#type lunatic
+Runs in circles and strafes. Harmless, but the circular motion makes it
+surprisingly hard to kill. Has been known to actually win rounds!
+(Movement has become much more expensive since, so it will no longer be
+so effective.)
+
+Based on the very first hardcoded brain. :)
+
+(20020409) Updated for engine-velocity!
+
+#color ff0
+
+#hardware
+processor 10
+engine .1 ;HUGE engine
+armor 200
+repair-rate .1
+solar-cells .4
+constructor .25
+energy 100 10
+blaster 0.1 8 3
+
+#code
+
+#var dir
+#var increment
+
+random-angle dir!
+0.15 0.3 random 0 1 random-int -1 1 ifev * increment!
+engine-max-power engine-power!
+
+do
+	dir increment + dir!
+	1 dir polar-to-rect engine-velocity!
+	energy 50 > if
+		1 constructor-type!
+		constructor-max-rate constructor-rate!
+		max-repair-rate repair-rate!
+	else
+		0 constructor-rate!
+		0 repair-rate!
+	then
+	energy 90 > if
+		dir fire-blaster
+	then
+forever
+
+#end

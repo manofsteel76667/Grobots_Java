@@ -1,0 +1,97 @@
+#side NeoRabbit
+#author Devon
+#date April 10 2002
+
+A new rabbit with bells and whistles.
+
+#color a64
+
+#type Rabbit
+#color 666
+
+States: gather, wander, run
+
+#hardware
+	processor 10
+	energy 200 10
+	constructor 1
+	solar-cells .01
+	eater 1.5
+	engine .03
+	food-sensor 13
+	armor 50
+	repair-rate .07
+	
+#code
+#start scan
+	
+#var next-scan
+#var last-armor
+
+gather:
+	food-position seek-location
+do
+	gestate^
+	food-position seek-location
+	check-armor^
+	time next-scan > scan& ifg
+	sync
+forever
+
+#const wander-scan-interval 91
+#const wander-power .01
+#const wander-speed .2 ;unimportant
+
+wander:
+	wander-speed random-angle polar-to-rect engine-velocity!
+	wander-power engine-power!
+	0 constructor-rate!
+	time wander-scan-interval + next-scan!
+do
+	time next-scan >= if
+		fire-food-sensor sync
+		food-found gather& ifg
+		time wander-scan-interval + next-scan!
+	then
+	repair^
+	gestate^
+	check-armor^
+	wander-speed velocity angle polar-to-rect engine-velocity!
+forever
+
+check-armor:
+	armor last-armor < 
+	armor last-armor!
+	if
+		rdrop Run& jump
+	then
+return
+
+#const run-time 120
+
+run:
+	engine-max-power engine-power!
+	1 random-angle polar-to-rect engine-velocity!
+	time run-time + next-scan!
+do
+	repair^
+	gestate^
+	time next-scan > scan& ifg
+forever
+
+scan:
+	fire-food-sensor sync
+	food-found wander& nifg
+	time 66 + next-scan!
+	gather& jump
+
+gestate:
+	1 constructor-type!
+	energy 50 > constructor-max-rate 0 ifev constructor-rate!
+return
+
+repair:
+	energy 20 > max-repair-rate 0 ifev repair-rate!
+return
+
+#end

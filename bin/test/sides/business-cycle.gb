@@ -1,0 +1,195 @@
+#side Business Cycle
+#author Matt Burkholder
+#date 6 Aug 2002
+
+#color 0CC 
+#type T-Bill 
+#color 0f0 
+;Just sits there and reproduces. 
+
+#hardware 
+processor 2 
+solar-cells 0.5 
+constructor 0.5 
+energy 2 0 
+armor 100 
+repair-rate 0.05
+radio write
+
+#code
+position 2 write 1 write 
+;2 constructor-type! 
+do 
+constructor-max-rate constructor-rate! 
+constructor-type nif
+   time 15000 > 3 1 2 random-int ifev constructor-type! then
+armor max-armor < max-repair-rate 0 ifev repair-rate!
+forever 
+
+#type Day Trader
+#color 800
+
+#hardware
+processor 15
+constructor 0.8
+energy 500 50
+eater 1.5
+armor 200
+engine 0.1
+repair-rate 0.05
+food-sensor 10
+robot-sensor 7
+blaster 12 6 4
+radio read
+
+
+#code
+
+#var food-sensor-now
+#var robot-sensor-now
+#var targetDirection
+#var take-a-shot
+#var destx 
+#var desty
+#var targetx
+#var targety
+
+ 0 100 random-int targetx! 0 100 random-int targety!
+ food-sensor-range 0.6 * food-sensor-focus-distance!
+Feed:
+			do
+						energy 490 > energy constructor-remaining 2 * > or 
+      constructor-max-rate 0 ifev constructor-rate!
+						constructor-type nif 1 type-population 3 3 ifev constructor-type! then
+						armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+
+						time robot-sensor-now < blaster-cooldown or energy 21 < or nif
+								fire-robot-sensor sync
+        robot-found energy 200 > and if 
+           robot-position targety! targetx! Attack^
+        else 1 read 2 read position v- angle targetDirection!
+											time 50 + robot-sensor-now!
+		         0 take-a-shot!
+        then then
+					
+
+						time food-sensor-now > if
+        targetDirection food-sensor-focus-direction!
+								fire-food-sensor sync
+								food-found if
+										18000 food-sensor-now!
+										 food-position 2dup seek-location sync sync sync sync
+								else 
+											time 50 + food-sensor-now!  0 0 then
+								desty! destx!
+						then 
+						destx if 
+		      destx desty position v- norm 1 > if
+								   destx desty seek-location 
+        else 0 0 engine-velocity! 0.05 engine-power! then
+					 else
+        targetx targety seek-location
+					then
+	    speed eaten or nif
+       time food-sensor-now! 
+		     3 30 random-int 3 30 random-int 3 31 random-int + + targetx!
+       3 30 random-int 3 30 random-int 3 31 random-int + + targety! then
+			forever
+
+Attack:
+ 0 constructor-rate!
+	do 
+			 blaster-cooldown nif
+       fire-robot-sensor sync robot-found not ifr
+	  	   energy blaster-firing-cost > robot-distance blaster-range < and if
+		   	     robot-position position v- 
+											robot-velocity 0.85 vs* velocity v- 
+											robot-distance blaster-speed / vs* v+ 
+											rect-to-polar fire-blaster drop then 
+       robot-position robot-velocity robot-distance speed 0.1 max / vs* v+ 
+       robot-position position v- robot-distance -0.2 * vs/ v+ targety! targetx!
+     then
+ 			 targetx targety seek-location
+	    armor max-armor < max-repair-rate 0 ifev repair-rate! 
+  energy 20 > while-loop
+return
+
+#type Dot-Com
+#color F05
+
+#hardware
+processor 5
+energy 70 70
+armor 20
+engine 0.15
+robot-sensor 12
+bomb 750
+solar-cells 0.01
+radio read write send receive
+
+#code
+
+#var robot-sensor-now
+#vector target 0 0
+
+
+PickDest^
+do 
+   time robot-sensor-now > if
+    fire-robot-sensor sync
+    robot-found 3 > if
+      robot-distance-overall  robot-direction-overall polar-to-rect position v+ target!
+      time 5 + robot-sensor-now!
+      robot-distance-overall 4 < energy 0.5 < or if 
+        beep robot-position 4 write 3 write sync die then
+   else robot-found if
+      robot-position target!
+	     time 5 + robot-sensor-now!
+      robot-distance 2 < if 
+								beep robot-position 4 write 3 write sync die then
+   else 
+      time 50 + robot-sensor-now!
+  then then
+  else check^ then
+  energy 10 > robot-found or if
+      target seek-location
+   else 0 engine-power! then
+forever
+
+#var counter 0
+#var end-wait-now 0
+#const Return-wait 25
+
+Check:
+    1 receive counter!
+    do counter 0 > while
+        counter 3 - counter!
+        target 1 in-range if
+            1 2 send else drop then
+    loop
+return
+ 
+PickDest:
+				target + 3 read 0 = or nif
+				   3 read 10 / round 1 max 9 min 10 *
+				   4 read 10 / round 1 max 9 min 10 *
+       0 3 write
+				else
+       1 9 random-int 10 *  dup 20 mod
+       1 5 random-int 20 * 10 -
+		     1 4 random-int 20 * ifev
+				then
+    target! target 1 read 2 read 20 in-range PickDest& ifg
+    id target 3 1 send
+    time Return-wait + end-wait-now!
+    do time end-wait-now < while sync
+        2 receive counter!
+        do counter 0 > while
+            counter 1 - counter!
+            id = PickDest& ifg
+        loop
+    loop
+    stack dropn
+return
+
+#end 

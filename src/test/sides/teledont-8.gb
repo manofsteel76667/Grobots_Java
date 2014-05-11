@@ -1,0 +1,249 @@
+#side Teledont
+This is almots a complete rewrite of Teledont.  It now uses multiple sensor returns for food and robots.  It selects the largest food to eat.  It also tries to avoid friendly fire but this doesn't seem to work yet.
+
+(Warren 20021216) Now uses world-size.
+1-15-03  Reduced cell size by about half, minor changes
+7-15-03  Now preferentially chooses food within long range of targets.
+8-18-03  Food Preference is now multiplied instead of applied first.
+8-18-03  Doesn't Shoot Well Shielded Targets
+8-19-03  Smaller Blaster Size.  Better Aiming
+8-19-03  Transmits Target Loctions
+
+   
+#author Matt Burkholder 
+#date 22 Nov 2002
+#color 55f
+#type Teledont
+#color a0a 
+#hardware 
+                processor 30 
+                engine 0.1
+                constructor 0.75
+                energy 1000 20
+                solar-cells .08
+                eater 2.25
+                robot-sensor 25 5
+                food-sensor 12 10
+                armor 300
+                repair-rate .15
+                blaster 15 25 9
+                radio send receive
+
+        
+#code 
+#vector target
+#vector dest
+#vector Home
+#vector radio-target -100 -100
+#vector Help-Needed -100 -100
+
+#var Target-Direction 0
+#var Target-Result 0
+#var Target-Loop 0
+#var Food-Good 0
+#var robot-sensor-now 0
+#var Take-a-Shot 0
+#var Home-Factor 1
+#var Dist-Factor 3
+#vector Center
+#var Run-Min
+#var Run-Factor
+#var Shoot-Factor
+#var Food-G
+#var Food-P
+#var Shot-Firing-Time
+
+#const Gutter 20
+#const Target-Channel 1
+#const Help-Me-Channel 2
+#var min-preferred-distance 18
+#var min-safe-distance 12
+#const food-taken-distance 3
+
+center-x: world-width 2 / return
+center-y: world-height 2 / return
+center: center-x center-y return
+
+#start
+blaster-range 2 - Run-Min!
+100 blaster-range / Shoot-Factor!
+120 blaster-range / Run-Factor!
+blaster-range 0.75 * min-preferred-distance!
+blaster-range 0.5 * min-safe-distance!
+
+do speed while-loop
+
+1 robot-sensor-sees-friends!
+position
+center-y^ < gutter world-height gutter - ifev
+swap center-x^ < gutter world-width gutter - ifev swap Home!
+Home dest!
+food-sensor-range 0.25 * food-sensor-focus-distance!
+do 
+   energy 250 > energy constructor-remaining 1.25 * > or constructor-max-rate 0 ifev constructor-rate!
+   1 constructor-type!
+   armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+   Target-Channel receive dup if
+       2 / floor target-loop! 
+       ;radio-target!    
+       do target-loop while 
+           2dup position radio-target position dist in-range if
+               radio-target! else 2drop then
+           target-loop 1 - target-loop!
+       loop
+    else drop then 
+    Help-Me-Channel receive dup if
+       2 / floor target-loop! 
+       ;Help-Needed!    
+       do target-loop while 
+           2dup position radio-target position dist in-range if
+               Help-Needed! else 2drop then
+           target-loop 1 - target-loop!
+       loop
+    else drop then 
+       
+   
+   Need-Food^ dup  time robot-sensor-now > or if
+        energy 20 > if fire-robot-sensor then
+        dup Scan-Food& ifc sync Pick-Food& ifc
+        robot-found if  
+            0 Take-a-Shot!
+            0 Target-Loop!
+            do 
+              Target-Loop current-robot-result!
+              Do-I-Shoot-It^ if
+                robot-position Target!
+                current-robot-result Target-Result!
+                robot-position 2 Target-Channel send
+                -100 -100 Help-Needed!
+                Time Take-a-shot!
+                Too-Close^ if
+                    -10 robot-Direction polar-to-rect position v+ dest! 
+                    Robot-position 2 Help-Me-Channel send robot-position vprint then
+ 
+                 do current-robot-result Take-a-Shot and while
+                     current-robot-result 1 - current-robot-result!
+                     In-the-Way^ if
+                         -5 Target-Direction polar-to-rect position v+ dest! 
+                         0 Take-a-shot!  then
+                 loop
+                 Target-Result current-robot-result!
+               then
+               Target-Loop 1 + Target-Loop!
+           Target-Loop num-robot-results < Take-a-Shot not and while-loop
+           
+           time 26 + robot-sensor-now!
+       else
+           time 100 + robot-sensor-now!
+           0 Take-a-Shot!
+       then else drop
+         Move-Home^
+    then
+   Take-a-Shot Blaster-Cooldown Shot-firing-Time <= and Compute-and-Fire& ifc
+   Motion^
+forever
+ 
+Do-I-Shoot-It:
+   robot-side side <> dup if 
+        Take-a-shot energy 500 > or 
+        robot-distance robot-mass Shoot-Factor / 12 max < or 
+        Help-Needed robot-position 5 in-range or and 
+        robot-shield-fraction 0.5 > and then
+return
+ 
+Too-Close:
+   robot-distance robot-mass Run-Factor /  Run-Min min < armor 120 < or
+   dup if robot-position vprint then
+return
+ 
+In-the-Way:
+     robot-side side = dup if ;target robot-position v- 2dup target project v- rect-to-polar Target-Direction! 
+     robot-position position v- 2dup target position v- project v- rect-to-polar Target-Direction!
+     robot-radius 2.5 * <  and then
+return
+ 
+Compute-and-Fire: 
+   Time
+   robot-distance 5 < if
+      robot-direction fire-blaster
+   else
+     robot-position position v- 2dup target! 2dup 
+     robot-velocity robot-distance blaster-speed / vs* v+ 
+     norm blaster-speed / robot-velocity velocity v- rot vs* v+
+     robot-velocity time robot-sensor-time - vs* v+
+     rect-to-polar swap blaster-range < if
+         do blaster-cooldown while-loop
+         fire-blaster
+     else
+         drop
+     then
+   then
+   
+   Time swap - Shot-firing-time!
+return
+ 
+Need-Food:
+   ;eaten engine-power or not friendly-collision or
+   engine-power not friendly-collision or eaten not and
+return
+
+Scan-Food:
+   Home position v- angle food-sensor-focus-direction!
+   fire-food-sensor
+return
+ 
+Pick-Food:
+ 0 Food-Good!
+10 Food-P!
+food-found if do
+    1.5 Food-G!
+    robot-found if 0 current-robot-result! do
+        robot-side side = if
+            food-position robot-position food-distance 2 / in-range if
+                0.8 Food-G min Food-G! then ;4 to 0.8
+        else
+            food-position robot-position dist dup min-preferred-distance < if
+                min-safe-distance < 0.5 0.9 ifev Food-G min Food-G! ;5 to 0.5 3 to 0.9
+            else
+                blaster-range < 1.2 1.0 ifev Food-G min Food-G! ;1 to 1.2 2 to 1.0
+            then
+        then
+    next-robot while-loop then
+    radio-target 2dup or if
+        food-position dist dup min-preferred-distance < if 
+            min-safe-distance < 0.5 1.0 ifev Food-G min Food-G!
+        else
+            blaster-range < 1.2 1.0 ifev Food-G min Food-G!
+        then
+    else 2drop then
+    ;Food-G Food-P <= if
+        food-energy Food-G *
+        food-position home dist home-factor * - 
+        food-distance dist-factor * -
+        dup Food-Good > if
+            Food-Good! food-position dest!  ;Food-G Food-P!
+        else drop then
+    ;then
+next-food while-loop then
+
+   Food-Good nif
+      10 Home Position 25 in-range random-angle food-sensor-focus-direction  ifev 
+      polar-to-rect position v+ dest!
+    then 
+    -100 -100 Radio-Target!
+return
+
+Move-Home:
+     1 type-population 3 > Position Home 20 in-range and nifr
+     Home center^ v- rect-to-polar 1.57 +  polar-to-rect center^ v+ Home!
+return
+
+#const wall-avoid-dist 3
+Motion:
+     energy food-sensor-firing-cost > food-found or if 
+        dest wall-avoid-dist max world-height wall-avoid-dist - min swap
+        wall-avoid-dist max world-width wall-avoid-dist -  min swap seek-location
+    else  0 engine-power! then
+return
+    
+#end 

@@ -1,0 +1,190 @@
+#side Feudal 3
+#color c75
+
+An autotroph with Revenges. No longer as terribly weak as it was.
+
+#type Serf
+#color 0f0
+Just another plant.
+
+(20030721) Randomized construction to reduce synchronized overreaction.
+
+#hardware
+  processor 2
+  energy 100 0
+  solar-cells .4
+  constructor .4
+  armor 50
+#code
+do
+  constructor-type nif
+    1 type-population 2 type-population < if 1 else
+      1 type-population 2 type-population 2 * <= if
+        .6 random-bool 1 2 ifev
+      else 2 then
+    then constructor-type!
+  then
+  energy max-energy 10 - > constructor-max-rate .1 ifev constructor-rate!
+forever
+
+#type Revenge
+Based on Commune's Revenge, but feeds itself instead of calling for food.
+
+(20030716) Long-range syphons, and no more separate sucking state.
+  Merged in changes from Commune's Revenge to v8:
+    Better combat movement.
+    Bigger repairer, slightly smaller and shorter blaster.
+    Better shoice of when to fight.
+    Less frequent scans, to save energy.
+    Now checks channel 5 after a failed chase.
+    Go-home uses reduced engine power to save energy.
+  Keep firing sensors while sucking.
+  Pick best cell to suck from, not nearest.
+  Receive calls even if not answering them, to prevent backlogs.
+(20030721) Fixed for syphon renaming and re-aiming.
+
+#color fff
+#hardware
+  engine .1
+  energy 250 10
+  repair-rate .1
+  armor 350
+  blaster 22 1 10
+  robot-sensor 8 10
+  shot-sensor 6
+  processor 13
+  radio send receive
+  syphon .7 8
+#code
+
+#const target-channel 5
+
+#vector home
+#vector target
+
+autorepair:
+  energy 100 > max-repair-rate 0 ifev repair-rate!
+return
+
+#start
+position home!
+
+idle:
+  0 engine-power!
+do
+  autorepair
+  energy armor min 85 > if
+    time robot-sensor-time 30 + >= if
+      fire-robot-sensor sync
+      robot-found fight& ifg
+    then
+    time shot-sensor-time 12 + >= if
+      fire-shot-sensor sync
+      shot-found chase-shot& ifg
+    then
+  then
+  target-channel receive if
+    target!
+    energy armor min 150 > chase& ifg
+  then
+  sync
+  energy max-energy 10 - < if
+    syphoned nif suck^ then
+  else
+    0 syphon-rate!
+  then
+forever
+
+chase-shot:
+  shot-position shot-velocity unitize -20 vs* v+ target!
+  target 2 target-channel send
+chase:
+  0 syphon-rate!
+do
+  target seek-location
+  autorepair
+  time robot-sensor-time 20 + >= if
+    fire-robot-sensor sync
+    robot-found fight& ifg
+  then
+  time shot-sensor-time 12 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  energy armor min 70 < retreat& ifg
+target position 2 in-range until-loop
+  target-channel messages 1 - target-channel clear-messages
+  target-channel receive go-home& nifg
+  target!
+chase& jump
+
+fight:
+  robot-position 2 target-channel send
+  0 syphon-rate!
+do
+  robot-position robot-velocity seek-moving-location
+  autorepair
+  time robot-sensor-time blaster-reload-time + >= if
+    fire-robot-sensor sync
+    robot-found go-home& nifg
+    robot-distance .8 robot-radius + < if
+      robot-direction fire-blaster
+    then
+  then
+energy armor min 30 > while-loop
+retreat& jump
+
+retreat:
+  target-channel clear-messages
+do
+  home seek-location
+  autorepair
+home position 5 in-range until-loop
+idle& jump
+
+go-home:
+  target-channel clear-messages
+do
+  home seek-location
+  .05 engine-power!
+  autorepair
+  time robot-sensor-time 25 + >= if
+    fire-robot-sensor sync
+    robot-found fight& ifg
+  then
+  time shot-sensor-time 12 + >= if
+    fire-shot-sensor sync
+    shot-found chase-shot& ifg
+  then
+  target-channel receive if
+    target!
+    energy armor min 120 > chase& ifg
+  then
+home position 5 in-range until-loop
+idle& jump
+
+#var best-energy
+
+suck:
+  0 engine-power!
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+  fire-robot-sensor sync
+;get results
+  1 robot-sensor-sees-enemies!
+  0 robot-sensor-sees-friends!
+  robot-found nifr
+  0 best-energy!
+  do
+    robot-type 1 = if robot-energy best-energy > and-if
+      robot-position target!
+      robot-energy best-energy!
+    then
+  next-robot while-loop
+  best-energy nifr
+really-suck:
+  target position v- rect-to-polar syphon-direction! syphon-distance!
+  syphon-max-rate syphon-rate!
+return
+
+#end

@@ -1,0 +1,252 @@
+#side Frog Celestial
+#author Devon
+Started 27 December 2003
+#color 690
+
+A sequel to World Toad, of normal size and without solar cells.
+Frogs are gatherer/fighters which retreat into a group when threatened.
+Thus they get the grouping advantages of a colony without giving up freedom of motion.
+
+#type ...goes Ribbit in the night
+#color c60
+
+#hardware
+  processor 13
+  radio send receive
+  engine .05
+  shot-sensor 5
+
+  energy 400 25
+  food-sensor 7
+  eater 1.5
+  constructor 1
+
+  robot-sensor 8 4
+  grenades 25 8 20
+  armor 200
+  repair-rate .08
+
+#comment   Communications
+Frogs periodically announce their existence.
+Each frog listens to keep track of their collective center, and of how many combat-ready cells are in their vicinity. This tells them whether and whither to run.
+Frogs also call for help, and announce extra food.
+
+#code
+#const ribbit-ch 5   ;channel to call on (strength x y)
+#var next-ribbit 0
+#const ribbit-period 153
+
+ribbit:   ;announce presence
+  time next-ribbit < ifr
+  energy armor min position 3 ribbit-ch send
+  time ribbit-period + next-ribbit!
+return
+
+#vector center  ;average position of all cells
+#var local-force-acc 0
+#var total-force-acc 0
+#var force-acc-time
+#const force-halflife 400
+
+total-force:
+  total-force-acc 0.5 time force-acc-time - force-halflife / exponent *
+return
+
+local-force:
+  local-force-acc 0.5 time force-acc-time - force-halflife / exponent *
+return
+
+listen:   ;listen for ribbits
+  ribbit-ch receive nifr
+  2dup center population 1 - vs* v+ population vs/ center!
+  position dist square 1 + over
+    total-force + total-force-acc!
+    / local-force + local-force-acc!
+  time force-acc-time!
+return
+
+#const food-ch 2   ;extra food (x y time)
+#const target-ch 1   ;help needed (x y)
+
+announce-food: food-position-overall time 3 food-ch send return
+
+#vector best
+
+extra-food:   ; (-- 0) or (-- x y 1)
+  food-ch messages 5 - food-ch skip-messages
+  do food-ch receive while
+    300 + time > if
+      2dup position dist position best dist < best nor or and-if
+      best!
+    else 2drop then
+  loop
+  best or if best 1 else 0 then
+return
+
+call-for-help:   ; (x y --)
+  2 target-ch send
+  target-ch clear-messages
+return
+
+#const help-range 25
+
+help-needed:   ; (-- 0) or (x y 1)
+  target-ch receive if
+    2dup position help-range in-range if 1
+    else 2drop 0 then
+  else 0 then
+return
+
+#comment   Utilities
+#code
+
+construct/repair:
+  constructor-type if
+    energy constructor-remaining 20 + max-energy 50 - min < 0 constructor-max-rate ifev constructor-rate!
+  else
+    energy max-energy 50 - > if
+      1 constructor-type!
+      constructor-max-rate constructor-rate!
+    else 0 constructor-rate! then
+  then
+repair:
+  energy 50 < 0 max-repair-rate ifev repair-rate!
+return
+
+random-location:
+  0 world-width random 0 world-height random
+return
+
+find-robot:
+  fire-robot-sensor sync
+  robot-found nif 0 return then
+  do
+    robot-shield-fraction .3 > if 1 return then
+  next-robot while-loop
+0 return
+
+shoot:
+  robot-velocity velocity v- robot-distance grenades-speed / vs* robot-position v+
+    position v- rect-to-polar swap 2 max swap fire-grenade
+return
+
+#comment   States
+
+eat wander potshot -> robot-seen shot-seen
+fight -> nothing-here run
+run-home run-away -> arrived
+chase-shot chase-rumor -> fight nothing-here
+
+#code
+
+#vector dest   ;movement destination for wandering, shot-chasing, etc.
+
+#start
+  position center!
+eat:
+  target-ch clear-messages
+  0 0 dest!
+do
+  energy 20 > if time robot-sensor-time 43 + >= and-if
+    find-robot and-if
+    ;If the robot is getting too close, fight or flee:
+    robot-velocity position robot-position v- unitize dot   ;closing speed
+      robot-distance 5 < .02 .1 ifev > enemy-seen& ifg
+    ;Otherwise, take potshots if we're not too badly off:
+    energy armor min 40 > shoot& ifc
+    ;...or ignore them.
+  then
+  time shot-sensor-time 11 + >= if
+    fire-shot-sensor sync
+    shot-found shot-seen& ifg
+  then
+  eaten nif time food-sensor-time 55 + >= and-if
+    fire-food-sensor sync
+    food-found if
+      food-energy 100 - 0 max food-found * 2000 > and-if announce-food
+      0 0 dest!
+    then
+  then
+  ribbit listen construct/repair
+  help-needed if
+    energy armor min 150 > if
+      dest! chase& jump
+    else 2drop then
+  then
+  food-found if food-position seek-location else
+    dest nor dest position 2 in-range or if
+      extra-food if dest! else random-location dest! then
+    then
+    dest seek-location
+  then
+forever
+
+enemy-seen:
+  robot-position call-for-help
+  energy armor min 70 < flee-robot& fight& ifeg
+
+shot-seen:
+  local-force 500 < flee-shot& ifg
+  position call-for-help
+  energy armor min 100 < flee-shot& chase-shot& ifeg
+
+#const flee-distance 12
+
+flee-robot:
+  total-force 3000 > if position center 10 in-range not and-if center else
+    position robot-position v- unitize flee-distance vs* position v+
+  then dest!
+  run& jump
+
+flee-shot:
+  total-force 3000 > if position center 10 in-range not and-if center else
+    shot-velocity unitize flee-distance vs* position v+
+  then dest!
+  run& jump
+
+#const fight-distance 7
+
+fight:
+  shoot^
+do
+  position robot-position v- unitize fight-distance vs* robot-position v+
+    1 random-angle polar-to-rect v+   ;dodge (badly)
+    robot-velocity seek-moving-location
+  construct/repair
+  time robot-sensor-time grenades-reload-time + >= if
+    find-robot eat& nifg
+    shoot^
+  then
+energy armor min 50 > while-loop
+flee-robot& jump
+
+run:
+  0 local-force-acc!   ;we're leaving
+  dest swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  construct/repair
+  listen
+  energy 20 > if robot-found and-if time robot-sensor-time grenades-reload-time + >= and-if
+    find-robot shoot& ifc
+  then
+position dest 2 in-range until-loop
+eat& jump
+
+chase-shot:
+  shot-velocity unitize -10 vs* shot-position v+ dest!
+chase:
+do
+  dest seek-location
+  construct/repair
+  time robot-sensor-time 31 + >= if
+    find-robot enemy-seen& ifg
+  then
+  time shot-sensor-time 11 + >= if
+    fire-shot-sensor sync
+    shot-found shot-seen& ifg
+  then
+dest position 3 in-range until-loop
+eat& jump
+
+#end

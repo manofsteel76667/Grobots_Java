@@ -1,0 +1,37 @@
+#side	My Algae
+#author	Analog Kid
+#date	April 9 2003
+
+My first real side.  Simple autotrophic algae.
+
+#color	090		; green
+
+#type	algae-cell
+#color	90f		; purple?
+
+#hardware
+	processor	5
+	energy		5	1
+	solar-cells	.5
+	constructor	.5
+	
+#code
+#start	init
+
+init:
+	
+loop:
+	reproduce^
+	;sync
+	loop& jump
+
+reproduce:
+	energy 2 >= if
+		1 constructor-type!
+		constructor-max-rate constructor-rate!
+	else
+		0 constructor-rate!
+	then
+	return
+		
+#end

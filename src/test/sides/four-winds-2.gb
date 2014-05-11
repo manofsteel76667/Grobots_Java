@@ -1,0 +1,233 @@
+#side Four Winds
+#author Warren
+#date Started 11/29/02
+#color 0af
+
+#seed 1 1 1 1 2 2 2
+
+One-type theotroph. Keeps track of a location to drift towards, and a drift priority.
+
+ToDo:
+-food sharing
+-trapped in corners
+-offense
+
+(20021216) Bugfix: Leaf now makes various types.
+           Now starts by foraging
+           Wander twiddled.
+
+#type Wind
+#color fff
+#hardware
+
+constructor 0.7
+energy 830 50
+armor 150
+processor 15
+engine 0.04
+
+eater 1.2
+
+food-sensor 10 1
+shot-sensor 10 1
+robot-sensor 15 1
+
+#code
+
+#vector home
+
+#var border
+restrict-position:  ;x y border -> x' y'
+ border!
+ border max world-height border - min
+ swap
+ border max world-width border - min
+ swap
+return
+
+random-position:
+5 world-width 5 - random 5 world-height 5 - random
+return
+
+#start
+id 2 mod 0 world-width ifev
+id 2 / floor 2 mod 0 world-height ifev
+5 restrict-position
+home!
+
+Begin-foraging:
+Forage-loop:
+ food-sensor-time 60 + time < if
+  fire-food-sensor sync
+ then
+ food-found if
+  food-position seek-location
+ else
+  Begin-wandering& jump
+ then
+ max-energy energy - 10 < Begin-run& ifg
+ Forage-loop& jump
+
+#vector vel-bias
+Begin-run:
+ engine-max-power engine-power!
+ 0 0 vel-bias!
+ 2 constructor-type!
+Run-loop:
+ energy 50 > home position dist constructor-remaining 0.02 * < and
+  constructor-max-rate 0 ifev constructor-rate!
+ 
+ vel-bias 0.97 vs* vel-bias!
+ shot-sensor-time 20 + time < if
+  fire-shot-sensor sync
+  shot-found if
+   shot-velocity -10 vs* shot-position position v-
+   v+
+   angle Pi + 1.5 swap polar-to-rect
+   vel-bias!
+  then
+ then
+ home position v- unitize 2 vs* vel-bias v+
+ engine-velocity!
+ home position dist 5 < Begin-Home& ifg
+Run-loop& jump
+
+Begin-home:
+ 0 engine-power!
+ 2 constructor-type!
+Home-loop:
+ constructor-type energy 50 > and Begin-foraging& nifg
+ constructor-max-rate constructor-rate!
+ Home-loop& jump
+
+Begin-wandering:
+random-position^ seek-location
+do
+ food-sensor-time 60 + time < if
+  fire-food-sensor sync
+  food-found Begin-foraging& ifg
+ then
+ wall-collision Begin-Wandering& ifg
+forever
+
+#type Leaf
+#color 0f0
+#hardware
+constructor 0.3
+energy 10 0
+armor 100
+processor 2
+
+solar-cells 0.305
+
+#code
+Loop:
+ constructor-type nif
+  2 type-population 5 <= if
+   2
+  else
+   0.7 random-bool if
+    3
+   else
+    0.5 random-bool 2 4 ifev
+   then
+  then
+  constructor-type!
+ then
+ sync
+ constructor-max-rate constructor-rate!
+ sync
+Loop& jump
+
+#type Defender
+#color f00
+#hardware
+processor 12
+energy 200 0
+radio send
+
+solar-cells 0.16
+constructor 0.08
+
+robot-sensor 21 1
+armor 250
+
+grenades 40 17 50
+#code
+
+do
+robot-sensor-time grenades-reload-time + time < if
+energy robot-sensor-firing-cost grenades-firing-cost + > and-if
+ fire-robot-sensor sync
+ robot-found if
+  robot-position time 3 1 send
+  robot-distance grenades-range < and-if
+  robot-position position v-
+  robot-velocity velocity v- robot-distance grenades-speed / vs* v+
+  rect-to-polar fire-grenade
+ then
+then
+constructor-type nif
+ 2 constructor-type!
+then
+energy 250 > constructor-max-rate 0 ifev constructor-rate!
+forever
+
+#type Missile
+Protocol: channel 1 is:
+x y time
+
+#color ff0
+#hardware
+processor 10
+energy 150 150
+engine 0.06
+
+radio receive
+
+robot-sensor 10
+
+armor 200
+bomb 1000
+#code
+#vector target
+#vector home
+#var target-time
+
+pick-loc:
+5 world-width 5 - random 5 world-height 5 - random home!
+return
+
+#start
+pick-loc^
+do
+ robot-sensor-time 15 + time < if
+  fire-robot-sensor sync
+  robot-found if
+  robot-mass 10 > and-if
+   robot-position target!
+   robot-distance 2 < if
+    die
+   then ;ok to boom
+  then ;found
+ then ;time to sense
+ do 1 messages while
+  1 receive drop
+  dup 
+  time 100 - > if
+   rrot 2dup position dist
+   position target dist
+   < and-if
+    target! target-time!
+   else
+    drop 2drop
+  then
+ loop
+ target drop if
+  target seek-location
+ else
+  home seek-location
+ then
+forever
+
+#end

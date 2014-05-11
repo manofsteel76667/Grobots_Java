@@ -1,0 +1,250 @@
+#side Ring of Fire 4
+#author Devon
+12 November 2002
+#color f60
+
+Autotrophs with blaster-using defenders that avoid friendly fire.
+This was a silly decorative side at first, but became semi-serious.
+
+Version 4 (20061021):
+  Core now hides like Unproductive's invisible factory.
+  Ring now eats when convenient.
+
+To do:
+  Ring should eat while fighting
+  grudge
+  flee safely (as group)
+  Ring don't run off - stay close to circle
+  
+
+#code
+
+home: 2 vread return
+
+pull-home: ; x y --
+  2 read if
+    2 vread 9 vs* v+ 10 vs/
+  then 2 vwrite
+return
+
+;move home away from a threat
+#vector threat
+chase-home: ;x y --
+  threat!
+  return ;disabled because it's too dangerous
+  home threat 20 in-range nifr
+  home threat v- unitize 30 vs* threat v+ ;far-dest
+  4 max world-height 4 - min swap 4 max world-width 4 - min swap ;constrained-dest
+  threat v- unitize 20 vs* threat v+ home v+ 2 vs/
+  0 max world-height min swap 0 max world-width min swap ;constrained-dest
+  2 vwrite
+return
+
+#var last-armor
+
+check-armor:
+  armor last-armor < if
+    position chase-home
+    time last-hit 100 + write
+  then
+  armor last-armor!
+return
+
+enemy?: ; side -- bool
+  100 + read
+return
+
+#type core
+#color 0c9
+
+(20030716) Slightly smaller.
+(20061021) Now runs and hides like Unproductive.
+           Better type selection.
+
+#hardware
+  processor 5
+  energy 5 0
+  solar-cells .4
+  constructor .4
+  armor 30
+  engine .03
+#code
+
+#vector dest
+
+#const close-to-wall 20
+;If we're close to a wall, get closer.
+snuggle:
+	position
+	over close-to-wall < if
+		nip 0 swap
+	else over world-width close-to-wall - > if
+		nip world-width swap
+	then then
+	dup close-to-wall < if
+		drop 0
+	else dup world-height close-to-wall - > if
+		drop world-height
+	then then
+	dest!
+	dest pull-home
+return
+
+#start
+armor last-armor!
+population 10 < if
+	snuggle
+else
+	position dest!
+then
+do
+  constructor-type nif
+		1 type-population 2 type-population > .4 .7 ifev random-bool
+		1 2 ifev constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+	position dest 3 in-range if
+	  position home 1 type-population sqrt 4 + in-range if
+  		0 engine-power!
+	 	  position dest!
+	 	else
+	 	  home dest!
+	 	  position pull-home
+	 	then
+	else
+		dest pull-home
+		dest seek-location
+	then
+	check-armor
+forever
+
+#type ring
+#color 000
+
+(20030602) Uses vread/vwrite.
+           Separate fighting mode; keep distance from enemies.
+(20030716) Friendly fire avoidance.
+           Don't give up fighting when out of energy.
+(20061021) Now tries to avoid collisions and stay out of walls.
+           Now eats.
+           Give up fighting when out of energy.
+
+#hardware
+  processor 25
+  
+  robot-sensor 16 8
+  blaster 21 16 20
+  armor 200
+  repair-rate .04
+  
+  engine .03
+  energy 300 0
+  solar-cells .05
+  eater .5
+  food-sensor 7
+  
+#code
+
+#vector post
+#var dir
+#var eating 0
+#const fighting-distance 14
+
+pick-post:
+  friendly-collision if position post 1 in-range and-if random-angle dir! then
+  do
+    1 type-population sqrt 4 + 2 type-population max
+    dir
+    polar-to-rect home v+ post!
+  post dup 0 < swap world-height > or swap dup 0 < swap world-width > or or while
+    random-angle dir!
+  loop
+return
+
+#start
+position pull-home
+armor last-armor!
+idle:
+  position home v- angle dir!
+do
+  pick-post
+  eaten nif energy max-energy 2 / < and-if 79 periodic-food-sensor and-if
+    food-found eating!
+  then
+  eating if
+    food-position seek-location
+    eaten not position food-position radius in-range and energy max-energy 5 - > or if
+      0 eating!
+    then
+  else
+    post seek-location
+  then
+  energy blaster-firing-cost > if 45 periodic-robot-sensor and-if robot-found and-if
+    record-target^
+    shoot^
+    robot-position chase-home
+    ;energy 50 > fighting& ifg
+  then
+  energy 25 > max-repair-rate 0 ifev repair-rate!
+  sync
+  check-armor
+forever
+
+#vector target-position
+#vector target-velocity
+#var target-distance
+
+fighting:
+do
+  position target-position v- unitize fighting-distance vs* target-position v+
+    target-velocity seek-moving-location
+  check-armor
+  blaster-reload-time periodic-robot-sensor if
+    robot-found idle& nifg
+    robot-side enemy? robot-position home 20 in-range or if
+      record-target^
+      energy blaster-firing-cost > shoot& ifc
+      robot-position chase-home
+    then
+  then
+  energy 50 > max-repair-rate 0 ifev repair-rate!
+energy blaster-firing-cost > while-loop
+idle& jump
+
+record-target:
+  robot-position target-position!
+  robot-velocity target-velocity!
+  robot-distance target-distance!
+return
+
+#var blast-direction
+#vector blast-velocity
+
+shoot:
+  target-velocity velocity v- 2dup target-distance blaster-speed / vs* target-position v+
+  position dist blaster-speed / vs* target-position v+
+  position v- angle blast-direction!
+  velocity blaster-speed blast-direction polar-to-rect v+ blast-velocity!
+;look for friends
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+  target-distance 2 / robot-sensor-focus-distance!
+  blast-direction robot-sensor-focus-direction!
+  fire-robot-sensor sync
+  1 robot-sensor-sees-enemies!
+  0 robot-sensor-sees-friends!
+  0 robot-sensor-focus-distance!
+;anybody in the way?
+  robot-found if
+    do
+      robot-position position v- 2dup
+      blast-velocity robot-velocity v- unitize dot dup radius > swap target-distance < and
+      rrot blast-velocity robot-velocity v- unitize cross abs robot-radius .2 + < and ifr
+    next-robot while-loop
+  then
+;shoot
+  blast-direction fire-blaster
+return
+
+
+#end

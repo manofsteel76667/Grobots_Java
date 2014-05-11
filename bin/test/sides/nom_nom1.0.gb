@@ -1,0 +1,113 @@
+#side nom nom 1.0
+#author elel
+#color 0f5
+#seed 1 1 1 2
+
+#type simple_eater
+#color 2f9
+#decoration 111 hline
+#hardware
+
+processor 15
+solar-cells 0.07
+eater 1
+engine 0.015
+constructor 1.1
+food-sensor 10 1
+energy 100 10
+armor 20
+bomb 100
+
+#code
+
+#var loop_counter					;counter for loops which need to run a set number of times
+#var is_there_food  ;temp
+
+#start  main_loop					;start executing code in search mode
+
+;;;;;;;;;;MAIN LOOP;;;;;;;;;;
+
+main_loop:							;for now search for food
+do
+	food-collision is_there_food! ;temp
+	ka_boom^
+	food-collision if				;check for food collision and jump to eating code if found
+		food_found_mode^
+		then	
+	food_check^
+	build_rate_controll^
+	friendly-collision 2 >= if		;if we are touching more than 2 friendlys, move
+		new_pastures^
+		then
+	food-position + 0 > if 			;get food position and add, next line sees if the result is a non-zero number (if food is found)
+		food-position seek-location
+		then
+forever
+
+;;;;;;;;;START OF SUB-MODES;;;;;;;;;;
+
+food_found_mode:
+	0 0 engine-velocity!
+	do food-collision while
+		autoconstruct
+		loop
+return
+
+new_pastures:
+	80 loop_counter!
+	random-angle engine-max-power engine-velocity!
+	do loop_counter 0 > while
+		loop_counter 1 - loop_counter!
+		ka_boom^
+		sync
+		loop
+return
+
+;;;;;;;;;;START OF FUNCTIONS;;;;;;;;;;	
+
+build_rate_controll:				;sets build rate to zero if bot is running out of food; necessary so the sensor can find more food
+	energy 1 < if
+		0 constructor-rate!
+		then
+return
+
+food_check:							;checks for food if certain conditions are met
+	energy 0.5 > if					;check to see if there is enough energy to fire the sensor
+		30 periodic-food-sensor		;fire food sensor only after waiting 30 cycles
+		drop						;drop unused success return from sensor
+		then	
+return
+
+ka_boom:							;checks whether there is an enemy to blow up  >:}
+enemy-collision if
+	die
+	then
+return
+
+
+;;; ;;; ;;; ;;; ;;; ;;; ;;; ;;;
+;; ; ; ; ; ; ; ; ; ; ; ; ; ; ;END OF BOT
+; ;;; ;;; ;;; ;;; ;;; ;;; ;;; ;
+
+
+#type simple solar
+#color f92
+#decoration 111 square
+#hardware
+
+processor 1
+solar-cells 0.2
+constructor 0.3
+energy 5 0
+armor 10
+
+#code
+
+#start
+
+main_loop:
+do
+		autoconstruct
+forever
+
+#end

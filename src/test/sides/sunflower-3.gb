@@ -1,0 +1,110 @@
+#side Sunflower 3
+This side is an autotroph that siphon energy to one central constructor.
+It has two glaring weaknesses right now.  It has no defense against teledont.
+If the builder/sensor/brain dies it is helpless.
+#author Matt Burkholder	
+#date 9 June 2002
+#color dc2
+#seed 1 2 2 2 2 2 2 
+
+(Devon 20040403) Fixed for syphon rename/rerange. I forgot to do this earlier.
+                 Smaller cells, especially stamens.
+                 Removed unused variables from stamens.
+                 Use vread/vwrite.
+                 Pistils correct for own velocity when firing.
+                 Stamens writes position less often, to save energy.
+                 Doesn't circle unless under attack, to save energy.
+
+To do: multiple flowers (new pistils should go to whoever's hungry)
+       gatherer type (call it Pollen?)
+
+#type Stamen
+#color f00
+#hardware 
+		processor 15 
+		constructor 3.5
+		energy 600 0
+		solar-cells 0.2
+		robot-sensor 17
+		shot-sensor 6
+		armor 200
+		repair-rate 0.05
+		radio write
+
+ 	
+#code 
+
+#const robot-sensor-delay 5
+#const shot-sensor-delay 20
+
+#var robot-sensor-now 0
+#var shot-sensor-now 0
+#var two-scan
+
+ position 1 vwrite
+			do
+      time 15 mod nif position 1 vwrite then
+						energy 280 / constructor-rate!
+	     armor max-armor < max-repair-rate 0 ifev repair-rate!
+						2 constructor-type!
+						armor max-armor < energy 20 > and max-repair-rate 0 ifev repair-rate!
+      time shot-sensor-now > if
+         shot-found two-scan!
+         fire-shot-sensor time shot-sensor-delay + shot-sensor-now! sync
+         shot-found two-scan or 5 write
+      then
+      shot-found two-scan robot-found or or time robot-sensor-now > and if
+          fire-robot-sensor time robot-sensor-delay + robot-sensor-now! sync
+								  robot-found if
+	           robot-position robot-velocity robot-distance 0.4 / vs* v+
+            3 vwrite
+	         else 0 0 3 vwrite
+				then then 
+			forever
+
+
+#type Pistel
+#color 330
+#hardware
+		processor 10
+		energy 200 0
+		solar-cells 0.2
+		armor 180
+		repair-rate 0.05
+  syphon 0.6
+  grenades 9 15 6
+  engine 0.02
+  eater 0.1
+	 radio read
+#code
+
+
+#var flower-dist
+ syphon-range pi 2 / + flower-dist! 
+id 7 > if
+  syphon-range 2 * pi 2 / + flower-dist! then
+id 19 > if
+  syphon-range 3 * pi 2 / + flower-dist!
+then
+flower-dist syphon-distance!
+do
+  0.1 1 vread position v- 2dup 
+  angle syphon-direction!
+  norm flower-dist -
+  dup -1 > 5 read or engine-max-power 0 ifev engine-power!
+  0 min syphon-direction + 
+  polar-to-rect engine-velocity! 
+  armor max-armor < max-repair-rate 0 ifev repair-rate!
+  energy 190 > if
+    syphon-max-rate negate syphon-rate!
+  else energy grenades-firing-cost < if
+    syphon-max-rate syphon-rate!
+  else 0 syphon-rate! then then
+  3 read if
+    3 vread position v- 2dup norm dup grenades-range < if
+      grenades-speed / velocity rot vs* v-
+      rect-to-polar fire-grenade
+    else drop 2drop then then
+forever
+
+#end 

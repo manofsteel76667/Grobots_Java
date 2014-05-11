@@ -1,0 +1,100 @@
+Grobots, a programming game
+(c) 2002-2006 Devon and Warren Schudy
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+(Or see <http://www.gnu.org/licenses/gpl.html>.)
+
+----- Website and email -----
+
+There is more information at <http://grobots.sourceforge.net/>.
+
+The authors' email addresses are:
+
+dschudy@yahoo.com
+wschudy@alum.wpi.edu
+
+----- Building under XCode -----
+
+In XCode 2.x or later, open mac/Grobots.xcodeproj and everything should work.
+
+----- Building under MPW -----
+
+The Mac version of Grobots can be built under MPW, using STLport
+for the standard library and MrCpp 5.x as the compiler. Once you
+have installed these (STLport may be hard), make this directory
+structure somewhere:
+
+Grobots:
+	src: (the decompressed source tree)
+	ObjectFiles:
+		Carbon: (empty)
+		Classic: (empty)
+		Tool: (empty)
+	GrobotsClassic.make (alias to :src:mac:GrobotsClassic.make)
+	GrobotsCarbon.make (alias to :src:mac:GrobotsCarbon.make)
+	GrobotsTool.make (alias to :src:mac:GrobotsTool.make)
+
+Then run MPW, make Grobots the current directory, and run
+"BuildProgram GrobotsClassic" (or another target name).
+
+----- Building under MSVC -----
+
+The Windows versions (regular and headless) can be built under Microsoft Visual Studio 2010.  Open win/WinGrobots.sln and everything should work.
+
+For older versions (back to MSVC 6), open win/Grobots.dsw. The compiler may die of an internal error when building with full optimizations on.
+
+
+Building Grobots on Windows using Visual Studio 2005
+Warren Schudy
+February 23, 2009
+
+Instructions:
+1) Unzip the source code
+2) Run unix2dos or equivalent to convert Win/GrobotsWin.dsp and Win/GrobotsHeadless.dsp to DOS linefeeds. (For some reason Win/Grobots.dsw does not seem to need conversion, but converting it too shouldn't hurt.)
+3) Open Grobots.dsw with Visual Studio 2005. Answer "yes" when it asks (twice) about converting the projects.
+4) Build menu, Configuration manager, select release mode at top.
+5) Build it.
+6) The executables are Win/Release/GrobotsWin.exe and Win/ReleaseHeadless/GrobotsHeadless.exe . The latter must be run from a command-line window.
+
+Troubleshooting:
+1) If you get errors when opening Grobots.dsw you probably forgot to run unix2dos.
+2) If lines mentioning "min" and "max" give strange compile errors a likely issue is that the Windows standard headers define macros for those. GBPlatform.h should define NOMINMAX to stop that, but perhaps something went wrong with that.
+3) If it complains about finding "windows.h" you are probably using version 6.1 of the Microsoft SDK, which does not appear to include windows.h. Use the 6.0a SDK instead. On my computer Visual Studio 2008 defaults to 6.1 and VS 2005 defaults to 6.0a, so if your computer is similar then switching to VS 2005 should solve this problem.
+
+----- Building on Linux -----
+
+> cd src/linux
+> make headless
+
+You may have to create object directories (support, brains, sides, simulation)
+under src/linux.
+
+This will probably work on other Unixes too.
+
+----- Building under other environments -----
+
+Porting headless mode to other environments should be easy. Tell your
+compiler to define HEADLESS as 1.
+
+If you can build Grobots in another environment, we want your diffs
+and makefiles (or local equivalent).
+
+See <http://grobots.sourceforge.net/source.html> for info on porting
+Grobots to other platforms. We are interested in portability patches,
+even incomplete ones.
+
+
+Have fun.
+

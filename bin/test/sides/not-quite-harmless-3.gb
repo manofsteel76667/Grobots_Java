@@ -1,0 +1,443 @@
+#side Not Quite Harmless 3
+#seed 2 2 1
+#author Warren
+#color a3f
+
+The leech is an interesting proof of concept type that needs a lot of polishing. Very fun to watch one leech walk up to almost any other side and drive it crazy. The leech type is responsible for the recent 5x increase in shield cost.
+
+Random-edge-position subreutine in Leech is copied from Eventually by Devon.
+
+(20030629): Removed syphon in response to rules changes. Reduced shields since it rarely died with them fully up. Added a new rat mode that sits and eats when low on energy but under attack.
+	Made Wises not run away from robots if no shots found and full armor.
+
+
+#type Leech
+#decoration fff circle
+#color fff
+
+A shielded syphon-user. Designed to plug into sides to distract enemies, especially missiles. Does not reproduce.
+
+(20030706) Now, leaner and meaner with larger shields to counteract recent weakening.
+
+#hardware
+
+energy 450 60
+armor 60
+processor 15
+radio send receive
+eater 0.9
+engine 0.06
+
+robot-sensor 8 3
+shot-sensor 6.5 1
+food-sensor 9 3
+
+repair-rate 0.14
+shield 0.55
+
+#code
+#var answers-shot-calls
+#var wanderer
+#const grenading-channel 1
+#const shot-seen-channel 2
+
+
+Random-position:
+0 world-width random 0 world-height random return
+
+
+#const edge-space 4
+;this subreutine copied from eventually 12
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+#vector cruise-position
+#var got-cruise-time
+
+
+#start
+0.5 random-bool answers-shot-calls!
+0.5 random-bool wanderer!
+Begin-eating:
+0 shield!
+
+#vector wander-position
+do
+	time food-sensor-time - 30 > if
+		fire-food-sensor sync
+	then
+	food-found if
+	 	food-position seek-location
+	else
+		0 engine-power!
+	then
+
+	energy max-energy / 0.1 > max-repair-rate 0 ifev repair-rate!
+
+	time shot-sensor-time - 15 > if
+	energy max-energy / 0.2 > and-if
+		fire-shot-sensor sync
+		shot-found if
+		shot-velocity norm and-if
+			Begin-decoying& jump
+		then
+	then
+	time robot-sensor-time - 40 > if
+	energy max-energy / 0.35 > and-if
+		fire-robot-sensor sync
+		robot-found if
+			Begin-decoying& jump
+		then
+	then
+	
+	energy max-energy / 0.55 > if
+		do
+			grenading-channel receive
+		while
+				got-cruise-time! cruise-position!
+				cruise-position position dist 5 energy max-energy / 20 * + < if
+				time got-cruise-time - 40 < and-if
+					Begin-cruising-to-given-location& jump
+				then
+		loop
+		answers-shot-calls if
+			do
+				shot-seen-channel receive
+			while
+				got-cruise-time! cruise-position!
+				cruise-position position dist 10 energy max-energy / 25 * + < if
+				time got-cruise-time - 40 < and-if
+					Begin-cruising-to-given-location& jump
+				then
+			loop
+		then
+	then
+	
+	energy max-energy / 0.95 > wanderer and Begin-cruising& ifg
+forever
+
+Begin-decoying:
+#var last-enemy-time
+time last-enemy-time!
+do
+	adjust-shields^
+	max-repair-rate repair-rate!
+	time robot-sensor-time - 20 > if
+		fire-robot-sensor sync
+		robot-found if
+				robot-distance radius robot-radius + - 0.05 * 0.5 min robot-direction polar-to-rect
+					robot-velocity v+ engine-velocity!
+				engine-max-power engine-power!
+				time last-enemy-time!
+		then
+	then
+	
+	robot-found nif
+  time shot-sensor-time - 10 > and-if
+	 fire-shot-sensor sync
+	shot-found and-if
+		time last-enemy-time!
+	 shot-position shot-velocity -100 vs* v+ seek-location
+	then
+
+	time last-enemy-time - 150 > Begin-eating& ifg
+	energy max-energy / 0.45 < Begin-ratting& ifg
+forever
+
+Begin-ratting:
+
+do
+	adjust-shields^
+	max-repair-rate repair-rate!
+	
+	
+	
+	time robot-sensor-time - 50 > if
+		fire-robot-sensor sync
+		robot-found if
+				time last-enemy-time!
+		then
+	then
+	
+	robot-found nif
+  time shot-sensor-time - 40 > and-if
+	 fire-shot-sensor sync
+	shot-found and-if
+		time last-enemy-time!
+	then
+
+	time last-enemy-time - 120 > armor max-armor = and Begin-eating& ifg
+	energy max-energy / 0.05 < Begin-eating& ifg
+	energy max-energy / 0.7 > Begin-decoying& ifg
+	time food-sensor-time - 30 > if
+		fire-food-sensor sync
+	then
+	
+	wander-position position dist 5 < if
+		random-edge-position wander-position!
+	then
+
+	food-found if
+	 	food-position seek-location
+	else
+		wander-position seek-location
+	then
+forever
+
+Begin-cruising-to-given-location:
+do
+	cruise-position seek-location
+	max-shield 0.2 * shield!
+	max-repair-rate repair-rate!
+	time shot-sensor-time - 15 > if
+		fire-shot-sensor sync
+		shot-found if
+		shot-velocity norm and-if
+			Begin-decoying& jump
+		then
+	then
+	
+	time robot-sensor-time - 30 > if
+		fire-robot-sensor sync
+		robot-found if
+			Begin-decoying& jump
+		then
+	then
+	
+	energy max-energy / 0.2 < Begin-eating& ifg
+	
+	cruise-position position dist 3 < if
+		Begin-eating& jump
+	then
+
+forever
+
+Begin-cruising:
+random-edge-position cruise-position!
+do
+	cruise-position seek-location
+	max-shield 0.2 * shield!
+	max-repair-rate repair-rate!
+	time shot-sensor-time - 15 > if
+		fire-shot-sensor sync
+		shot-found if
+		shot-velocity norm and-if
+			Begin-decoying& jump
+		then
+	then
+	
+	time robot-sensor-time - 30 > if
+		fire-robot-sensor sync
+		robot-found if
+			Begin-decoying& jump
+		then
+	then
+	
+	energy max-energy / 0.4 < Begin-eating& ifg
+	
+	cruise-position position dist 3 < if
+		random-edge-position cruise-position!
+	then
+
+forever
+
+adjust-shields:
+ energy max-energy /  max-armor armor / + 
+ armor max-armor = -1.2 -0.6 ifev + 
+ dup 0.2 > swap 0 ifev
+ max-shield * shield!
+return
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#type It Runs Away
+#color 999
+#hardware
+
+constructor 0.9
+eater 1.9
+food-sensor 13 1
+radio send receive
+
+energy 300 50
+armor 150
+processor 15
+engine 0.075
+
+grenades 15 8 25
+robot-sensor 8 1
+
+repair-rate 0.03
+shot-sensor 9 1
+
+#code
+#const grenading-channel 1
+#const shot-seen-channel 2
+
+#vector better-place
+#var migration-priority
+#var adventerous-personality
+
+#const edge-space 4
+;this subreutine copied from eventually 12
+random-edge-position:
+  0 1 random-int if
+    0 1 random-int edge-space world-width edge-space - ifev
+    edge-space world-height edge-space - random
+  else
+    edge-space world-width edge-space - random
+    0 1 random-int edge-space world-height edge-space - ifev
+  then
+return
+
+construct:
+constructor-type nif
+	0.27 random-bool 1 2 ifev constructor-type!
+then
+energy max-energy / 0.3 > constructor-max-rate 0 ifev constructor-rate!
+return
+
+defend:
+ energy armor > max-repair-rate 0 ifev repair-rate!
+ shot-sensor-time time 20 - < energy 30 > and if
+  fire-shot-sensor sync
+  #const shot-run-distance 10
+  shot-found if shot-velocity or and-if
+   shot-run-distance
+   shot-velocity -100 vs* shot-position position v- v+ vnegate angle
+   polar-to-rect better-place v+
+   5 restrict-position^ better-place!
+   migration-priority 12 armor 50 / - + migration-priority!
+  then
+ then
+return
+
+fight:
+ robot-sensor-time time 20 - < energy 40 > and if
+ grenades-cooldown not and-if
+  fire-robot-sensor sync
+  robot-found if
+   
+   3 shot-found 3 0 ifev + armor 50 / -
+   0 max migration-priority + migration-priority!
+   
+   1 robot-direction polar-to-rect robot-velocity dot 0.01 <
+   shot-found or if
+    robot-position
+    robot-velocity velocity v- robot-distance grenades-speed / vs* v+
+    position v- rect-to-polar swap 2.5 max swap fire-grenade
+    robot-position robot-sensor-time 3 grenading-channel send
+   then ;closing or firing
+  then ;found
+ then ;time-to-fire
+return
+
+think:
+; better-place position v- rect-to-polar fire-grenade
+ migration-priority 0.98 * migration-priority!
+ better-place 0.99 vs* position 0.01 vs* v+
+ 0.1 random-angle polar-to-rect v+
+ 5 restrict-position better-place!
+return
+
+#var border
+restrict-position:  ;x y border -> x' y'
+ border!
+ border max world-height border - min
+ swap
+ border max world-width border - min
+ swap
+return
+
+#start
+#vector wander-position
+0.5 random-bool adventerous-personality!
+position 10 random-angle polar-to-rect v+ 5 restrict-position^ better-place!
+0 migration-priority!
+
+#var meal-ready
+#var meal-ready-time
+Begin-browsing:
+random-edge-position wander-position!
+0 meal-ready!
+Loop:
+ food-sensor-time time 30 - <
+ meal-ready not and if
+  better-place position v- rect-to-polar food-sensor-focus-direction! food-sensor-focus-distance!
+  fire-food-sensor sync
+  food-found if
+  	time meal-ready-time!
+  	1 meal-ready!
+  then
+ then
+ meal-ready if
+  food-position seek-location
+  food-position position dist radius 0.1 + < 
+  	time meal-ready-time - 80 > or 
+  	eaten not and if
+   0 meal-ready!
+  then
+ else
+ 	adventerous-personality if
+ 	energy max-energy / 0.1 > and-if
+ 		wander-position position dist 5 < if
+ 			random-edge-position wander-position!
+ 		then
+ 		wander-position seek-location
+ 	else
+  	0 engine-power!
+  then
+ then
+ think^
+ defend^
+ fight^
+ construct^
+ migration-priority 15 >
+ better-place position dist 10 > and if
+ 	position time 3 shot-seen-channel send
+  Begin-running& jump
+ else
+  Loop& jump
+then
+
+Begin-running:
+
+Run-loop:
+ better-place position v- 0.05 vs* engine-velocity!
+ engine-max-power engine-power!
+ think^
+ defend^
+ fight^
+ construct^
+  better-place position dist 5 <
+  migration-priority 10 <
+ or if
+  Begin-browsing& jump 
+ else
+  Run-loop& jump
+then
+
+;#type It Runs Towards
+;
+;A type that I added to kill sides that rely on short-range fire (e.g. Commune)
+;
+;#color ccc
+;#hardware
+;processor 10
+;energy 100 100
+;armor 100
+;engine 0.05
+;
+;bomb 1000
+;
+;robot-sensor 10 3
+
+;#code
+
+#end

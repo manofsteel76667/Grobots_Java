@@ -1,0 +1,161 @@
+#side Noffee 3
+#author Warren/Devon
+
+NoFF, with Escherichia for an economy.
+
+#seed 2 1 2
+
+#type No friendly fire
+#author Warren
+started 20030614
+
+A blaster turret which won't shoot friends.
+
+(Devon 20030627) Smaller solar cells, more storage, smaller blaster.
+                 Don't scan when out of energy.
+(20030628) Slightly faster friend-avoiding loop.
+(Devon 20030814) Fixed sensor/blaster range mismatch.
+(Devon 20030815) Ignore shielded targets unless full.
+(20040104) Added syncs and reduced CPU to save power.
+    Reduced range slightly, increased armor.
+    Fire sensor less often when no enemies seen to save power.
+    Increased energy storage
+
+#hardware
+  energy 300 0
+  armor 200
+  processor 30
+
+  solar-cells 0.15
+
+  robot-sensor 15 10
+  blaster 25 15 40
+#code
+
+#var enemy-distance
+#vector target-delta
+#vector expected-shot-velocity
+#var next-scan
+
+do
+  energy blaster-firing-cost robot-sensor-firing-cost + > if
+  time next-scan > and-if
+    0 robot-sensor-sees-friends!
+    1 robot-sensor-sees-enemies!
+    0 robot-sensor-focus-distance!
+    fire-robot-sensor sync
+    robot-found if
+      robot-shield-fraction 0.2 < if energy max-energy 10 - < No-Shoot& ifg then
+      
+      robot-distance enemy-distance!
+      ;determine which way to fire
+      robot-position position v- 
+      robot-velocity velocity v-
+      robot-distance blaster-speed / vs* v+
+      target-delta!
+      
+      blaster-speed target-delta angle polar-to-rect velocity v+ expected-shot-velocity!
+      
+      ;look for friends in line of fire
+      1 robot-sensor-sees-friends!
+      0 robot-sensor-sees-enemies!
+      target-delta 0.5 vs* rect-to-polar robot-sensor-focus-direction! robot-sensor-focus-distance!
+      fire-robot-sensor sync
+      robot-found if
+        do
+          robot-position position v- target-delta unitize dot dup 
+          0 > swap enemy-distance < and if ;if the friend is between us and the enemy
+            robot-position position v-
+            expected-shot-velocity robot-velocity v- unitize
+            ;stack: vector to ally, shots expected closing velocity
+            cross abs
+            ;stack: ally distance from line of fire
+            robot-radius 0.3 + < no-shoot& ifg
+          then
+        next-robot while-loop
+      then ;friends
+      target-delta angle fire-blaster
+      No-Shoot:
+      time blaster-reload-time + next-scan!
+    else
+      time 100 + next-scan!
+    then ;enemies found
+    sync sync ;save CPU
+  then ;time to fire
+  sync ;save CPU
+forever
+
+#type Escherichia
+#author Devon
+#color 970
+
+(20030418) Bigger eater and constructor.
+           Flee away from shot as well as parallel to it.
+(20030428) Wander more locally.
+           Scan for food more often.
+(20030517) Don't starve self gestating.
+(20030104) Bugfix: could try to run outside non-square world.
+
+#hardware
+  eater 1.5
+  constructor 1
+  energy 200 10
+  armor 90
+  processor 8
+  food-sensor 6
+  shot-sensor 5
+  engine .02
+#code
+
+#vector dest
+#const wander-range 40
+
+new-dest:
+  position swap
+    dup wander-range - 0 max swap wander-range + world-width min random
+    swap dup wander-range - 0 max swap wander-range + world-height min random
+    dest!
+return
+
+construct:
+  constructor-type if
+    energy 180 constructor-remaining 15 + min >=
+      constructor-max-rate 0 ifev constructor-rate!
+  else energy 180 > if
+    1 2 random-int constructor-type!
+    constructor-max-rate constructor-rate!
+  then then
+return
+
+#start
+main:
+  new-dest
+do
+  eaten nif time food-sensor-time 60 + >= and-if
+    fire-food-sensor sync
+  then
+  food-found if
+    food-position seek-location
+  else 
+    position dest 5 in-range if
+      new-dest
+    then
+    dest seek-location
+  then
+  energy 10 > if time shot-sensor-time 10 + >= and-if
+    fire-shot-sensor sync
+    shot-found run& ifg
+  then
+  construct
+forever
+
+run:
+  shot-velocity unitize position shot-position v- unitize v+ 15 vs* position v+
+    swap 0 max world-width min swap 0 max world-height min dest!
+do
+  dest seek-location
+  construct
+position dest 4 in-range until-loop
+main& jump
+
+#end

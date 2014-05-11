@@ -1,0 +1,231 @@
+#side Nanomachines Beta1
+#color 270
+#seed 1
+
+#type Nanodisassembler
+#color 000
+#hardware
+  processor 10
+  armor 31
+  constructor 0.8
+  energy 50 5
+  engine 0.01
+  food-sensor 5 1
+  eater 0.9
+  solar-cells 0.02 ;0.0175 energy lost while moving
+#code
+#vector target
+#vector ignore 0 0
+#var last-armor
+
+construct:
+  constructor-type nif
+    1 type-population 100 >= if
+      ;2 constructor-type!
+      0.5 random-bool if
+	    2 constructor-type!
+	  else
+	    3 constructor-type!
+	  then
+	else
+	  0.5 random-bool if
+	    1 constructor-type!
+	  else
+	    0.5 random-bool if
+	    2 constructor-type!
+	  else
+	    3 constructor-type!
+	  then
+	  then
+	then
+  then
+  energy max-energy / pi/2 * sin constructor-max-rate * constructor-rate!
+return
+
+seek-target:
+  target position 2 in-range if
+    0 world-width random 0 world-height random target!
+  then
+  target seek-location
+return
+
+try-calling-reinforcements:
+  911 read 40 + time >= nif
+    time 911 write
+    position 912 vwrite
+  then
+return
+
+#start
+0 world-width random 0 world-height random target!
+do
+  construct^
+  
+  armor last-armor < if
+    try-calling-reinforcements^
+    position target!
+  then
+  armor last-armor!
+  
+  eaten if
+    position seek-location
+  else
+    50 periodic-food-sensor drop
+	friendly-collision if
+	  food-found if
+	    food-position ignore!
+	  then
+	  seek-target^
+	else
+  	  food-found ignore food-position v- or and if
+	    food-position seek-location
+	  else
+	    seek-target^
+	  then
+	then
+  then
+forever
+
+#type Nanoeradicator
+#color D11
+#hardware
+  processor 10
+  armor 200
+  energy 100 50
+  engine 0.02
+  solar-cells 0.04
+  robot-sensor 6 1
+  grenades 10 6 10
+  ;blaster 10 1 10
+#code
+#vector target
+#var spread
+#var rand-angle
+#var last-armor
+
+seek-target:
+  911 read 40 + time >= if
+    912 vread spread negate spread random spread negate spread random v+ 1 restrict-position target!
+  then
+  target position 1 in-range if
+    0 world-width random 0 world-height random target!
+  then
+  target seek-location
+return
+
+attack:
+  pi/2 negate pi/2 random rand-angle!
+  do
+    armor last-armor < if
+      ; Oh no! I injured myself with a grenade! Better call for backup!
+      try-calling-reinforcements^
+    then
+    armor last-armor!
+    robot-position robot-velocity lead-grenade
+    ;robot-position robot-velocity lead-blaster
+    robot-position position 3 in-range if
+      robot-position position v- rect-to-polar rand-angle + pi + swap 10 * swap polar-to-rect position v+ seek-location
+    else
+      robot-position robot-velocity seek-moving-location
+    then
+    grenades-reload-time periodic-robot-sensor drop
+    ;10 periodic-robot-sensor drop
+  robot-found while-loop
+  0 world-width random 0 world-height random target!
+return
+
+try-calling-reinforcements:
+  911 read 40 + time >= nif
+    time 911 write
+    robot-position 912 vwrite
+  then
+return
+
+#start
+0 world-width random 0 world-height random target!
+do
+  2 type-population 90 < if
+    2 type-population 9 / spread!
+  else
+    30 spread!
+  then
+  seek-target^
+  30 periodic-robot-sensor drop
+  robot-found if
+    attack^
+  then
+forever
+
+#type Nanoilluminator
+#color 11D
+#hardware
+  processor 10
+  armor 100
+  energy 50 10
+  engine 0.02
+  solar-cells 0.025
+  shield 0.1
+  robot-sensor 6 1
+  enemy-syphon 1 6
+#code
+#vector target
+#var spread
+#var rand-angle
+#var last-armor
+
+seek-target:
+  901 read 40 + time >= if
+    902 vread spread negate spread random spread negate spread random v+ 1 restrict-position target!
+  then
+  target position 1 in-range if
+    0 world-width random 0 world-height random target!
+  then
+  target seek-location
+return
+
+attack:
+  pi/2 negate pi/2 random rand-angle!
+  enemy-syphon-max-rate enemy-syphon-rate!
+  do
+    ;armor last-armor < if
+      ;try-calling-reinforcements^
+    ;then
+    energy 10 > if
+      max-shield shield!
+    else
+      0 shield!
+    then
+    armor last-armor!
+    robot-position position v- angle enemy-syphon-direction!
+    robot-position position dist enemy-syphon-distance!
+    robot-position robot-velocity seek-moving-location
+    5 periodic-robot-sensor drop
+  robot-found while-loop
+  0 enemy-syphon-rate!
+  0 enemy-syphon-distance!
+  0 world-width random 0 world-height random target!
+return
+
+try-calling-reinforcements:
+  901 read 40 + time >= nif
+    time 901 write
+    robot-position 902 vwrite
+  then
+return
+
+#start
+0 world-width random 0 world-height random target!
+do
+  2 type-population 90 < if
+    2 type-population 9 / spread!
+  else
+    30 spread!
+  then
+  seek-target^
+  30 periodic-robot-sensor drop
+  robot-found if
+    attack^
+  then
+forever
+
+#end

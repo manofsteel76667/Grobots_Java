@@ -1,0 +1,285 @@
+#side Shepherds
+#author Devon
+#color cba
+6-9 November 2005
+
+Unarmed colony with forcefields for defense.
+Shepherds fend off enemies, collect food, and herd the sheep to safety.
+This side was originally supposed to hide in corners like Productive,
+  but has turned out more like a moving Untouchable.
+
+Rather than move on their own, the sheep are pushed around with forcefields.
+Shepherds move to eat one food while simultaneously using their
+  forcefield to gather another (or push away an enemy). This
+  saves a lot of time.
+Shepherds have only one state. This works well because their choices
+  (motion and forcefielding) are mostly independent.
+Shepherds communicate about robots they see, so their forcefields
+  have up-to-date target positions and can track targets accurately.
+
+In its first tournament, this unarmed side took second place against
+  (roughly) the top nine.
+At present forcefields are about as efficient as engines, but cost
+  less and have range. They should be made less so. To preserve the
+  possibility of moving food, its friction could be decreased.
+
+To do:
+  Don't push enemies into walls.
+  Reduce pushing matches over food. (Randomize? Communicate? Avoid other shepherds?)
+  Reduce starvation when large and cornered.
+  Don't get trapped when fleeing. (Maybe needs a map.)
+  Weapons. Must deal with forcefields. Ideas:
+    Radial blasting. (Move so forcefields won't affect hitting.)
+    Short range. (Will get killed.)
+    Missiles (hazardous near colony).
+    Long range to kill things beyond forcing.
+    Take forcing into account when aiming.
+    Use forcefields to help shots hit.
+    Turn off forcing near targets.
+    Really big grenades.
+    (The defense is good, so we don't need to hit too often.)
+  Deliberately move to walls. (Will this actually help?)
+  Better threat identification. Consider # of cells.
+  Limit flight speed. (Flee relative to actual position, not goal.)
+  It's ok to pull receding food.
+
+#seed 1 2
+
+#type Shepherd
+#color 05f
+#hardware
+  armor 100
+  robot-sensor 18 20
+  food-sensor 18 10
+  force-field .16 18
+  constructor .5 ;remove?
+  eater 1
+  solar-cells .02
+  energy 200 15
+  processor 25
+  engine .05
+
+#code
+
+#const target-channel 4
+#const flock-channel 8 ;also threats?
+
+#vector flock ;where sheep are supposed to be
+#var flocksize ;how close to flock sheep must be
+
+
+#start
+  position flock!
+do
+  find-food^
+  move^
+  watch-for-robots^
+  listen^
+  push/pull^
+  herd^
+  construct^
+forever
+
+construct:
+  constructor-type nif .5 random-bool 1 2 ifev constructor-type! then
+  energy max-energy / constructor-max-rate * constructor-rate!
+return
+
+#vector dinner ;food we're eating
+
+#var last-armor
+move: ;run from injury; otherwise eat food
+  armor last-armor < if position flock flocksize 5 + in-range not and-if
+    flock seek-location
+    ;position fly^ ;TODO only fly once
+  else
+    armor last-armor!
+    dinner or if
+      dinner seek-location
+      eaten nif dinner position radius in-range and-if 0 0 dinner! then
+    else
+      0 engine-power!
+    then
+  then
+return
+
+find-food:
+  time food-sensor-time 50 + < ifr
+  fire-food-sensor sync
+  food-found nifr
+  do
+    food-velocity or nif food-energy 20 >= and-if ;moving or tiny food is uninteresting
+      food-position flock flocksize 10 + in-range energy 15 < or if
+        ;stay close to home to not leave colony defenseless
+        food-distance position dinner dist < dinner nor or if
+          food-position dinner!
+        then
+      else
+        pull-food^
+        return ;only pull one
+      then
+    then
+  next-food while-loop
+return
+
+#vector target-pos
+#vector target-vel
+#var target-id ;0 means food
+#var target-time
+
+pull-food:
+  target-id ifr ;less important than enemies
+  food-position target-pos!
+  flock food-position v- unitize .1 food-mass sqrt / vs* target-vel!
+  time target-time!
+  push/pull^
+return
+
+#comment Keeping robots away:
+Shepherds communicate about enemies that are too close to the flock.
+They also announce when they're pushing a target, so everyone won't push the same one.
+The message format is (position velocity target-id).
+#code
+
+;identifies individual cell across sides
+get-target-id: ;-- id
+  robot-side 1000 * robot-id +
+return
+
+watch-for-robots:
+  time robot-sensor-time 55 + < ifr
+  fire-robot-sensor sync
+  robot-found nifr
+  do
+    consider-robot^
+  next-robot while-loop
+return
+
+consider-robot: ;announce or target
+  robot-position flock flocksize 20 + in-range nifr
+  robot-bomb robot-reloading or if robot-position fly^ then
+  robot-position flock v- unitize robot-velocity dot .05 > ifr ;ignore receding robots
+  robot-position robot-velocity get-target-id
+  dup target-id = target-id not or robot-distance target-pos position dist < or if
+    target-id! target-vel! target-pos!
+    time target-time!
+    push/pull^
+  else ;don't announce it if we're pushing it
+    5 target-channel send
+  then
+return
+
+listen:
+  flock-channel receive if
+    flock!
+    2 type-population 5 * sqrt flocksize!
+  then
+  target-channel receive nifr
+  target-id if
+    drop 2drop 2drop ;ignore if we already have one
+  else
+    target-id! target-vel! target-pos!
+    target-pos position force-field-range in-range nif
+      0 target-time!
+      0 target-id!
+    else
+      time target-time!
+    then
+  then
+return
+
+push/pull:
+  ;TODO don't push into a wall
+  time target-time 25 + < if energy 10 > and-if
+    target-pos flock v- angle target-id nif pi + then ;angle to push
+    .004 time target-time - * over polar-to-rect target-vel v+
+      time target-time - vs* target-pos v+
+      rot set-force-field
+  else
+    0 force-field-power!
+    0 target-id!
+    0 target-time!
+  then
+return
+
+#var next-herd
+
+calc-size:
+  2 type-population 2 * sqrt 2 + flocksize!
+return
+
+;todo keep track of where threats are?
+herd:
+  force-field-power ifr
+  energy 100 < ifr
+  time next-herd < ifr
+  time 115 + next-herd! ;default, if nobody needs herding
+  calc-size^
+  0 robot-sensor-sees-enemies!
+  1 robot-sensor-sees-friends!
+  fire-robot-sensor sync
+  robot-found if
+    do
+      ;should we move sheep toward flock or just away from threats?
+      robot-type 2 = if robot-position flock flocksize in-range not and-if
+        move-sheep^
+      then
+    next-robot while-loop
+  then
+  1 robot-sensor-sees-enemies!
+  0 robot-sensor-sees-friends!
+return
+
+#var starttime
+move-sheep:
+  time starttime!
+  robot-distance force-field-distance!
+  robot-direction force-field-direction!
+  flock robot-position v- angle force-field-angle!
+  force-field-max-power force-field-power!
+  do sync time starttime 20 + <= while-loop
+  0 force-field-power!
+  time 45 + next-herd! ;more herding is probably needed soon
+return
+
+#const flight-step 4
+
+;move flock away from threat
+fly: ; threatx threaty --
+  calc-size^
+  flock v- unitize -16 vs* flock v+
+;avoid walls
+  restrict^
+  flock v- unitize flight-step vs* flock v+ flock!
+  flock 2 flock-channel send
+return
+
+restrict: ; x y -- x y
+  swap flocksize max world-width flocksize - min
+  swap flocksize max world-height flocksize - min
+return
+
+#type Sheep
+#color 774
+#hardware
+  solar-cells .35
+  energy 5 0
+  constructor .35
+  armor 20
+  processor 2
+#code
+
+do
+  constructor-type nif
+    1 type-population 10 < .5 .2 ifev random-bool 1 2 ifev constructor-type!
+  then
+  constructor-max-rate constructor-rate!
+forever
+
+;#type Sacrificial Lamb
+;#color c00
+;#hardware
+  ;armor 80
+  ;bomb 1000
+;;doesn't even detonate itself
+#end

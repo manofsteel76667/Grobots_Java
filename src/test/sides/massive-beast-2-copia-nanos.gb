@@ -1,0 +1,261 @@
+#side Massive Beast2-nanos
+#color 0F0
+#seed 1 3
+#author David and Midnight
+
+#code
+
+;I basically combined Midnight's nanobots from Stand Alone Complex with my Massive Beast
+
+#type Mammoth
+#color F07
+#hardware
+  processor 20
+  armor 700
+  engine 0.2
+  eater 4.8
+  energy 800 100
+  solar-cells 0.05
+  food-sensor 15 1
+  blaster 36 29 10
+  constructor 2.8
+  robot-sensor 29 1
+  repair-rate 0.5
+#code
+
+#var repeat-time 20
+
+do
+  constructor-progress 0 = if
+    1 3 random-int 1 = if
+      2 constructor-type!
+    else
+      3 type-population 2 type-population 2 * < if
+        3 constructor-type!
+      else
+        2 constructor-type!
+      then
+    then
+  then
+  energy 100 > robot-sensor-time repeat-time + time < and if
+    fire-robot-sensor
+  then
+  position 1 write 2 write
+  time 100 write
+  robot-found if
+    5 repeat-time!
+    robot-velocity robot-position time 5 1 send ;sending position and velocity of robot
+    energy 200 > robot-position position dist 15 < or if
+      robot-position robot-velocity lead-blaster
+    then
+  else
+    20 repeat-time!
+  then
+  food-sensor-time 20 + time < if
+    fire-food-sensor
+  then
+  food-found if
+    food-position seek-location
+  else
+    50 50 seek-location
+  then
+  energy 400 > if
+    constructor-max-rate constructor-rate!
+  else
+    0 constructor-rate!
+  then
+  energy 300 > armor max-armor < and if
+    max-repair-rate repair-rate!
+  else
+    0 repair-rate!
+  then
+  sync
+forever
+
+#type Escort
+#color F09
+#hardware
+  processor 20
+  armor 600
+  engine 0.1
+  energy 300 10
+  solar-cells 0.1
+  blaster 3 15 5
+#code
+
+#var my-loc
+#vector his-loc
+#vector temp-vect
+#var temp-var
+#var attacking 0
+#var my-id
+
+2 type-population my-id!
+do
+  attacking 10 + time < if      ;this is to make sure we keep the changes made to my-loc in the code below
+    my-id 2pi 2 type-population / * reorient my-loc!
+  then
+  time my-id 2 + write
+  2 read 1 read his-loc!
+  his-loc 5 my-loc polar-to-rect v+ seek-location
+  1 receive if
+    10 + time > if
+      time attacking!
+      temp-vect!
+      my-id 2pi 2 type-population / * reorient my-loc!
+      my-loc temp-vect his-loc v- angle - temp-var!     ;get the angle between the the line between the bad bot and the home bot and line between the home bot and self
+      temp-var abs pi 8 / < if      ;is this angle small?
+        temp-var signum pi 8 / * my-loc + reorient my-loc!     ;yes, then move out of the way
+      then
+      my-loc temp-vect his-loc v- angle pi + reorient - abs pi 4 / < nif
+        temp-vect 2swap lead-blaster
+      else
+        drop drop
+      then
+    else
+      drop drop drop drop
+    then
+  then
+  my-id 2 type-population > if
+    1 my-id!
+    do
+      my-id 2 + read
+      my-id 1 + my-id!
+      time 10 - <
+    until-loop
+    my-id 1 - my-id!
+  then
+  sync
+forever
+
+#type Nanodisassembler
+#color 000
+#hardware
+  processor 10
+  armor 10
+  constructor 0.8
+  energy 50 5
+  engine 0.01
+  food-sensor 5 1
+  eater 0.9
+  solar-cells 0.02
+#code
+#vector target
+#vector ignorefood 0 0
+
+construct:
+  constructor-type nif
+	  0.5 random-bool if
+	    3 constructor-type!
+	  else
+	    4 constructor-type!
+	  then
+  then
+  energy max-energy / pi/2 * sin constructor-max-rate * constructor-rate!
+return
+
+seek-target:
+  target position 2 in-range if
+    0 world-width random 0 world-height random target!
+  then
+  target seek-location
+return
+
+#start
+0 world-width random 0 world-height random target!
+max-shield shield!
+do
+  construct^
+  
+  eaten if
+    position seek-location
+  else
+    50 periodic-food-sensor drop
+	friendly-collision if
+	  food-found if
+	    food-position ignorefood!
+	  then
+	  seek-target^
+	else
+  	  food-found ignorefood food-position v- or and if
+	    food-position seek-location
+	  else
+	    seek-target^
+	  then
+	then
+  then
+forever
+
+#type Nanoeradicator
+#color D11
+#hardware
+  processor 10
+  armor 100
+  energy 100 50
+  engine 0.02
+  solar-cells 0.04
+  robot-sensor 6 1
+  grenades 10 3 10
+#code
+#vector target
+#vector center
+
+new-random-target:
+  0.9 random-bool if
+    -20 20 random -20 20 random center v+ target!
+  else
+    0.9 random-bool if
+      -30 30 random -30 30 random center v+ target!
+    else
+      0.9 random-bool if
+        -40 40 random -40 40 random center v+ target!
+      else
+        -50 50 random -50 50 random center v+ target!
+      then
+    then
+  then
+return
+
+seek-target:
+  911 read 100 + time >= if
+    912 vread target!
+  then
+  target position 2 in-range if
+    new-random-target^
+  then
+  target seek-location
+return
+
+attack:
+  do
+    try-calling-reinforcements^
+    robot-position robot-velocity lead-grenade
+    robot-position position 1 in-range if
+      seek-target^
+    else
+      robot-position robot-velocity seek-moving-location
+    then
+    grenades-reload-time periodic-robot-sensor drop
+  robot-found while-loop
+  new-random-target^
+return
+
+try-calling-reinforcements:
+  911 read 100 + time >= nif
+    time 911 write
+    robot-position 912 vwrite
+  then
+return
+
+#start
+world-size 2 vs/ center!
+20 negate 20 random 20 negate 20 random center v+ target!
+do
+  seek-target^
+  30 periodic-robot-sensor drop
+  robot-found if
+    try-calling-reinforcements^
+    attack^
+  then
+forever
+#end
