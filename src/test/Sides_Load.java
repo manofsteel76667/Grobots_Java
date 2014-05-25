@@ -1,7 +1,9 @@
-package test.sides;
+package test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +42,10 @@ public class Sides_Load {
 		String sep = System.getProperty("file.separator");
 		return "src" + sep + "test" + sep + "sides" + sep;
 	}
+	public static final String outputFilePath(){
+		String sep = System.getProperty("file.separator");
+		return "src" + sep + "test" + sep;
+	}
 	@Test
 	public void testAllSides() throws IOException, GBError {
 		String path = testFilePath();
@@ -50,34 +56,35 @@ public class Sides_Load {
 				if (s.substring(s.length() - 3).equals(".gb"))
 					filenames.add(path + s);
 		}
+		PrintWriter out = new PrintWriter(outputFilePath() + "SideLoader test output.txt");
 		for (String file : filenames) {
-			testSideReader(file);
+			testSideReader(file, out);
 		}
+		out.close();
 	}
-	@Test
-	public void testOneSide(){
-		testSideReader("the-lunacy.gb");
-	}
-	public void testSideReader(String filename){
+	public void testSideReader(String filename, PrintWriter out) throws FileNotFoundException{
 		try {
 			String file = filename;
 			if (!filename.contains(testFilePath()))
 				file = testFilePath() + filename;
 			Side test = SideReader.Load(file);
-			System.out.println(file + " read successfully.  Side "
+			out.println(file + " read successfully.  Side "
 					+ test.Name() + " compiles without error.");
 			Iterator<sides.RobotType> it = test.types.iterator();			
 			while(it.hasNext()){
 				sides.RobotType typ = it.next();				
-				System.out.println("Type " + typ.name + " layout: ");
+				out.println("Type " + typ.name + " layout: ");
 				for(int i = 0;i< typ.hardware.hardwareList.length - 1;i++)
-					System.out.println(String.format("%s: Cost: %f,  mass %f", 
+					if (typ.hardware.hardwareList[i].Cost() > 0)
+					out.println(String.format("%s: Cost: %.0f,  mass %.2f", 
 							slotNames[i], typ.hardware.hardwareList[i].Cost(), typ.hardware.hardwareList[i].Mass()));
-				System.out.println(String.format("%s: Cost: %f,  mass %f", 
+				out.println(String.format("%s: \tCost: \t%f,  \tmass \t%f", 
 						slotNames[20], typ.brain.Cost(), typ.brain.Mass()));
+				out.println(String.format("%s's %s Total Cost: %.1f \t Total Mass: %.2f", test.Name(), typ.name, typ.Cost(), typ.Mass()));
+				out.println("");
 			}
 		} catch (Exception e) {
-			System.out.println("Error in " + filename + ": " + e.getMessage());
+			out.println("Error in " + filename + ": " + e.getMessage());
 		}
 	}
 }
