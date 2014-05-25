@@ -4,24 +4,26 @@
 package sides;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class GBScores {
-	// protected:
+	// //protected:
 	// rounds
-	public long sides; // = number of seeds
-	public long rounds;
-	public long survived;
-	public long sterile;
-	public long earlyDeaths;
-	public long elimination;
+	public int sides; // = number of seeds
+	public int rounds;
+	public int survived;
+	public int sterile;
+	public int earlyDeaths;
+	public int elimination;
 	// sampled
-	public long population, populationEver;
+	public int population;
+	int populationEver;
 	public double biomass, earlyBiomass;
-	public LinkedList<Long> biomassHistory; // may eventually be a vector of
+	public List<Integer> biomassHistory; // may eventually be a vector of
 											// GBScores
 	public double constructor;
 	public double economyHardware, combatHardware, totalHardware;
-	public long territory;
+	public int territory;
 	// accumulated
 	public double seeded;
 	public GBIncomeStatistics income;
@@ -29,15 +31,15 @@ public class GBScores {
 	public double dead, killed, suicide;
 	public double damageDone, damageTaken, friendlyFire;
 	// fractions
-	public float biomassFraction, earlyBiomassFraction;
-	public float killedFraction;
-	public float biomassFractionSquared; // for standard deviations
+	public double biomassFraction, earlyBiomassFraction;
+	public double killedFraction;
+	public double biomassFractionSquared; // for standard deviations
 
 	// GBScores //
 
-	GBScores() {
-		biomassHistory = new LinkedList<Long>();
-		biomassHistory.add(0l);
+	public GBScores() {
+		biomassHistory = new LinkedList<Integer>();
+		biomassHistory.add(0);
 	}
 
 	public void Reset() {
@@ -57,10 +59,10 @@ public class GBScores {
 		killedFraction = 0.0f;
 		biomassFractionSquared = 0.0f;
 		biomassHistory.clear();
-		biomassHistory.add(0l);
+		biomassHistory.add(0);
 	}
 
-	void OneRound() {
+	public void OneRound() {
 		rounds = 1;
 	}
 
@@ -103,78 +105,78 @@ public class GBScores {
 		}
 	}
 
-	float Survival() {
-		return sides != 0 ? (float) survived / sides : 0;
+	double Survival() {
+		return sides != 0 ? (double) survived / sides : 0;
 	}
 
-	float SurvivalNotSterile() {
-		return sides != 0 ? 1.0f - (float) sterile / sides : 0f;
+	public double SurvivalNotSterile() {
+		return sides != 0 ? 1.0f - (double) sterile / sides : 0f;
 	}
 
-	float EarlyDeathRate() {
-		return sides != 0 ? (float) earlyDeaths / sides : 0f;
+	public double EarlyDeathRate() {
+		return sides != 0 ? (double) earlyDeaths / sides : 0f;
 	}
 
-	float LateDeathRate() {
+	public double LateDeathRate() {
 		if (sides - earlyDeaths <= 0)
 			return 0;
-		return 1.0f - (float) (sides - sterile) / (sides - earlyDeaths);
+		return 1.0f - (double) (sides - sterile) / (sides - earlyDeaths);
 	}
 
-	float EliminationRate() {
-		return rounds != 0 ? (float) elimination / rounds : 0;
+	double EliminationRate() {
+		return rounds != 0 ? (double) elimination / rounds : 0;
 	}
 
-	long Population() {
+	public int Population() {
 		return population / (rounds != 0 ? rounds : 1);
 	}
 
-	long PopulationEver() {
+	int PopulationEver() {
 		return populationEver / (rounds != 0 ? rounds : 1);
 	}
 
-	long Biomass() {
-		return (long) (biomass / rounds);
+	public int Biomass() {
+		return (int) (biomass / rounds);
 	}
 
-	long EarlyBiomass() {
-		return (long) (earlyBiomass / rounds);
+	int EarlyBiomass() {
+		return (int) (earlyBiomass / rounds);
 	}
 
-	long SurvivalBiomass() {
-		return (long) (biomass / survived);
+	int SurvivalBiomass() {
+		return (int) (biomass / survived);
 	}
 
-	long EarlySurvivalBiomass() {
-		return (long) (earlyBiomass / (rounds - earlyDeaths));
+	int EarlySurvivalBiomass() {
+		return (int) (earlyBiomass / (rounds - earlyDeaths));
 	}
 
-	float BiomassFraction() {
+	public double BiomassFraction() {
 		return biomassFraction / (rounds != 0 ? rounds : 1);
 	}
 
-	float EarlyBiomassFraction() {
+	public double EarlyBiomassFraction() {
 		return earlyBiomassFraction / (rounds != 0 ? rounds : 1);
 	}
 
-	float SurvivalBiomassFraction() {
+	public double SurvivalBiomassFraction() {
 		return biomassFraction / (survived != 0 ? survived : 1);
 	}
 
-	LinkedList<Long> BiomassHistory() {
+	List<Integer> BiomassHistory() {
 		if (rounds <= 1)
 			return biomassHistory;
-		LinkedList<Long> avg = biomassHistory;
+		List<Integer> avg = biomassHistory;
 		for (int i = 0;i<avg.size();i++)
 			avg.set(i, avg.get(i)/rounds);
 		return avg;
 	}
 
-	long Constructor() {
-		return rounds != 0 ? (long) (constructor / rounds) : 0;
+	int Constructor() {
+		return rounds != 0 ? (int) (constructor / rounds) : 0;
 	}
 
-	long Territory() {
+	int Territory() {
 		return territory;
 	}
 
@@ -186,51 +188,51 @@ public class GBScores {
 		return combatHardware / totalHardware;
 	}
 
-	long Seeded() {
-		return rounds != 0 ? (long) (seeded / rounds) : 0;
+	public int Seeded() {
+		return rounds != 0 ? (int) (seeded / rounds) : 0;
 	}
 
-	long Dead() {
-		return (long) (dead / rounds);
+	int Dead() {
+		return (int) (dead / rounds);
 	}
 
-	long Killed() {
-		return (long) (killed / rounds);
+	int Killed() {
+		return (int) (killed / rounds);
 	}
 
-	long Suicide() {
-		return (long) (suicide / rounds);
+	int Suicide() {
+		return (int) (suicide / rounds);
 	}
 
-	float KilledFraction() {
-		return (long) (killedFraction / (rounds != 0 ? rounds : 1));
+	public double KilledFraction() {
+		return (int) (killedFraction / (rounds != 0 ? rounds : 1));
 	}
 
-	float KillRate() {
+	public double KillRate() {
 		if (biomass == 0)
 			return 0.0f;
-		return (float) (killed / biomass);
+		return (double) (killed / biomass);
 	}
 
 	// What fraction of income has ended up as growth?
-	float Efficiency() {
+	double Efficiency() {
 		if (income.Total() == 0)
 			return 0.0f;
-		return (float) ((biomass - seeded) / income.Total());
+		return (double) ((biomass - seeded) / income.Total());
 	}
 
-	long Doubletime(long currentTime) {
+	int Doubletime(int currentTime) {
 		if (seeded == 0 || biomass <= 1)
 			return 0;
-		return (long) (currentTime * Math.log(2.0) / Math.log(biomass) / seeded);
+		return (int) (currentTime * Math.log(2.0) / Math.log(biomass) / seeded);
 	}
 
-	float BiomassFractionSD() {
-		float frac = BiomassFraction();
+	double BiomassFractionSD() {
+		double frac = BiomassFraction();
 		if (rounds == 0)
 			return 0.0f;
 		double variance = biomassFractionSquared / rounds - frac * frac;
-		return (float) (variance < 0 ? 0 : Math.sqrt(variance)); // rounding
+		return (double) (variance < 0 ? 0 : Math.sqrt(variance)); // rounding
 																	// error can
 																	// make
 																	// variance
@@ -242,9 +244,9 @@ public class GBScores {
 	}
 
 	// Sampling error: twice the standard deviation of the mean.
-	float BiomassFractionError() {
-		return (float) (rounds > 1 ? BiomassFractionSD()
-				/ Math.sqrt((float) (rounds - 1)) * 2.0 : 1.0);
+	public double BiomassFractionError() {
+		return (double) (rounds > 1 ? BiomassFractionSD()
+				/ Math.sqrt((double) (rounds - 1)) * 2.0 : 1.0);
 	}
 };
 

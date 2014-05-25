@@ -1,6 +1,6 @@
 package sides;
 
-public class ForceFieldSpec implements Hardware<ForceFieldSpec> {
+public class ForceFieldSpec extends HardwareItem {
 
 	@Override
 	public double Mass() {
@@ -34,6 +34,7 @@ public class ForceFieldSpec implements Hardware<ForceFieldSpec> {
 	public double range;
 
 	public ForceFieldSpec() {
+		super(0,0);
 		power = 0;
 		range = 0;
 	}

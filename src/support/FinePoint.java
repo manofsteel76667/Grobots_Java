@@ -41,79 +41,6 @@ public class FinePoint {
 		x = nx;
 		y = ny;
 	}
-
-	/**
-	 * += operator
-	 * 
-	 * @param addend
-	 * @return
-	 */
-	public FinePoint plusEqual(FinePoint addend) {
-		x += addend.x;
-		y += addend.y;
-		return this;
-	}
-
-	/**
-	 * -= operator
-	 * 
-	 * @param subtrahend
-	 * @return
-	 */
-	public FinePoint minusEqual(FinePoint subtrahend) {
-		x -= subtrahend.x;
-		y -= subtrahend.y;
-		return this;
-	}
-
-	/**
-	 * *= operator
-	 * 
-	 * @param factor
-	 * @return
-	 */
-	public FinePoint multiplyEqual(double factor) {
-		x *= factor;
-		y *= factor;
-		return this;
-	}
-
-	/**
-	 * *= operator
-	 * 
-	 * @param factor
-	 * @return
-	 */
-	public FinePoint multiplyEqual(int factor) {
-		x *= factor;
-		y *= factor;
-		return this;
-	}
-
-	/**
-	 * /= operator
-	 * 
-	 * @param divisor
-	 * @return
-	 */
-	public FinePoint divideEqual(double divisor) {
-		x /= divisor;
-		y /= divisor;
-		return this;
-	}
-
-	/**
-	 * /= operator
-	 * 
-	 * @param divisor
-	 * @return
-	 */
-	public FinePoint divideEqual(int divisor) {
-		x /= divisor;
-		y /= divisor;
-		return this;
-	}
-
 	public FinePoint add(FinePoint addend) {
 		return new FinePoint(x + addend.x, y + addend.y);
 	}
@@ -154,7 +81,7 @@ public class FinePoint {
 		return (dx * dx + dy * dy) <= r * r;
 	}
 
-	boolean isNonzero() {
+	public boolean isNonzero() {
 		return x != 0 && y != 0;
 	}
 
@@ -162,7 +89,7 @@ public class FinePoint {
 		return x == 0 && y == 0;
 	}
 
-	void setPolar(double r, double theta) {
+	public void setPolar(double r, double theta) {
 		x = r * Math.cos(theta);
 		y = r * Math.sin(theta);
 	}
@@ -183,7 +110,7 @@ public class FinePoint {
 		return Math.sqrt(x * x + y * y);
 	}
 
-	FinePoint unit() {
+	public FinePoint unit() {
 		return makePolar(1, angle());
 	}
 
@@ -192,11 +119,11 @@ public class FinePoint {
 		// this *= norm / Norm(); //faster but could overflow in some cases
 	}
 
-	double angle() {
+	public double angle() {
 		return Math.atan2(y, x);
 	}
 
-	void setAngle(double angle) {
+	public void setAngle(double angle) {
 		setPolar(norm(), angle);
 	}
 
@@ -210,16 +137,16 @@ public class FinePoint {
 		return base.multiply(base.dotProduct(base)).divide(base.normSquare());
 	}
 
-	double cross(FinePoint other) {
+	public double cross(FinePoint other) {
 		return x * other.y - other.x * y;
 	}
 
-	FinePoint rotateTo(FinePoint base) {
+	public FinePoint rotateTo(FinePoint base) {
 		FinePoint u = base.unit();
 		return new FinePoint(x * u.x - y * u.y, y * u.x + x * u.y);
 	}
 
-	FinePoint rotateFrom(FinePoint base) {
+	public FinePoint rotateFrom(FinePoint base) {
 		FinePoint u = base.unit();
 		return new FinePoint(x * u.x + y * u.y, y * u.x - x * u.y);
 	}

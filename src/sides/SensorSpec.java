@@ -2,7 +2,7 @@ package sides;
 
 import support.GBObjectClass;
 
-public class SensorSpec implements Hardware<SensorSpec> {
+public class SensorSpec extends HardwareItem {
 
 	@Override
 	public double Mass() {
@@ -36,6 +36,7 @@ public class SensorSpec implements Hardware<SensorSpec> {
 	}
 
 	public SensorSpec() {
+		super(0,0);
 		range = 0;
 		numResults = 1;
 		seen = GBObjectClass.ocDead.value;

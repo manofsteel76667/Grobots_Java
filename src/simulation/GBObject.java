@@ -6,7 +6,15 @@ package simulation;
 
 import sides.Side;
 //Maps FinePoints to screen locations
-import support.*;
+import support.FinePoint;
+import support.GBObjectClass;
+import brains.GBBadSymbolIndexError;
+import exception.GBAbort;
+import exception.GBBadArgumentError;
+import exception.GBBadComputedValueError;
+import exception.GBGenericError;
+import exception.GBNilPointerError;
+import exception.GBOutOfMemoryError;
 
 interface GBProjection {
 	public short ToScreenX(double x);
@@ -32,39 +40,66 @@ public abstract class GBObject /*
 	public static final double kMaxOverlap = 0.04;
 	public static final short kMaxSquareMiniSize = 4;
 
-	public abstract void TakeDamage(double amount, Side origin);
+	// Some abstract functions aren't implemented by all descendants
+	// Java hates this so they were given default behavior here.
+	public void TakeDamage(double amount, Side origin) {
+	}
 
-	public abstract double TakeEnergy(double amount);
+	public Double TakeEnergy(double amount) throws GBBadArgumentError,
+			GBBadComputedValueError {
+		return null;
+	}
 
-	public abstract double GiveEnergy(double amount);
+	public Double GiveEnergy(double amount) throws GBBadArgumentError {
+		return null;
+	}
 
-	public abstract double MaxTakeEnergy();
+	public Double MaxTakeEnergy() {
+		return null;
+	}
 
-	public abstract double MaxGiveEnergy();
+	public Double MaxGiveEnergy() {
+		return null;
+	}
 
 	// high-level actions
-	public abstract void Think(GBWorld world);
+	public void Think(GBWorld world) {
+	} // Not everything has a brain
 
-	public abstract void Act(GBWorld world);
+	public abstract void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError, GBGenericError, GBBadSymbolIndexError, GBOutOfMemoryError;
 
-	public abstract void CollideWithWall();
+	public void CollideWithWall() {
+	}
 
-	public abstract void CollideWith(GBObject other);
+	public void CollideWith(GBObject other) throws GBGenericError, GBAbort, GBBadArgumentError, GBBadComputedValueError {
+	}
 
-	public abstract void CollectStatistics(GBWorld world);
+	public void CollectStatistics(GBWorld world) {
+	}
 
 	// high-level queries
 	public abstract GBObjectClass Class();
 
-	public abstract Side Owner();
+	public Side Owner() {
+		return null;
+	} // food is not owned by anyone
 
-	public abstract double Energy();
+	public Double Energy() {
+		return null;
+	}
 
-	public abstract double Interest(); // how attractive to autocamera
+	public Double Interest() {
+		return null;
+	} // how attractive to autocamera
 
-	public abstract String Description();
+	// TODO: Refactor this to toString() once simulation builds
+	public String Description() {
+		return "";
+	}
 
-	public abstract String Details();
+	public String Details() {
+		return "";
+	}
 
 	// evil antimodular drawing code
 	// TODO: Put these back in when we do the GUI
@@ -79,7 +114,7 @@ public abstract class GBObject /*
 	// protected:
 	protected double radius;
 	protected double mass;
-	public GBObject next;
+	public GBObject next;//references the next object; allows GBObject to act as a singly-linked list
 
 	/*
 	 * TODO: Remove GBObject() { throw GBBadConstructorError(); }
@@ -167,7 +202,7 @@ public abstract class GBObject /*
 	}
 
 	public void Accelerate(FinePoint deltav) {
-		velocity.plusEqual(deltav);
+		velocity= velocity.add(deltav);
 	}
 
 	public void Drag(double friction, double linearCoeff, double quadraticCoeff) {
@@ -208,14 +243,14 @@ public abstract class GBObject /*
 		return Math.min(dist / radius, 1.0); // don't overlap more than 1
 	}
 
-	public void BasicCollide(GBObject other) {
+	public void BasicCollide(GBObject other) throws GBGenericError, GBAbort, GBBadComputedValueError, GBBadArgumentError  {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);
 		}
 	}
 
-	public void SolidCollide(GBObject other, double coefficient) {
+	public void SolidCollide(GBObject other, double coefficient) throws GBGenericError, GBAbort, GBBadComputedValueError, GBBadArgumentError  {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);
@@ -225,7 +260,7 @@ public abstract class GBObject /*
 
 	public void PushBy(FinePoint impulse) {
 		if (mass != 0)
-			velocity.plusEqual(impulse.divide(mass));
+			velocity=velocity.add(impulse.divide(mass));
 	}
 
 	public void PushBy(double impulse, double dir) {
@@ -289,7 +324,7 @@ public abstract class GBObject /*
 	}
 
 	public void Move() {
-		position.plusEqual(velocity);
+		position=position.add(velocity);
 	}
 	// TODO: Put these back in when we start on the GUI
 	// Draw a shadow slightly offset from our location.

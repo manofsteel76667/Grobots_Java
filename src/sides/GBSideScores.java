@@ -1,9 +1,9 @@
 package sides;
 
 public class GBSideScores extends GBScores {
-	long extinctTime, sterileTime;
-	public static final long kEarlyDeathTime = 4500;
-	public static final long kMaxSterileConstructor = 10;
+	int extinctTime, sterileTime;
+	public static final int kEarlyDeathTime = 4500;
+	public static final int kMaxSterileConstructor = 10;
 
 	public GBSideScores() {
 	}
@@ -56,19 +56,19 @@ public class GBSideScores extends GBScores {
 		friendlyFire += d;
 	}
 
-	void ReportSeeded(double en) {
+	public void ReportSeeded(double en) {
 		seeded += en;
 		if (biomassHistory.size() == 1)
-			biomassHistory.set(0, (long) seeded);
+			biomassHistory.set(0, (int) seeded);
 		sides = 1;
 		rounds = 1;
 	}
 
-	void ReportTerritory() {
+	public void ReportTerritory() {
 		++territory;
 	}
 
-	void ReportTotals(GBScores totals) {
+	public void ReportTotals(GBScores totals) {
 		biomassFraction = (float) (totals.Biomass() != 0 ? biomass
 				/ totals.Biomass() : 0.0);
 		biomassFractionSquared = biomassFraction * biomassFraction;
@@ -81,7 +81,7 @@ public class GBSideScores extends GBScores {
 			elimination = 1;
 	}
 
-	void ReportFrame(long frame) {
+	public void ReportFrame(int frame) {
 		if (seeded == 0)
 			return;
 		if (population != 0) {
@@ -109,18 +109,18 @@ public class GBSideScores extends GBScores {
 				earlyDeaths = 1;
 		}
 		if (frame % 100 == 0 && frame != 0)
-			biomassHistory.add((long) biomass);
+			biomassHistory.add((int)biomass);
 	}
 
-	long ExtinctTime() {
+	int ExtinctTime() {
 		return extinctTime;
 	}
 
-	long SterileTime() {
+	public int SterileTime() {
 		return sterileTime;
 	}
 
-	long GetNewRobotNumber() {
+	int GetNewRobotNumber() {
 		return ++populationEver; // preincrement for 1-based numbering
 	}
 

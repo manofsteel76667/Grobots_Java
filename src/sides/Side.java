@@ -4,11 +4,19 @@
 
 package sides;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-import simulation.*;
-import support.*;
-import exception.*;
+import simulation.GBMessage;
+import simulation.GBMessageQueue;
+import support.FinePoint;
+import support.Model;
+import exception.GBBadArgumentError;
+import exception.GBGenericError;
+import exception.GBIndexOutOfRangeError;
+import exception.GBNilPointerError;
+import exception.GBOutOfMemoryError;
 
 public class Side extends Model implements Comparable<Side> {
 
@@ -16,10 +24,11 @@ public class Side extends Model implements Comparable<Side> {
 	public static final int kMaxSeedIDs = 20;
 	public static final float kSideCopyColorDistance = 0.3f;
 
-	LinkedList<RobotType> types;
+	public boolean debug = false;
+	public List<RobotType> types;
 	RobotType selected; // really a view property - could remove
 	String name, author;
-	long id;
+	int id;
 	// GBColor color;
 	// scores
 	GBSideScores scores;
@@ -31,14 +40,14 @@ public class Side extends Model implements Comparable<Side> {
 	double[] sharedMemory;
 	GBMessageQueue[] msgQueues;
 	// seeding
-	LinkedList<Long> seedIDs;
+	List<Integer> seedIDs;
 	// public:
-	String filename;
-	support.FinePoint center;
+	public String filename;
+	public support.FinePoint center;
 
 	public Side() {
 		id = 0;
-		seedIDs = new LinkedList<Long>();
+		seedIDs = new LinkedList<Integer>();
 		// color(), name(), author(),
 		scores = new GBSideScores();
 		cScores = new GBScores();
@@ -46,18 +55,18 @@ public class Side extends Model implements Comparable<Side> {
 		groupPosition = new FinePoint();
 		sharedMemory = new double[Side.kSharedMemorySize];
 		msgQueues = new GBMessageQueue[GBMessageQueue.kNumMessageChannels];
-		types = new LinkedList<RobotType>();
-		seedIDs = new LinkedList<Long>();
+		types = new ArrayList<RobotType>();
+		seedIDs = new ArrayList<Integer>();
 	}
 
-	public Side copy() throws GBBadComputedValueError, GBNilPointerError  {
+	public Side copy() throws GBNilPointerError, GBGenericError   {
 		Side side = new Side();
 		for (int i = 0; i < types.size(); ++i)
 			side.AddType(types.get(i).clone());
 		side.name = name;
 		side.author = author;
 		// side.SetColor(gRandoms.ColorNear(color, kSideCopyColorDistance));
-		for (Long id : seedIDs)
+		for (int id : seedIDs)
 			side.seedIDs.add(id);
 		// id, comm and scores are not copied
 		return side;
@@ -81,11 +90,11 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	public long ID() {
+	public int ID() {
 		return id;
 	}
 
-	public void SetID(long newid) {
+	public void SetID(int newid) {
 		id = newid;
 		Changed();
 	}
@@ -96,10 +105,10 @@ public class Side extends Model implements Comparable<Side> {
 	 * public void SetColor(GBColor & newcolor) { color = newcolor; Changed(); }
 	 */
 
-	public RobotType GetType(long index) throws GBIndexOutOfRangeError {
+	public RobotType GetType(int index) throws GBIndexOutOfRangeError {
 		if (index <= 0 || index > types.size())
 			throw new GBIndexOutOfRangeError();
-		return types.get((int) index - 1);
+		return types.get(index - 1);
 	}
 
 	public void SelectType(RobotType which) {
@@ -113,12 +122,12 @@ public class Side extends Model implements Comparable<Side> {
 		return selected;
 	}
 
-	public long SelectedTypeID() {
+	public int SelectedTypeID() {
 		return selected == null ? selected.ID() : 0;
 	}
 
 	// used by brains
-	public long GetTypeIndex(RobotType type) {
+	public int GetTypeIndex(RobotType type) {
 		if (type == null)
 			return 0;
 		for (int i = 0; i < types.size(); ++i)
@@ -127,11 +136,11 @@ public class Side extends Model implements Comparable<Side> {
 		return 0;
 	}
 
-	public long CountTypes() {
+	public int CountTypes() {
 		return types.size();
 	}
 
-	public void AddType(RobotType type) throws GBNilPointerError, GBBadComputedValueError  {
+	public void AddType(RobotType type) throws GBNilPointerError, GBGenericError  {
 		// adds type at end so they will stay in order
 		if (type == null)
 			throw new GBNilPointerError();
@@ -146,7 +155,7 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	public void AddSeedID(long id) {
+	public void AddSeedID(int id) {
 		seedIDs.add(id);
 	}
 
@@ -245,18 +254,18 @@ public class Side extends Model implements Comparable<Side> {
 		return cScores;
 	}
 
-	public long GetNewRobotNumber() {
+	public int GetNewRobotNumber() {
 		return scores.GetNewRobotNumber();
 	}
 
-	public double ReadSharedMemory(int addr) throws java.lang.Exception {
+	public double ReadSharedMemory(int addr) throws GBIndexOutOfRangeError  {
 		if (addr < 1 || addr > kSharedMemorySize)
 			throw new GBIndexOutOfRangeError();
 		return sharedMemory[addr - 1];
 	}
 
 	public void WriteSharedMemory(double value, int addr)
-			throws java.lang.Exception {
+			throws GBIndexOutOfRangeError {
 		if (addr < 1 || addr > kSharedMemorySize)
 			throw new GBIndexOutOfRangeError();
 		sharedMemory[addr - 1] = value;
@@ -264,8 +273,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	// Note: the pointer returned is to within an internal array and
 	// must be used and discarded before any robot calls SendMessage again!
-	public GBMessage ReceiveMessage(int channel, long desiredMessageNumber)
-			throws java.lang.Exception {
+	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) throws GBIndexOutOfRangeError, GBGenericError
+			 {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)
@@ -273,8 +282,8 @@ public class Side extends Model implements Comparable<Side> {
 		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
 	}
 
-	public void SendMessage(GBMessage msg, int channel)
-			throws java.lang.Exception {
+	public void SendMessage(GBMessage msg, int channel) throws GBOutOfMemoryError, GBGenericError, GBBadArgumentError
+			 {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null) {
@@ -285,7 +294,7 @@ public class Side extends Model implements Comparable<Side> {
 		msgQueues[channel - 1].AddMessage(msg);
 	}
 
-	public long NextMessageNumber(int channel) throws java.lang.Exception {
+	public int NextMessageNumber(int channel) throws GBIndexOutOfRangeError  {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)
@@ -293,8 +302,8 @@ public class Side extends Model implements Comparable<Side> {
 		return msgQueues[channel - 1].NextMessageNumber();
 	}
 
-	public int MessagesWaiting(int channel, long next)
-			throws java.lang.Exception {
+	public int MessagesWaiting(int channel, int next) throws GBIndexOutOfRangeError
+			 {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)

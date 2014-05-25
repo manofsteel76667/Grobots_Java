@@ -1,14 +1,16 @@
 package brains;
 
-import exception.*;
-import sides.Hardware;
+import sides.HardwareItem;
+import exception.GBGenericError;
+import exception.GBOutOfMemoryError;
+import exception.GBSimulationError;
 
 // GBBrainSpec.cpp
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 
-public class BrainSpec implements Hardware<BrainSpec> {
-	public Brain MakeBrain() {
+public class BrainSpec extends HardwareItem {
+	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
 		return null;
 	};
 
@@ -32,10 +34,11 @@ public class BrainSpec implements Hardware<BrainSpec> {
 	public void ParseLine(String line, short lineNum) {
 	};
 
-	public void Check() throws GBError {
+	public void Check() throws GBGenericError {
 	} // check OK to use
 
 	public BrainSpec() {
+		super(0,0);
 	}
 
 }
@@ -75,17 +78,6 @@ class GBUnknownHardwareVariableError extends GBBrainError {
 
 	public String ToString() {
 		return "illegal or unimplemented hardware variable";
-	}
-};
-
-class GBBadSymbolIndexError extends GBBrainError {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -7856782923738485816L;
-
-	public String ToString() {
-		return "invalid symbol index";
 	}
 };
 

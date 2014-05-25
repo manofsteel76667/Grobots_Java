@@ -4,16 +4,18 @@
 
 package sides;
 
-import exception.GBBadComputedValueError;
-import exception.GBError;
-import brains.*;
+import brains.Brain;
+import brains.BrainSpec;
+import brains.GBBadSymbolIndexError;
+import exception.GBGenericError;
+import exception.GBOutOfMemoryError;
 
 public class RobotType extends support.Model {
 	public static final double kStandardMass = 20;
-
+	public boolean debug = false;
 	public Side side;
 	public String name;
-	public long id;
+	public int id;
 	// public GBColor color;
 	// public GBRobotDecoration decoration;
 	// public GBColor decorationColor;
@@ -26,17 +28,21 @@ public class RobotType extends support.Model {
 	double mass;
 
 	// cpp file
-	public RobotType() throws java.lang.Exception {
-		throw new java.lang.Exception("Bad constructor");
+	public RobotType() throws GBGenericError{
+		throw new GBGenericError("Bad constructor");
 	}
 
 	public RobotType(Side owner) {
 		side = owner;
+		debug = owner.debug;
 		/*
 		 * id(0), color(), name(), decoration(rdNone),
 		 * decorationColor(GBColor::black),
 		 */
-		hardware = new HardwareSpec();
+		if (!debug)
+			hardware = new HardwareSpec();
+		else
+			hardware= new HardwareSpec(true);
 		/*
 		 * brain(null), population(0), biomass(0)
 		 */
@@ -80,11 +86,11 @@ public class RobotType extends support.Model {
 						// + name;
 	}
 
-	public long ID() {
+	public int ID() {
 		return id;
 	}
 
-	public void SetID(long newid) {
+	public void SetID(int newid) {
 		id = newid;
 	}
 
@@ -106,20 +112,20 @@ public class RobotType extends support.Model {
 		return brain;
 	}
 
-	public void SetBrain(BrainSpec spec) throws GBError {
+	public void SetBrain(BrainSpec spec) throws GBGenericError  {
 		spec.Check();
 		brain = spec;
 		Changed();
 	}
 
-	public Brain MakeBrain() {
+	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
 		if (brain == null) {
 			return null;
 		}
 		return brain.MakeBrain();
 	}
 
-	public void Recalculate() throws GBBadComputedValueError  {
+	public void Recalculate() throws GBGenericError  {
 		hardware.Recalculate();
 		cost = hardware.Cost() + (brain != null ? brain.Cost() : 0);
 		mass = hardware.Mass() + (brain != null ? brain.Mass() : 0);

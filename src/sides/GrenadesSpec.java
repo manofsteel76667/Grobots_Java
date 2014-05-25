@@ -1,6 +1,6 @@
 package sides;
 
-public class GrenadesSpec implements Hardware<GrenadesSpec> {
+public class GrenadesSpec extends HardwareItem {
 
 	@Override
 	public double Mass() {
@@ -40,9 +40,10 @@ public class GrenadesSpec implements Hardware<GrenadesSpec> {
 	double damage;
 	double range;
 	double speed;
-	long reloadTime;
+	int reloadTime;
 
 	public GrenadesSpec() {
+		super(0,0);
 		damage = 0;
 		range = 0;
 		speed = 0;
@@ -61,11 +62,11 @@ public class GrenadesSpec implements Hardware<GrenadesSpec> {
 		return speed;
 	}
 
-	public long Lifetime() {
-		return (long) Math.ceil(range / speed);
+	public int Lifetime() {
+		return (int) Math.ceil(range / speed);
 	}
 
-	long ReloadTime() {
+	public int ReloadTime() {
 		return reloadTime;
 	}
 
@@ -73,7 +74,7 @@ public class GrenadesSpec implements Hardware<GrenadesSpec> {
 		return range * damage * HardwareSpec.kGrenadesRecoil;
 	}
 
-	void Set(double dmg, double rng, long reload) {
+	public void Set(double dmg, double rng, int reload) {
 		damage = Math.max(dmg, 0);
 		range = Math.max(rng, 0);
 		speed = Math.pow(range / HardwareSpec.kGrenadesLifetimeSpeedTradeoff,
@@ -82,7 +83,7 @@ public class GrenadesSpec implements Hardware<GrenadesSpec> {
 												// frame
 	}
 
-	double FiringCost() {
+	public double FiringCost() {
 		return (damage + HardwareSpec.kGrenadesDamageOverhead)
 				* (HardwareSpec.kGrenadesFiringCostPerDamage + range
 						* HardwareSpec.kGrenadesFiringCostPerRange + Math.pow(

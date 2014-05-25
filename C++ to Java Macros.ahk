@@ -4,10 +4,11 @@
 
 !F1::
 ;Standard variable types
-	replace("bool","boolean")
-	replace("string","String")
+	replace("bool "," boolean ")
+	replace("string ","String ")
 	replace("std::string","String")
-	replace("long","int") ;design choice... we don't really need 64-bit ints anywhere
+	replace("long "," int ") ;design choice... we don't really need 64-bit ints anywhere
+	replace("short "," int ")
 	replace("std::vector","List")
 ;Typedef'd variable types
 	replace("GBNumber","double")
@@ -27,8 +28,8 @@
 	replace("GBVelocity","FinePoint")
 	replace("GBMomentum","FinePoint")
 	replace("GBAcceleration","FinePoint")
-	replace("GBForce","FinePoint")
-	replace("GBVector","FinePoint")	
+	replace("GBForce ","FinePoint ")
+	replace("GBVector ","FinePoint ")	
 	replace("GBFrames","int")
 	replace("GBInstructionCount","int")
 ;The const keyword in various forms
@@ -45,18 +46,24 @@
 	replace("throw ","throw new ")
 	replace("nil","null")
 	replace("->",".")
-	replace("String(","") ;remove the trailing parenthesis manually
 	replace("public:","//public:")
 	replace("private:","//private:")
 	replace("protected:","//protected:")
 	replace(" : public "," extends ")
+	replace("<int>","<Integer>")
 ;Math
-	replace("abs(","Math.abs(")
-	replace("min(","Math.min(")
-	replace("max(","Math.max(")
-	replace("ceil(","Math.ceil(")
-	replace("floor(","Math.floor(")
-
+	replace(" abs("," Math.abs(")
+	replace(" min("," Math.min(")
+	replace(" max("," Math.max(")
+	replace(" ceil("," Math.ceil(")
+	replace(" floor("," Math.floor(")
+	replace(" round("," Math.round(")
+	replace("(abs(","(Math.abs(")
+	replace("(min(","(Math.min(")
+	replace("(max(","(Math.max(")
+	replace("(ceil(","(Math.ceil(")
+	replace("(floor(","(Math.floor(")
+	replace("(round(","(Math.round(")
 return
 
 ;use Eclipse's global find-and-replace.  All instances of x become y 

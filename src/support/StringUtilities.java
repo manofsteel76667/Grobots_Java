@@ -48,7 +48,6 @@ public class StringUtilities {
 			return null;
 		}
 	}
-	
 	public static Double parseDouble(String str){
 		try{
 			return Double.parseDouble(str);
@@ -56,5 +55,9 @@ public class StringUtilities {
 		catch(NumberFormatException nfe) {
 			return null;
 		}
+	}
+	public static String toPercentString(double f, int digitsAfterDP) {
+		String formatstring = "%." + digitsAfterDP + "f %";
+		return String.format(formatstring, f);
 	}
 }

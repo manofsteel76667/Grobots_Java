@@ -1,7 +1,6 @@
 package sides;
 
-import exception.GBBadComputedValueError;
-import exception.GBError;
+import exception.GBGenericError;
 
 public class HardwareSpec {
 	public static final double kStandardMassPerCost = 0.02;
@@ -49,13 +48,13 @@ public class HardwareSpec {
 	public static final double kConstructorMassPerRate = kConstructorCostPerRate
 			* kStandardMassPerCost;
 
-	public static final double kSensorCostPerRange = 1;
+	public static final double kSensorCostPerRange = 1.0;
 	public static final double kSensorMassPerRange = kSensorCostPerRange
 			* kStandardMassPerCost * 0.375;
 	public static final double kSensorCostPerPower = 0.25;
 	public static final double kSensorMassPerPower = kSensorCostPerPower
 			* kStandardMassPerCost * 0.375;
-	public static final double kSensorCostPerResult = 1;
+	public static final double kSensorCostPerResult = 1.0;
 	public static final double kSensorMassPerResult = kSensorCostPerResult
 			* kStandardMassPerCost * 0.375;
 	public static final double kSensorFiringCostPerPower = 0.005;
@@ -159,8 +158,8 @@ public class HardwareSpec {
 	public static final double kEnemySyphonMassPerRange = kEnemySyphonCostPerRange
 			* kStandardMassPerCost;
 
-	long processor;
-	long memory;
+	int processor;
+	int memory;
 	double engine;
 	double maxEnergy;
 	double initialEnergy;
@@ -171,6 +170,7 @@ public class HardwareSpec {
 	double shield;
 	double bomb;
 	// public: // complex hardware
+	public HardwareItem[] hardwareList;
 	public ConstructorSpec constructor;
 	public SensorSpec sensor1;
 	public SensorSpec sensor2;
@@ -186,7 +186,14 @@ public class HardwareSpec {
 	double coolingCost;
 	double growthCost, combatCost, hardwareCost;
 	double mass;
-
+	boolean debug;
+	public HardwareSpec(boolean _debug){
+		this();
+		debug = _debug;
+		if (debug)
+			//List of items with cost and mass, used for debugging on load but not cloned
+			hardwareList = new HardwareItem[21];
+	}
 	public HardwareSpec()  {
 		processor = 0;
 		memory = 0;
@@ -247,90 +254,90 @@ public class HardwareSpec {
 		return ret;
 	}
 
-	long Processor() {
+	public int Processor() {
 		return processor;
 	}
 
-	long Memory() {
+	public int Memory() {
 		return memory;
 	}
 
-	void SetProcessor(long speed, long mem) {
+	public void SetProcessor(int speed, int mem) {
 		processor = speed;
 		memory = mem;
 	}
 
-	double Engine() {
+	public double Engine() {
 		return engine;
 	}
 
-	void SetEngine(double power) {
+	public void SetEngine(double power) {
 		engine = Math.max(power, 0);
 	}
 
-	double MaxEnergy() {
+	public double MaxEnergy() {
 		return maxEnergy;
 	}
 
-	double InitialEnergy() {
+	public double InitialEnergy() {
 		return initialEnergy;
 	}
 
-	void SetEnergy(double full, double initial) {
+	public void SetEnergy(double full, double initial) {
 		maxEnergy = Math.max(full, 0);
 		// initialEnergy = clamp(initial, 0, maxEnergy);} jma no clamp function
 		// in java
 		initialEnergy = Math.max(0, Math.min(initial, maxEnergy));
 	}
 
-	double SolarCells() {
+	public double SolarCells() {
 		return solarCells;
 	}
 
-	void SetSolarCells(double amt) {
+	public void SetSolarCells(double amt) {
 		solarCells = Math.max(amt, 0);
 	}
 
-	double Eater() {
+	public double Eater() {
 		return eater;
 	}
 
-	void SetEater(double amt) {
+	public void SetEater(double amt) {
 		eater = Math.max(amt, 0);
 	}
 
-	double Armor() {
+	public double Armor() {
 		return armor;
 	}
 
-	void SetArmor(double amt) {
+	public void SetArmor(double amt) {
 		armor = Math.max(amt, 1);
 	}
 
-	double RepairRate() {
+	public double RepairRate() {
 		return repairRate;
 	}
 
-	void SetRepairRate(double rate) {
+	public void SetRepairRate(double rate) {
 		repairRate = Math.max(rate, 0);
 	}
 
-	double Shield() {
+	public double Shield() {
 		return shield;
 	}
 
-	void SetShield(double amt) {
+	public void SetShield(double amt) {
 		shield = Math.max(amt, 0);
 	}
 
-	double Bomb() {
+	public double Bomb() {
 		return bomb;
 	}
 
-	void SetBomb(double amt) {
+	public void SetBomb(double amt) {
 		bomb = Math.max(amt, 0);
 	}
-	public void Recalculate() throws GBBadComputedValueError  {
+	public void Recalculate() throws GBGenericError  {
 		growthCost = EnergyHardwareCost() + SolarCellsCost() + EaterCost()
 				+ constructor.Cost() + syphon.Cost();
 		combatCost = ArmorCost() + RepairCost() + ShieldCost() + blaster.Cost()
@@ -346,124 +353,150 @@ public class HardwareSpec {
 				+ syphon.Mass() + enemySyphon.Mass();
 		coolingCost = Math.pow(hardwareCost * kCoolingCostRatio, 2);
 		hardwareCost += coolingCost;
-		mass += CoolingMass();
+		mass += CoolingMass();	
+		if (debug)
+			buildHardwareList();
 		if (hardwareCost < kBaseCost || mass < kBaseMass)
-			throw new GBBadComputedValueError();
+			//throw new GBBadComputedValueError();
+			throw new GBGenericError("Bad computed value");
 	}
-
-	double Cost() {
+	void buildHardwareList(){
+		//Builds the hardware list array, used for debugging initial load but not in-game
+		hardwareList[0] = new HardwareItem(ChassisMass(), ChassisCost());//Chassis
+		hardwareList[1] = new HardwareItem(ProcessorMass(), ProcessorCost());//Processor
+		hardwareList[2] = new HardwareItem(EngineMass(), EngineCost());//Engine
+		hardwareList[3] = constructor;//Constructor
+		hardwareList[4] = new HardwareItem(EnergyMass(), EnergyCost());//Energy
+		hardwareList[5] = new HardwareItem(SolarCellsMass(), SolarCellsCost());//Solar-Cells
+		hardwareList[6] = new HardwareItem(EaterMass(), EaterCost());//Eater
+		hardwareList[7] = syphon;//Syphon
+		hardwareList[8] = sensor1;//Robot-Sensor
+		hardwareList[9] = sensor2;//Food-Sensor
+		hardwareList[10] = sensor3;//Shot-Sensor
+		hardwareList[11] = new HardwareItem(ArmorMass(), ArmorCost());//Armor
+		hardwareList[12] = new HardwareItem(RepairMass(), RepairCost());//Repair-rate
+		hardwareList[13] = new HardwareItem(ShieldMass(), ShieldCost());//Shield
+		hardwareList[14] = blaster;//Blaster
+		hardwareList[15] = grenades;//Grenades
+		hardwareList[16] = forceField;//Force-Field
+		hardwareList[17] = enemySyphon;//Enemy-syphon
+		hardwareList[18] = new HardwareItem(BombMass(), BombCost());//Bomb
+		hardwareList[19] = new HardwareItem(CoolingMass(), coolingCost);//Cooling charge
+		hardwareList[20] = new HardwareItem(0, 0);//Code
+	}
+	public double Cost() {
 		return hardwareCost + initialEnergy;
 	}
 
-	double HardwareCost() {
+	public double HardwareCost() {
 		return hardwareCost;
 	}
 
-	double BaseCost() {
+	public double BaseCost() {
 		return hardwareCost - coolingCost;
 	}
 
-	double Mass() {
+	public double Mass() {
 		return mass;
 	}
 
-	double GrowthCost() {
+	public double GrowthCost() {
 		return growthCost;
 	}
 
-	double CombatCost() {
+	public double CombatCost() {
 		return combatCost;
 	}
 
-	double ChassisCost() {
+	public double ChassisCost() {
 		return kBaseCost;
 	}
 
-	double ChassisMass() {
+	public double ChassisMass() {
 		return kBaseMass;
 	}
 
-	double ProcessorCost() {
+	public double ProcessorCost() {
 		return kCostPerProcessor * processor + kCostPerMemory * memory;
 	}
 
-	double ProcessorMass() {
+	public double ProcessorMass() {
 		return kMassPerProcessor * processor + kMassPerMemory * memory;
 	}
 
-	double EngineCost() {
+	public double EngineCost() {
 		return engine * kCostPerEngine;
 	}
 
-	double EngineMass() {
+	public double EngineMass() {
 		return engine * kMassPerEngine;
 	}
 
-	double EnergyHardwareCost() {
+	public double EnergyHardwareCost() {
 		return maxEnergy * kCostPerMaxEnergy;
 	}
 
-	double EnergyCost() {
+	public double EnergyCost() {
 		return EnergyHardwareCost() + initialEnergy;
 	}
 
-	double EnergyMass() {
+	public double EnergyMass() {
 		return maxEnergy * kMassPerMaxEnergy;
 	}
 
-	double SolarCellsCost() {
+	public double SolarCellsCost() {
 		return solarCells * kCostPerSolarCells;
 	}
 
-	double SolarCellsMass() {
+	public double SolarCellsMass() {
 		return solarCells * kMassPerSolarCells;
 	}
 
-	double EaterCost() {
+	public double EaterCost() {
 		return eater * kCostPerEater;
 	}
 
-	double EaterMass() {
+	public double EaterMass() {
 		return eater * kMassPerEater;
 	}
 
-	double ArmorCost() {
+	public double ArmorCost() {
 		return armor * kCostPerArmor;
 	}
 
-	double ArmorMass() {
+	public double ArmorMass() {
 		return armor * kMassPerArmor;
 	}
 
-	double RepairCost() {
+	public double RepairCost() {
 		return repairRate * kCostPerRepairRate;
 	}
 
-	double RepairMass() {
+	public double RepairMass() {
 		return repairRate * kMassPerRepairRate;
 	}
 
-	double ShieldCost() {
+	public double ShieldCost() {
 		return shield * kCostPerShield;
 	}
 
-	double ShieldMass() {
+	public double ShieldMass() {
 		return shield * kMassPerShield;
 	}
 
-	double BombCost() {
+	public double BombCost() {
 		return bomb * kCostPerBomb;
 	}
 
-	double BombMass() {
+	public double BombMass() {
 		return bomb * kMassPerBomb;
 	}
 
-	double CoolingCost() {
+	public double CoolingCost() {
 		return coolingCost;
 	}
 
-	double CoolingMass() {
+	public double CoolingMass() {
 		return coolingCost * kStandardMassPerCost;
 	}
 

@@ -1,6 +1,6 @@
 package sides;
 
-public class ConstructorSpec implements Hardware<ConstructorSpec> {
+public class ConstructorSpec extends HardwareItem {
 
 	@Override
 	public double Mass() {
@@ -20,6 +20,7 @@ public class ConstructorSpec implements Hardware<ConstructorSpec> {
 	}
 
 	public ConstructorSpec() {
+		super(0,0);
 		rate = 0;
 	}
 

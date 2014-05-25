@@ -1,6 +1,6 @@
 package sides;
 
-public class BlasterSpec implements Hardware<BlasterSpec> {
+public class BlasterSpec extends HardwareItem {
 
 	@Override
 	public double Mass() {
@@ -40,6 +40,7 @@ public class BlasterSpec implements Hardware<BlasterSpec> {
 	}
 
 	public BlasterSpec() {
+		super(0,0);
 		damage = 0;
 		range = 0;
 		speed = 0;
@@ -50,8 +51,8 @@ public class BlasterSpec implements Hardware<BlasterSpec> {
 	private double damage;
 	private double speed;
 	private double range;
-	private long reloadTime;
-	private long lifetime;
+	private int reloadTime;
+	private int lifetime;
 
 	public double Damage() {
 		return damage;
@@ -65,20 +66,20 @@ public class BlasterSpec implements Hardware<BlasterSpec> {
 		return speed;
 	}
 
-	public long Lifetime() {
+	public int Lifetime() {
 		return lifetime;
 	}
 
-	public long ReloadTime() {
+	public int ReloadTime() {
 		return reloadTime;
 	}
 
-	public void Set(double dmg, double rng, long reload) {
+	public void Set(double dmg, double rng, int reload) {
 		damage = Math.max(dmg, 0);
 		range = Math.max(rng, 0);
 		speed = Math.pow(range / HardwareSpec.kBlasterLifetimeSpeedTradeoff,
 				HardwareSpec.kBlasterSpeedExponent);
-		lifetime = (long) Math.ceil(range / speed);
+		lifetime = (int) Math.ceil(range / speed);
 		reloadTime = (reload < 1) ? 1 : reload; // limit to >= 1
 	}
 
