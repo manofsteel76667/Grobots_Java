@@ -34,7 +34,7 @@ public class ForceFieldSpec extends HardwareItem {
 	public double range;
 
 	public ForceFieldSpec() {
-		super(0,0);
+		super(0, 0);
 		power = 0;
 		range = 0;
 	}

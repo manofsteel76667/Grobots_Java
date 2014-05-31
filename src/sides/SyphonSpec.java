@@ -36,7 +36,7 @@ public class SyphonSpec extends HardwareItem {
 	}
 
 	public SyphonSpec() {
-		super(0,0);
+		super(0, 0);
 		power = 0;
 		range = 1;
 		hitsEnemies = true;

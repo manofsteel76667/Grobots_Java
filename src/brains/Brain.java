@@ -2,6 +2,7 @@
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 package brains;
+
 import simulation.GBRobot;
 import simulation.GBWorld;
 import exception.GBAbort;
@@ -23,12 +24,13 @@ public class Brain {
 	 * 
 	 * @param robot
 	 * @param world
-	 * @throws GBAbort 
-	 * @throws GBGenericError 
-	 * @throws GBOutOfMemoryError 
-	 * @throws GBBadArgumentError 
+	 * @throws GBAbort
+	 * @throws GBGenericError
+	 * @throws GBOutOfMemoryError
+	 * @throws GBBadArgumentError
 	 */
-	public void Step(GBRobot robot, GBWorld world) throws GBAbort, GBBadArgumentError, GBOutOfMemoryError, GBGenericError {
+	public void Step(GBRobot robot, GBWorld world) throws GBAbort,
+			GBBadArgumentError, GBOutOfMemoryError, GBGenericError {
 		think(robot, world);
 	}
 
@@ -37,15 +39,21 @@ public class Brain {
 	 * 
 	 * @param robot
 	 * @param world
+	 * @throws GBAbort
+	 * @throws GBGenericError
+	 * @throws GBOutOfMemoryError
+	 * @throws GBBadArgumentError
 	 */
-	public void think(GBRobot robot, GBWorld world) {
+	public void think(GBRobot robot, GBWorld world) throws GBBadArgumentError,
+			GBOutOfMemoryError, GBGenericError, GBAbort {
 
 	}
 
 	/**
 	 * Can we think now?
 	 */
-	public boolean ready; 
+	public boolean ready;
+
 	protected class GBStackOverflowError extends GBBrainError {
 
 		/**

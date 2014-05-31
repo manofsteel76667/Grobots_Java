@@ -23,7 +23,7 @@ public class GBError extends java.lang.Exception {
 		System.exit(1);
 	}
 
-	public static void NonfatalError(String message) throws GBAbort  {
+	public static void NonfatalError(String message) throws GBAbort {
 		String[] buttons = { "Abort", "Retry", "Ignore" };
 		int rc = javax.swing.JOptionPane.showOptionDialog(null, message,
 				"Nonfatal error", javax.swing.JOptionPane.WARNING_MESSAGE, 0,

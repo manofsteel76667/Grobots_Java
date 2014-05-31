@@ -187,14 +187,17 @@ public class HardwareSpec {
 	double growthCost, combatCost, hardwareCost;
 	double mass;
 	boolean debug;
-	public HardwareSpec(boolean _debug){
+
+	public HardwareSpec(boolean _debug) {
 		this();
 		debug = _debug;
 		if (debug)
-			//List of items with cost and mass, used for debugging on load but not cloned
+			// List of items with cost and mass, used for debugging on load but
+			// not cloned
 			hardwareList = new HardwareItem[21];
 	}
-	public HardwareSpec()  {
+
+	public HardwareSpec() {
 		processor = 0;
 		memory = 0;
 		engine = 0;
@@ -337,7 +340,8 @@ public class HardwareSpec {
 	public void SetBomb(double amt) {
 		bomb = Math.max(amt, 0);
 	}
-	public void Recalculate() throws GBGenericError  {
+
+	public void Recalculate() throws GBGenericError {
 		growthCost = EnergyHardwareCost() + SolarCellsCost() + EaterCost()
 				+ constructor.Cost() + syphon.Cost();
 		combatCost = ArmorCost() + RepairCost() + ShieldCost() + blaster.Cost()
@@ -353,37 +357,41 @@ public class HardwareSpec {
 				+ syphon.Mass() + enemySyphon.Mass();
 		coolingCost = Math.pow(hardwareCost * kCoolingCostRatio, 2);
 		hardwareCost += coolingCost;
-		mass += CoolingMass();	
+		mass += CoolingMass();
 		if (debug)
 			buildHardwareList();
 		if (hardwareCost < kBaseCost || mass < kBaseMass)
-			//throw new GBBadComputedValueError();
+			// throw new GBBadComputedValueError();
 			throw new GBGenericError("Bad computed value");
 	}
-	void buildHardwareList(){
-		//Builds the hardware list array, used for debugging initial load but not in-game
-		hardwareList[0] = new HardwareItem(ChassisMass(), ChassisCost());//Chassis
-		hardwareList[1] = new HardwareItem(ProcessorMass(), ProcessorCost());//Processor
-		hardwareList[2] = new HardwareItem(EngineMass(), EngineCost());//Engine
-		hardwareList[3] = constructor;//Constructor
-		hardwareList[4] = new HardwareItem(EnergyMass(), EnergyCost());//Energy
-		hardwareList[5] = new HardwareItem(SolarCellsMass(), SolarCellsCost());//Solar-Cells
-		hardwareList[6] = new HardwareItem(EaterMass(), EaterCost());//Eater
-		hardwareList[7] = syphon;//Syphon
-		hardwareList[8] = sensor1;//Robot-Sensor
-		hardwareList[9] = sensor2;//Food-Sensor
-		hardwareList[10] = sensor3;//Shot-Sensor
-		hardwareList[11] = new HardwareItem(ArmorMass(), ArmorCost());//Armor
-		hardwareList[12] = new HardwareItem(RepairMass(), RepairCost());//Repair-rate
-		hardwareList[13] = new HardwareItem(ShieldMass(), ShieldCost());//Shield
-		hardwareList[14] = blaster;//Blaster
-		hardwareList[15] = grenades;//Grenades
-		hardwareList[16] = forceField;//Force-Field
-		hardwareList[17] = enemySyphon;//Enemy-syphon
-		hardwareList[18] = new HardwareItem(BombMass(), BombCost());//Bomb
-		hardwareList[19] = new HardwareItem(CoolingMass(), coolingCost);//Cooling charge
-		hardwareList[20] = new HardwareItem(0, 0);//Code
+
+	void buildHardwareList() {
+		// Builds the hardware list array, used for debugging initial load but
+		// not in-game
+		hardwareList[0] = new HardwareItem(ChassisMass(), ChassisCost());// Chassis
+		hardwareList[1] = new HardwareItem(ProcessorMass(), ProcessorCost());// Processor
+		hardwareList[2] = new HardwareItem(EngineMass(), EngineCost());// Engine
+		hardwareList[3] = constructor;// Constructor
+		hardwareList[4] = new HardwareItem(EnergyMass(), EnergyCost());// Energy
+		hardwareList[5] = new HardwareItem(SolarCellsMass(), SolarCellsCost());// Solar-Cells
+		hardwareList[6] = new HardwareItem(EaterMass(), EaterCost());// Eater
+		hardwareList[7] = syphon;// Syphon
+		hardwareList[8] = sensor1;// Robot-Sensor
+		hardwareList[9] = sensor2;// Food-Sensor
+		hardwareList[10] = sensor3;// Shot-Sensor
+		hardwareList[11] = new HardwareItem(ArmorMass(), ArmorCost());// Armor
+		hardwareList[12] = new HardwareItem(RepairMass(), RepairCost());// Repair-rate
+		hardwareList[13] = new HardwareItem(ShieldMass(), ShieldCost());// Shield
+		hardwareList[14] = blaster;// Blaster
+		hardwareList[15] = grenades;// Grenades
+		hardwareList[16] = forceField;// Force-Field
+		hardwareList[17] = enemySyphon;// Enemy-syphon
+		hardwareList[18] = new HardwareItem(BombMass(), BombCost());// Bomb
+		hardwareList[19] = new HardwareItem(CoolingMass(), coolingCost);// Cooling
+																		// charge
+		hardwareList[20] = new HardwareItem(0, 0);// Code
 	}
+
 	public double Cost() {
 		return hardwareCost + initialEnergy;
 	}

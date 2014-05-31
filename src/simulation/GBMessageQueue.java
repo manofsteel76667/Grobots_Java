@@ -1,4 +1,5 @@
 package simulation;
+
 import exception.GBBadArgumentError;
 import exception.GBGenericError;
 
@@ -14,6 +15,9 @@ public class GBMessageQueue {
 
 	public GBMessageQueue() {
 		buffer = new GBMessage[kMaxMessages];
+		for (int i = 0; i < kMaxMessages; i++) {
+			buffer[i] = new GBMessage();
+		}
 	}
 
 	// called by Side::Reset()
@@ -21,18 +25,18 @@ public class GBMessageQueue {
 		nextNumber = 0;
 	}
 
-	public void AddMessage(GBMessage newMess) throws GBGenericError, GBBadArgumentError  {
+	public void AddMessage(GBMessage newMess) throws GBGenericError,
+			GBBadArgumentError {
 		buffer[(int) (nextNumber % kMaxMessages)] = newMess;
 		buffer[(int) (nextNumber % kMaxMessages)].SetMessageNumber(nextNumber);
 		if (++nextNumber >= kMaxMessageNumber)
 			throw new GBGenericError("Message number got too high.");
 	}
 
-	public GBMessage GetMessage(int num) throws GBGenericError  {
+	public GBMessage GetMessage(int num) throws GBGenericError {
 		int potential = (int) (num % kMaxMessages);
-		if (buffer[potential].sequenceNum == num) {
+		if (buffer[potential].sequenceNum == num)
 			return buffer[potential];
-		}
 		// don't have the message they are looking for. Return the oldest we
 		// have, if it is older than requested.
 		if (buffer[(int) (nextNumber % kMaxMessages)].sequenceNum > num) {

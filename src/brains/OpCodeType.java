@@ -6,15 +6,18 @@ import java.util.Map;
 public enum OpCodeType {
 	ocPrimitive, ocHardwareVariable, ocHardwareVector, ocCompileWord;
 	public final int ID;
-	OpCodeType(){
+
+	OpCodeType() {
 		ID = this.ordinal();
 	}
+
 	static final Map<Integer, OpCodeType> idLookup = new HashMap<Integer, OpCodeType>();
-	static{
-		for(OpCodeType typ : OpCodeType.values())
+	static {
+		for (OpCodeType typ : OpCodeType.values())
 			idLookup.put(typ.ID, typ);
 	}
-	public final static OpCodeType byID(int _ID){
+
+	public final static OpCodeType byID(int _ID) {
 		return idLookup.get(_ID);
 	}
 }

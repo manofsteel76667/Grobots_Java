@@ -40,7 +40,7 @@ public class BlasterSpec extends HardwareItem {
 	}
 
 	public BlasterSpec() {
-		super(0,0);
+		super(0, 0);
 		damage = 0;
 		range = 0;
 		speed = 0;

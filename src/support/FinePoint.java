@@ -41,6 +41,7 @@ public class FinePoint {
 		x = nx;
 		y = ny;
 	}
+
 	public FinePoint add(FinePoint addend) {
 		return new FinePoint(x + addend.x, y + addend.y);
 	}

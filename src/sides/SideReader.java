@@ -308,7 +308,7 @@ public class SideReader {
 				if (tokens.size() == 0)
 					throw new GBMissingElementArgumentError();
 				if (side == null)
-					throw new GBGenericError("SideReader missing side");				
+					throw new GBGenericError("SideReader missing side");
 				type = new RobotType(side);
 				java.lang.StringBuilder sb = new java.lang.StringBuilder(tokens
 						.removeFirst());
@@ -600,7 +600,7 @@ public class SideReader {
 		fileName = _filename;
 	}
 
-	void LoadIt() throws GBAbort  {
+	void LoadIt() throws GBAbort {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(fileName));
 			while ((line = br.readLine()) != null) {
@@ -635,7 +635,8 @@ public class SideReader {
 					"tried to get unfinished side from SideReader - was #end missing?");
 	}
 
-	public static Side Load(String filename) throws GBAbort, GBIndexOutOfRangeError, GBGenericError  {
+	public static Side Load(String filename) throws GBAbort,
+			GBIndexOutOfRangeError, GBGenericError {
 		try {
 			SideReader reader = new SideReader(filename);
 			reader.state = GBElementType.etNone;

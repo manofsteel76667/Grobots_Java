@@ -36,7 +36,7 @@ public class SensorSpec extends HardwareItem {
 	}
 
 	public SensorSpec() {
-		super(0,0);
+		super(0, 0);
 		range = 0;
 		numResults = 1;
 		seen = GBObjectClass.ocDead.value;

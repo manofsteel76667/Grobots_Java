@@ -38,7 +38,7 @@ public class BrainSpec extends HardwareItem {
 	} // check OK to use
 
 	public BrainSpec() {
-		super(0,0);
+		super(0, 0);
 	}
 
 }

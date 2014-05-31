@@ -59,7 +59,7 @@ public class Side extends Model implements Comparable<Side> {
 		seedIDs = new ArrayList<Integer>();
 	}
 
-	public Side copy() throws GBNilPointerError, GBGenericError   {
+	public Side copy() throws GBNilPointerError, GBGenericError {
 		Side side = new Side();
 		for (int i = 0; i < types.size(); ++i)
 			side.AddType(types.get(i).clone());
@@ -140,7 +140,8 @@ public class Side extends Model implements Comparable<Side> {
 		return types.size();
 	}
 
-	public void AddType(RobotType type) throws GBNilPointerError, GBGenericError  {
+	public void AddType(RobotType type) throws GBNilPointerError,
+			GBGenericError {
 		// adds type at end so they will stay in order
 		if (type == null)
 			throw new GBNilPointerError();
@@ -200,8 +201,8 @@ public class Side extends Model implements Comparable<Side> {
 	public void ReportRobot(double biomass, RobotType type,
 			support.FinePoint where) {
 		HardwareSpec hw = type.Hardware();
-		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(),
-				hw.CombatCost(), hw.BaseCost());
+		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(), hw
+				.CombatCost(), hw.BaseCost());
 		groupPosition.add(where);
 		Changed();
 	}
@@ -258,7 +259,7 @@ public class Side extends Model implements Comparable<Side> {
 		return scores.GetNewRobotNumber();
 	}
 
-	public double ReadSharedMemory(int addr) throws GBIndexOutOfRangeError  {
+	public double ReadSharedMemory(int addr) throws GBIndexOutOfRangeError {
 		if (addr < 1 || addr > kSharedMemorySize)
 			throw new GBIndexOutOfRangeError();
 		return sharedMemory[addr - 1];
@@ -273,8 +274,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	// Note: the pointer returned is to within an internal array and
 	// must be used and discarded before any robot calls SendMessage again!
-	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) throws GBIndexOutOfRangeError, GBGenericError
-			 {
+	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber)
+			throws GBIndexOutOfRangeError, GBGenericError {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)
@@ -282,8 +283,8 @@ public class Side extends Model implements Comparable<Side> {
 		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
 	}
 
-	public void SendMessage(GBMessage msg, int channel) throws GBOutOfMemoryError, GBGenericError, GBBadArgumentError
-			 {
+	public void SendMessage(GBMessage msg, int channel)
+			throws GBOutOfMemoryError, GBGenericError, GBBadArgumentError {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null) {
@@ -294,7 +295,7 @@ public class Side extends Model implements Comparable<Side> {
 		msgQueues[channel - 1].AddMessage(msg);
 	}
 
-	public int NextMessageNumber(int channel) throws GBIndexOutOfRangeError  {
+	public int NextMessageNumber(int channel) throws GBIndexOutOfRangeError {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)
@@ -302,8 +303,8 @@ public class Side extends Model implements Comparable<Side> {
 		return msgQueues[channel - 1].NextMessageNumber();
 	}
 
-	public int MessagesWaiting(int channel, int next) throws GBIndexOutOfRangeError
-			 {
+	public int MessagesWaiting(int channel, int next)
+			throws GBIndexOutOfRangeError {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBIndexOutOfRangeError();
 		if (msgQueues[channel - 1] == null)

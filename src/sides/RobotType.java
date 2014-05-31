@@ -20,7 +20,7 @@ public class RobotType extends support.Model {
 	// public GBRobotDecoration decoration;
 	// public GBColor decorationColor;
 	public HardwareSpec hardware;
-	public brains.BrainSpec brain;
+	public BrainSpec brain;
 	public long population;
 	public double biomass;
 	// private:
@@ -28,7 +28,7 @@ public class RobotType extends support.Model {
 	double mass;
 
 	// cpp file
-	public RobotType() throws GBGenericError{
+	public RobotType() throws GBGenericError {
 		throw new GBGenericError("Bad constructor");
 	}
 
@@ -42,7 +42,7 @@ public class RobotType extends support.Model {
 		if (!debug)
 			hardware = new HardwareSpec();
 		else
-			hardware= new HardwareSpec(true);
+			hardware = new HardwareSpec(true);
 		/*
 		 * brain(null), population(0), biomass(0)
 		 */
@@ -57,12 +57,11 @@ public class RobotType extends support.Model {
 		type.brain = brain.clone();
 		return type;
 	}
-	
-	public boolean equals(RobotType other){
+
+	public boolean equals(RobotType other) {
 		if (other == null)
 			return false;
-		return this.side.name == other.side.name && 
-				this.name == other.name;
+		return this.side.name == other.side.name && this.name == other.name;
 	}
 
 	public void ResetSampledStatistics() {
@@ -112,7 +111,7 @@ public class RobotType extends support.Model {
 		return brain;
 	}
 
-	public void SetBrain(BrainSpec spec) throws GBGenericError  {
+	public void SetBrain(BrainSpec spec) throws GBGenericError {
 		spec.Check();
 		brain = spec;
 		Changed();
@@ -125,7 +124,7 @@ public class RobotType extends support.Model {
 		return brain.MakeBrain();
 	}
 
-	public void Recalculate() throws GBGenericError  {
+	public void Recalculate() throws GBGenericError {
 		hardware.Recalculate();
 		cost = hardware.Cost() + (brain != null ? brain.Cost() : 0);
 		mass = hardware.Mass() + (brain != null ? brain.Mass() : 0);

@@ -16,7 +16,7 @@ public class GBMessage {
 		data = new double[kMaxMessageLength];
 	}
 
-	public void SetMessageNumber(int num) throws GBBadArgumentError  {
+	public void SetMessageNumber(int num) throws GBBadArgumentError {
 		if (num < 0)
 			throw new GBBadArgumentError();
 		sequenceNum = num;
@@ -24,7 +24,8 @@ public class GBMessage {
 
 	public void AddDatum(double elt) throws GBGenericError {
 		if (length >= kMaxMessageLength)
-			throw new GBGenericError("Attempting to make a message that's too long");
+			throw new GBGenericError(
+					"Attempting to make a message that's too long");
 		data[length++] = elt;
 	}
 

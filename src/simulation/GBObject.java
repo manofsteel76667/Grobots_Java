@@ -63,15 +63,19 @@ public abstract class GBObject /*
 	}
 
 	// high-level actions
-	public void Think(GBWorld world) {
+	public void Think(GBWorld world) throws GBBadArgumentError,
+			GBOutOfMemoryError, GBGenericError, GBAbort {
 	} // Not everything has a brain
 
-	public abstract void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError, GBGenericError, GBBadSymbolIndexError, GBOutOfMemoryError;
+	public abstract void Act(GBWorld world) throws GBNilPointerError,
+			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
+			GBOutOfMemoryError;
 
 	public void CollideWithWall() {
 	}
 
-	public void CollideWith(GBObject other) throws GBGenericError, GBAbort, GBBadArgumentError, GBBadComputedValueError {
+	public void CollideWith(GBObject other) throws GBGenericError, GBAbort,
+			GBBadArgumentError, GBBadComputedValueError {
 	}
 
 	public void CollectStatistics(GBWorld world) {
@@ -84,12 +88,12 @@ public abstract class GBObject /*
 		return null;
 	} // food is not owned by anyone
 
-	public Double Energy() {
-		return null;
+	public double Energy() {
+		return 0;
 	}
 
-	public Double Interest() {
-		return null;
+	public double Interest() {
+		return 0;
 	} // how attractive to autocamera
 
 	// TODO: Refactor this to toString() once simulation builds
@@ -114,7 +118,8 @@ public abstract class GBObject /*
 	// protected:
 	protected double radius;
 	protected double mass;
-	public GBObject next;//references the next object; allows GBObject to act as a singly-linked list
+	public GBObject next;// references the next object; allows GBObject to act
+							// as a singly-linked list
 
 	/*
 	 * TODO: Remove GBObject() { throw GBBadConstructorError(); }
@@ -202,7 +207,7 @@ public abstract class GBObject /*
 	}
 
 	public void Accelerate(FinePoint deltav) {
-		velocity= velocity.add(deltav);
+		velocity = velocity.add(deltav);
 	}
 
 	public void Drag(double friction, double linearCoeff, double quadraticCoeff) {
@@ -243,14 +248,17 @@ public abstract class GBObject /*
 		return Math.min(dist / radius, 1.0); // don't overlap more than 1
 	}
 
-	public void BasicCollide(GBObject other) throws GBGenericError, GBAbort, GBBadComputedValueError, GBBadArgumentError  {
+	public void BasicCollide(GBObject other) throws GBGenericError, GBAbort,
+			GBBadComputedValueError, GBBadArgumentError {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);
 		}
 	}
 
-	public void SolidCollide(GBObject other, double coefficient) throws GBGenericError, GBAbort, GBBadComputedValueError, GBBadArgumentError  {
+	public void SolidCollide(GBObject other, double coefficient)
+			throws GBGenericError, GBAbort, GBBadComputedValueError,
+			GBBadArgumentError {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);
@@ -260,7 +268,7 @@ public abstract class GBObject /*
 
 	public void PushBy(FinePoint impulse) {
 		if (mass != 0)
-			velocity=velocity.add(impulse.divide(mass));
+			velocity = velocity.add(impulse.divide(mass));
 	}
 
 	public void PushBy(double impulse, double dir) {
@@ -324,7 +332,7 @@ public abstract class GBObject /*
 	}
 
 	public void Move() {
-		position=position.add(velocity);
+		position = position.add(velocity);
 	}
 	// TODO: Put these back in when we start on the GUI
 	// Draw a shadow slightly offset from our location.

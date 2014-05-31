@@ -20,9 +20,10 @@ public class GrenadesSpec extends HardwareItem {
 		if (damage > 0)
 			return (1.0 / reloadTime + HardwareSpec.kGrenadesBarrelCost)
 					* (damage + HardwareSpec.kGrenadesDamageOverhead)
-					* (HardwareSpec.kGrenadesCostPerDamageRate + 
-						range * HardwareSpec.kGrenadesCostPerRange + 
-						Math.pow(range, 2.0) * HardwareSpec.kGrenadesCostPerRangeSquared);
+					* (HardwareSpec.kGrenadesCostPerDamageRate + range
+							* HardwareSpec.kGrenadesCostPerRange + Math.pow(
+							range, 2.0)
+							* HardwareSpec.kGrenadesCostPerRangeSquared);
 		else
 			return 0;
 	}
@@ -43,7 +44,7 @@ public class GrenadesSpec extends HardwareItem {
 	int reloadTime;
 
 	public GrenadesSpec() {
-		super(0,0);
+		super(0, 0);
 		damage = 0;
 		range = 0;
 		speed = 0;

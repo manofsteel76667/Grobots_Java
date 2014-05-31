@@ -27,6 +27,7 @@ import exception.GBError;
 import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
+import exception.GBOutOfMemoryError;
 import exception.GBSimulationError;
 import exception.GBTooManyIterationsError;
 
@@ -100,7 +101,8 @@ public class GBWorld extends GBObjectWorld {
 	 * code) code #endif
 	 */
 
-	void ThinkAllObjects() {
+	void ThinkAllObjects() throws GBBadArgumentError, GBOutOfMemoryError,
+			GBGenericError, GBAbort {
 		// only bothers with robots
 		// try {
 		for (int i = 0; i <= tilesX * tilesY; i++)
@@ -126,7 +128,8 @@ public class GBWorld extends GBObjectWorld {
 		try {
 			for (mannaLeft += size.x * size.y * mannaRate
 					/ (kForegroundTileSize * kForegroundTileSize); mannaLeft > mannaSize; mannaLeft -= mannaSize)
-				AddObjectDirectly(new GBManna(RandomLocation(0), mannaSize));
+				AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
+			// AddObjectDirectly(new GBManna(RandomLocation(0), mannaSize));
 		} catch (GBError err) {
 			GBError.NonfatalError("Error adding manna: " + err.ToString());
 		}
@@ -195,8 +198,10 @@ public class GBWorld extends GBObjectWorld {
 		for (; amount > 0; amount -= placed) {
 			placed = amount > mannaSize ? Randoms().InRange(mannaSize / 10,
 					mannaSize) : amount;
-			AddObjectDirectly(new GBManna(RandomLocation(0), placed));
+			AddObjectNew(new GBManna(RandomLocation(0), placed));
+			// AddObjectDirectly(new GBManna(RandomLocation(0), placed));
 		}
+		addNewObjects();
 	}
 
 	public GBWorld() throws GBNilPointerError, GBBadArgumentError {
@@ -224,7 +229,8 @@ public class GBWorld extends GBObjectWorld {
 	 * ~GBWorld() { RemoveAllSides(); }
 	 */
 
-	public void SimulateOneFrame() throws GBAbort {
+	public void SimulateOneFrame() throws GBAbort, GBBadArgumentError,
+			GBOutOfMemoryError, GBGenericError {
 		/*
 		 * #if GBWORLD_PROFILING && MAC UnsignedWide start, phaseStart, end;
 		 * Microseconds(&start); #endif
@@ -252,7 +258,8 @@ public class GBWorld extends GBObjectWorld {
 	}
 
 	void AdvanceFrame() throws GBAbort, GBNilPointerError, GBBadArgumentError,
-			GBTooManyIterationsError, GBSimulationError {
+			GBTooManyIterationsError, GBSimulationError, GBOutOfMemoryError,
+			GBGenericError {
 		SimulateOneFrame();
 		if (RoundOver())
 			EndRound();
@@ -280,7 +287,7 @@ public class GBWorld extends GBObjectWorld {
 			running = false;
 	}
 
-	void CollectStatistics() {
+	void CollectStatistics() throws GBAbort {
 		// reset
 		mannas = 0;
 		corpses = 0;
@@ -290,32 +297,32 @@ public class GBWorld extends GBObjectWorld {
 		for (int i = 0; i < sides.size(); ++i)
 			sides.get(i).ResetSampledStatistics();
 		// collect
-		// try {
-		for (int i = 0; i <= tilesX * tilesY; i++) {
-			// robots and territory
-			Side side = null;
-			boolean exclusive = true;
-			for (GBObject robot = objects.get(GBObjectClass.ocRobot)[i]; robot != null; robot = robot.next) {
-				robot.CollectStatistics(this);
-				if (exclusive) {
-					if (side == null)
-						side = robot.Owner();
-					else if (side != robot.Owner())
-						exclusive = false;
+		try {
+			for (int i = 0; i <= tilesX * tilesY; i++) {
+				// robots and territory
+				Side side = null;
+				boolean exclusive = true;
+				for (GBObject robot = objects.get(GBObjectClass.ocRobot)[i]; robot != null; robot = robot.next) {
+					robot.CollectStatistics(this);
+					if (exclusive) {
+						if (side == null)
+							side = robot.Owner();
+						else if (side != robot.Owner())
+							exclusive = false;
+					}
 				}
+				if (side != null && exclusive && i != tilesX * tilesY)
+					side.Scores().ReportTerritory();
+				// other classes
+				for (int cur = GBObjectClass.ocFood.value; cur < GBObjectClass
+						.values().length; cur++)
+					for (GBObject ob = objects.get(GBObjectClass.byValue(cur))[i]; ob != null; ob = ob.next)
+						ob.CollectStatistics(this);
 			}
-			if (side != null && exclusive && i != tilesX * tilesY)
-				side.Scores().ReportTerritory();
-			// other classes
-			for (int cur = GBObjectClass.ocFood.value; cur < GBObjectClass
-					.values().length; cur++)
-				for (GBObject ob = objects.get(GBObjectClass.byValue(cur))[i]; ob != null; ob = ob.next)
-					ob.CollectStatistics(this);
+		} catch (Exception err) {
+			GBError.NonfatalError("Error collecting statistics: "
+					+ err.toString());
 		}
-		// } catch ( GBError err ) {
-		// GBError.NonfatalError("Error collecting statistics: " +
-		// err.ToString());
-		// }
 		// report
 		roundScores.Reset();
 		for (int i = 0; i < sides.size(); ++i) {
@@ -346,7 +353,8 @@ public class GBWorld extends GBObjectWorld {
 				if (type.Cost() <= cost) {
 					bot = new GBRobot(type, where.add(random
 							.Vector(kSeedRadius)));
-					AddObjectDirectly(bot);
+					AddObjectNew(bot);
+					// AddObjectDirectly(bot);
 					side.Scores().ReportSeeded(type.Cost());
 					cost -= type.Cost();
 					lastPlaced = i;
@@ -387,11 +395,12 @@ public class GBWorld extends GBObjectWorld {
 			}
 			// all else fails, make a manna.
 			if (cost > 0)
-				AddObjectDirectly(new GBManna(where, cost)); // no ReportSeeded
-																// because it's
-																// pretty
-																// worthless
-
+				AddObjectNew(new GBManna(where, cost));
+			// AddObjectDirectly(new GBManna(where, cost)); // no ReportSeeded
+			// because it's
+			// pretty
+			// worthless
+			addNewObjects();
 		} catch (GBError err) {
 			GBError.NonfatalError("Error adding seed:" + err.ToString());
 		}

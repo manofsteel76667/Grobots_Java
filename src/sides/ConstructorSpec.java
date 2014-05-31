@@ -20,7 +20,7 @@ public class ConstructorSpec extends HardwareItem {
 	}
 
 	public ConstructorSpec() {
-		super(0,0);
+		super(0, 0);
 		rate = 0;
 	}
 

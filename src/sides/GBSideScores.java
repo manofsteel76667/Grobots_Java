@@ -109,7 +109,7 @@ public class GBSideScores extends GBScores {
 				earlyDeaths = 1;
 		}
 		if (frame % 100 == 0 && frame != 0)
-			biomassHistory.add((int)biomass);
+			biomassHistory.add((int) biomass);
 	}
 
 	int ExtinctTime() {

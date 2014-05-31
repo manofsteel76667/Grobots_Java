@@ -429,12 +429,13 @@ public enum StackBrainOpcode {
 	static final Map<String, StackBrainOpcode> nameLookup = new HashMap<String, StackBrainOpcode>();
 	static final Map<Integer, StackBrainOpcode> idLookup = new HashMap<Integer, StackBrainOpcode>();
 	public static final Map<OpCodeType, Set<String>> opClass = new HashMap<OpCodeType, Set<String>>();
-	
+
 	static {
 		for (OpCodeType typ : OpCodeType.values())
 			opClass.put(typ, new HashSet<String>());
 		for (StackBrainOpcode code : StackBrainOpcode.values()) {
 			nameLookup.put(code.name.toLowerCase(), code);
+			idLookup.put(code.ID, code);
 			opClass.get(code.type).add(code.name);
 		}
 	}
@@ -464,7 +465,7 @@ public enum StackBrainOpcode {
 		if (nameLookup.containsKey(_name.toLowerCase()))
 			return nameLookup.get(_name.toLowerCase());
 		else
-			return null; 
+			return null;
 	}
 
 	public final static StackBrainOpcode byID(int _ID) {

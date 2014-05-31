@@ -40,6 +40,8 @@ public class GBScores {
 	public GBScores() {
 		biomassHistory = new LinkedList<Integer>();
 		biomassHistory.add(0);
+		income = new GBIncomeStatistics();
+		expenditure = new GBExpenditureStatistics();
 	}
 
 	public void Reset() {
@@ -167,8 +169,8 @@ public class GBScores {
 		if (rounds <= 1)
 			return biomassHistory;
 		List<Integer> avg = biomassHistory;
-		for (int i = 0;i<avg.size();i++)
-			avg.set(i, avg.get(i)/rounds);
+		for (int i = 0; i < avg.size(); i++)
+			avg.set(i, avg.get(i) / rounds);
 		return avg;
 	}
 
@@ -249,4 +251,3 @@ public class GBScores {
 				/ Math.sqrt((double) (rounds - 1)) * 2.0 : 1.0);
 	}
 };
-

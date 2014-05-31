@@ -17,20 +17,23 @@ public enum OpType {
 	otHardwareVectorRead,
 	otHardwareVectorWrite;
 
-	OpType(){
+	OpType() {
 		ID = this.ordinal();
 	}
+
 	static Map<Integer, OpType> idLookup = new HashMap<Integer, OpType>();
-	static{
-		for(OpType typ : OpType.values())
+	static {
+		for (OpType typ : OpType.values())
 			idLookup.put(typ.ID, typ);
 	}
+
 	public static final int kNumOpCodes() {
 		return OpType.values().length;
 	}
-	
+
 	public final int ID;
-	public static OpType byID(int _ID){
+
+	public static OpType byID(int _ID) {
 		if (idLookup.containsKey(_ID))
 			return idLookup.get(_ID);
 		else
