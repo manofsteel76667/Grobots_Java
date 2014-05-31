@@ -12,6 +12,7 @@ public class GBBlasterSpark extends GBTimedDecoration {
 		super(where, kBlasterSparkMaxRadius, kBlasterSparkLifetime);
 	}
 
+	@Override
 	public void Act(GBWorld world) {
 		super.Act(world);
 		radius = kBlasterSparkMaxRadius - kBlasterSparkGrowthRate

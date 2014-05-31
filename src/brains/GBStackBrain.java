@@ -327,7 +327,7 @@ public class GBStackBrain extends Brain {
 
 	void BrainError(GBError err, GBRobot robot, GBWorld world) throws GBAbort {
 		if (world.reportErrors)
-			GBError.NonfatalError(robot.Description()
+			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
 					+ AddressAndLine(pc - 1) + ": " + err.ToString());
 		status = BrainStatus.bsError;
@@ -384,6 +384,7 @@ public class GBStackBrain extends Brain {
 		ExecuteInstruction(ins, robot, world);
 	}
 
+	@Override
 	public void Step(GBRobot robot, GBWorld world) throws GBAbort,
 			GBBadArgumentError, GBOutOfMemoryError, GBGenericError {
 		if (status != BrainStatus.bsOK)
@@ -474,7 +475,7 @@ public class GBStackBrain extends Brain {
 		switch (StackBrainOpcode.byID(index)) {
 		// world
 		case hvTime:
-			return (double) world.CurrentFrame();
+			return world.CurrentFrame();
 		case hvTimeLimit:
 			return world.timeLimit;
 		case hvWorldWidth:
@@ -1496,13 +1497,13 @@ public class GBStackBrain extends Brain {
 		case opPrint:
 			DoPrint(Double.toString(Pop()));
 			if (world.reportPrints)
-				GBError.NonfatalError(robot.Description() + " prints: "
+				GBError.NonfatalError(robot.toString() + " prints: "
 						+ lastPrint);
 			break;
 		case opPrintVector:
 			DoPrint(PopVector().toString());
 			if (world.reportPrints)
-				GBError.NonfatalError(robot.Description() + " prints: "
+				GBError.NonfatalError(robot.toString() + " prints: "
 						+ lastPrint);
 			break;
 		case opBeep: /* TODO: waiting for sound StartSound(siBeep); */
@@ -1777,6 +1778,7 @@ class GBOffEndError extends GBBadAddressError {
 		super(addr);
 	}
 
+	@Override
 	public String ToString() {
 		return "fell off end of code";
 	}

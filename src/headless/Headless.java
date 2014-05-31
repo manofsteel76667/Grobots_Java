@@ -9,14 +9,8 @@ import sides.SideReader;
 import simulation.GBObjectWorld;
 import simulation.GBWorld;
 import support.FinePoint;
-import support.GBObjectClass;
 import support.StringUtilities;
-import test.TestBase;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBGenericError;
-import exception.GBNilPointerError;
 import exception.GBRestart;
 
 public class Headless {
@@ -32,12 +26,12 @@ public class Headless {
 			DieWithUsage(argv[0]);
 		try {
 			GBWorld world = new GBWorld();
+			world.timeLimit = 18000;
 			int statsPeriod = 500;
 			// get args
 			for (int i = 0; i < argv.length; ++i)
 				ProcessArg(argv[i], world, statsPeriod, argv[0]);
 			// run
-			world.timeLimit = 9000;
 			Date start = new Date();
 			int totalFrames = 0;
 			int round = 1;
@@ -122,61 +116,65 @@ public class Headless {
 	}
 
 	static void ProcessArg(String arg, GBWorld world, int statsPeriod,
-			String name) throws GBNilPointerError, GBBadArgumentError, GBAbort,
-			GBGenericError {
-		if ('-' == arg.charAt(0)) {
-			if (StringUtilities.parseInt(arg.substring(1)) == null)
-				DieWithUsage(name);
-			int dimension;
-			switch (arg.charAt(1)) {
-			case 't':
-				world.tournament = true;
-				world.tournamentLength = StringUtilities.parseInt(arg
-						.substring(1));
-				System.out.println("#tournament " + world.tournamentLength);
-				break;
-			case 'S':
-				// SetupSound();
-				// SetSoundActive(true);
-				break;
-			case 'l':
-				world.timeLimit = StringUtilities.parseInt(arg.substring(1));
-				break;
-			case 'b':
-				statsPeriod = StringUtilities.parseInt(arg.substring(1));
-				break;
-			case 'w':
-				dimension = StringUtilities.parseInt(arg.substring(1));
-				world.Resize(new FinePoint(GBObjectWorld.kBackgroundTileSize
-						* dimension, world.Top()));
-				break;
-			case 'h':
-				dimension = StringUtilities.parseInt(arg.substring(1));
-				world.Resize(new FinePoint(world.Right(),
-						GBObjectWorld.kBackgroundTileSize * dimension));
-				break;
-			case 's':
-				world.seedLimit = StringUtilities.parseInt(arg.substring(1));
-				break;
-			case 'H':
-				dumpHtml = true;
-				break;
-			default:
-				DieWithUsage(name);
-			}
-		} else {
-			Side side = SideReader.Load(arg);
-			if (side != null) {
-				world.AddSide(side);
-				System.out.print("#side " + side.Name());
-				for (int i = 1; i <= side.CountTypes(); ++i) {
-					RobotType type = side.GetType(i);
-					System.out.print("\t#type " + type.name + "\tcost "
-							+ Math.round(type.Cost()) + "\tmass "
-							+ Math.round(type.Mass() * 10) / 10);
+			String name) {
+		try {
+			if ('-' == arg.charAt(0)) {
+				int dimension;
+				switch (arg.charAt(1)) {
+				case 't':
+					world.tournament = true;
+					world.tournamentLength = StringUtilities.parseInt(arg
+							.substring(2));
+					System.out.println("#tournament " + world.tournamentLength);
+					break;
+				case 'S':
+					// SetupSound();
+					// SetSoundActive(true);
+					break;
+				case 'l':
+					world.timeLimit = StringUtilities
+							.parseInt(arg.substring(2));
+					break;
+				case 'b':
+					statsPeriod = StringUtilities.parseInt(arg.substring(2));
+					break;
+				case 'w':
+					dimension = StringUtilities.parseInt(arg.substring(2));
+					world.Resize(new FinePoint(
+							GBObjectWorld.kBackgroundTileSize * dimension,
+							world.Top()));
+					break;
+				case 'h':
+					dimension = StringUtilities.parseInt(arg.substring(2));
+					world.Resize(new FinePoint(world.Right(),
+							GBObjectWorld.kBackgroundTileSize * dimension));
+					break;
+				case 's':
+					world.seedLimit = StringUtilities
+							.parseInt(arg.substring(2));
+					break;
+				case 'H':
+					dumpHtml = true;
+					break;
+				default:
+					DieWithUsage(name);
 				}
-				System.out.println("");
+			} else {
+				Side side = SideReader.Load(arg);
+				if (side != null) {
+					world.AddSide(side);
+					System.out.print("#side " + side.Name());
+					for (int i = 1; i <= side.CountTypes(); ++i) {
+						RobotType type = side.GetType(i);
+						System.out.print("\t#type " + type.name + "\tcost "
+								+ Math.round(type.Cost()) + "\tmass "
+								+ Math.round(type.Mass() * 10) / 10);
+					}
+					System.out.println("");
+				}
 			}
+		} catch (Exception e) {
+			DieWithUsage(name);
 		}
 	}
 

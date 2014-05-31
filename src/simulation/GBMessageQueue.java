@@ -27,20 +27,20 @@ public class GBMessageQueue {
 
 	public void AddMessage(GBMessage newMess) throws GBGenericError,
 			GBBadArgumentError {
-		buffer[(int) (nextNumber % kMaxMessages)] = newMess;
-		buffer[(int) (nextNumber % kMaxMessages)].SetMessageNumber(nextNumber);
+		buffer[nextNumber % kMaxMessages] = newMess;
+		buffer[nextNumber % kMaxMessages].SetMessageNumber(nextNumber);
 		if (++nextNumber >= kMaxMessageNumber)
 			throw new GBGenericError("Message number got too high.");
 	}
 
 	public GBMessage GetMessage(int num) throws GBGenericError {
-		int potential = (int) (num % kMaxMessages);
+		int potential = num % kMaxMessages;
 		if (buffer[potential].sequenceNum == num)
 			return buffer[potential];
 		// don't have the message they are looking for. Return the oldest we
 		// have, if it is older than requested.
-		if (buffer[(int) (nextNumber % kMaxMessages)].sequenceNum > num) {
-			return buffer[(int) (nextNumber % kMaxMessages)];
+		if (buffer[nextNumber % kMaxMessages].sequenceNum > num) {
+			return buffer[nextNumber % kMaxMessages];
 		} else if (num >= nextNumber) // Are they asking for a message that
 										// hasn't appeared yet?
 			return null;
@@ -57,7 +57,7 @@ public class GBMessageQueue {
 			return 0;
 		if (next <= nextNumber - kMaxMessages)
 			return kMaxMessages;
-		return (int) (nextNumber - next);
+		return nextNumber - next;
 	}
 
 };

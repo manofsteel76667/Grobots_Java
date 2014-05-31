@@ -661,6 +661,7 @@ class GBReaderError extends GBError {
 	 */
 	private static final long serialVersionUID = 868639067553966720L;
 
+	@Override
 	public String ToString() {
 		return "unspecified reader error";
 	}
@@ -675,6 +676,7 @@ class GBNoSuchElementError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = -6461302010627743143L;
 
+	@Override
 	public String ToString() {
 		return "invalid element type";
 	}
@@ -687,6 +689,7 @@ class GBMisplacedElementError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = -6773763990635882381L;
 
+	@Override
 	public String ToString() {
 		return "an element appeared in an invalid place";
 	}
@@ -699,6 +702,7 @@ class GBMissingElementError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 133326259568207644L;
 
+	@Override
 	public String ToString() {
 		return "a required element is missing";
 	}
@@ -711,6 +715,7 @@ class GBElementArgumentError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 1927401559638696895L;
 
+	@Override
 	public String ToString() {
 		return "invalid or forbidden element argument";
 	}
@@ -723,6 +728,7 @@ class GBMissingElementArgumentError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = -4160350834828591548L;
 
+	@Override
 	public String ToString() {
 		return "missing element argument";
 	}
@@ -735,6 +741,7 @@ class GBForbiddenContentError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 1544294849800329702L;
 
+	@Override
 	public String ToString() {
 		return "content is not allowed here";
 	}
@@ -747,6 +754,7 @@ class GBLineTooLongError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 989008233723928310L;
 
+	@Override
 	public String ToString() {
 		return "input line too long";
 	}
@@ -759,6 +767,7 @@ class GBUnknownHardwareError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 5518712721840211353L;
 
+	@Override
 	public String ToString() {
 		return "unknown hardware component";
 	}
@@ -771,6 +780,7 @@ class GBHardwareArgumentError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = 3101185710730165359L;
 
+	@Override
 	public String ToString() {
 		return "bad argument to a hardware component";
 	}
@@ -783,6 +793,7 @@ class GBMissingHardwareArgumentError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = -6411802234623163474L;
 
+	@Override
 	public String ToString() {
 		return "missing argument to a hardware component";
 	}
@@ -796,6 +807,7 @@ class GBFileError extends GBReaderError {
 	 */
 	private static final long serialVersionUID = -2401737324445858461L;
 
+	@Override
 	public String ToString() {
 		return "file I/O error";
 	}

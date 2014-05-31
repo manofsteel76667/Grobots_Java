@@ -61,14 +61,17 @@ public abstract class GBShot extends GBObject {
 		power = howMuch;
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		return GBObjectClass.ocShot;
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 
 	}
 
+	@Override
 	public Side Owner() {
 		return owner;
 	}
@@ -81,7 +84,8 @@ public abstract class GBShot extends GBObject {
 		return power;
 	}
 
-	public String Description() {
+	@Override
+	public String toString() {
 		return owner != null ? "Shot from " + owner.Name() : "Shot"
 				+ " (power " + power + ", speed " + Speed() + ')';
 	}
@@ -107,11 +111,13 @@ abstract class GBTimedShot extends GBShot {
 		lifetime = howLong;
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 		super.Act(world);
 		lifetime--;
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		if (lifetime > 0)
 			return GBObjectClass.ocShot;
@@ -119,6 +125,7 @@ abstract class GBTimedShot extends GBShot {
 			return GBObjectClass.ocDead;
 	}
 
+	@Override
 	public double Interest() {
 		return Math.abs(power) * 10 / (lifetime < 5 ? 5 : lifetime) + 1;
 	}
@@ -134,11 +141,13 @@ class GBBlast extends GBTimedShot {
 		super(where, kBlastRadius, vel, who, howMuch, howLong);
 	}
 
+	@Override
 	public void CollideWithWall() {
 		lifetime = 0;
 		hit = true;
 	}
 
+	@Override
 	public void CollideWith(GBObject other) {
 		if (!hit && other.Class() == GBObjectClass.ocRobot) {
 			other.TakeDamage(power, owner);
@@ -149,6 +158,7 @@ class GBBlast extends GBTimedShot {
 		}
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 		super.Act(world);
 		if (hit) {
@@ -156,6 +166,7 @@ class GBBlast extends GBTimedShot {
 		}
 	}
 
+	@Override
 	public int Type() {
 		return 1;
 	}
@@ -200,14 +211,17 @@ class GBGrenade extends GBTimedShot {
 				: howLong);
 	}
 
+	@Override
 	public void CollideWithWall() {
 		lifetime = 0;
 	}
 
+	@Override
 	public void CollideWith(GBObject obj) {
 		// grenades ignore collisions
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 		super.Act(world);
 		if (lifetime <= 0) {
@@ -215,6 +229,7 @@ class GBGrenade extends GBTimedShot {
 		}
 	}
 
+	@Override
 	public int Type() {
 		return 2;
 	}
@@ -245,6 +260,7 @@ class GBExplosion extends GBTimedShot {
 		 */
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		if (lifetime > 0)
 			return GBObjectClass.ocArea;
@@ -252,6 +268,7 @@ class GBExplosion extends GBTimedShot {
 			return GBObjectClass.ocDead;
 	}
 
+	@Override
 	public void CollideWith(GBObject other) {
 		if (lifetime < kExplosionLifetime)
 			return;
@@ -269,6 +286,7 @@ class GBExplosion extends GBTimedShot {
 								: kExplosionPushRatio));
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 		super.Act(world);
 		if (lifetime == 0) {
@@ -277,8 +295,8 @@ class GBExplosion extends GBTimedShot {
 					* kExplosionSmokesPerPower, kExplosionMinSmokes)); i > 0; i--)
 				world.AddObjectNew(new GBSmoke(Position().add(
 						world.Randoms().Vector(Radius())), world.Randoms()
-						.Vector(GBSmoke.kSmokeMaxSpeed), world.Randoms()
-						.intInRange(GBSmoke.kSmokeMinLifetime, maxLifetime)));
+						.Vector(GBTimedDecoration.kSmokeMaxSpeed), world.Randoms()
+						.intInRange(GBTimedDecoration.kSmokeMinLifetime, maxLifetime)));
 		}
 	}
 
@@ -309,14 +327,17 @@ class GBForceField extends GBShot {
 		direction = dir;
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		return dead ? GBObjectClass.ocDead : GBObjectClass.ocArea;
 	}
 
+	@Override
 	public void Move() {
 		// don't move! velocity is only apparent.
 	}
 
+	@Override
 	public void CollideWith(GBObject other) {
 		double force = power / Math.max(other.Speed(), kMinEffectiveSpeed)
 				* OverlapFraction(other) * Math.sqrt(other.Mass())
@@ -324,15 +345,18 @@ class GBForceField extends GBShot {
 		other.PushBy(force, direction);
 	}
 
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
 		super.Act(world);
 		dead = true;
 	}
 
+	@Override
 	public int Type() {
 		return 5;
 	}
 
+	@Override
 	public double Interest() {
 		return Math.abs(power) * 15 + 1;
 	}
@@ -380,14 +404,16 @@ class GBSyphon extends GBTimedShot {
 		hitsEnemies = newHitsEnemies;
 	}
 
+	@Override
 	public void Move() {
 		// don't move! velocity is only apparent.
 	}
 
+	@Override
 	public void CollideWith(GBObject other) throws GBAbort, GBGenericError,
 			GBBadArgumentError {
 		if (other.Class() == GBObjectClass.ocRobot && power != 0
-				&& other != (GBObject) sink
+				&& other != sink
 				&& (hitsEnemies || other.Owner() == sink.Owner())) {
 			if (power >= 0) {
 				try {
@@ -453,10 +479,12 @@ class GBSyphon extends GBTimedShot {
 		}
 	}
 
+	@Override
 	public int Type() {
 		return hitsEnemies ? 4 : 3;
 	}
 
+	@Override
 	public double Interest() {
 		return Math.abs(power) * (hitsEnemies ? 5 : 1) + (hitsEnemies ? 2 : 1);
 	}

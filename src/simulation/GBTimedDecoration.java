@@ -27,6 +27,7 @@ public class GBTimedDecoration extends GBObject {
 		lifetime = howLong;
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		if (lifetime > 0)
 			return GBObjectClass.ocDecoration;
@@ -34,10 +35,12 @@ public class GBTimedDecoration extends GBObject {
 			return GBObjectClass.ocDead;
 	}
 
-	public String Description() {
+	@Override
+	public String toString() {
 		return "Decoration";
 	}
 
+	@Override
 	public void Act(GBWorld world) {
 		lifetime--;
 	}

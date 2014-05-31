@@ -45,21 +45,21 @@ public abstract class GBObject /*
 	public void TakeDamage(double amount, Side origin) {
 	}
 
-	public Double TakeEnergy(double amount) throws GBBadArgumentError,
+	public double TakeEnergy(double amount) throws GBBadArgumentError,
 			GBBadComputedValueError {
-		return null;
+		return 0;
 	}
 
-	public Double GiveEnergy(double amount) throws GBBadArgumentError {
-		return null;
+	public double GiveEnergy(double amount) throws GBBadArgumentError {
+		return 0;
 	}
 
-	public Double MaxTakeEnergy() {
-		return null;
+	public double MaxTakeEnergy() {
+		return 0;
 	}
 
-	public Double MaxGiveEnergy() {
-		return null;
+	public double MaxGiveEnergy() {
+		return 0;
 	}
 
 	// high-level actions
@@ -96,10 +96,8 @@ public abstract class GBObject /*
 		return 0;
 	} // how attractive to autocamera
 
-	// TODO: Refactor this to toString() once simulation builds
-	public String Description() {
-		return "";
-	}
+	@Override
+	public abstract String toString(); //Was Description()
 
 	public String Details() {
 		return "";

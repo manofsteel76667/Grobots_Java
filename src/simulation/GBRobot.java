@@ -97,10 +97,12 @@ public class GBRobot extends GBObject {
 		return parent;
 	}
 
-	public String Description() {
+	@Override
+	public String toString() {
 		return type.Description() + " #" + id;
 	}
 
+	@Override
 	public String Details() {
 		String dets = Energy() + " energy, " + hardware.Armor() + " armor";
 		if (hardware.constructor.Progress() != 0)
@@ -151,7 +153,7 @@ public class GBRobot extends GBObject {
 					/ mass, 2) + 1);
 		return 1;
 	}
-
+	@Override
 	public void TakeDamage(double amount, Side origin) {
 		double actual = amount * type.MassiveDamageMultiplier(mass)
 				* ShieldFraction();
@@ -166,20 +168,20 @@ public class GBRobot extends GBObject {
 				origin.Scores().ReportDamageDone(actual);
 		}
 	}
-
-	public Double TakeEnergy(double amount) {
+	@Override
+	public double TakeEnergy(double amount) {
 		return hardware.UseEnergyUpTo(amount);
 	}
-
-	public Double GiveEnergy(double amount) throws GBBadArgumentError {
+	@Override
+	public double GiveEnergy(double amount) throws GBBadArgumentError {
 		return hardware.GiveEnergy(amount);
 	}
-
-	public Double MaxTakeEnergy() {
+	@Override
+	public double MaxTakeEnergy() {
 		return hardware.Energy();
 	}
-
-	public Double MaxGiveEnergy() {
+	@Override
+	public double MaxGiveEnergy() {
 		return hardware.MaxEnergy() - hardware.Energy();
 	}
 
@@ -200,7 +202,7 @@ public class GBRobot extends GBObject {
 		dead = true;
 		lastHit = killer;
 	}
-
+	@Override
 	public void Move() {
 		friendlyCollisions = 0;
 		enemyCollisions = 0;
@@ -210,11 +212,11 @@ public class GBRobot extends GBObject {
 		super.Move();
 		Drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
 	}
-
+	@Override
 	public void CollideWithWall() {
 		wallCollisions++;
 	}
-
+	@Override
 	public void CollideWith(GBObject other) throws GBBadComputedValueError,
 			GBBadArgumentError {
 		switch (other.Class()) {
@@ -245,13 +247,13 @@ public class GBRobot extends GBObject {
 			break;
 		}
 	}
-
+	@Override
 	public void Think(GBWorld world) throws GBBadArgumentError,
 			GBOutOfMemoryError, GBGenericError, GBAbort {
 		if (brain != null)
 			brain.think(this, world);
 	}
-
+	@Override
 	public void Act(GBWorld world) throws GBNilPointerError,
 			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
 			GBOutOfMemoryError {
@@ -270,24 +272,26 @@ public class GBRobot extends GBObject {
 		Recalculate();
 	}
 
+	@Override
 	public void CollectStatistics(GBWorld world) {
 		double bm = Biomass();
 		Owner().ReportRobot(bm, type, Position());
 		type.ReportRobot(bm);
 		world.ReportRobot(bm);
 	}
-
+	@Override
 	public GBObjectClass Class() {
 		if (dead)
 			return GBObjectClass.ocDead;
 		else
 			return GBObjectClass.ocRobot;
 	}
-
+	@Override
 	public Side Owner() {
 		return type.side;
 	}
 
+	@Override
 	public double Energy() {
 		return hardware.Energy();
 	}
@@ -297,6 +301,7 @@ public class GBRobot extends GBObject {
 				+ hardware.Energy() + hardware.constructor.Progress();
 	}
 
+	@Override
 	public double Interest() {
 		double interest = Biomass() * (0.001 + Speed() * 0.01)
 				+ hardware.ActualShield() / 2;

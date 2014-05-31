@@ -457,6 +457,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
+	@Override
 	public void Resize(FinePoint newsize) throws GBNilPointerError,
 			GBBadArgumentError, GBAbort {
 		if (newsize == size)

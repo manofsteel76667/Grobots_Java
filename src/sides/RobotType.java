@@ -48,6 +48,7 @@ public class RobotType extends support.Model {
 		 */
 	}
 
+	@Override
 	public RobotType clone() {
 		RobotType type = new RobotType(side);
 		type.name = name;

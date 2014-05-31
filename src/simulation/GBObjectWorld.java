@@ -15,7 +15,6 @@ import support.GBRandomState;
 import support.Model;
 import exception.GBAbort;
 import exception.GBBadArgumentError;
-import exception.GBBadObjectClassError;
 import exception.GBError;
 import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
@@ -213,8 +212,7 @@ public class GBObjectWorld extends Model {
 		// try {
 		for (int i = 0; i < tilesX * tilesY; i++)
 			for (GBObjectClass cl : GBObjectClass.values())
-				for (GBObject tile : objects.get(cl))
-					for (GBObject obj = tile; obj != null; obj = obj.next) {
+					for (GBObject obj = objects.get(cl)[i]; obj != null; obj = obj.next) {
 						obj.Move();
 						if (i < tilesX || i > tilesX * (tilesY - 1)
 								|| i % tilesX == 0 || i % tilesX == tilesX - 1)

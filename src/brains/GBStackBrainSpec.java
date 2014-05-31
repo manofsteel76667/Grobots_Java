@@ -37,12 +37,13 @@ class GBSymbol {
 	 * descendant classes do not contribute to the level of uniqueness of the
 	 * symbol; only its name matters.
 	 */
+	@Override
 	public int hashCode() {
 		return name.hashCode();
 	}
 
 	public boolean equals(GBSymbol other) {
-		return name.toLowerCase().equals(((GBSymbol) other).name.toLowerCase());
+		return name.toLowerCase().equals(other.name.toLowerCase());
 	}
 };
 
@@ -185,6 +186,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		return new GBStackBrainSpec(this);
 	}
 
+	@Override
 	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
 		return new GBStackBrain(this);
 	}
@@ -580,6 +582,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		}
 	}
 
+	@Override
 	public void Check() throws GBGenericError {
 		try {
 			// check compile-time stack
@@ -785,6 +788,7 @@ class GBCStackError extends GBBrainError {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	@Override
 	public String toString() {
 		return "item left on compile-time stack (unmatched compile-time word)";
 	}
@@ -801,6 +805,7 @@ class GBBadAddressError extends GBBrainError {
 		address = addr;
 	}
 
+	@Override
 	public String toString() {
 		return "invalid address: " + address;
 	}
@@ -816,6 +821,7 @@ class GBUnknownSymbolError extends GBSymbolError {
 		super(s);
 	}
 
+	@Override
 	public String toString() {
 		return "undefined symbol: " + sym;
 	}
@@ -831,6 +837,7 @@ class GBDuplicateSymbolError extends GBSymbolError {
 		super(s);
 	}
 
+	@Override
 	public String toString() {
 		return "duplicate symbol: " + sym;
 	}
@@ -846,6 +853,7 @@ class GBUnresolvedSymbolError extends GBSymbolError {
 		super(s);
 	}
 
+	@Override
 	public String toString() {
 		return "unresolved forward symbol definition: " + sym;
 	}

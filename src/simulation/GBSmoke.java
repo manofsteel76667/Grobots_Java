@@ -10,8 +10,8 @@ public class GBSmoke extends GBTimedDecoration {
 	public GBSmoke(FinePoint where, FinePoint vel, int life) {
 		super(where, kSmokeRadius, vel, life);
 	}
-
-	public String Description() {
+	@Override
+	public String toString() {
 		return "Smoke";
 	}
 	// TODO: after GUI

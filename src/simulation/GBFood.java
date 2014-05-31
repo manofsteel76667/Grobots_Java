@@ -47,11 +47,12 @@ public class GBFood extends GBObject {
 			throw new GBBadArgumentError();
 	}
 
+	@Override
 	public double Energy() {
 		return value;
 	}
-
-	public Double TakeEnergy(double limit) throws GBBadArgumentError,
+	@Override
+	public double TakeEnergy(double limit) throws GBBadArgumentError,
 			GBBadComputedValueError {
 		if (limit < 0)
 			throw new GBBadArgumentError();
@@ -68,30 +69,36 @@ public class GBFood extends GBObject {
 			return limit;
 		}
 	}
-
-	public Double MaxTakeEnergy() {
+	@Override
+	public double MaxTakeEnergy() {
 		return value;
 	}
-
+	@Override
 	public GBObjectClass Class() {
 		if (value > 0)
 			return GBObjectClass.ocFood;
 		else
 			return GBObjectClass.ocDead;
 	}
-
+	@Override
 	public Side Owner() {
 		return null;
 	}
-
+	@Override
 	public void Move() {
 		super.Move();
 		Drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
 	}
-
+	@Override
 	public void Act(GBWorld world) {
 		value = Math.max(value - kFoodDecayRate, 0);
 		Recalculate(); // FIXME this is slow
+	}
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "";
 	}
 
 	// TODO: After GUI

@@ -93,9 +93,9 @@ public class GBGrenadesState {
 				for (double en = FiringCost() * effectiveness; en >= GBHardwareState.kGrenadesFiringCostPerSmoke; en -= GBHardwareState.kGrenadesFiringCostPerSmoke) {
 					GBObject smoke = new GBSmoke(robot.Position().addPolar(
 							robot.Radius(), direction), world.Randoms().Vector(
-							GBSmoke.kSmokeMaxSpeed), world.Randoms()
-							.intInRange(GBSmoke.kSmokeMinLifetime,
-									GBSmoke.kSmokeMaxLifetime));
+							GBTimedDecoration.kSmokeMaxSpeed), world.Randoms()
+							.intInRange(GBTimedDecoration.kSmokeMinLifetime,
+									GBTimedDecoration.kSmokeMaxLifetime));
 					world.AddObjectNew(smoke);
 				}
 				cooldown = ReloadTime();

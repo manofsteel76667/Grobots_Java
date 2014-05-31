@@ -32,6 +32,7 @@ class GBSensorShot extends GBObject {
 		focus = fcs;
 	}
 
+	@Override
 	public void CollideWith(GBObject other) {
 		if (other.Class() == GBObjectClass.ocRobot && (GBRobot) other == owner)
 			return; // Seeing self is never allowed
@@ -39,10 +40,12 @@ class GBSensorShot extends GBObject {
 				.subtract(focus)).norm())); // most logic is now in SensorState
 	}
 
+	@Override
 	public void Act(GBWorld world) {
 		age++;
 	}
 
+	@Override
 	public GBObjectClass Class() {
 		if (age >= Lifetime())
 			return GBObjectClass.ocDead;
@@ -50,7 +53,8 @@ class GBSensorShot extends GBObject {
 			return GBObjectClass.ocSensorShot;
 	}
 
-	public String Description() {
+	@Override
+	public String toString() {
 		String classname;
 		switch (seen) {
 		case ocRobot:
@@ -66,7 +70,7 @@ class GBSensorShot extends GBObject {
 			classname = "Mystery";
 			break;
 		}
-		return classname + " sensor for " + owner.Description();
+		return classname + " sensor for " + owner.toString();
 	}
 
 	// TODO: when GUI is done
@@ -86,6 +90,7 @@ class GBSensorShot extends GBObject {
 		return age == 0 ? seen : GBObjectClass.ocDead;
 	}
 
+	@Override
 	public Side Owner() {
 		return side;
 	}

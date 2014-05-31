@@ -19,6 +19,7 @@ public class HardwareItem implements Cloneable {
 		return cost;
 	}
 
+	@Override
 	public HardwareItem clone() {
 		return new HardwareItem(mass, cost);
 	}

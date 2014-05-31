@@ -227,6 +227,7 @@ public class HardwareSpec {
 		mass = 0;
 	}
 
+	@Override
 	public HardwareSpec clone() {
 		HardwareSpec ret = new HardwareSpec();
 		ret.processor = processor;

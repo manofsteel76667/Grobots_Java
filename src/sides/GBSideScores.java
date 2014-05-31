@@ -12,12 +12,12 @@ public class GBSideScores extends GBScores {
 		population = 0;
 		biomass = 0;
 		constructor = economyHardware = combatHardware = totalHardware = 0;
-
 		territory = 0;
 	}
 
+	@Override
 	public void Reset() {
-		Reset();
+		super.Reset();
 		extinctTime = 0;
 		sterileTime = 0;
 	}
@@ -69,14 +69,14 @@ public class GBSideScores extends GBScores {
 	}
 
 	public void ReportTotals(GBScores totals) {
-		biomassFraction = (float) (totals.Biomass() != 0 ? biomass
-				/ totals.Biomass() : 0.0);
+		biomassFraction = totals.Biomass() != 0 ? biomass
+				/ totals.Biomass() : 0.0;
 		biomassFractionSquared = biomassFraction * biomassFraction;
-		earlyBiomassFraction = (float) (totals.EarlyBiomass() != 0 ? earlyBiomass
+		earlyBiomassFraction = totals.EarlyBiomass() != 0 ? earlyBiomass
 				/ totals.EarlyBiomass()
-				: 0.0);
-		killedFraction = (float) (totals.Killed() != 0 ? killed
-				/ totals.Killed() : 0.0);
+				: 0.0;
+		killedFraction = totals.Killed() != 0 ? killed
+				/ totals.Killed() : 0.0;
 		if (totals.survived == 1 && survived != 0)
 			elimination = 1;
 	}

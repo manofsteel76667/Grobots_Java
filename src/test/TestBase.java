@@ -8,19 +8,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Test;
-
-import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
 import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 import sides.Side;
 import sides.SideReader;
-import simulation.GBObject;
-import simulation.GBRobot;
-import support.FinePoint;
 
 public class TestBase {
 	static String[] slotNames = { "chassis", "processor", "engine",

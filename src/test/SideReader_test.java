@@ -3,28 +3,20 @@ package test;
 import static org.junit.Assert.fail;
 import headless.Headless;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
 
 import sides.RobotType;
 import sides.Side;
-import sides.SideReader;
 import simulation.GBRobot;
 import simulation.GBWorld;
 import support.FinePoint;
 import exception.GBAbort;
 import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 
 public class SideReader_test {
@@ -93,7 +85,15 @@ public class SideReader_test {
 			String[] sides = new String[] {
 					TestBase.sidesFilePath() + "cyclops.gb",
 					TestBase.sidesFilePath() + "tomatoes.gb",
-					TestBase.sidesFilePath() + "microalgae.gb" };
+					TestBase.sidesFilePath() + "move-zig-3.gb",
+					//"-t100",//Tournament
+					"-S",//Sound on
+					"-l18000",//Time limit
+					"-b500",//Stats period
+					"-w10",//World width
+					"-h10",//World height
+					"-s5",//Seed limit
+					"-H"};//HTML output
 			Headless.main(sides);
 		} catch (Exception e) {
 			e.printStackTrace();

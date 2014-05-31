@@ -16,23 +16,25 @@ public class GBCorpse extends GBFood {
 		type = who;
 		killer = cause;
 	}
-
+	@Override
 	public Side Owner() {
 		return type.side;
 	}
 
+	@Override
 	public void CollectStatistics(GBWorld world) {
 		world.ReportCorpse(value);
 	}
-
+	@Override
 	public double Interest() {
 		return value / 500;
 	}
-
-	public String Description() {
+	@Override
+	public String toString() {
 		return "Corpse of " + type.Description();
 	}
 
+	@Override
 	public String Details() {
 		return value + " energy, killed by " + killer != null ? killer.Name()
 				: "accident";

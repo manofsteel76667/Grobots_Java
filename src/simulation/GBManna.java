@@ -9,11 +9,13 @@ public class GBManna extends GBFood {
 		super(where, val);
 	}
 
+	@Override
 	public void CollectStatistics(GBWorld world) {
 		world.ReportManna(value);
 	}
 
-	public String Description() {
+	@Override
+	public String toString() {
 		return "Manna (" + value + ')';
 	}
 	// TODO: GUI

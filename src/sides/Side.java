@@ -188,7 +188,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void ResetSampledStatistics() {
 		if (scores.population != 0)
-			center.add(groupPosition.divide((int) scores.Population())).divide(
+			center.add(groupPosition.divide(scores.Population())).divide(
 					2);
 		// center = (center + groupPosition / (int)scores.Population()) / 2;
 		groupPosition.set(0, 0);

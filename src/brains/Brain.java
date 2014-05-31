@@ -61,6 +61,7 @@ public class Brain {
 	 */
 		private static final long serialVersionUID = 1L;
 
+		@Override
 		public String toString() {
 			return "stack overflow";
 		}
@@ -73,6 +74,7 @@ public class Brain {
 	 */
 		private static final long serialVersionUID = 1L;
 
+		@Override
 		public String toString() {
 			return "stack underflow";
 		}

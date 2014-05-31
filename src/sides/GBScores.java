@@ -213,14 +213,14 @@ public class GBScores {
 	public double KillRate() {
 		if (biomass == 0)
 			return 0.0f;
-		return (double) (killed / biomass);
+		return killed / biomass;
 	}
 
 	// What fraction of income has ended up as growth?
 	double Efficiency() {
 		if (income.Total() == 0)
 			return 0.0f;
-		return (double) ((biomass - seeded) / income.Total());
+		return (biomass - seeded) / income.Total();
 	}
 
 	int Doubletime(int currentTime) {
@@ -234,7 +234,7 @@ public class GBScores {
 		if (rounds == 0)
 			return 0.0f;
 		double variance = biomassFractionSquared / rounds - frac * frac;
-		return (double) (variance < 0 ? 0 : Math.sqrt(variance)); // rounding
+		return variance < 0 ? 0 : Math.sqrt(variance); // rounding
 																	// error can
 																	// make
 																	// variance
@@ -247,7 +247,7 @@ public class GBScores {
 
 	// Sampling error: twice the standard deviation of the mean.
 	public double BiomassFractionError() {
-		return (double) (rounds > 1 ? BiomassFractionSD()
-				/ Math.sqrt((double) (rounds - 1)) * 2.0 : 1.0);
+		return rounds > 1 ? BiomassFractionSD()
+				/ Math.sqrt(rounds - 1) * 2.0 : 1.0;
 	}
 };
