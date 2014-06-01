@@ -11,6 +11,8 @@ import java.util.List;
 import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
+import support.GBColor;
+import support.GBRandomState;
 import support.Model;
 import exception.GBBadArgumentError;
 import exception.GBGenericError;
@@ -29,7 +31,7 @@ public class Side extends Model implements Comparable<Side> {
 	RobotType selected; // really a view property - could remove
 	String name, author;
 	int id;
-	// GBColor color;
+	GBColor color;
 	// scores
 	GBSideScores scores;
 	GBScores cScores;
@@ -48,7 +50,8 @@ public class Side extends Model implements Comparable<Side> {
 	public Side() {
 		id = 0;
 		seedIDs = new LinkedList<Integer>();
-		// color(), name(), author(),
+		color=new GBColor(); 
+		//name(), author(),
 		scores = new GBSideScores();
 		cScores = new GBScores();
 		center = new FinePoint();
@@ -65,7 +68,7 @@ public class Side extends Model implements Comparable<Side> {
 			side.AddType(types.get(i).clone());
 		side.name = name;
 		side.author = author;
-		// side.SetColor(gRandoms.ColorNear(color, kSideCopyColorDistance));
+		 side.SetColor(GBRandomState.gRandoms.ColorNear(color, kSideCopyColorDistance));
 		for (int id : seedIDs)
 			side.seedIDs.add(id);
 		// id, comm and scores are not copied
@@ -99,11 +102,11 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	/*
-	 * public GBColor Color() { return color; }
-	 * 
-	 * public void SetColor(GBColor & newcolor) { color = newcolor; Changed(); }
-	 */
+	
+	  public GBColor Color() { return color; }
+	  
+	  public void SetColor(GBColor newcolor) { color = newcolor; Changed(); }
+	 
 
 	public RobotType GetType(int index) throws GBIndexOutOfRangeError {
 		if (index <= 0 || index > types.size())

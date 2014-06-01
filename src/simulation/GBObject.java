@@ -7,6 +7,7 @@ package simulation;
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
+import support.GBColor;
 import support.GBObjectClass;
 import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
@@ -29,7 +30,7 @@ interface GBProjection {
 };
 
 public abstract class GBObject /*
-								 * TODO: figure out if we need this: extends
+								 * 
 								 * GBDeletionReporter
 								 */{
 	FinePoint position;
@@ -105,23 +106,16 @@ public abstract class GBObject /*
 
 	// evil antimodular drawing code
 	// TODO: Put these back in when we do the GUI
-	// public abstract GBColor Color() ;
-	// public abstract void Draw(GBGraphics g, GBProjection proj, GBRect where,
-	// boolean detailed) ;
-	// public abstract void DrawUnderlay(GBGraphics g, GBProjection proj, GBRect
-	// where, boolean detailed) ;
-	// public abstract void DrawOverlay(GBGraphics g, GBProjection proj, GBRect
-	// where, boolean detailed) ;
+	public abstract GBColor Color() ;
+	// public abstract void Draw(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
+	// public abstract void DrawUnderlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
+	// public abstract void DrawOverlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
 
 	// protected:
 	protected double radius;
 	protected double mass;
 	public GBObject next;// references the next object; allows GBObject to act
 							// as a singly-linked list
-
-	/*
-	 * TODO: Remove GBObject() { throw GBBadConstructorError(); }
-	 */
 
 	public GBObject(FinePoint where, double r) {
 		position = where;

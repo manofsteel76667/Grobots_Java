@@ -17,13 +17,18 @@ import support.FinePoint;
 import exception.GBAbort;
 import exception.GBBadArgumentError;
 import exception.GBError;
+import exception.GBGenericError;
+import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 
 public class SideReader_test {
 	List<Side> allsides = null;
 	Side side = null;
 	RobotType type = null;
-
+@Test
+public void testOneSide() throws GBIndexOutOfRangeError, GBAbort, GBGenericError{
+	TestBase.loadSide("active-4.gb");
+}
 	/**
 	 * Load each side file in the sides directory. For each side, instantiate
 	 * one robot of each type in the side.
@@ -53,7 +58,7 @@ public class SideReader_test {
 			}
 		} catch (GBError e) {
 			e.printStackTrace();
-			fail("Could not create " + msg + ": " + e.ToString());
+			fail("Could not create " + msg + ": " + e.toString());
 		}
 	}
 
@@ -75,7 +80,7 @@ public class SideReader_test {
 			world.AddSeeds();
 		} catch (GBError e) {
 			e.printStackTrace();
-			fail("Failed:" + e.ToString());
+			fail("Failed:" + e.toString());
 		}
 	}
 

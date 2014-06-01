@@ -139,7 +139,7 @@ public class GBObjectWorld extends Model {
 			}
 			addNewObjects();
 		} catch (GBError err) {
-			GBError.NonfatalError("Error resorting objects: " + err.ToString());
+			GBError.NonfatalError("Error resorting objects: " + err.toString());
 		}
 	}
 
@@ -221,7 +221,7 @@ public class GBObjectWorld extends Model {
 					}
 		// }
 		// catch ( GBError err ) {
-		// GBError.NonfatalError("Error moving objects: " + err.ToString());
+		// GBError.NonfatalError("Error moving objects: " + err.toString());
 		// }
 	}
 
@@ -259,7 +259,7 @@ public class GBObjectWorld extends Model {
 				}// )
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robots: "
-						+ err.ToString());
+						+ err.toString());
 			}
 			if (((GBRobot) bot).hardware.EaterLimit() != 0)
 				try {
@@ -271,7 +271,7 @@ public class GBObjectWorld extends Model {
 					// }
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding robot and food: "
-							+ err.ToString());
+							+ err.toString());
 				}
 			try {
 				for (GBObject shot = objects.get(GBObjectClass.ocShot)[t]; shot != null; shot = shot.next) {
@@ -282,7 +282,7 @@ public class GBObjectWorld extends Model {
 				// }
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robot and shot: "
-						+ err.ToString());
+						+ err.toString());
 			}
 			try {
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next) {
@@ -293,7 +293,7 @@ public class GBObjectWorld extends Model {
 				// }
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robot and area: "
-						+ err.ToString());
+						+ err.toString());
 			}
 		}// )
 		try {
@@ -308,7 +308,7 @@ public class GBObjectWorld extends Model {
 			}// )
 		} catch (GBError err) {
 			GBError.NonfatalError("Error colliding area and food: "
-					+ err.ToString());
+					+ err.toString());
 		}
 		CollideSensors(t, t);
 	}
@@ -355,7 +355,7 @@ public class GBObjectWorld extends Model {
 					// }
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding robots: "
-							+ err.ToString());
+							+ err.toString());
 				}
 				if (((GBRobot) bot).hardware.EaterLimit() != 0)
 					try {
@@ -366,7 +366,7 @@ public class GBObjectWorld extends Model {
 						}
 					} catch (GBError err) {
 						GBError.NonfatalError("Error colliding robot and food: "
-								+ err.ToString());
+								+ err.toString());
 					}
 				try {
 					for (GBObject shot = objects.get(GBObjectClass.ocShot)[t2]; shot != null; shot = shot.next) {
@@ -376,7 +376,7 @@ public class GBObjectWorld extends Model {
 					}
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding robot and shot: "
-							+ err.ToString());
+							+ err.toString());
 				}
 			}
 			try {
@@ -387,7 +387,7 @@ public class GBObjectWorld extends Model {
 				}// )
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robot and area: "
-						+ err.ToString());
+						+ err.toString());
 			}
 		}// )
 		for (GBObject food = objects.get(GBObjectClass.ocFood)[t1]; food != null; food = food.next) {
@@ -402,7 +402,7 @@ public class GBObjectWorld extends Model {
 					}
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding food and robot: "
-							+ err.ToString());
+							+ err.toString());
 				}
 			try {
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
@@ -412,7 +412,7 @@ public class GBObjectWorld extends Model {
 				}
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding food and area: "
-						+ err.ToString());
+						+ err.toString());
 			}
 		}// )
 		try {
@@ -428,7 +428,7 @@ public class GBObjectWorld extends Model {
 			}// )
 		} catch (GBError err) {
 			GBError.NonfatalError("Error colliding shot and robot: "
-					+ err.ToString());
+					+ err.toString());
 		}
 		for (GBObject area = objects.get(GBObjectClass.ocArea)[t1]; area != null; area = area.next) {
 			// FOR_EACH_OBJECT_IN_LIST(objects[t1][GBObjectClass.ocArea.value],
@@ -442,7 +442,7 @@ public class GBObjectWorld extends Model {
 					}
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding area and robot: "
-							+ err.ToString());
+							+ err.toString());
 				}
 				try {
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
@@ -452,7 +452,7 @@ public class GBObjectWorld extends Model {
 					}
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding area and food: "
-							+ err.ToString());
+							+ err.toString());
 				}
 			}
 		}// )
@@ -494,7 +494,7 @@ public class GBObjectWorld extends Model {
 			}// )
 		} catch (GBError err) {
 			GBError.NonfatalError("Error colliding sensor-shot with other object: "
-					+ err.ToString());
+					+ err.toString());
 		}
 	}
 
@@ -534,7 +534,7 @@ public class GBObjectWorld extends Model {
 					AddObjectDirectly(obj);
 			}
 		} catch (GBError err) {
-			GBError.NonfatalError("Error erasing objects: " + err.ToString());
+			GBError.NonfatalError("Error erasing objects: " + err.toString());
 		}
 	}
 
@@ -603,7 +603,7 @@ public class GBObjectWorld extends Model {
 			}
 		}
 		// } catch ( GBError err ) {
-		// GBError.NonfatalError("Error in ObjectNear: " + err.ToString());
+		// GBError.NonfatalError("Error in ObjectNear: " + err.toString());
 		// }
 		return best;
 	}
@@ -644,7 +644,7 @@ public class GBObjectWorld extends Model {
 		}
 		// } catch ( GBError err ) {
 		// GBError.NonfatalError("Error in RandomInterestingObject: " +
-		// err.ToString());
+		// err.toString());
 		// }
 		return null;
 	}
@@ -667,7 +667,7 @@ public class GBObjectWorld extends Model {
 		// })
 		// } catch ( GBError err ) {
 		// GBError.NonfatalError("Error in RandomInterestingObjectNear: " +
-		// err.ToString());
+		// err.toString());
 		// }
 		return null;
 	}

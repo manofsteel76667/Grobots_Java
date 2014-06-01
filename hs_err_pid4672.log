@@ -366,7 +366,7 @@ RBX=0x00000000cb366cd8 is an oop
  - 304 :  : 'exception/GBError'
  - 305 :  : 'exception/GBError'
  - 306 :  : name_index=307 signature_index=49
- - 307 :  : 'ToString'
+ - 307 :  : 'toString'
  - 308 :  : 'element'
  - 309 :  : 'sb'
  - 310 :  : 'Ljava/lang/StringBuilder;'
@@ -1045,7 +1045,7 @@ RCX=0x00000000cb366cd8 is an oop
  - 304 :  : 'exception/GBError'
  - 305 :  : 'exception/GBError'
  - 306 :  : name_index=307 signature_index=49
- - 307 :  : 'ToString'
+ - 307 :  : 'toString'
  - 308 :  : 'element'
  - 309 :  : 'sb'
  - 310 :  : 'Ljava/lang/StringBuilder;'
@@ -1729,7 +1729,7 @@ R8 =0x00000000cb366cd8 is an oop
  - 304 :  : 'exception/GBError'
  - 305 :  : 'exception/GBError'
  - 306 :  : name_index=307 signature_index=49
- - 307 :  : 'ToString'
+ - 307 :  : 'toString'
  - 308 :  : 'element'
  - 309 :  : 'sb'
  - 310 :  : 'Ljava/lang/StringBuilder;'
@@ -2409,7 +2409,7 @@ R10=0x00000000cb366cd8 is an oop
  - 304 :  : 'exception/GBError'
  - 305 :  : 'exception/GBError'
  - 306 :  : name_index=307 signature_index=49
- - 307 :  : 'ToString'
+ - 307 :  : 'toString'
  - 308 :  : 'element'
  - 309 :  : 'sb'
  - 310 :  : 'Ljava/lang/StringBuilder;'

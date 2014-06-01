@@ -109,7 +109,7 @@ public class GBWorld extends GBObjectWorld {
 			for (GBObject ob = objects.get(GBObjectClass.ocRobot)[i]; ob != null; ob = ob.next)
 				ob.Think(this);
 		// } catch ( GBError err ) {
-		// GBError.NonfatalError("Error thinking object: " + err.ToString());
+		// GBError.NonfatalError("Error thinking object: " + err.toString());
 		// }
 	}
 
@@ -120,7 +120,7 @@ public class GBWorld extends GBObjectWorld {
 					for (GBObject ob = objects.get(cur)[i]; ob != null; ob = ob.next)
 						ob.Act(this);
 		} catch (GBError err) {
-			GBError.NonfatalError("Error acting object: " + err.ToString());
+			GBError.NonfatalError("Error acting object: " + err.toString());
 		}
 	}
 
@@ -131,7 +131,7 @@ public class GBWorld extends GBObjectWorld {
 				AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
 			// AddObjectDirectly(new GBManna(RandomLocation(0), mannaSize));
 		} catch (GBError err) {
-			GBError.NonfatalError("Error adding manna: " + err.ToString());
+			GBError.NonfatalError("Error adding manna: " + err.toString());
 		}
 	}
 
@@ -402,7 +402,7 @@ public class GBWorld extends GBObjectWorld {
 			// worthless
 			addNewObjects();
 		} catch (GBError err) {
-			GBError.NonfatalError("Error adding seed:" + err.ToString());
+			GBError.NonfatalError("Error adding seed:" + err.toString());
 		}
 	}
 

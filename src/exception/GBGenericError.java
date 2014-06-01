@@ -15,7 +15,7 @@ public class GBGenericError extends GBError {
 	}
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return message;
 	}
 

@@ -2,6 +2,7 @@ package simulation;
 
 import sides.Side;
 import support.FinePoint;
+import support.GBColor;
 import support.GBObjectClass;
 import exception.GBBadArgumentError;
 import exception.GBBadComputedValueError;
@@ -102,10 +103,11 @@ public class GBFood extends GBObject {
 	}
 
 	// TODO: After GUI
-	/*
-	 * public GBColor Color() { return GBColor::white; }
-	 * 
-	 * void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
+	
+	 @Override
+	public GBColor Color() { return GBColor.white; }
+	  
+	 /* void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
 	 * /*detailed
 	 *//*
 		 * ) { g.DrawSolidRect(where, Color()); }

@@ -55,7 +55,7 @@ class GBBrainError extends GBSimulationError {
 	}
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "unspecified brain error";
 	}
 };
@@ -67,7 +67,7 @@ class GBUnknownInstructionError extends GBBrainError {
 	private static final long serialVersionUID = 2958382950648962574L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "illegal or unimplemented instruction";
 	}
 };
@@ -79,7 +79,7 @@ class GBUnknownHardwareVariableError extends GBBrainError {
 	private static final long serialVersionUID = 2173486710426250517L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "illegal or unimplemented hardware variable";
 	}
 };
@@ -96,7 +96,7 @@ class GBNotIntegerError extends GBBrainError {
 	}
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return Double.toString(value) + " is not an integer";
 	}
 };
@@ -108,7 +108,7 @@ class GBReadOnlyError extends GBBrainError {
 	private static final long serialVersionUID = -252704304831425647L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "tried to write a read-only variable";
 	}
 };

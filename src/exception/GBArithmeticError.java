@@ -9,6 +9,7 @@ public class GBArithmeticError extends GBError {
 	public GBArithmeticError() {
 	}
 
+	@Override
 	public String toString() {
 		return "arithmetic error";
 	}

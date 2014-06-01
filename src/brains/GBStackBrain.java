@@ -329,7 +329,7 @@ public class GBStackBrain extends Brain {
 		if (world.reportErrors)
 			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
-					+ AddressAndLine(pc - 1) + ": " + err.ToString());
+					+ AddressAndLine(pc - 1) + ": " + err.toString());
 		status = BrainStatus.bsError;
 	}
 
@@ -1779,7 +1779,7 @@ class GBOffEndError extends GBBadAddressError {
 	}
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "fell off end of code";
 	}
 }

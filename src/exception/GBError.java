@@ -9,15 +9,18 @@ public class GBError extends java.lang.Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = -6819324881379371856L;
-
+	@Override
+	public String getMessage(){
+		return toString();
+	}
 	public GBError() {
 	}
 
-	public String ToString() {
+	@Override
+	public String toString() {
 		return "undifferentiated GBError (shouldn't be used)";
 	}
 
-	// TODO: Check how these work in Headless Mode
 	public static void FatalError(String message) {
 		javax.swing.JOptionPane.showMessageDialog(null, message);
 		System.exit(1);

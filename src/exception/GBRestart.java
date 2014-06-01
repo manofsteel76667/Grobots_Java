@@ -10,7 +10,8 @@ public class GBRestart extends Exception {
 	public GBRestart() {
 	}
 
-	public String ToString() {
+	@Override
+	public String toString() {
 		return "unspecified restart";
 	}
 };

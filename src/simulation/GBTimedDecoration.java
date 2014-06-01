@@ -1,13 +1,14 @@
 package simulation;
 
 import support.FinePoint;
+import support.GBColor;
 import support.GBObjectClass;
 
 // GBDecorations.cpp
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 
-public class GBTimedDecoration extends GBObject {
+public abstract class GBTimedDecoration extends GBObject {
 	// convenience constants
 	public static final double kSmokeMaxSpeed = 0.03;
 	public static final int kSmokeMinLifetime = 30;
@@ -44,4 +45,7 @@ public class GBTimedDecoration extends GBObject {
 	public void Act(GBWorld world) {
 		lifetime--;
 	}
+
+	@Override
+	public abstract GBColor Color();
 };

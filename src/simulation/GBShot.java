@@ -11,6 +11,7 @@ import exception.GBBadArgumentError;
 import exception.GBError;
 import exception.GBGenericError;
 import exception.GBNilPointerError;
+import support.GBColor;
 
 public abstract class GBShot extends GBObject {
 	// protected:
@@ -174,15 +175,20 @@ class GBBlast extends GBTimedShot {
 	// Blasts fade out at the end of their lives.
 	// Big blasts are saturated, smaller ones are pink or white.
 	// Long-range blasts are orangish; short-range ones are magenta.
+	@Override
+	public GBColor Color() {
+		float fadeout = hit ? 1.0f : Math.min(lifetime
+				/ Math.min(originallifetime, 10.0f), 1.0f);
+		float whiteness = (float) Math.pow(0.95, power);
+		float blueness = (float) Math.pow(0.9995, originallifetime
+				* originallifetime);
+		return GBColor.white.Mix(whiteness,
+				new GBColor(1, 0.5f - blueness * 1.5f, blueness * 1.5f))
+				.multiply(fadeout);
+	}
+
 	// TODO: Put this back in when we do the GUI
 	/*
-	 * public static final GBColor Color() { float fadeout = hit ? 1.0f
-	 * :Math.min(lifetime /Math.min((float)originallifetime, 10.0f), 1.0f);
-	 * float whiteness = pow(0.95, ToDouble(power)); float blueness =
-	 * pow(0.9995, originallifetime * originallifetime); return
-	 * GBColor::white.Mix(whiteness, GBColor(1, 0.5f - blueness * 1.5f, blueness
-	 * * 1.5f)) * fadeout; }
-	 * 
 	 * void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
 	 * /*detailed
 	 *//*
@@ -233,16 +239,22 @@ class GBGrenade extends GBTimedShot {
 	public int Type() {
 		return 2;
 	}
+
 	// TODO: Put this back in when the GUI is done
+
+	@Override
+	public GBColor Color() {
+		return GBColor.yellow;
+	}
+
 	/*
-	 * public GBColor Color() { return GBColor::yellow; }
-	 * 
 	 * public void Draw(GBGraphics & g, GBProjection & proj, GBRect & where,
 	 * boolean detailed) { if (where.Width() <= 3)
 	 * g.DrawSolidRect(where,Color()); else { if ( detailed ) DrawShadow(g,
 	 * proj, Velocity() * -1.0f, GBColor::gray); g.DrawSolidOval(where,
 	 * Color()); } }
 	 */
+
 };
 
 class GBExplosion extends GBTimedShot {
@@ -295,15 +307,21 @@ class GBExplosion extends GBTimedShot {
 					* kExplosionSmokesPerPower, kExplosionMinSmokes)); i > 0; i--)
 				world.AddObjectNew(new GBSmoke(Position().add(
 						world.Randoms().Vector(Radius())), world.Randoms()
-						.Vector(GBTimedDecoration.kSmokeMaxSpeed), world.Randoms()
-						.intInRange(GBTimedDecoration.kSmokeMinLifetime, maxLifetime)));
+						.Vector(GBTimedDecoration.kSmokeMaxSpeed), world
+						.Randoms().intInRange(
+								GBTimedDecoration.kSmokeMinLifetime,
+								maxLifetime)));
 		}
 	}
 
 	// TODO: when the GUI is done
+
+	@Override
+	public GBColor Color() {
+		return new GBColor(1, 0.9f, 0.2f);
+	}
+
 	/*
-	 * public GBColor Color() { return GBColor(1, 0.9f, 0.2f); }
-	 * 
 	 * public void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
 	 * /*detailed
 	 *//*
@@ -362,9 +380,13 @@ class GBForceField extends GBShot {
 	}
 
 	// TODO: when the GUI is done
+
+	@Override
+	public GBColor Color() {
+		return new GBColor(0, 0.8f, 1);
+	}
+
 	/*
-	 * public static final GBColor Color() { return GBColor(0, 0.8f, 1); }
-	 * 
 	 * void Draw(GBGraphics & g, GBProjection &proj, GBRect & where, boolean
 	 * /*detailed
 	 *//*
@@ -488,11 +510,16 @@ class GBSyphon extends GBTimedShot {
 	public double Interest() {
 		return Math.abs(power) * (hitsEnemies ? 5 : 1) + (hitsEnemies ? 2 : 1);
 	}
+
 	// TODO: after GUI is done
+
+	@Override
+	public GBColor Color() {
+		return (hitsEnemies ? new GBColor(0.6f, 1, 0) : new GBColor(0.5f, 0.8f,
+				1));
+	}
+
 	/*
-	 * public GBColor Color() { return (hitsEnemies ? GBColor(0.6f, 1, 0) :
-	 * GBColor(0.5f, 0.8f, 1)); }
-	 * 
 	 * public void Draw(GBGraphics & g, GBProjection & proj, GBRect & where,
 	 * boolean detailed) { //draw tail showing origin, rate and whether it's
 	 * working if ( detailed ) { GBColor tailcolor = Owner().Color() *

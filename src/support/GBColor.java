@@ -5,7 +5,7 @@
 package support;
 import exception.*;
 
-class GBColor extends java.awt.Color {
+public class GBColor extends java.awt.Color {
 	/**
 	 * 
 	 */
@@ -20,7 +20,6 @@ public GBColor(){
 	r = 1.0f; g=1.0f; b=1.0f;
 }
 
-// some things are inline, and can be found in GBColor.h
 public static final float kRedWeight = 0.35f;
 public static final float kGreenWeight = 0.45f;
 public static final float kBlueWeight = 0.2f;
@@ -28,25 +27,31 @@ public static final float kBlueWeight = 0.2f;
 public static final float kMaxTextLightness = 0.7f;
 
 
-GBColor( float grey){
+public GBColor( float grey){
 	super(Limit(grey),Limit(grey),Limit(grey));
 	r= Limit(grey); g=Limit(grey); b=Limit(grey);
 }
 
-GBColor( float red, float green, float blue){
+public GBColor( float red, float green, float blue){
 	super(Limit(red), Limit(green), Limit(blue));
 	r=Limit(red);
 	g=Limit(green);
 	b=Limit(blue);
 }
 
-void Set( float red, float green, float blue) {
+/**
+ * This won't work in java; need to change all calls to this to create a new GBColor object instead.
+ * @param red
+ * @param green
+ * @param blue
+ */
+public void Set( float red, float green, float blue) {
 	r = Limit(red);
 	g = Limit(green);
 	b = Limit(blue);
 }
 
-float Lightness() {
+public float Lightness() {
 	return r * kRedWeight + g * kGreenWeight + b * kBlueWeight;
 }
 

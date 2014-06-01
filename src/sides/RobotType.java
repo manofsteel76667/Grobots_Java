@@ -4,6 +4,7 @@
 
 package sides;
 
+import support.GBColor;
 import brains.Brain;
 import brains.BrainSpec;
 import brains.GBBadSymbolIndexError;
@@ -12,13 +13,13 @@ import exception.GBOutOfMemoryError;
 
 public class RobotType extends support.Model {
 	public static final double kStandardMass = 20;
-	public boolean debug = false;
+	public boolean debug = true;
 	public Side side;
 	public String name;
 	public int id;
-	// public GBColor color;
-	// public GBRobotDecoration decoration;
-	// public GBColor decorationColor;
+	 public GBColor color;
+	 public GBRobotDecoration decoration=GBRobotDecoration.none;
+	 public GBColor decorationColor;
 	public HardwareSpec hardware;
 	public BrainSpec brain;
 	public long population;
@@ -36,13 +37,14 @@ public class RobotType extends support.Model {
 		side = owner;
 		debug = owner.debug;
 		/*
-		 * id(0), color(), name(), decoration(rdNone),
+		 * id(0), name(), decoration(rdNone),
 		 * decorationColor(GBColor::black),
 		 */
-		if (!debug)
-			hardware = new HardwareSpec();
-		else
-			hardware = new HardwareSpec(true);
+		color = new GBColor();
+		//if (!debug)
+		//	hardware = new HardwareSpec();
+		//else
+			hardware = new HardwareSpec(debug);
 		/*
 		 * brain(null), population(0), biomass(0)
 		 */
@@ -52,7 +54,7 @@ public class RobotType extends support.Model {
 	public RobotType clone() {
 		RobotType type = new RobotType(side);
 		type.name = name;
-		// type.SetColor(color);
+		type.SetColor(color);
 		// type.SetDecoration(decoration, decorationColor);
 		type.hardware = hardware;
 		type.brain = brain.clone();
@@ -94,15 +96,15 @@ public class RobotType extends support.Model {
 		id = newid;
 	}
 
-	/*
-	 * GBColor Color() { return color; } void SetColor( GBColor newcolor) {
-	 * color = newcolor; Changed(); }
-	 * 
-	 * GBRobotDecoration Decoration() { return decoration; } GBColor
-	 * DecorationColor() { return decorationColor; } void
-	 * SetDecoration(GBRobotDecoration dec, GBColor col) { decoration = dec;
-	 * decorationColor = col; }
-	 */
+	
+	 public GBColor Color() { return color; } void SetColor( GBColor newcolor) {
+	  color = newcolor; Changed(); }
+	  
+	  GBRobotDecoration Decoration() { return decoration; } GBColor
+	  DecorationColor() { return decorationColor; } void
+	  SetDecoration(GBRobotDecoration dec, GBColor col) { decoration = dec;
+	  decorationColor = col; }
+	 
 
 	public HardwareSpec Hardware() {
 		return hardware;

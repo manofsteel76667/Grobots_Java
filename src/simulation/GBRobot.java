@@ -16,6 +16,7 @@ import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
+import support.GBColor;
 
 public class GBRobot extends GBObject {
 	RobotType type;
@@ -319,12 +320,14 @@ public class GBRobot extends GBObject {
 			interest += Math.abs(hardware.enemySyphon.Rate()) * 5 + 2;
 		return interest;
 	}
-	/*
-	 * //This color is only used for the minimap, so it has built-in contrast
-	 * handling. public static final GBColor Color() { return
-	 * Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
-	 * .Mix(0.9f, type.Color()); }
-	 * 
+	
+	 //This color is only used for the minimap, so it has built-in contrast
+	 // handling. 
+	@Override
+	public GBColor Color() { return
+	  Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
+	  .Mix(0.9f, type.Color()); }
+	 /* 
 	 * 
 	 * //Draw a meter with whichever color gives better contrast. If pulse, make
 	 * the meter flash. static void DrawMeter(GBGraphics g, double fraction,

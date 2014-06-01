@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import support.FinePoint;
+import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
 import brains.GBStackBrainSpec;
@@ -64,7 +65,7 @@ enum GBElementType {
 
 }
 
-enum decorationNames {
+enum GBRobotDecoration {
 	none("none"),
 	dot("dot"),
 	circle("circle"),
@@ -78,18 +79,23 @@ enum decorationNames {
 	backslash("backslash");
 	public final String tagName;
 
-	public static decorationNames byTag(String _tagName) {
-		return tagLookup.get(_tagName.toLowerCase());
+	public static GBRobotDecoration byTag(String _tagName)
+			throws GBElementArgumentError {
+		try {
+			return tagLookup.get(_tagName.toLowerCase());
+		} catch (Exception e) {
+			throw new GBElementArgumentError();
+		}
 	}
 
-	public static final int kNumDecorationTypes = decorationNames.values().length;
-	static final Map<String, decorationNames> tagLookup = new HashMap<String, decorationNames>();
+	public static final int kNumDecorationTypes = GBRobotDecoration.values().length;
+	static final Map<String, GBRobotDecoration> tagLookup = new HashMap<String, GBRobotDecoration>();
 	static {
-		for (decorationNames typ : decorationNames.values())
+		for (GBRobotDecoration typ : GBRobotDecoration.values())
 			tagLookup.put(typ.tagName, typ);
 	}
 
-	decorationNames(String _tagName) {
+	GBRobotDecoration(String _tagName) {
 		tagName = _tagName;
 	}
 }
@@ -117,8 +123,13 @@ enum HardwareComponents {
 	hcEnemySyphon("enemy-syphon");
 	public final String tagName;
 
-	public static HardwareComponents byTag(String _tagName) {
-		return tagLookup.get(_tagName.toLowerCase());
+	public static HardwareComponents byTag(String _tagName)
+			throws GBElementArgumentError {
+		try {
+			return tagLookup.get(_tagName.toLowerCase());
+		} catch (Exception e) {
+			throw new GBElementArgumentError();
+		}
 	}
 
 	public static final int kHardwareComponentTypes = HardwareComponents
@@ -206,6 +217,29 @@ public class SideReader {
 					// states
 				}
 		}
+	}
+
+	boolean ParseColor(String token, GBColor color) {
+		// could do named colors, but not urgent
+		// check length
+		float r, g, b;
+		try {
+			if (token.length() == 3) {
+				r = (float) Integer.parseInt(token.substring(0, 1), 16) / 255.0f;
+				g = (float) Integer.parseInt(token.substring(1, 2), 16) / 255.0f;
+				b = (float) Integer.parseInt(token.substring(2, 3), 16) / 255.0f;
+				color = new GBColor(r, g, b);
+			} else if (token.length() == 6) {
+				r = (float) Integer.parseInt(token.substring(0, 2), 16) / 255.0f;
+				g = (float) Integer.parseInt(token.substring(2, 4), 16) / 255.0f;
+				b = (float) Integer.parseInt(token.substring(4, 6), 16) / 255.0f;
+				color = new GBColor(r, g, b);
+			}
+			return true;
+		} catch (NumberFormatException e) {
+
+		}
+		return false;
 	}
 
 	void ProcessTag(GBElementType element) throws GBGenericError {
@@ -326,21 +360,18 @@ public class SideReader {
 					if (tokens.size() == 0)
 						throw new GBMissingElementArgumentError();
 					String token = tokens.removeFirst();
-					/*
-					 * GBColor color; if ( ! ParseColor(token, color) ) throw
-					 * GBElementArgumentError();
-					 */
+
+					GBColor color = new GBColor();
+					if (!ParseColor(token, color))
+						throw new GBElementArgumentError();
+
 					if (tokens.size() == 0)
 						throw new GBMissingElementArgumentError();
 					token = tokens.removeFirst();
-					/*
-					 * GBRobotDecoration dec = kNumRobotDecorations; for ( int i
-					 * = 0; i < kNumRobotDecorations; i ++ ) if (
-					 * NamesEquivalent(token, decorationNames[i]) ) { dec =
-					 * (GBRobotDecoration)i; break; } if ( dec ==
-					 * kNumRobotDecorations ) throw GBElementArgumentError();
-					 * type.SetDecoration(dec, color);
-					 */
+
+					GBRobotDecoration dec = GBRobotDecoration.byTag(token);
+					type.SetDecoration(dec, color);
+
 				}
 				break;
 			case etHardware:
@@ -441,7 +472,7 @@ public class SideReader {
 			 */
 			tokens.clear();
 		} catch (GBError e) {
-			throw new GBGenericError(e.ToString());
+			throw new GBGenericError(e.toString());
 		}
 	}
 
@@ -452,7 +483,8 @@ public class SideReader {
 	}
 
 	void ProcessHardwareLine() throws GBUnknownHardwareError,
-			GBMissingHardwareArgumentError, GBHardwareArgumentError {
+			GBMissingHardwareArgumentError, GBHardwareArgumentError,
+			GBElementArgumentError {
 		if (tokens.size() == 0)
 			return;
 		String name = tokens.removeFirst();
@@ -612,7 +644,7 @@ public class SideReader {
 						ProcessLine();
 					} catch (GBError err) {
 						GBError.NonfatalError("Error loading side from "
-								+ fileName + ": " + err.ToString()
+								+ fileName + ": " + err.toString()
 								+ " at line " + lineno);
 					}
 			}
@@ -645,7 +677,7 @@ public class SideReader {
 			side.filename = filename;
 			return side;
 		} catch (GBError err) {
-			GBError.NonfatalError("Error loading side: " + err.ToString());
+			GBError.NonfatalError("Error loading side: " + err.toString());
 			return null;
 		} // catch ( GBAbort ) {}
 			// return null;
@@ -662,7 +694,7 @@ class GBReaderError extends GBError {
 	private static final long serialVersionUID = 868639067553966720L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "unspecified reader error";
 	}
 
@@ -677,7 +709,7 @@ class GBNoSuchElementError extends GBReaderError {
 	private static final long serialVersionUID = -6461302010627743143L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "invalid element type";
 	}
 
@@ -690,7 +722,7 @@ class GBMisplacedElementError extends GBReaderError {
 	private static final long serialVersionUID = -6773763990635882381L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "an element appeared in an invalid place";
 	}
 
@@ -703,7 +735,7 @@ class GBMissingElementError extends GBReaderError {
 	private static final long serialVersionUID = 133326259568207644L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "a required element is missing";
 	}
 
@@ -716,7 +748,7 @@ class GBElementArgumentError extends GBReaderError {
 	private static final long serialVersionUID = 1927401559638696895L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "invalid or forbidden element argument";
 	}
 
@@ -729,7 +761,7 @@ class GBMissingElementArgumentError extends GBReaderError {
 	private static final long serialVersionUID = -4160350834828591548L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "missing element argument";
 	}
 
@@ -742,7 +774,7 @@ class GBForbiddenContentError extends GBReaderError {
 	private static final long serialVersionUID = 1544294849800329702L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "content is not allowed here";
 	}
 
@@ -755,7 +787,7 @@ class GBLineTooLongError extends GBReaderError {
 	private static final long serialVersionUID = 989008233723928310L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "input line too long";
 	}
 
@@ -768,7 +800,7 @@ class GBUnknownHardwareError extends GBReaderError {
 	private static final long serialVersionUID = 5518712721840211353L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "unknown hardware component";
 	}
 
@@ -781,7 +813,7 @@ class GBHardwareArgumentError extends GBReaderError {
 	private static final long serialVersionUID = 3101185710730165359L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "bad argument to a hardware component";
 	}
 
@@ -794,7 +826,7 @@ class GBMissingHardwareArgumentError extends GBReaderError {
 	private static final long serialVersionUID = -6411802234623163474L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "missing argument to a hardware component";
 	}
 
@@ -808,7 +840,7 @@ class GBFileError extends GBReaderError {
 	private static final long serialVersionUID = -2401737324445858461L;
 
 	@Override
-	public String ToString() {
+	public String toString() {
 		return "file I/O error";
 	}
 };

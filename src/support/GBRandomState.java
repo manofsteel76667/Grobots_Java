@@ -57,15 +57,16 @@ public class GBRandomState {
 		return FinePoint.makePolar(InRange(0, maxLength), Angle());
 	}
 
-	/*
-	 * TODO: Put back in when the gui is started public GBColor Color() { return
-	 * GBColor(FloatInRange(0, 1), FloatInRange(0, 1), FloatInRange(0, 1)); }
-	 * 
-	 * // FIXME: ColorNear is broken public GBColor ColorNear( GBColor & old,
-	 * float dist) { return GBColor(FloatInRange(old.Red() - dist, old.Red() +
-	 * dist), FloatInRange(old.Green() - dist, old.Green() + dist),
-	 * FloatInRange(old.Blue() - dist, old.Blue() + dist)); }
-	 */
+	public GBColor Color() {
+		return new GBColor(FloatInRange(0, 1), FloatInRange(0, 1),
+				FloatInRange(0, 1));
+	}
+//TODO: This was marked as broken.  Fixed syntax but was there more to it?
+	public GBColor ColorNear(GBColor old, float dist) {
+		return new GBColor(FloatInRange(old.r - dist, old.r + dist),
+				FloatInRange(old.g - dist, old.g + dist), FloatInRange(old.b
+						- dist, old.b + dist));
+	}
 
 	public boolean bool(double probability) {
 		return InRange(0, 1 - Number.kEpsilon) < probability;

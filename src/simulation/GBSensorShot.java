@@ -5,6 +5,7 @@ package simulation;
 // Distributed under the GNU General Public License.
 import sides.Side;
 import support.FinePoint;
+import support.GBColor;
 import support.GBObjectClass;
 
 class GBSensorShot extends GBObject {
@@ -74,13 +75,22 @@ class GBSensorShot extends GBObject {
 	}
 
 	// TODO: when GUI is done
-	/*
-	 * public static final GBColor Color() { float fraction = 1.0 - (float)age /
-	 * Lifetime(); switch ( seen ) { case ocRobot: return GBColor(0.4f, 0.8f, 1)
-	 * * fraction; case ocFood: return GBColor(0.5f, 1, 0.5f) * fraction; case
-	 * ocShot: return GBColor(1, 1, 0.5f) * fraction; } return
-	 * GBColor(fraction); }
-	 */
+
+	@Override
+	public GBColor Color() {
+		float fraction = 1.0f - age / Lifetime();
+		switch (seen) {
+		case ocRobot:
+			return new GBColor(0.4f, 0.8f, 1).multiply(fraction);
+		case ocFood:
+			return new GBColor(0.5f, 1, 0.5f).multiply(fraction);
+		case ocShot:
+			return new GBColor(1, 1, 0.5f).multiply(fraction);
+		default:
+			break;
+		}
+		return new GBColor(fraction);
+	}
 
 	public GBRobot Firer() {
 		return owner;
