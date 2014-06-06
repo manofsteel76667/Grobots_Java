@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="grobots.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Menus.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\brains\GBBrain.cpp" />
+    <ClCompile Include="..\..\brains\GBBrainSpec.cpp" />
+    <ClCompile Include="..\..\brains\GBStackBrain.cpp" />
+    <ClCompile Include="..\..\brains\GBStackBrainOpcodes.cpp" />
+    <ClCompile Include="..\..\brains\GBStackBrainPrimitives.cpp" />
+    <ClCompile Include="..\..\brains\GBStackBrainSpec.cpp" />
+    <ClCompile Include="..\..\sides\GBHardwareSpec.cpp" />
+    <ClCompile Include="..\..\sides\GBRobotType.cpp" />
+    <ClCompile Include="..\..\sides\GBScores.cpp" />
+    <ClCompile Include="..\..\sides\GBSide.cpp" />
+    <ClCompile Include="..\..\sides\GBSideReader.cpp" />
+    <ClCompile Include="..\..\simulation\GBDecorations.cpp" />
+    <ClCompile Include="..\..\simulation\GBFood.cpp" />
+    <ClCompile Include="..\..\simulation\GBHardwareState.cpp" />
+    <ClCompile Include="..\..\simulation\GBMessages.cpp" />
+    <ClCompile Include="..\..\simulation\GBObject.cpp" />
+    <ClCompile Include="..\..\simulation\GBObjectWorld.cpp" />
+    <ClCompile Include="..\..\simulation\GBRobot.cpp" />
+    <ClCompile Include="..\..\simulation\GBSensorShot.cpp" />
+    <ClCompile Include="..\..\simulation\GBShot.cpp" />
+    <ClCompile Include="..\..\simulation\GBWorld.cpp" />
+    <ClCompile Include="..\..\support\GBColor.cpp" />
+    <ClCompile Include="..\..\support\GBDeletionReporter.cpp" />
+    <ClCompile Include="..\..\support\GBErrors.cpp" />
+    <ClCompile Include="..\..\support\GBFinePoint.cpp" />
+    <ClCompile Include="..\..\support\GBGraphics.cpp" />
+    <ClCompile Include="..\..\support\GBLongNumber.cpp" />
+    <ClCompile Include="..\..\support\GBMilliseconds.cpp" />
+    <ClCompile Include="..\..\support\GBModel.cpp" />
+    <ClCompile Include="..\..\support\GBNumber.cpp" />
+    <ClCompile Include="..\..\support\GBRandomState.cpp" />
+    <ClCompile Include="..\..\support\GBSound.cpp" />
+    <ClCompile Include="..\..\support\GBStringUtilities.cpp" />
+    <ClCompile Include="..\..\ui\GBApplication.cpp" />
+    <ClCompile Include="..\..\ui\GBMain.cpp" />
+    <ClCompile Include="..\..\ui\GBViewsApplication.cpp" />
+    <ClCompile Include="..\..\ui\GBWindow.cpp" />
+    <ClCompile Include="..\..\views\GBAboutBox.cpp" />
+    <ClCompile Include="..\..\views\GBDebugger.cpp" />
+    <ClCompile Include="..\..\views\GBListView.cpp" />
+    <ClCompile Include="..\..\views\GBMiniMap.cpp" />
+    <ClCompile Include="..\..\views\GBPortal.cpp" />
+    <ClCompile Include="..\..\views\GBRobotTypeView.cpp" />
+    <ClCompile Include="..\..\views\GBRosterView.cpp" />
+    <ClCompile Include="..\..\views\GBScoresView.cpp" />
+    <ClCompile Include="..\..\views\GBSideDebugger.cpp" />
+    <ClCompile Include="..\..\views\GBTournamentView.cpp" />
+    <ClCompile Include="..\..\views\GBView.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\brains\GBBrain.h" />
+    <ClInclude Include="..\..\brains\GBBrainSpec.h" />
+    <ClInclude Include="..\..\brains\GBStackBrain.h" />
+    <ClInclude Include="..\..\brains\GBStackBrainOpcodes.h" />
+    <ClInclude Include="..\..\brains\GBStackBrainSpec.h" />
+    <ClInclude Include="..\..\sides\GBHardwareSpec.h" />
+    <ClInclude Include="..\..\sides\GBRobotType.h" />
+    <ClInclude Include="..\..\sides\GBScores.h" />
+    <ClInclude Include="..\..\sides\GBSide.h" />
+    <ClInclude Include="..\..\sides\GBSideReader.h" />
+    <ClInclude Include="..\..\simulation\GBDecorations.h" />
+    <ClInclude Include="..\..\simulation\GBFood.h" />
+    <ClInclude Include="..\..\simulation\GBHardwareState.h" />
+    <ClInclude Include="..\..\simulation\GBMessages.h" />
+    <ClInclude Include="..\..\simulation\GBObject.h" />
+    <ClInclude Include="..\..\simulation\GBObjectWorld.h" />
+    <ClInclude Include="..\..\simulation\GBRobot.h" />
+    <ClInclude Include="..\..\simulation\GBSensorShot.h" />
+    <ClInclude Include="..\..\simulation\GBShot.h" />
+    <ClInclude Include="..\..\simulation\GBWorld.h" />
+    <ClInclude Include="..\..\support\GBColor.h" />
+    <ClInclude Include="..\..\support\GBDeletionReporter.h" />
+    <ClInclude Include="..\..\support\GBErrors.h" />
+    <ClInclude Include="..\..\support\GBFinePoint.h" />
+    <ClInclude Include="..\..\support\GBGraphics.h" />
+    <ClInclude Include="..\..\support\GBLongNumber.h" />
+    <ClInclude Include="..\..\support\GBMilliseconds.h" />
+    <ClInclude Include="..\..\support\GBModel.h" />
+    <ClInclude Include="..\..\support\GBNumber.h" />
+    <ClInclude Include="..\..\support\GBPlatform.h" />
+    <ClInclude Include="..\..\support\GBRandomState.h" />
+    <ClInclude Include="..\..\support\GBSound.h" />
+    <ClInclude Include="..\..\support\GBStringUtilities.h" />
+    <ClInclude Include="..\..\support\GBTypes.h" />
+    <ClInclude Include="..\..\ui\GBApplication.h" />
+    <ClInclude Include="..\..\ui\GBViewsApplication.h" />
+    <ClInclude Include="..\..\ui\GBWindow.h" />
+    <ClInclude Include="..\..\views\GBAboutBox.h" />
+    <ClInclude Include="..\..\views\GBDebugger.h" />
+    <ClInclude Include="..\..\views\GBListView.h" />
+    <ClInclude Include="..\..\views\GBMiniMap.h" />
+    <ClInclude Include="..\..\views\GBPortal.h" />
+    <ClInclude Include="..\..\views\GBRobotTypeView.h" />
+    <ClInclude Include="..\..\views\GBRosterView.h" />
+    <ClInclude Include="..\..\views\GBScoresView.h" />
+    <ClInclude Include="..\..\views\GBSideDebugger.h" />
+    <ClInclude Include="..\..\views\GBTournamentView.h" />
+    <ClInclude Include="..\..\views\GBView.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8E7278F9-E8A6-4F9B-92BF-CAA59C46EF50}</ProjectGuid>
+    <RootNamespace>WinGrobots</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\brains;..\..\sides;..\..\simulation;..\..\support;..\..\ui;..\..\views;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\brains;..\..\sides;..\..\simulation;..\..\support;..\..\ui;..\..\views;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

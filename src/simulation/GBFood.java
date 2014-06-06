@@ -1,5 +1,9 @@
 package simulation;
 
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
@@ -52,6 +56,7 @@ public class GBFood extends GBObject {
 	public double Energy() {
 		return value;
 	}
+
 	@Override
 	public double TakeEnergy(double limit) throws GBBadArgumentError,
 			GBBadComputedValueError {
@@ -70,10 +75,12 @@ public class GBFood extends GBObject {
 			return limit;
 		}
 	}
+
 	@Override
 	public double MaxTakeEnergy() {
 		return value;
 	}
+
 	@Override
 	public GBObjectClass Class() {
 		if (value > 0)
@@ -81,15 +88,18 @@ public class GBFood extends GBObject {
 		else
 			return GBObjectClass.ocDead;
 	}
+
 	@Override
 	public Side Owner() {
 		return null;
 	}
+
 	@Override
 	public void Move() {
 		super.Move();
 		Drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
 	}
+
 	@Override
 	public void Act(GBWorld world) {
 		value = Math.max(value - kFoodDecayRate, 0);
@@ -102,22 +112,17 @@ public class GBFood extends GBObject {
 		return "";
 	}
 
-	// TODO: After GUI
-	
-	 @Override
-	public GBColor Color() { return GBColor.white; }
-	  
-	 /* void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
-	 * /*detailed
-	 *//*
-		 * ) { g.DrawSolidRect(where, Color()); }
-		 */
+	@Override
+	public GBColor Color() {
+		return GBColor.white;
+	}
+
+	public void Draw(Graphics2D g, GBProjection proj,
+			Rectangle where, boolean detailed) {
+		g.setColor(Color());
+		g.fill(where);
+	}
 
 };
 
-// GBFood //
-
-// GBManna //
-
-// GBCorpse //
 

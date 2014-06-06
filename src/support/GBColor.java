@@ -40,7 +40,7 @@ public GBColor( float red, float green, float blue){
 }
 
 /**
- * This won't work in java; need to change all calls to this to create a new GBColor object instead.
+ * TODO: This won't work in java; need to change all calls to this to create a new GBColor object instead.
  * @param red
  * @param green
  * @param blue

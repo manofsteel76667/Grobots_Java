@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>CPP_Version</name>
-			<type>2</type>
-			<location>C:/Users/Anderson/workspace/Grobots/CPP_Version</location>
-		</link>
-	</linkedResources>
 </projectDescription>

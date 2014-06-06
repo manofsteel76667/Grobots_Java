@@ -1,0 +1,172 @@
+//Microsoft Developer Studio generated resource script.
+//
+//#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "windows.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+101 MENU DISCARDABLE 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Load Side...",               12901
+        MENUITEM "&Duplicate Side",             12902
+        MENUITEM "R&eload Side",                12903
+        MENUITEM SEPARATOR
+        MENUITEM "&Remove Side",                12905
+        MENUITEM "Remove All Sides",            12906
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       12910
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Roster",                     13001
+        MENUITEM "&Minimap",                    13003
+        MENUITEM "&Statistics",                 13004
+        MENUITEM "T&ypes",                      13005
+        MENUITEM "&Debugger",                   13006
+        MENUITEM "&Tournament",                 13007
+        MENUITEM "S&ide Debugger",              13008
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Sound",                       13101, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Show &Sensors",               13103
+        MENUITEM "Show &Decorations",           13104, CHECKED
+        MENUITEM "Show &Meters",                13105, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Minimap Robots",              13107, CHECKED
+        MENUITEM "Minimap Food",                13108, CHECKED
+        MENUITEM "Minimap Sensors",             13109
+        MENUITEM "Minimap Decorations",         13110
+        MENUITEM "Minimap Trails",              13111
+        MENUITEM SEPARATOR
+        MENUITEM "Report &Errors",              13113, CHECKED
+        MENUITEM "Report &Prints",              13114
+        MENUITEM SEPARATOR
+        MENUITEM "Refollow",                    13116
+        MENUITEM "Follow Random",               13117
+        MENUITEM "Follow Near",                 13118
+        MENUITEM "&Autofollow",                 13119
+        MENUITEM SEPARATOR
+        MENUITEM "&Graph All Rounds",           13121
+    END
+    POPUP "&Simulation"
+    BEGIN
+        MENUITEM "&Run",                        13201
+        MENUITEM "Single &Frame",               13202
+        MENUITEM "Step",                        13203, GRAYED
+        MENUITEM "&Pause",                      13204
+        MENUITEM SEPARATOR
+        MENUITEM "Slowest (2 fps)",             13206
+        MENUITEM "Slow (&10 fps)",              13207
+        MENUITEM "Normal (&30 fps)",            13208, CHECKED
+        MENUITEM "Fast (&60 fps)",              13209
+        MENUITEM "Faster (300 fps)",            13210
+        MENUITEM "&Unlimited",                  13211
+        MENUITEM SEPARATOR
+        MENUITEM "&New Round",                  13213
+        MENUITEM "R&estart",                    13214
+        MENUITEM "&Seed",                       13215
+        MENUITEM "Resee&d",                     13216
+        MENUITEM SEPARATOR
+        MENUITEM "Rules",                       13218, GRAYED
+        MENUITEM "&Tournament",                 13219
+        MENUITEM "Sa&ve Scores",               13220
+        MENUITEM "Reset Sc&ores",               13221
+        MENUITEM SEPARATOR
+        MENUITEM "Start/Stop &Brain",           13223
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "Scroll",                      13301
+        MENUITEM SEPARATOR
+        MENUITEM "Add Manna",                   13303
+        MENUITEM "Add Robot",                   13304
+        MENUITEM "Add Seed",                    13305
+        MENUITEM SEPARATOR
+        MENUITEM "Move",                        13307
+        MENUITEM "Pull",                        13308
+        MENUITEM "Smite",                       13309
+        MENUITEM "Blasts",                      13310
+        MENUITEM "Erase",                       13311
+        MENUITEM "Erase Area",                  13312
+    END
+    POPUP "Help", HELP
+    BEGIN
+        MENUITEM "&About Grobots",              12801
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+//1 TEXTINCLUDE DISCARDABLE 
+//BEGIN
+//    "resource.h\0"
+//END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+ID_ICON_GROBOTS         ICON    DISCARDABLE     "grobots.ico"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

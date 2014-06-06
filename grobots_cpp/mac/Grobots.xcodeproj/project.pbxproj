@@ -1,0 +1,606 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00CBA6FE0B434E98008B8D69 /* Mac_Interface.rsrc in Rez */ = {isa = PBXBuildFile; fileRef = 00DD37600B409A0200390993 /* Mac_Interface.rsrc */; };
+		00CBA6FF0B434E98008B8D69 /* Sounds.rsrc in Rez */ = {isa = PBXBuildFile; fileRef = 00DD37610B409A0200390993 /* Sounds.rsrc */; };
+		00DD36D30B4098A000390993 /* GBBrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36C80B4098A000390993 /* GBBrain.cpp */; };
+		00DD36D40B4098A000390993 /* GBBrainSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36CA0B4098A000390993 /* GBBrainSpec.cpp */; };
+		00DD36D50B4098A000390993 /* GBStackBrain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36CC0B4098A000390993 /* GBStackBrain.cpp */; };
+		00DD36D60B4098A000390993 /* GBStackBrainOpcodes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36CE0B4098A000390993 /* GBStackBrainOpcodes.cpp */; };
+		00DD36D70B4098A000390993 /* GBStackBrainPrimitives.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36D00B4098A000390993 /* GBStackBrainPrimitives.cpp */; };
+		00DD36D80B4098A000390993 /* GBStackBrainSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36D10B4098A000390993 /* GBStackBrainSpec.cpp */; };
+		00DD37340B4098CF00390993 /* GBHardwareSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36DB0B4098CF00390993 /* GBHardwareSpec.cpp */; };
+		00DD37350B4098CF00390993 /* GBRobotType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36DD0B4098CF00390993 /* GBRobotType.cpp */; };
+		00DD37360B4098CF00390993 /* GBScores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36DF0B4098CF00390993 /* GBScores.cpp */; };
+		00DD37370B4098CF00390993 /* GBSide.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36E10B4098CF00390993 /* GBSide.cpp */; };
+		00DD37380B4098CF00390993 /* GBSideReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36E30B4098CF00390993 /* GBSideReader.cpp */; };
+		00DD37390B4098CF00390993 /* GBDecorations.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36E60B4098CF00390993 /* GBDecorations.cpp */; };
+		00DD373A0B4098CF00390993 /* GBFood.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36E80B4098CF00390993 /* GBFood.cpp */; };
+		00DD373B0B4098CF00390993 /* GBHardwareState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36EA0B4098CF00390993 /* GBHardwareState.cpp */; };
+		00DD373C0B4098CF00390993 /* GBMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36EC0B4098CF00390993 /* GBMessages.cpp */; };
+		00DD373D0B4098CF00390993 /* GBObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36EE0B4098CF00390993 /* GBObject.cpp */; };
+		00DD373E0B4098CF00390993 /* GBObjectWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36F00B4098CF00390993 /* GBObjectWorld.cpp */; };
+		00DD373F0B4098CF00390993 /* GBRobot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36F20B4098CF00390993 /* GBRobot.cpp */; };
+		00DD37400B4098CF00390993 /* GBSensorShot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36F40B4098CF00390993 /* GBSensorShot.cpp */; };
+		00DD37410B4098CF00390993 /* GBShot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36F60B4098CF00390993 /* GBShot.cpp */; };
+		00DD37420B4098CF00390993 /* GBWorld.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36F80B4098CF00390993 /* GBWorld.cpp */; };
+		00DD37430B4098CF00390993 /* GBColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36FB0B4098CF00390993 /* GBColor.cpp */; };
+		00DD37440B4098CF00390993 /* GBDeletionReporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36FD0B4098CF00390993 /* GBDeletionReporter.cpp */; };
+		00DD37450B4098CF00390993 /* GBErrors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD36FF0B4098CF00390993 /* GBErrors.cpp */; };
+		00DD37460B4098CF00390993 /* GBFinePoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37010B4098CF00390993 /* GBFinePoint.cpp */; };
+		00DD37470B4098CF00390993 /* GBGraphics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37030B4098CF00390993 /* GBGraphics.cpp */; };
+		00DD37480B4098CF00390993 /* GBLongNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37050B4098CF00390993 /* GBLongNumber.cpp */; };
+		00DD37490B4098CF00390993 /* GBMilliseconds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37070B4098CF00390993 /* GBMilliseconds.cpp */; };
+		00DD374A0B4098CF00390993 /* GBModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37090B4098CF00390993 /* GBModel.cpp */; };
+		00DD374B0B4098CF00390993 /* GBNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD370B0B4098CF00390993 /* GBNumber.cpp */; };
+		00DD374C0B4098CF00390993 /* GBRandomState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD370E0B4098CF00390993 /* GBRandomState.cpp */; };
+		00DD374D0B4098CF00390993 /* GBSound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37100B4098CF00390993 /* GBSound.cpp */; };
+		00DD374E0B4098CF00390993 /* GBStringUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37120B4098CF00390993 /* GBStringUtilities.cpp */; };
+		00DD374F0B4098CF00390993 /* GBApplication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37160B4098CF00390993 /* GBApplication.cpp */; };
+		00DD37500B4098CF00390993 /* GBMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37180B4098CF00390993 /* GBMain.cpp */; };
+		00DD37510B4098CF00390993 /* GBViewsApplication.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37190B4098CF00390993 /* GBViewsApplication.cpp */; };
+		00DD37520B4098CF00390993 /* GBWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD371B0B4098CF00390993 /* GBWindow.cpp */; };
+		00DD37530B4098CF00390993 /* GBAboutBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD371E0B4098CF00390993 /* GBAboutBox.cpp */; };
+		00DD37540B4098CF00390993 /* GBDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37200B4098CF00390993 /* GBDebugger.cpp */; };
+		00DD37550B4098CF00390993 /* GBListView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37220B4098CF00390993 /* GBListView.cpp */; };
+		00DD37560B4098CF00390993 /* GBMiniMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37240B4098CF00390993 /* GBMiniMap.cpp */; };
+		00DD37570B4098CF00390993 /* GBPortal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37260B4098CF00390993 /* GBPortal.cpp */; };
+		00DD37580B4098CF00390993 /* GBRobotTypeView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37280B4098CF00390993 /* GBRobotTypeView.cpp */; };
+		00DD37590B4098CF00390993 /* GBRosterView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD372A0B4098CF00390993 /* GBRosterView.cpp */; };
+		00DD375A0B4098CF00390993 /* GBScoresView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD372C0B4098CF00390993 /* GBScoresView.cpp */; };
+		00DD375B0B4098CF00390993 /* GBSideDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD372E0B4098CF00390993 /* GBSideDebugger.cpp */; };
+		00DD375C0B4098CF00390993 /* GBTournamentView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37300B4098CF00390993 /* GBTournamentView.cpp */; };
+		00DD375D0B4098CF00390993 /* GBView.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00DD37320B4098CF00390993 /* GBView.cpp */; };
+		00DD37620B409A0200390993 /* Mac_Interface.rsrc in Resources */ = {isa = PBXBuildFile; fileRef = 00DD37600B409A0200390993 /* Mac_Interface.rsrc */; };
+		00DD37630B409A0200390993 /* Sounds.rsrc in Resources */ = {isa = PBXBuildFile; fileRef = 00DD37610B409A0200390993 /* Sounds.rsrc */; };
+		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		4A9504C5FFE6A39111CA0CBA /* Debug */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		4A9504C6FFE6A39111CA0CBA /* Release */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXFileReference section */
+		00DD36C80B4098A000390993 /* GBBrain.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBBrain.cpp; sourceTree = "<group>"; };
+		00DD36C90B4098A000390993 /* GBBrain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBBrain.h; sourceTree = "<group>"; };
+		00DD36CA0B4098A000390993 /* GBBrainSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBBrainSpec.cpp; sourceTree = "<group>"; };
+		00DD36CB0B4098A000390993 /* GBBrainSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBBrainSpec.h; sourceTree = "<group>"; };
+		00DD36CC0B4098A000390993 /* GBStackBrain.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = GBStackBrain.cpp; sourceTree = "<group>"; };
+		00DD36CD0B4098A000390993 /* GBStackBrain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBStackBrain.h; sourceTree = "<group>"; };
+		00DD36CE0B4098A000390993 /* GBStackBrainOpcodes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBStackBrainOpcodes.cpp; sourceTree = "<group>"; };
+		00DD36CF0B4098A000390993 /* GBStackBrainOpcodes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBStackBrainOpcodes.h; sourceTree = "<group>"; };
+		00DD36D00B4098A000390993 /* GBStackBrainPrimitives.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBStackBrainPrimitives.cpp; sourceTree = "<group>"; };
+		00DD36D10B4098A000390993 /* GBStackBrainSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBStackBrainSpec.cpp; sourceTree = "<group>"; };
+		00DD36D20B4098A000390993 /* GBStackBrainSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBStackBrainSpec.h; sourceTree = "<group>"; };
+		00DD36DB0B4098CF00390993 /* GBHardwareSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBHardwareSpec.cpp; sourceTree = "<group>"; };
+		00DD36DC0B4098CF00390993 /* GBHardwareSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBHardwareSpec.h; sourceTree = "<group>"; };
+		00DD36DD0B4098CF00390993 /* GBRobotType.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBRobotType.cpp; sourceTree = "<group>"; };
+		00DD36DE0B4098CF00390993 /* GBRobotType.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBRobotType.h; sourceTree = "<group>"; };
+		00DD36DF0B4098CF00390993 /* GBScores.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBScores.cpp; sourceTree = "<group>"; };
+		00DD36E00B4098CF00390993 /* GBScores.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBScores.h; sourceTree = "<group>"; };
+		00DD36E10B4098CF00390993 /* GBSide.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBSide.cpp; sourceTree = "<group>"; };
+		00DD36E20B4098CF00390993 /* GBSide.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBSide.h; sourceTree = "<group>"; };
+		00DD36E30B4098CF00390993 /* GBSideReader.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBSideReader.cpp; sourceTree = "<group>"; };
+		00DD36E40B4098CF00390993 /* GBSideReader.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBSideReader.h; sourceTree = "<group>"; };
+		00DD36E60B4098CF00390993 /* GBDecorations.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBDecorations.cpp; sourceTree = "<group>"; };
+		00DD36E70B4098CF00390993 /* GBDecorations.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBDecorations.h; sourceTree = "<group>"; };
+		00DD36E80B4098CF00390993 /* GBFood.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBFood.cpp; sourceTree = "<group>"; };
+		00DD36E90B4098CF00390993 /* GBFood.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBFood.h; sourceTree = "<group>"; };
+		00DD36EA0B4098CF00390993 /* GBHardwareState.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = GBHardwareState.cpp; sourceTree = "<group>"; };
+		00DD36EB0B4098CF00390993 /* GBHardwareState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBHardwareState.h; sourceTree = "<group>"; };
+		00DD36EC0B4098CF00390993 /* GBMessages.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBMessages.cpp; sourceTree = "<group>"; };
+		00DD36ED0B4098CF00390993 /* GBMessages.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBMessages.h; sourceTree = "<group>"; };
+		00DD36EE0B4098CF00390993 /* GBObject.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBObject.cpp; sourceTree = "<group>"; };
+		00DD36EF0B4098CF00390993 /* GBObject.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBObject.h; sourceTree = "<group>"; };
+		00DD36F00B4098CF00390993 /* GBObjectWorld.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBObjectWorld.cpp; sourceTree = "<group>"; };
+		00DD36F10B4098CF00390993 /* GBObjectWorld.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBObjectWorld.h; sourceTree = "<group>"; };
+		00DD36F20B4098CF00390993 /* GBRobot.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = GBRobot.cpp; sourceTree = "<group>"; };
+		00DD36F30B4098CF00390993 /* GBRobot.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBRobot.h; sourceTree = "<group>"; };
+		00DD36F40B4098CF00390993 /* GBSensorShot.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBSensorShot.cpp; sourceTree = "<group>"; };
+		00DD36F50B4098CF00390993 /* GBSensorShot.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBSensorShot.h; sourceTree = "<group>"; };
+		00DD36F60B4098CF00390993 /* GBShot.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBShot.cpp; sourceTree = "<group>"; };
+		00DD36F70B4098CF00390993 /* GBShot.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBShot.h; sourceTree = "<group>"; };
+		00DD36F80B4098CF00390993 /* GBWorld.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBWorld.cpp; sourceTree = "<group>"; };
+		00DD36F90B4098CF00390993 /* GBWorld.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBWorld.h; sourceTree = "<group>"; };
+		00DD36FB0B4098CF00390993 /* GBColor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBColor.cpp; sourceTree = "<group>"; };
+		00DD36FC0B4098CF00390993 /* GBColor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBColor.h; sourceTree = "<group>"; };
+		00DD36FD0B4098CF00390993 /* GBDeletionReporter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBDeletionReporter.cpp; sourceTree = "<group>"; };
+		00DD36FE0B4098CF00390993 /* GBDeletionReporter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBDeletionReporter.h; sourceTree = "<group>"; };
+		00DD36FF0B4098CF00390993 /* GBErrors.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBErrors.cpp; sourceTree = "<group>"; };
+		00DD37000B4098CF00390993 /* GBErrors.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBErrors.h; sourceTree = "<group>"; };
+		00DD37010B4098CF00390993 /* GBFinePoint.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBFinePoint.cpp; sourceTree = "<group>"; };
+		00DD37020B4098CF00390993 /* GBFinePoint.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBFinePoint.h; sourceTree = "<group>"; };
+		00DD37030B4098CF00390993 /* GBGraphics.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBGraphics.cpp; sourceTree = "<group>"; };
+		00DD37040B4098CF00390993 /* GBGraphics.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBGraphics.h; sourceTree = "<group>"; };
+		00DD37050B4098CF00390993 /* GBLongNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBLongNumber.cpp; sourceTree = "<group>"; };
+		00DD37060B4098CF00390993 /* GBLongNumber.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBLongNumber.h; sourceTree = "<group>"; };
+		00DD37070B4098CF00390993 /* GBMilliseconds.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBMilliseconds.cpp; sourceTree = "<group>"; };
+		00DD37080B4098CF00390993 /* GBMilliseconds.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBMilliseconds.h; sourceTree = "<group>"; };
+		00DD37090B4098CF00390993 /* GBModel.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBModel.cpp; sourceTree = "<group>"; };
+		00DD370A0B4098CF00390993 /* GBModel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBModel.h; sourceTree = "<group>"; };
+		00DD370B0B4098CF00390993 /* GBNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBNumber.cpp; sourceTree = "<group>"; };
+		00DD370C0B4098CF00390993 /* GBNumber.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBNumber.h; sourceTree = "<group>"; };
+		00DD370D0B4098CF00390993 /* GBPlatform.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBPlatform.h; sourceTree = "<group>"; };
+		00DD370E0B4098CF00390993 /* GBRandomState.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBRandomState.cpp; sourceTree = "<group>"; };
+		00DD370F0B4098CF00390993 /* GBRandomState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBRandomState.h; sourceTree = "<group>"; };
+		00DD37100B4098CF00390993 /* GBSound.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBSound.cpp; sourceTree = "<group>"; };
+		00DD37110B4098CF00390993 /* GBSound.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBSound.h; sourceTree = "<group>"; };
+		00DD37120B4098CF00390993 /* GBStringUtilities.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBStringUtilities.cpp; sourceTree = "<group>"; };
+		00DD37130B4098CF00390993 /* GBStringUtilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBStringUtilities.h; sourceTree = "<group>"; };
+		00DD37140B4098CF00390993 /* GBTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBTypes.h; sourceTree = "<group>"; };
+		00DD37160B4098CF00390993 /* GBApplication.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBApplication.cpp; sourceTree = "<group>"; };
+		00DD37170B4098CF00390993 /* GBApplication.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBApplication.h; sourceTree = "<group>"; };
+		00DD37180B4098CF00390993 /* GBMain.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBMain.cpp; sourceTree = "<group>"; };
+		00DD37190B4098CF00390993 /* GBViewsApplication.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBViewsApplication.cpp; sourceTree = "<group>"; };
+		00DD371A0B4098CF00390993 /* GBViewsApplication.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBViewsApplication.h; sourceTree = "<group>"; };
+		00DD371B0B4098CF00390993 /* GBWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBWindow.cpp; sourceTree = "<group>"; };
+		00DD371C0B4098CF00390993 /* GBWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBWindow.h; sourceTree = "<group>"; };
+		00DD371E0B4098CF00390993 /* GBAboutBox.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = GBAboutBox.cpp; sourceTree = "<group>"; };
+		00DD371F0B4098CF00390993 /* GBAboutBox.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = GBAboutBox.h; sourceTree = "<group>"; };
+		00DD37200B4098CF00390993 /* GBDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBDebugger.cpp; sourceTree = "<group>"; };
+		00DD37210B4098CF00390993 /* GBDebugger.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBDebugger.h; sourceTree = "<group>"; };
+		00DD37220B4098CF00390993 /* GBListView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBListView.cpp; sourceTree = "<group>"; };
+		00DD37230B4098CF00390993 /* GBListView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBListView.h; sourceTree = "<group>"; };
+		00DD37240B4098CF00390993 /* GBMiniMap.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBMiniMap.cpp; sourceTree = "<group>"; };
+		00DD37250B4098CF00390993 /* GBMiniMap.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBMiniMap.h; sourceTree = "<group>"; };
+		00DD37260B4098CF00390993 /* GBPortal.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = GBPortal.cpp; sourceTree = "<group>"; };
+		00DD37270B4098CF00390993 /* GBPortal.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBPortal.h; sourceTree = "<group>"; };
+		00DD37280B4098CF00390993 /* GBRobotTypeView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBRobotTypeView.cpp; sourceTree = "<group>"; };
+		00DD37290B4098CF00390993 /* GBRobotTypeView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBRobotTypeView.h; sourceTree = "<group>"; };
+		00DD372A0B4098CF00390993 /* GBRosterView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBRosterView.cpp; sourceTree = "<group>"; };
+		00DD372B0B4098CF00390993 /* GBRosterView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBRosterView.h; sourceTree = "<group>"; };
+		00DD372C0B4098CF00390993 /* GBScoresView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBScoresView.cpp; sourceTree = "<group>"; };
+		00DD372D0B4098CF00390993 /* GBScoresView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBScoresView.h; sourceTree = "<group>"; };
+		00DD372E0B4098CF00390993 /* GBSideDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBSideDebugger.cpp; sourceTree = "<group>"; };
+		00DD372F0B4098CF00390993 /* GBSideDebugger.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBSideDebugger.h; sourceTree = "<group>"; };
+		00DD37300B4098CF00390993 /* GBTournamentView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBTournamentView.cpp; sourceTree = "<group>"; };
+		00DD37310B4098CF00390993 /* GBTournamentView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBTournamentView.h; sourceTree = "<group>"; };
+		00DD37320B4098CF00390993 /* GBView.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GBView.cpp; sourceTree = "<group>"; };
+		00DD37330B4098CF00390993 /* GBView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GBView.h; sourceTree = "<group>"; };
+		00DD37600B409A0200390993 /* Mac_Interface.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; name = Mac_Interface.rsrc; path = ../mac/Mac_Interface.rsrc; sourceTree = "<group>"; };
+		00DD37610B409A0200390993 /* Sounds.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; name = Sounds.rsrc; path = ../mac/Sounds.rsrc; sourceTree = "<group>"; };
+		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
+		4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; languageSpecificationIdentifier = plist; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D0C4E970486CD37000505A6 /* Grobots.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grobots.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D0C4E910486CD37000505A6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00DD36C70B4098A000390993 /* brains */ = {
+			isa = PBXGroup;
+			children = (
+				00DD36C80B4098A000390993 /* GBBrain.cpp */,
+				00DD36C90B4098A000390993 /* GBBrain.h */,
+				00DD36CA0B4098A000390993 /* GBBrainSpec.cpp */,
+				00DD36CB0B4098A000390993 /* GBBrainSpec.h */,
+				00DD36CC0B4098A000390993 /* GBStackBrain.cpp */,
+				00DD36CD0B4098A000390993 /* GBStackBrain.h */,
+				00DD36CE0B4098A000390993 /* GBStackBrainOpcodes.cpp */,
+				00DD36CF0B4098A000390993 /* GBStackBrainOpcodes.h */,
+				00DD36D00B4098A000390993 /* GBStackBrainPrimitives.cpp */,
+				00DD36D10B4098A000390993 /* GBStackBrainSpec.cpp */,
+				00DD36D20B4098A000390993 /* GBStackBrainSpec.h */,
+			);
+			name = brains;
+			path = ../brains;
+			sourceTree = SOURCE_ROOT;
+		};
+		00DD36DA0B4098CF00390993 /* sides */ = {
+			isa = PBXGroup;
+			children = (
+				00DD36DB0B4098CF00390993 /* GBHardwareSpec.cpp */,
+				00DD36DC0B4098CF00390993 /* GBHardwareSpec.h */,
+				00DD36DD0B4098CF00390993 /* GBRobotType.cpp */,
+				00DD36DE0B4098CF00390993 /* GBRobotType.h */,
+				00DD36DF0B4098CF00390993 /* GBScores.cpp */,
+				00DD36E00B4098CF00390993 /* GBScores.h */,
+				00DD36E10B4098CF00390993 /* GBSide.cpp */,
+				00DD36E20B4098CF00390993 /* GBSide.h */,
+				00DD36E30B4098CF00390993 /* GBSideReader.cpp */,
+				00DD36E40B4098CF00390993 /* GBSideReader.h */,
+			);
+			name = sides;
+			path = ../sides;
+			sourceTree = SOURCE_ROOT;
+		};
+		00DD36E50B4098CF00390993 /* simulation */ = {
+			isa = PBXGroup;
+			children = (
+				00DD36E60B4098CF00390993 /* GBDecorations.cpp */,
+				00DD36E70B4098CF00390993 /* GBDecorations.h */,
+				00DD36E80B4098CF00390993 /* GBFood.cpp */,
+				00DD36E90B4098CF00390993 /* GBFood.h */,
+				00DD36EA0B4098CF00390993 /* GBHardwareState.cpp */,
+				00DD36EB0B4098CF00390993 /* GBHardwareState.h */,
+				00DD36EC0B4098CF00390993 /* GBMessages.cpp */,
+				00DD36ED0B4098CF00390993 /* GBMessages.h */,
+				00DD36EE0B4098CF00390993 /* GBObject.cpp */,
+				00DD36EF0B4098CF00390993 /* GBObject.h */,
+				00DD36F00B4098CF00390993 /* GBObjectWorld.cpp */,
+				00DD36F10B4098CF00390993 /* GBObjectWorld.h */,
+				00DD36F20B4098CF00390993 /* GBRobot.cpp */,
+				00DD36F30B4098CF00390993 /* GBRobot.h */,
+				00DD36F40B4098CF00390993 /* GBSensorShot.cpp */,
+				00DD36F50B4098CF00390993 /* GBSensorShot.h */,
+				00DD36F60B4098CF00390993 /* GBShot.cpp */,
+				00DD36F70B4098CF00390993 /* GBShot.h */,
+				00DD36F80B4098CF00390993 /* GBWorld.cpp */,
+				00DD36F90B4098CF00390993 /* GBWorld.h */,
+			);
+			name = simulation;
+			path = ../simulation;
+			sourceTree = SOURCE_ROOT;
+		};
+		00DD36FA0B4098CF00390993 /* support */ = {
+			isa = PBXGroup;
+			children = (
+				00DD36FB0B4098CF00390993 /* GBColor.cpp */,
+				00DD36FC0B4098CF00390993 /* GBColor.h */,
+				00DD36FD0B4098CF00390993 /* GBDeletionReporter.cpp */,
+				00DD36FE0B4098CF00390993 /* GBDeletionReporter.h */,
+				00DD36FF0B4098CF00390993 /* GBErrors.cpp */,
+				00DD37000B4098CF00390993 /* GBErrors.h */,
+				00DD37010B4098CF00390993 /* GBFinePoint.cpp */,
+				00DD37020B4098CF00390993 /* GBFinePoint.h */,
+				00DD37030B4098CF00390993 /* GBGraphics.cpp */,
+				00DD37040B4098CF00390993 /* GBGraphics.h */,
+				00DD37050B4098CF00390993 /* GBLongNumber.cpp */,
+				00DD37060B4098CF00390993 /* GBLongNumber.h */,
+				00DD37070B4098CF00390993 /* GBMilliseconds.cpp */,
+				00DD37080B4098CF00390993 /* GBMilliseconds.h */,
+				00DD37090B4098CF00390993 /* GBModel.cpp */,
+				00DD370A0B4098CF00390993 /* GBModel.h */,
+				00DD370B0B4098CF00390993 /* GBNumber.cpp */,
+				00DD370C0B4098CF00390993 /* GBNumber.h */,
+				00DD370D0B4098CF00390993 /* GBPlatform.h */,
+				00DD370E0B4098CF00390993 /* GBRandomState.cpp */,
+				00DD370F0B4098CF00390993 /* GBRandomState.h */,
+				00DD37100B4098CF00390993 /* GBSound.cpp */,
+				00DD37110B4098CF00390993 /* GBSound.h */,
+				00DD37120B4098CF00390993 /* GBStringUtilities.cpp */,
+				00DD37130B4098CF00390993 /* GBStringUtilities.h */,
+				00DD37140B4098CF00390993 /* GBTypes.h */,
+			);
+			name = support;
+			path = ../support;
+			sourceTree = SOURCE_ROOT;
+		};
+		00DD37150B4098CF00390993 /* ui */ = {
+			isa = PBXGroup;
+			children = (
+				00DD37600B409A0200390993 /* Mac_Interface.rsrc */,
+				00DD37610B409A0200390993 /* Sounds.rsrc */,
+				00DD37160B4098CF00390993 /* GBApplication.cpp */,
+				00DD37170B4098CF00390993 /* GBApplication.h */,
+				00DD37180B4098CF00390993 /* GBMain.cpp */,
+				00DD37190B4098CF00390993 /* GBViewsApplication.cpp */,
+				00DD371A0B4098CF00390993 /* GBViewsApplication.h */,
+				00DD371B0B4098CF00390993 /* GBWindow.cpp */,
+				00DD371C0B4098CF00390993 /* GBWindow.h */,
+			);
+			name = ui;
+			path = ../ui;
+			sourceTree = SOURCE_ROOT;
+		};
+		00DD371D0B4098CF00390993 /* views */ = {
+			isa = PBXGroup;
+			children = (
+				00DD371E0B4098CF00390993 /* GBAboutBox.cpp */,
+				00DD371F0B4098CF00390993 /* GBAboutBox.h */,
+				00DD37200B4098CF00390993 /* GBDebugger.cpp */,
+				00DD37210B4098CF00390993 /* GBDebugger.h */,
+				00DD37220B4098CF00390993 /* GBListView.cpp */,
+				00DD37230B4098CF00390993 /* GBListView.h */,
+				00DD37240B4098CF00390993 /* GBMiniMap.cpp */,
+				00DD37250B4098CF00390993 /* GBMiniMap.h */,
+				00DD37260B4098CF00390993 /* GBPortal.cpp */,
+				00DD37270B4098CF00390993 /* GBPortal.h */,
+				00DD37280B4098CF00390993 /* GBRobotTypeView.cpp */,
+				00DD37290B4098CF00390993 /* GBRobotTypeView.h */,
+				00DD372A0B4098CF00390993 /* GBRosterView.cpp */,
+				00DD372B0B4098CF00390993 /* GBRosterView.h */,
+				00DD372C0B4098CF00390993 /* GBScoresView.cpp */,
+				00DD372D0B4098CF00390993 /* GBScoresView.h */,
+				00DD372E0B4098CF00390993 /* GBSideDebugger.cpp */,
+				00DD372F0B4098CF00390993 /* GBSideDebugger.h */,
+				00DD37300B4098CF00390993 /* GBTournamentView.cpp */,
+				00DD37310B4098CF00390993 /* GBTournamentView.h */,
+				00DD37320B4098CF00390993 /* GBView.cpp */,
+				00DD37330B4098CF00390993 /* GBView.h */,
+			);
+			name = views;
+			path = ../views;
+			sourceTree = SOURCE_ROOT;
+		};
+		195DF8CFFE9D517E11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D0C4E970486CD37000505A6 /* Grobots.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		20286C29FDCF999611CA2CEA /* Grobots */ = {
+			isa = PBXGroup;
+			children = (
+				20286C2AFDCF999611CA2CEA /* Sources */,
+				20286C2CFDCF999611CA2CEA /* Resources */,
+				20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */,
+				195DF8CFFE9D517E11CA2CBB /* Products */,
+			);
+			name = Grobots;
+			sourceTree = "<group>";
+		};
+		20286C2AFDCF999611CA2CEA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				00DD36DA0B4098CF00390993 /* sides */,
+				00DD36E50B4098CF00390993 /* simulation */,
+				00DD36FA0B4098CF00390993 /* support */,
+				00DD37150B4098CF00390993 /* ui */,
+				00DD371D0B4098CF00390993 /* views */,
+				00DD36C70B4098A000390993 /* brains */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		20286C2CFDCF999611CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8D0C4E960486CD37000505A6 /* Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				20286C33FDCF999611CA2CEA /* Carbon.framework */,
+				4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */,
+				4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D0C4E890486CD37000505A6 /* Grobots */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "Grobots" */;
+			buildPhases = (
+				8D0C4E8C0486CD37000505A6 /* Resources */,
+				8D0C4E8F0486CD37000505A6 /* Sources */,
+				8D0C4E910486CD37000505A6 /* Frameworks */,
+				00CBA6FC0B434E89008B8D69 /* Rez */,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+			};
+			dependencies = (
+			);
+			name = Grobots;
+			productInstallPath = "$(HOME)/Applications";
+			productName = Grobots;
+			productReference = 8D0C4E970486CD37000505A6 /* Grobots.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		20286C28FDCF999611CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "Grobots" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				4A9504C5FFE6A39111CA0CBA /* Debug */,
+				4A9504C6FFE6A39111CA0CBA /* Release */,
+			);
+			hasScannedForEncodings = 1;
+			mainGroup = 20286C29FDCF999611CA2CEA /* Grobots */;
+			projectDirPath = "";
+			targets = (
+				8D0C4E890486CD37000505A6 /* Grobots */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D0C4E8C0486CD37000505A6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00DD37620B409A0200390993 /* Mac_Interface.rsrc in Resources */,
+				00DD37630B409A0200390993 /* Sounds.rsrc in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		00CBA6FC0B434E89008B8D69 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00CBA6FE0B434E98008B8D69 /* Mac_Interface.rsrc in Rez */,
+				00CBA6FF0B434E98008B8D69 /* Sounds.rsrc in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D0C4E8F0486CD37000505A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00DD36D30B4098A000390993 /* GBBrain.cpp in Sources */,
+				00DD36D40B4098A000390993 /* GBBrainSpec.cpp in Sources */,
+				00DD36D50B4098A000390993 /* GBStackBrain.cpp in Sources */,
+				00DD36D60B4098A000390993 /* GBStackBrainOpcodes.cpp in Sources */,
+				00DD36D70B4098A000390993 /* GBStackBrainPrimitives.cpp in Sources */,
+				00DD36D80B4098A000390993 /* GBStackBrainSpec.cpp in Sources */,
+				00DD37340B4098CF00390993 /* GBHardwareSpec.cpp in Sources */,
+				00DD37350B4098CF00390993 /* GBRobotType.cpp in Sources */,
+				00DD37360B4098CF00390993 /* GBScores.cpp in Sources */,
+				00DD37370B4098CF00390993 /* GBSide.cpp in Sources */,
+				00DD37380B4098CF00390993 /* GBSideReader.cpp in Sources */,
+				00DD37390B4098CF00390993 /* GBDecorations.cpp in Sources */,
+				00DD373A0B4098CF00390993 /* GBFood.cpp in Sources */,
+				00DD373B0B4098CF00390993 /* GBHardwareState.cpp in Sources */,
+				00DD373C0B4098CF00390993 /* GBMessages.cpp in Sources */,
+				00DD373D0B4098CF00390993 /* GBObject.cpp in Sources */,
+				00DD373E0B4098CF00390993 /* GBObjectWorld.cpp in Sources */,
+				00DD373F0B4098CF00390993 /* GBRobot.cpp in Sources */,
+				00DD37400B4098CF00390993 /* GBSensorShot.cpp in Sources */,
+				00DD37410B4098CF00390993 /* GBShot.cpp in Sources */,
+				00DD37420B4098CF00390993 /* GBWorld.cpp in Sources */,
+				00DD37430B4098CF00390993 /* GBColor.cpp in Sources */,
+				00DD37440B4098CF00390993 /* GBDeletionReporter.cpp in Sources */,
+				00DD37450B4098CF00390993 /* GBErrors.cpp in Sources */,
+				00DD37460B4098CF00390993 /* GBFinePoint.cpp in Sources */,
+				00DD37470B4098CF00390993 /* GBGraphics.cpp in Sources */,
+				00DD37480B4098CF00390993 /* GBLongNumber.cpp in Sources */,
+				00DD37490B4098CF00390993 /* GBMilliseconds.cpp in Sources */,
+				00DD374A0B4098CF00390993 /* GBModel.cpp in Sources */,
+				00DD374B0B4098CF00390993 /* GBNumber.cpp in Sources */,
+				00DD374C0B4098CF00390993 /* GBRandomState.cpp in Sources */,
+				00DD374D0B4098CF00390993 /* GBSound.cpp in Sources */,
+				00DD374E0B4098CF00390993 /* GBStringUtilities.cpp in Sources */,
+				00DD374F0B4098CF00390993 /* GBApplication.cpp in Sources */,
+				00DD37500B4098CF00390993 /* GBMain.cpp in Sources */,
+				00DD37510B4098CF00390993 /* GBViewsApplication.cpp in Sources */,
+				00DD37520B4098CF00390993 /* GBWindow.cpp in Sources */,
+				00DD37530B4098CF00390993 /* GBAboutBox.cpp in Sources */,
+				00DD37540B4098CF00390993 /* GBDebugger.cpp in Sources */,
+				00DD37550B4098CF00390993 /* GBListView.cpp in Sources */,
+				00DD37560B4098CF00390993 /* GBMiniMap.cpp in Sources */,
+				00DD37570B4098CF00390993 /* GBPortal.cpp in Sources */,
+				00DD37580B4098CF00390993 /* GBRobotTypeView.cpp in Sources */,
+				00DD37590B4098CF00390993 /* GBRosterView.cpp in Sources */,
+				00DD375A0B4098CF00390993 /* GBScoresView.cpp in Sources */,
+				00DD375B0B4098CF00390993 /* GBSideDebugger.cpp in Sources */,
+				00DD375C0B4098CF00390993 /* GBTournamentView.cpp in Sources */,
+				00DD375D0B4098CF00390993 /* GBView.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		C0E91AC608A95435008D54AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Grobots_Prefix.pch;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				PRODUCT_NAME = Grobots;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		C0E91AC708A95435008D54AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Grobots_Prefix.pch;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				PRODUCT_NAME = Grobots;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		C0E91ACA08A95435008D54AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_DEBUGGING_SYMBOLS = used;
+				GCC_ENABLE_SYMBOL_SEPARATION = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Debug;
+		};
+		C0E91ACB08A95435008D54AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "Grobots" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0E91AC608A95435008D54AB /* Debug */,
+				C0E91AC708A95435008D54AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "Grobots" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0E91ACA08A95435008D54AB /* Debug */,
+				C0E91ACB08A95435008D54AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 20286C28FDCF999611CA2CEA /* Project object */;
+}

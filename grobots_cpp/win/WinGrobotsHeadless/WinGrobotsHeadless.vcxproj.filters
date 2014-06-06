@@ -1,0 +1,223 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="brains">
+      <UniqueIdentifier>{1462bd19-1915-4dab-8425-ce72a7e7d8bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="support">
+      <UniqueIdentifier>{d4ef9f2c-bd25-419b-b06a-912cdbc45ffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="simulation">
+      <UniqueIdentifier>{e9fb979c-c43a-4efe-9d59-5b66ae8bcf34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sides">
+      <UniqueIdentifier>{37ef6cca-6b2f-4f15-a096-6c5986447569}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\brains\GBBrain.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\brains\GBBrainSpec.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\brains\GBStackBrain.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\brains\GBStackBrainOpcodes.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\brains\GBStackBrainPrimitives.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\brains\GBStackBrainSpec.cpp">
+      <Filter>brains</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\sides\GBHardwareSpec.cpp">
+      <Filter>sides</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\sides\GBRobotType.cpp">
+      <Filter>sides</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\sides\GBScores.cpp">
+      <Filter>sides</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\sides\GBSide.cpp">
+      <Filter>sides</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\sides\GBSideReader.cpp">
+      <Filter>sides</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBDecorations.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBFood.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBHardwareState.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBMessages.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBObject.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBObjectWorld.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBRobot.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBSensorShot.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBShot.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simulation\GBWorld.cpp">
+      <Filter>simulation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBColor.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBDeletionReporter.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBErrors.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBFinePoint.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBGraphics.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBLongNumber.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBMilliseconds.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBModel.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBNumber.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBRandomState.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBSound.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\support\GBStringUtilities.cpp">
+      <Filter>support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GBHeadless.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\brains\GBBrain.h">
+      <Filter>brains</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\brains\GBBrainSpec.h">
+      <Filter>brains</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\brains\GBStackBrain.h">
+      <Filter>brains</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\brains\GBStackBrainOpcodes.h">
+      <Filter>brains</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\brains\GBStackBrainSpec.h">
+      <Filter>brains</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sides\GBHardwareSpec.h">
+      <Filter>sides</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sides\GBRobotType.h">
+      <Filter>sides</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sides\GBScores.h">
+      <Filter>sides</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sides\GBSide.h">
+      <Filter>sides</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\sides\GBSideReader.h">
+      <Filter>sides</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBDecorations.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBFood.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBHardwareState.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBMessages.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBObject.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBObjectWorld.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBRobot.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBSensorShot.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBShot.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simulation\GBWorld.h">
+      <Filter>simulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBColor.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBDeletionReporter.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBErrors.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBFinePoint.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBGraphics.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBLongNumber.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBMilliseconds.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBModel.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBNumber.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBPlatform.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBRandomState.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBSound.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBStringUtilities.h">
+      <Filter>support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\support\GBTypes.h">
+      <Filter>support</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

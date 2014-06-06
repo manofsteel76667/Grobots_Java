@@ -4,6 +4,11 @@ package simulation;
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 
+import java.awt.Graphics;
+import java.awt.Rectangle;
+
+import javax.swing.JComponent;
+
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
@@ -29,10 +34,14 @@ interface GBProjection {
 	public FinePoint FromScreen(short x, short y);
 };
 
-public abstract class GBObject /*
+public abstract class GBObject extends JComponent /*
 								 * 
 								 * GBDeletionReporter
 								 */{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5543423295955441930L;
 	FinePoint position;
 	FinePoint velocity;
 
@@ -107,7 +116,7 @@ public abstract class GBObject /*
 	// evil antimodular drawing code
 	// TODO: Put these back in when we do the GUI
 	public abstract GBColor Color() ;
-	// public abstract void Draw(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
+	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where, boolean detailed) ;
 	// public abstract void DrawUnderlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
 	// public abstract void DrawOverlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
 
@@ -328,15 +337,20 @@ public abstract class GBObject /*
 	}
 	// TODO: Put these back in when we start on the GUI
 	// Draw a shadow slightly offset from our location.
-	/*
-	 * public void DrawShadow(GBGraphics g, GBProjection proj, FinePoint offset,
-	 * GBColor color) { GBRect shadow(proj.ToScreenX(Left() + offset.x),
-	 * proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right() + offset.x),
-	 * proj.ToScreenY(Bottom() + offset.y)); g.DrawSolidOval(shadow, color); }
-	 * 
-	 * public void DrawMini(GBGraphics g, GBRect where) { if ( where.Width() <
-	 * kMaxSquareMiniSize ) g.DrawSolidRect(where, Color()); else
-	 * g.DrawSolidOval(where, Color()); }
-	 */
+	
+	 /*public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
+	  GBColor color) { Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
+	  proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right() + offset.x),
+	  proj.ToScreenY(Bottom() + offset.y)); 
+	  g.DrawSolidOval(shadow, color); 
+	  }
+	  
+	  public void DrawMini(Graphics g, Rectangle where) { 
+		  if ( where.getWidth() < kMaxSquareMiniSize ) 
+			  g.DrawSolidRect(where, Color()); 
+		  else
+			  g.DrawSolidOval(where, Color()); 
+	  }*/
+	 
 
 };
