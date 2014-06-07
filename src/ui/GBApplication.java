@@ -17,7 +17,7 @@ enum StepRates{
 		value = val;
 	}
 }
-public class GBApplication extends JFrame {
+public class GBApplication extends JFrame implements Runnable {
 
 	/**
 	 * 
@@ -36,5 +36,12 @@ public class GBApplication extends JFrame {
 		stepRate = StepRates.normal;
 		this.setJMenuBar(new GBMenu(this));
 		setContentPane(portal);
+		this.setVisible(true);
+	}
+	@Override
+	public void run() {
+		while(true){
+			
+		}
 	}
 }
