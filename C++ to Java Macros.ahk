@@ -64,6 +64,12 @@
 	replace("(ceil(","(Math.ceil(")
 	replace("(floor(","(Math.floor(")
 	replace("(round(","(Math.round(")
+;UI Stuff
+	replace("GBRect","Rectangle")
+	replace("GBMilliseconds()","System.currentTimeMillis()")
+	replace("GBMilliseconds","long")
+	replace("GBChangeCount","long")
+	replace"GBBitMap","BufferedImage")
 return
 
 ;use Eclipse's global find-and-replace.  All instances of x become y 

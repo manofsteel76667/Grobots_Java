@@ -6,13 +6,11 @@ package simulation;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
-
-import javax.swing.JComponent;
+import java.awt.Color;
 
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
-import support.GBColor;
 import support.GBObjectClass;
 import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
@@ -22,26 +20,7 @@ import exception.GBGenericError;
 import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
 
-interface GBProjection {
-	public short ToScreenX(double x);
-
-	public short ToScreenY(double y);
-
-	public double FromScreenX(short h);
-
-	public double FromScreenY(short v);
-
-	public FinePoint FromScreen(short x, short y);
-};
-
-public abstract class GBObject extends JComponent /*
-								 * 
-								 * GBDeletionReporter
-								 */{
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -5543423295955441930L;
+public abstract class GBObject {
 	FinePoint position;
 	FinePoint velocity;
 
@@ -50,30 +29,30 @@ public abstract class GBObject extends JComponent /*
 	public static final double kMaxOverlap = 0.04;
 	public static final short kMaxSquareMiniSize = 4;
 
-	// Some abstract functions aren't implemented by all descendants
-	// Java hates this so they were given default behavior here.
-	public void TakeDamage(double amount, Side origin) {
+	// Some formerly abstract functions aren't implemented by all descendants
+	// Java hates this so they were made protected and given default behavior here.
+	protected void TakeDamage(double amount, Side origin) {
 	}
 
-	public double TakeEnergy(double amount) throws GBBadArgumentError,
+	protected double TakeEnergy(double amount) throws GBBadArgumentError,
 			GBBadComputedValueError {
 		return 0;
 	}
 
-	public double GiveEnergy(double amount) throws GBBadArgumentError {
+	protected double GiveEnergy(double amount) throws GBBadArgumentError {
 		return 0;
 	}
 
-	public double MaxTakeEnergy() {
+	protected double MaxTakeEnergy() {
 		return 0;
 	}
 
-	public double MaxGiveEnergy() {
+	protected double MaxGiveEnergy() {
 		return 0;
 	}
 
 	// high-level actions
-	public void Think(GBWorld world) throws GBBadArgumentError,
+	protected void Think(GBWorld world) throws GBBadArgumentError,
 			GBOutOfMemoryError, GBGenericError, GBAbort {
 	} // Not everything has a brain
 
@@ -81,44 +60,43 @@ public abstract class GBObject extends JComponent /*
 			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
 			GBOutOfMemoryError;
 
-	public void CollideWithWall() {
+	protected void CollideWithWall() {
 	}
 
-	public void CollideWith(GBObject other) throws GBGenericError, GBAbort,
+	protected void CollideWith(GBObject other) throws GBGenericError, GBAbort,
 			GBBadArgumentError, GBBadComputedValueError {
 	}
 
-	public void CollectStatistics(GBWorld world) {
+	protected void CollectStatistics(GBWorld world) {
 	}
 
 	// high-level queries
 	public abstract GBObjectClass Class();
 
-	public Side Owner() {
+	protected Side Owner() {
 		return null;
 	} // food is not owned by anyone
 
-	public double Energy() {
+	protected double Energy() {
 		return 0;
 	}
 
-	public double Interest() {
+	protected double Interest() {
 		return 0;
 	} // how attractive to autocamera
 
-	@Override
-	public abstract String toString(); //Was Description()
+	//@Override
+	//public abstract String toString(); //Was Description() 
 
 	public String Details() {
 		return "";
 	}
 
 	// evil antimodular drawing code
-	// TODO: Put these back in when we do the GUI
-	public abstract GBColor Color() ;
-	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where, boolean detailed) ;
-	// public abstract void DrawUnderlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
-	// public abstract void DrawOverlay(GBGraphics g, GBProjection proj, GBRect where, boolean detailed) ;
+	public abstract Color Color() ;
+	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where, boolean detailed);
+	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where, boolean detailed){}
+	protected void DrawOverlay(Graphics g, GBProjection proj, Rectangle where, boolean detailed){}
 
 	// protected:
 	protected double radius;

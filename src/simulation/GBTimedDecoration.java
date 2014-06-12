@@ -3,6 +3,7 @@ package simulation;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
+import java.awt.Color;
 
 // GBDecorations.cpp
 // Grobots (c) 2002-2004 Devon and Warren Schudy
@@ -47,5 +48,5 @@ public abstract class GBTimedDecoration extends GBObject {
 	}
 
 	@Override
-	public abstract GBColor Color();
+	public abstract Color Color();
 };

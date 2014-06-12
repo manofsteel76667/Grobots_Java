@@ -1,6 +1,6 @@
 package exception;
 
-public class GBRestart extends Exception {
+public class GBRestart extends GBError {
 
 	/**
 	 * 

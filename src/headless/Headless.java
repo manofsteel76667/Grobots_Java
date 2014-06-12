@@ -105,8 +105,6 @@ public class Headless {
 			System.exit(0);
 		} catch (GBError err) {
 			GBError.FatalError("Uncaught GBError: " + err.toString());
-		} catch (GBRestart r) {
-			GBError.FatalError("Uncaught GBRestart: " + r.toString());
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 			GBError.FatalError("Uncaught java exception: " + e.toString()

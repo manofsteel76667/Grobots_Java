@@ -257,7 +257,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	void AdvanceFrame() throws GBAbort, GBNilPointerError, GBBadArgumentError,
+	public void AdvanceFrame() throws GBAbort, GBNilPointerError, GBBadArgumentError,
 			GBTooManyIterationsError, GBSimulationError, GBOutOfMemoryError,
 			GBGenericError {
 		SimulateOneFrame();
@@ -287,7 +287,7 @@ public class GBWorld extends GBObjectWorld {
 			running = false;
 	}
 
-	void CollectStatistics() throws GBAbort {
+	public void CollectStatistics() throws GBAbort {
 		// reset
 		mannas = 0;
 		corpses = 0;
@@ -334,7 +334,7 @@ public class GBWorld extends GBObjectWorld {
 			sides.get(i).Scores().ReportTotals(roundScores);
 	}
 
-	void AddSeed(Side side, FinePoint where) throws GBAbort {
+	public void AddSeed(Side side, FinePoint where) throws GBAbort {
 		try {
 			double cost = seedValue - seedTypePenalty * side.CountTypes();
 			// give side a number
@@ -434,7 +434,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	void ReseedDeadSides() throws GBAbort {
+	public void ReseedDeadSides() throws GBAbort {
 		// since this uses side statistics, be sure statistics have been
 		// gathered
 		for (int i = 0; i < sides.size(); ++i)
@@ -445,7 +445,7 @@ public class GBWorld extends GBObjectWorld {
 		CollectStatistics();
 	}
 
-	void Reset() throws GBNilPointerError, GBBadArgumentError {
+	public void Reset() throws GBNilPointerError, GBBadArgumentError {
 		currentFrame = 0;
 		mannaLeft = 0;
 		sidesSeeded = 0;
@@ -604,7 +604,7 @@ public class GBWorld extends GBObjectWorld {
 		tournamentScores.add(roundScores);
 	}
 
-	void ResetTournamentScores() {
+	public void ResetTournamentScores() {
 		for (int i = 0; i < sides.size(); ++i)
 			sides.get(i).TournamentScores().Reset();
 		tournamentScores.Reset();
@@ -733,7 +733,7 @@ public class GBWorld extends GBObjectWorld {
 		return tournamentScores;
 	}
 
-	void Follow(GBObject ob) {
+	public void Follow(GBObject ob) {
 		followed = ob;
 		GBRobot bot = (GBRobot) ob;
 		if (bot != null) {
@@ -742,7 +742,7 @@ public class GBWorld extends GBObjectWorld {
 		}
 	}
 
-	GBObject Followed() {
+	public GBObject Followed() {
 		return followed;
 	}
 

@@ -1,7 +1,11 @@
 package simulation;
 
 import support.FinePoint;
-import support.GBColor;
+import support.GBGraphics;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class GBBlasterSpark extends GBTimedDecoration {
 	public static final int kBlasterSparkLifetime = 8;
@@ -22,11 +26,9 @@ public class GBBlasterSpark extends GBTimedDecoration {
 	// TODO: after GUI
 	
 	  @Override
-	public GBColor Color() { return GBColor.white; }
+	public Color Color() { return Color.white; }
 	  
-	 /* void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
-	 * /*detailed
-	 *//*
-		 * ) { g.DrawOpenOval(where, Color()); }
-		 */
+	 public void Draw(Graphics  g, GBProjection proj, Rectangle where, boolean detailed ) { 
+		 GBGraphics.drawOval(g, where, Color()); }
+
 }

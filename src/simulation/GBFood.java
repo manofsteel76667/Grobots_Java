@@ -3,10 +3,12 @@ package simulation;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
+import support.GBGraphics;
 import support.GBObjectClass;
 import exception.GBBadArgumentError;
 import exception.GBBadComputedValueError;
@@ -113,14 +115,13 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public GBColor Color() {
-		return GBColor.white;
+	public Color Color() {
+		return Color.white;
 	}
 
-	public void Draw(Graphics2D g, GBProjection proj,
+	public void Draw(Graphics g, GBProjection proj,
 			Rectangle where, boolean detailed) {
-		g.setColor(Color());
-		g.fill(where);
+		GBGraphics.fillRect(g, where, Color());
 	}
 
 };

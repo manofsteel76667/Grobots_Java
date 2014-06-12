@@ -1,8 +1,13 @@
 package simulation;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
+import support.GBGraphics;
 import exception.GBBadArgumentError;
 
 public class GBCorpse extends GBFood {
@@ -16,6 +21,7 @@ public class GBCorpse extends GBFood {
 		type = who;
 		killer = cause;
 	}
+
 	@Override
 	public Side Owner() {
 		return type.side;
@@ -25,10 +31,12 @@ public class GBCorpse extends GBFood {
 	public void CollectStatistics(GBWorld world) {
 		world.ReportCorpse(value);
 	}
+
 	@Override
 	public double Interest() {
 		return value / 500;
 	}
+
 	@Override
 	public String toString() {
 		return "Corpse of " + type.Description();
@@ -39,16 +47,22 @@ public class GBCorpse extends GBFood {
 		return value + " energy, killed by " + killer != null ? killer.Name()
 				: "accident";
 	}
-	// TODO: GUI
-	/*
-	 * public static final GBColor Color() { return GBColor::red; }
-	 * 
-	 * void Draw(GBGraphics & g, GBProjection & proj, GBRect & where, boolean
-	 * detailed) { Draw(g, proj, where, detailed); if ( detailed &&
-	 * where.Width() >= 4 ) { g.DrawOpenRect(where, Owner().Color()); if (
-	 * killer && where.Width() >= 6 ) { GBRect dot(where.CenterX() - 1,
-	 * where.CenterY() - 1, where.CenterX() + 1, where.CenterY() + 1);
-	 * g.DrawSolidRect(dot, killer.Color()); } } }
-	 */
+
+	public Color Color() {
+		return Color.red;
+	}
+
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		Draw(g, proj, where, detailed);
+		if (detailed && where.getWidth() >= 4) {
+			GBGraphics.drawRect(g, where, Owner().Color());
+			if (killer != null && where.getWidth() >= 6) {
+				Rectangle dot = new Rectangle((int) where.getCenterX() - 1,
+						(int) where.getCenterY() - 1, 2, 2);
+				GBGraphics.fillRect(g, dot, killer.Color());
+			}
+		}
+	}
 
 }

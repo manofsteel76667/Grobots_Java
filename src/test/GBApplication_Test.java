@@ -12,7 +12,7 @@ public class GBApplication_Test {
 
 	@Test
 	public void testGBApplication() throws GBNilPointerError, GBBadArgumentError {
-		new GBApplication().run();
+		GBApplication.main(new String[] {""});
 	}
 
 

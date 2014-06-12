@@ -5,7 +5,7 @@ import exception.GBBadArgumentError;
 
 public class GBManna extends GBFood {
 	// public:
-	GBManna(FinePoint where, double val) throws GBBadArgumentError {
+	public GBManna(FinePoint where, double val) throws GBBadArgumentError {
 		super(where, val);
 	}
 
