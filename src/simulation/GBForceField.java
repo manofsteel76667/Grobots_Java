@@ -1,6 +1,8 @@
 package simulation;
 
+import java.awt.BasicStroke;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import sides.Side;
@@ -72,22 +74,25 @@ public class GBForceField extends GBShot {
 		FinePoint edge = Position().subtract(
 				Velocity().unit().multiply(Radius()));
 		//From robot to target
+		((Graphics2D)g).setStroke(new BasicStroke(weight));
 		GBGraphics.drawLine(g, proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
 				proj.ToScreenX(Position().x - Velocity().x),
 				proj.ToScreenY(Position().y - Velocity().y),
-				Color().multiply(0.5f), weight);
+				Color().multiply(0.5f));
 		int cx = ((int) where.getWidth()) / 2;
 		int cy = ((int) where.getHeight()) / 2;
 		//From destination into the direction being pushed
-		GBGraphics.drawLine(g, cx, cy, (int) (cx + Math.round(Math
-				.cos(direction) * where.getWidth() / 2)), (int) (cy - Math
+		((Graphics2D)g).setStroke(new BasicStroke(1));
+		GBGraphics.drawLine(g, cx, cy,  cx + Math.round(Math
+				.cos(direction) * where.getWidth() / 2),  (cy - Math
 				.round((Math.sin(direction) * where.getHeight() / 2))),
-				owner != null ? owner.Color() : Color(), 1);
+				owner != null ? owner.Color() : Color());
 		//Force field radius
 		GBGraphics.drawOval(g, where, Color());
 	}
 
-	protected void DrawMini(Graphics g, Rectangle where) {
+	@Override
+	public void DrawMini(Graphics g, Rectangle where) {
 		GBGraphics.drawOval(g, where, Color());
 	}
 

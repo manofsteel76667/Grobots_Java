@@ -11,7 +11,6 @@ import simulation.GBWorld;
 import support.FinePoint;
 import support.StringUtilities;
 import exception.GBError;
-import exception.GBRestart;
 
 public class Headless {
 	// GBHeadless.cpp

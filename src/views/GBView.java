@@ -8,6 +8,7 @@ import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
 import exception.GBBadArgumentError;
 import exception.GBGenericError;
+import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
 
@@ -81,7 +82,7 @@ public class GBView extends JPanel {
 	// drawing
 		GBGraphics & Graphics() ;
 		void SetGraphics(GBGraphics * g);
-		virtual void Draw();
+		virtual void Draw() throws GBIndexOutOfRangeError;
 		 boolean NeedsRedraw( boolean running) ;
 		 boolean NeedsResize() ;
 		virtual GBMilliseconds RedrawInterval() ;
@@ -347,25 +348,42 @@ public class GBView extends JPanel {
 		explicit GBWrapperView(GBView * what);
 		~GBWrapperView();
 	// sizing
-		 boolean Resizable() ;
-		 int MinimumWidth() ;
-		 int MinimumHeight() ;
-		 int MaximumWidth() ;
-		 int MaximumHeight() ;
-		 int PreferredWidth() ;
-		 int PreferredHeight() ;
+		 @Override
+		boolean Resizable() ;
+		 @Override
+		int MinimumWidth() ;
+		 @Override
+		int MinimumHeight() ;
+		 @Override
+		int MaximumWidth() ;
+		 @Override
+		int MaximumHeight() ;
+		 @Override
+		int PreferredWidth() ;
+		 @Override
+		int PreferredHeight() ;
+		@Override
 		void SetSize( int width,  int height);
+		@Override
 		void SetBounds( GBRect & newbounds);
 	// drawing
+		@Override
 		void Draw();
 		GBMilliseconds RedrawInterval() ;
-		 boolean InstantChanges() ;
-		 boolean DelayedChanges() ;
+		 @Override
+		boolean InstantChanges() ;
+		 @Override
+		boolean DelayedChanges() ;
 	// event handling
-		 boolean GetFrontClicks() ;
+		 @Override
+		boolean GetFrontClicks() ;
+		@Override
 		void AcceptClick( int x,  int y, int clicksBefore);
+		@Override
 		void AcceptDrag( int x,  int y);
+		@Override
 		void AcceptUnclick( int x,  int y, int clicksBefore);
+		@Override
 		void AcceptKeystroke( char what);
 	// other
 		public static final String Name() ;
@@ -470,11 +488,15 @@ public class GBView extends JPanel {
 		explicit GBDoubleBufferedView(GBView * what);
 		~GBDoubleBufferedView();
 	// sizing
+		@Override
 		void SetSize( int width,  int height);
+		@Override
 		void SetBounds( GBRect & newbounds);
 	// event handling
+		@Override
 		void AcceptKeystroke( char what);
 	// drawing
+		@Override
 		void Draw();
 	};
 

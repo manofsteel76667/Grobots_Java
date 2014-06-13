@@ -1,15 +1,12 @@
 package views;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Stroke;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-
-import javax.swing.JPanel;
 
 import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
@@ -25,6 +22,7 @@ import simulation.GBExplosion;
 import simulation.GBForceField;
 import simulation.GBManna;
 import simulation.GBObject;
+import simulation.GBObjectWorld;
 import simulation.GBProjection;
 import simulation.GBRobot;
 import simulation.GBWorld;
@@ -117,51 +115,52 @@ public class GBPortal extends GBView implements GBProjection {
 		this.setPreferredSize(new Dimension(311,311));
 		this.setDoubleBuffered(true);
 		this.setOpaque(true);
-		this.setBackground(GBColor.black);
+		this.setBackground(Color.black);
 	}
 	@Override
 	public void paintComponent(Graphics g){
-		background = new BufferedImage(scale * world.ForegroundTilesX() * GBWorld.kBackgroundTileSize,
-				scale * world.ForegroundTilesY() * GBWorld.kBackgroundTileSize,
+		background = new BufferedImage(scale * world.ForegroundTilesX() * GBObjectWorld.kBackgroundTileSize,
+				scale * world.ForegroundTilesY() * GBObjectWorld.kBackgroundTileSize,
 				BufferedImage.TYPE_INT_ARGB);		
 	}
 	
+	@Override
 	void DrawBackground() {
-		 int minTileX = (int) Math.floor(ViewLeft() / GBWorld.kBackgroundTileSize);
-		 int minTileY = (int) Math.floor(ViewBottom() / GBWorld.kBackgroundTileSize);
-		 int maxTileX = (int) Math.ceil(ViewRight() / GBWorld.kBackgroundTileSize);
-		 int maxTileY = (int) Math.ceil(ViewTop() / GBWorld.kBackgroundTileSize);
+		 int minTileX = (int) Math.floor(ViewLeft() / GBObjectWorld.kBackgroundTileSize);
+		 int minTileY = (int) Math.floor(ViewBottom() / GBObjectWorld.kBackgroundTileSize);
+		 int maxTileX = (int) Math.ceil(ViewRight() / GBObjectWorld.kBackgroundTileSize);
+		 int maxTileY = (int) Math.ceil(ViewTop() / GBObjectWorld.kBackgroundTileSize);
 		for (  int yi = minTileY; yi <= maxTileY; yi ++ )
 			for (  int xi = minTileX; xi <= maxTileX; xi ++ )
 				DrawBackgroundTile(xi, yi);
 	}
 
 	void DrawBackgroundTile( int xi,  int yi) {
-		Rectangle tile=new Rectangle(ToScreenX(GBWorld.kBackgroundTileSize * xi),
-			ToScreenY(GBWorld.kBackgroundTileSize * (yi + 1)),
-			ToScreenX(GBWorld.kBackgroundTileSize * (xi + 1)),
-			ToScreenY(GBWorld.kBackgroundTileSize * yi));
+		Rectangle tile=new Rectangle(ToScreenX(GBObjectWorld.kBackgroundTileSize * xi),
+			ToScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
+			ToScreenX(GBObjectWorld.kBackgroundTileSize * (xi + 1)),
+			ToScreenY(GBObjectWorld.kBackgroundTileSize * yi));
 	// if it's in the world, draw it:
-		if ( xi >= 0 && yi >= 0 
+		/*if ( xi >= 0 && yi >= 0 
 				&& xi < world.BackgroundTilesX() && yi < world.BackgroundTilesY() ) {
 		// draw tile
 			Blit(background, background.get.Bounds(), tile);
 		} else // it's a wall{
 			setColor(GBColor.lightGray);
 			fillShape(tile, GBColor.lightGray);
-	}
+	}*/
 	}
 
 	void DrawOneTile( Rectangle b, Graphics2D g) {
 	// black background
-		g.setColor(GBColor.BLACK);
+		g.setColor(Color.BLACK);
 		g.fill(b);
 	// fine grid
 		GBColor fineColor=new GBColor(Math.min(0.4f + 0.04f * scale / kScale,  0.15f + 0.25f * scale / kScale));
 		 int coarseThickness = 1 + scale / 20;
 		GBColor coarseColor=new GBColor(0.4f + 0.4f * scale / kScale);
 		g.setColor(fineColor);
-		for ( int i = 1; i < GBWorld.kBackgroundTileSize; i ++ ) {
+		for ( int i = 1; i < GBObjectWorld.kBackgroundTileSize; i ++ ) {
 			 int x = (int) (b.getMinX() + i * scale);
 			 int y = (int) (b.getMinY() + i * scale);
 			g.drawLine(x, (int)b.getMinY(), x, (int)b.getMaxY());
@@ -181,10 +180,10 @@ public class GBPortal extends GBView implements GBProjection {
 	}*/
 
 	void DrawObjects() throws GBIndexOutOfRangeError {
-		 int minTileX = (int) Math.max(Math.floor(ViewLeft() / GBWorld.kForegroundTileSize - 0.5), 0L);
-		 int minTileY = (int) Math.max(Math.floor(ViewBottom() / GBWorld.kForegroundTileSize - 0.5), 0L);
-		 int maxTileX = (int) Math.min(Math.ceil(ViewRight() / GBWorld.kForegroundTileSize + 0.5), world.ForegroundTilesX() - 1);
-		 int maxTileY = (int) Math.min(Math.ceil(ViewTop() / GBWorld.kForegroundTileSize + 0.5), world.ForegroundTilesY() - 1);
+		 int minTileX = (int) Math.max(Math.floor(ViewLeft() / GBObjectWorld.kForegroundTileSize - 0.5), 0L);
+		 int minTileY = (int) Math.max(Math.floor(ViewBottom() / GBObjectWorld.kForegroundTileSize - 0.5), 0L);
+		 int maxTileX = (int) Math.min(Math.ceil(ViewRight() / GBObjectWorld.kForegroundTileSize + 0.5), world.ForegroundTilesX() - 1);
+		 int maxTileY = (int) Math.min(Math.ceil(ViewTop() / GBObjectWorld.kForegroundTileSize + 0.5), world.ForegroundTilesY() - 1);
 		 int yi, xi;
 		for ( yi = minTileY; yi <= maxTileY; yi ++ )
 			for ( xi = minTileX; xi <= maxTileX; xi ++ )
@@ -231,23 +230,28 @@ public class GBPortal extends GBView implements GBProjection {
 		}
 	}
 
-	 int ToScreenX( double x) {
+	 @Override
+	public int ToScreenX( double x) {
 		return (int) (Math.floor((x - viewpoint.x) * scale) + CenterX());
 	}
 
-	 int ToScreenY( double y) {
+	 @Override
+	public int ToScreenY( double y) {
 		return (int) (Math.floor((viewpoint.y - y) * scale) + CenterY());
 	}
 
-	double FromScreenX(  int h) {
+	@Override
+	public double FromScreenX(  int h) {
 		return (h - CenterX()) / scale + viewpoint.x;
 	}
 
-	double FromScreenY(  int v) {
+	@Override
+	public double FromScreenY(  int v) {
 		return (CenterY() - v) / scale + viewpoint.y;
 	}
 
-	FinePoint FromScreen( int x,  int y) {
+	@Override
+	public FinePoint FromScreen( int x,  int y) {
 		return new FinePoint(FromScreenX(x), FromScreenY(y));
 	}
 
@@ -305,7 +309,8 @@ public class GBPortal extends GBView implements GBProjection {
 		//DrawOpenOval(where, color);
 	}
 
-	public void Draw() {
+	@Override
+	public void Draw() throws GBIndexOutOfRangeError {
 		if ( ViewRight() < 0 || ViewLeft() > world.Right() || ViewTop() < 0 || ViewBottom() > world.Top() )
 			viewpoint = world.Size().divide(2);
 		if ( autofollow && System.currentTimeMillis() > lastFollow + kAutofollowPeriod )
@@ -315,8 +320,8 @@ public class GBPortal extends GBView implements GBProjection {
 		DrawBackground();
 		GBRobot bot = (GBRobot)world.Followed();
 		if ( bot!=null ) {
-			DrawRangeCircle(bot.Position(), bot.hardware.blaster.MaxRange() + bot.Radius(), GBColor.magenta.multiply(0.5f));
-			DrawRangeCircle(bot.Position(), bot.hardware.grenades.MaxRange() + bot.Radius(), GBColor.yellow.multiply(0.5f));
+			DrawRangeCircle(bot.Position(), bot.hardware.blaster.MaxRange() + bot.Radius(), new GBColor(Color.magenta).multiply(0.5f));
+			DrawRangeCircle(bot.Position(), bot.hardware.grenades.MaxRange() + bot.Radius(), new GBColor(Color.yellow).multiply(0.5f));
 			if ( bot.hardware.syphon.MaxRate() > 0 )
 				DrawRangeCircle(bot.Position(), bot.hardware.syphon.MaxRange() + bot.Radius(), new GBColor(0.25f, 0.4f, 0.5f));
 			if ( bot.hardware.enemySyphon.MaxRate() > 0 )
@@ -324,7 +329,7 @@ public class GBPortal extends GBView implements GBProjection {
 			DrawRangeCircle(bot.Position(), bot.hardware.forceField.MaxRange(), new GBColor(0, 0.4f, 0.5f));
 		}
 		DrawObjects();
-		if ( world.Followed()!=null ) {
+		/*if ( world.Followed()!=null ) {
 			FinePoint targetPos = world.Followed().Position();
 			int texty = ToScreenY(targetPos.y - (world.Followed().Radius() > 2 ? 0 : world.Followed().Radius())) + 13;
 			DrawStringCentered(world.Followed().toString(), ToScreenX(targetPos.x), texty,
@@ -339,17 +344,19 @@ public class GBPortal extends GBView implements GBProjection {
 				if ( side.Scores().Seeded()!=0 )
 					DrawStringCentered(side.Name(), ToScreenX(side.center.x), ToScreenY(side.center.y),
 						14, side.Scores().sterile!=0 ? GBColor.gray : GBColor.white);
-		}
+		}*/
 	// record drawn
 		//worldChanges = world.ChangeCount();
 		//selfChanges = ChangeCount();
 	}
 
+	@Override
 	public boolean InstantChanges() {
 		//TODO: check what this does
 		return true;//worldChanges != world.ChangeCount() || selfChanges != ChangeCount() || Following();
 	}
 
+	@Override
 	public void AcceptClick( int x,  int y, int clicks) throws GBAbort, GBNilPointerError, GBBadArgumentError, GBBadSymbolIndexError, GBGenericError, GBOutOfMemoryError {
 		lastx = x; lasty = y;
 		lastClick = FromScreen(x, y);
@@ -359,6 +366,7 @@ public class GBPortal extends GBView implements GBProjection {
 		autofollow = false;
 	}
 
+	@Override
 	public void AcceptDrag( int x,  int y) throws GBAbort, GBNilPointerError, GBBadArgumentError, GBBadSymbolIndexError, GBGenericError, GBOutOfMemoryError {
 		FinePoint spot = FromScreen(x, y);
 		if ( tool == toolTypes.ptScroll ) {
@@ -386,6 +394,7 @@ public class GBPortal extends GBView implements GBProjection {
 		}
 	}
 
+	@Override
 	public void AcceptUnclick( int x,  int y, int clicks) throws GBAbort, GBNilPointerError, GBBadArgumentError, GBBadSymbolIndexError, GBGenericError, GBOutOfMemoryError {
 		AcceptDrag(x, y);
 
@@ -398,10 +407,12 @@ public class GBPortal extends GBView implements GBProjection {
 	//	return "World";
 	//}
 
+	@Override
 	public  boolean Resizable() {
 		return true;
 	}
 
+	@Override
 	public void SetSize( int width,  int height) {
 		setPreferredSize(new Dimension(width, height));
 		worldChanges = -1;

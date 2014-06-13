@@ -28,7 +28,8 @@ public class GBBlasterSpark extends GBTimedDecoration {
 	  @Override
 	public Color Color() { return Color.white; }
 	  
-	 public void Draw(Graphics  g, GBProjection proj, Rectangle where, boolean detailed ) { 
+	 @Override
+	public void Draw(Graphics  g, GBProjection proj, Rectangle where, boolean detailed ) { 
 		 GBGraphics.drawOval(g, where, Color()); }
 
 }

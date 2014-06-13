@@ -11,6 +11,7 @@ import java.awt.Color;
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
+import support.GBGraphics;
 import support.GBObjectClass;
 import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
@@ -30,7 +31,8 @@ public abstract class GBObject {
 	public static final short kMaxSquareMiniSize = 4;
 
 	// Some formerly abstract functions aren't implemented by all descendants
-	// Java hates this so they were made protected and given default behavior here.
+	// Java hates this so they were made protected and given default behavior
+	// here.
 	protected void TakeDamage(double amount, Side origin) {
 	}
 
@@ -85,18 +87,26 @@ public abstract class GBObject {
 		return 0;
 	} // how attractive to autocamera
 
-	//@Override
-	//public abstract String toString(); //Was Description() 
+	// @Override
+	// public abstract String toString(); //Was Description()
 
 	public String Details() {
 		return "";
 	}
 
 	// evil antimodular drawing code
-	public abstract Color Color() ;
-	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where, boolean detailed);
-	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where, boolean detailed){}
-	protected void DrawOverlay(Graphics g, GBProjection proj, Rectangle where, boolean detailed){}
+	public abstract Color Color();
+
+	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed);
+
+	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+	}
+
+	protected void DrawOverlay(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+	}
 
 	// protected:
 	protected double radius;
@@ -287,8 +297,8 @@ public abstract class GBObject {
 			 * center)); other.Accelerate((rv1 - center) * (m1 * coefficient) /
 			 * m2 - (rv2 - center));
 			 */
-			Accelerate(rv2.subtract(center).multiply(m2 * coefficient).divide(
-					m1).subtract(rv1.subtract(center)));
+			Accelerate(rv2.subtract(center).multiply(m2 * coefficient)
+					.divide(m1).subtract(rv1.subtract(center)));
 			other.Accelerate(rv1.subtract(center).multiply(m1 * coefficient)
 					.divide(m2).subtract(rv2.subtract(center)));
 		}
@@ -300,8 +310,8 @@ public abstract class GBObject {
 			 * FinePoint away1 = - cc / dist * m2 / (m1 + m2); FinePoint away2 =
 			 * cc / dist * m1 / (m1 + m2);
 			 */
-			FinePoint away1 = cc.negate().divide(dist).multiply(m2).divide(
-					m1 + m2);
+			FinePoint away1 = cc.negate().divide(dist).multiply(m2)
+					.divide(m1 + m2);
 			FinePoint away2 = cc.divide(dist).multiply(m1).divide(m1 + m2);
 			MoveBy(away1.multiply(kCollisionRepulsionSpeed));
 			other.MoveBy(away2.multiply(kCollisionRepulsionSpeed));
@@ -313,22 +323,20 @@ public abstract class GBObject {
 	public void Move() {
 		position = position.add(velocity);
 	}
-	// TODO: Put these back in when we start on the GUI
-	// Draw a shadow slightly offset from our location.
-	
-	 /*public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
-	  GBColor color) { Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
-	  proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right() + offset.x),
-	  proj.ToScreenY(Bottom() + offset.y)); 
-	  g.DrawSolidOval(shadow, color); 
-	  }
-	  
-	  public void DrawMini(Graphics g, Rectangle where) { 
-		  if ( where.getWidth() < kMaxSquareMiniSize ) 
-			  g.DrawSolidRect(where, Color()); 
-		  else
-			  g.DrawSolidOval(where, Color()); 
-	  }*/
-	 
+
+	public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
+			Color color) {
+		Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
+				proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right()
+						+ offset.x), proj.ToScreenY(Bottom() + offset.y));
+		GBGraphics.fillOval(g, shadow, color);
+	}
+
+	public void DrawMini(Graphics g, Rectangle where) {
+		if (where.getWidth() < kMaxSquareMiniSize)
+			GBGraphics.fillRect(g, where, Color());
+		else
+			GBGraphics.fillOval(g, where, Color());
+	}
 
 };

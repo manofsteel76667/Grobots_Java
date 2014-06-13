@@ -100,7 +100,7 @@ public class RobotType extends support.Model {
 	 public GBColor Color() { return color; } void SetColor( GBColor newcolor) {
 	  color = newcolor; Changed(); }
 	  
-	  GBRobotDecoration Decoration() { return decoration; } GBColor
+	  public GBRobotDecoration Decoration() { return decoration; } public GBColor
 	  DecorationColor() { return decorationColor; } void
 	  SetDecoration(GBRobotDecoration dec, GBColor col) { decoration = dec;
 	  decorationColor = col; }

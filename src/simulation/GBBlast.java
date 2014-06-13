@@ -67,6 +67,7 @@ public class GBBlast extends GBTimedShot {
 				.multiply(fadeout);
 	}
 
+	@Override
 	public void Draw(Graphics g, GBProjection proj, Rectangle where,
 			boolean detailed) {
 		Graphics2D g2 = (Graphics2D) g;
@@ -76,11 +77,11 @@ public class GBBlast extends GBTimedShot {
 		} else if (hit) {
 			g2.setPaint(Color());
 			g2.fillOval((int) where.getCenterX(), (int) where.getCenterY(),
-					(int) where.width, (int) where.height);
+					where.width, where.height);
 		} else {
 			g2.setPaint(Color.gray);
 			g2.drawOval((int) where.getCenterX(), (int) where.getCenterY(),
-					(int) where.width, (int) where.height);
+					where.width, where.height);
 		}
 		int cx = (int) where.getCenterX();
 		int cy = (int) where.getCenterY();

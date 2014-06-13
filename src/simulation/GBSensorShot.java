@@ -6,7 +6,10 @@ package simulation;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
+import support.GBGraphics;
 import support.GBObjectClass;
+
+import java.awt.*;
 
 class GBSensorShot extends GBObject {
 	GBRobot owner;
@@ -104,15 +107,17 @@ class GBSensorShot extends GBObject {
 	public Side Owner() {
 		return side;
 	}
-	// TODO: When GUI is done
-	/*
-	 * void Draw(GBGraphics g, GBProjection & proj, GBRect where, boolean
-	 * /*detailed
-	 *//*
-		 * ) { // show focus, owner, and side? g.DrawOpenOval(where, Color()); }
-		 * 
-		 * void DrawMini(GBGraphics & g, GBRect & where) { g.DrawOpenOval(where,
-		 * Color()); }8?
-		 */
+
+	@Override
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		// show focus, owner, and side?
+		GBGraphics.drawOval(g, where, Color());
+	}
+
+	@Override
+	public void DrawMini(Graphics g, Rectangle where) {
+		GBGraphics.drawOval(g, where, Color());
+	}
 
 };

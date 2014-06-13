@@ -1,6 +1,5 @@
 package simulation;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
@@ -74,6 +73,7 @@ public class GBExplosion extends GBTimedShot {
 		return new GBColor(1, 0.9f, 0.2f);
 	}
 
+	@Override
 	public void Draw(Graphics g, GBProjection proj, Rectangle where,
 			boolean detailed) {
 		GBGraphics.fillOval(g, where, Color());

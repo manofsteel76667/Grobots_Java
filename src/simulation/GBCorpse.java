@@ -48,10 +48,12 @@ public class GBCorpse extends GBFood {
 				: "accident";
 	}
 
+	@Override
 	public Color Color() {
 		return Color.red;
 	}
 
+	@Override
 	public void Draw(Graphics g, GBProjection proj, Rectangle where,
 			boolean detailed) {
 		Draw(g, proj, where, detailed);

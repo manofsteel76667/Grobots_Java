@@ -10,13 +10,13 @@ import support.FinePoint;
  *
  */
 public interface GBProjection {
-	public short ToScreenX(double x);
+	public int ToScreenX(double x);
 
-	public short ToScreenY(double y);
+	public int ToScreenY(double y);
 
-	public double FromScreenX(short h);
+	public double FromScreenX(int h);
 
-	public double FromScreenY(short v);
+	public double FromScreenY(int v);
 
-	public FinePoint FromScreen(short x, short y);
+	public FinePoint FromScreen(int x, int y);
 }

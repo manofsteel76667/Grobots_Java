@@ -2,6 +2,9 @@ package simulation;
 
 import support.FinePoint;
 import support.GBColor;
+import support.GBGraphics;
+
+import java.awt.*;
 
 public class GBSmoke extends GBTimedDecoration {
 	public static final double kSmokeRadius = 0.4;
@@ -26,10 +29,10 @@ public class GBSmoke extends GBTimedDecoration {
 		return new GBColor(intensity);
 	}
 
-	/*
-	 * void Draw(GBGraphics & g, GBProjection &, GBRect & where, boolean
-	 * /*detailed
-	 *//*
-		 * ) { g.DrawSolidOval(where, Color()); }
-		 */
+	@Override
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		GBGraphics.fillOval(g, where, Color());
+	}
+
 }

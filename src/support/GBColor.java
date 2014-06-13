@@ -48,9 +48,9 @@ public class GBColor extends java.awt.Color {
 
 	public GBColor(Color root) {
 		super(root.getRed(), root.getGreen(), root.getBlue());
-		r = (float) root.getRed() / 256f;
-		g = (float) root.getGreen() / 256f;
-		b = (float) root.getBlue() / 256f;
+		r = root.getRed() / 256f;
+		g = root.getGreen() / 256f;
+		b = root.getBlue() / 256f;
 	}
 
 	/**

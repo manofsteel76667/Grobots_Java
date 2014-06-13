@@ -1,7 +1,10 @@
 package simulation;
 
+import java.awt.*;
+
 import support.FinePoint;
 import support.GBColor;
+import support.GBGraphics;
 import support.GBObjectClass;
 import exception.GBAbort;
 import exception.GBBadArgumentError;
@@ -43,12 +46,12 @@ public class GBSyphon extends GBTimedShot {
 							* otherBot.ShieldFraction();
 					if (other.Owner() != sink.Owner()) {
 						if (otherBot.hardware.MaxEnergy() != 0)
-							efficiency *= Math.min(1, otherBot.hardware
-									.Energy()
-									/ otherBot.hardware.MaxEnergy());
+							efficiency *= Math.min(1,
+									otherBot.hardware.Energy()
+											/ otherBot.hardware.MaxEnergy());
 					}
-					double maxTransfer = Math.min(sink.MaxGiveEnergy(), other
-							.MaxTakeEnergy());
+					double maxTransfer = Math.min(sink.MaxGiveEnergy(),
+							other.MaxTakeEnergy());
 					double actual = Math.min(maxTransfer, power * efficiency);
 
 					if (actual > 0) {
@@ -76,8 +79,8 @@ public class GBSyphon extends GBTimedShot {
 				double efficiency = sink.ShieldFraction()
 						* otherBot.ShieldFraction();
 				// efficiency does not decrease with low energy when giving
-				double maxTransfer = Math.min(other.MaxGiveEnergy(), sink
-						.MaxTakeEnergy());
+				double maxTransfer = Math.min(other.MaxGiveEnergy(),
+						sink.MaxTakeEnergy());
 				double actual = Math.min(maxTransfer, -power * efficiency);
 
 				double taken = sink.TakeEnergy(actual);
@@ -116,19 +119,31 @@ public class GBSyphon extends GBTimedShot {
 				1));
 	}
 
-	/*
-	 * public void Draw(GBGraphics & g, GBProjection & proj, GBRect & where,
-	 * boolean detailed) { //draw tail showing origin, rate and whether it's
-	 * working if ( detailed ) { GBColor tailcolor = Owner().Color() *
-	 * (creator.Syphoned() ? 0.8f : 0.4f); FinePoint unit = - Velocity().Unit();
-	 * double phase = Milliseconds() / 1000.0 * ToDouble(creator.Rate()); for
-	 * (double d = Speed() + (phase -Math.floor(phase)) - 1 - sink.Radius(); d
-	 * >= Radius(); d -= 1 ) { short x = proj.ToScreenX(Position().x + unit.x *
-	 * d); short y = proj.ToScreenY(Position().y + unit.y * d); GBRect r(x - 1,
-	 * y - 1, x + 1, y + 1); g.DrawSolidRect(r, tailcolor); } } //draw the
-	 * syphon g.DrawLine(where.left, where.top, where.right, where.bottom,
-	 * Color()); g.DrawLine(where.right, where.top, where.left, where.bottom,
-	 * Color()); }
-	 */
+	@Override
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		// draw tail showing origin, rate and whether it's working
+		if (detailed) {
+			GBColor tailcolor = Owner().Color().multiply(
+					creator.Syphoned() != 0 ? 0.8f : 0.4f);
+			FinePoint unit = Velocity().unit().multiply(-1);
+			double phase = System.currentTimeMillis() / 1000.0 * creator.Rate();
+			for (double d = Speed() + (phase - Math.floor(phase)) - 1
+					- sink.Radius(); d >= Radius(); d -= 1) {
+				int x = proj.ToScreenX(Position().x + unit.x * d);
+				int y = proj.ToScreenY(Position().y + unit.y * d);
+				Rectangle r = new Rectangle(x - 1, y - 1, x + 1, y + 1);
+				GBGraphics.fillRect(g, r, tailcolor);
+			}
+		}
+		// draw the syphon
+		((Graphics2D) g).setStroke(GBGraphics.dashedStroke(10));
+		GBGraphics.drawLine(g, where.getX(), where.getY(),
+				where.getX() + where.getWidth(),
+				where.getY() + where.getHeight(), Color());
+		// twice?
+		GBGraphics.drawLine(g, where.getX() + where.getWidth(), where.getY(),
+				where.getX(), where.getY() + where.getHeight(), Color());
+	}
 
 }
