@@ -1567,8 +1567,8 @@ public class GBStackBrain extends Brain {
 			Push(robot.hardware.radio.Read(tempInt + 1, robot.Owner()));
 			break;
 		case opMessagesWaiting:
-			Push(robot.hardware.radio.MessagesWaiting(PopInteger(), robot
-					.Owner()));
+			Push(robot.hardware.radio.MessagesWaiting(PopInteger(),
+					robot.Owner()));
 			break;
 		case opSendMessage: {
 			GBMessage sendee = new GBMessage();
@@ -1586,8 +1586,8 @@ public class GBStackBrain extends Brain {
 			break;
 		case opReceiveMessage: {
 			tempInt = PopInteger();
-			GBMessage received = robot.hardware.radio.Receive(tempInt, robot
-					.Owner());
+			GBMessage received = robot.hardware.radio.Receive(tempInt,
+					robot.Owner());
 			if (received == null) {
 				Push(0);
 			} else {
@@ -1606,8 +1606,8 @@ public class GBStackBrain extends Brain {
 			break;
 		case opSkipMessages:
 			tempInt = PopInteger();
-			robot.hardware.radio.SkipMessages(tempInt, PopInteger(), robot
-					.Owner());
+			robot.hardware.radio.SkipMessages(tempInt, PopInteger(),
+					robot.Owner());
 			break;
 		case opTypePopulation: {
 			RobotType theType = robot.Owner().GetType(PopInteger());
@@ -1678,8 +1678,8 @@ public class GBStackBrain extends Brain {
 		case opLeadBlaster: { // pos vel --
 			FinePoint vel = PopVector().subtract(robot.Velocity());
 			FinePoint pos = PopVector().subtract(robot.Position());
-			FinePoint target = LeadShot(pos, vel, robot.hardware.blaster
-					.Speed(), robot.Radius());
+			FinePoint target = LeadShot(pos, vel,
+					robot.hardware.blaster.Speed(), robot.Radius());
 			if (target.isNonzero()
 					&& target.norm() <= robot.hardware.blaster.MaxRange()
 							+ robot.Radius())
@@ -1689,8 +1689,8 @@ public class GBStackBrain extends Brain {
 		case opLeadGrenade: { // pos vel --
 			FinePoint vel = PopVector().subtract(robot.Velocity());
 			FinePoint pos = PopVector().subtract(robot.Position());
-			FinePoint target = LeadShot(pos, vel, robot.hardware.grenades
-					.Speed(), robot.Radius());
+			FinePoint target = LeadShot(pos, vel,
+					robot.hardware.grenades.Speed(), robot.Radius());
 			if (target.isNonzero()
 					&& target.norm() <= robot.hardware.grenades.MaxRange()
 							+ robot.Radius())

@@ -4,18 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum OpType {
-	otPrimitive,
-	otConstantRead,
-	otVariableRead,
-	otVariableWrite,
-	otVectorRead,
-	otVectorWrite,
-	otLabelRead,
-	otLabelCall,
-	otHardwareRead,
-	otHardwareWrite,
-	otHardwareVectorRead,
-	otHardwareVectorWrite;
+	otPrimitive, otConstantRead, otVariableRead, otVariableWrite, otVectorRead, otVectorWrite, otLabelRead, otLabelCall, otHardwareRead, otHardwareWrite, otHardwareVectorRead, otHardwareVectorWrite;
 
 	OpType() {
 		ID = this.ordinal();

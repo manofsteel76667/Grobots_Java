@@ -125,14 +125,9 @@ public class GBWorld extends GBObjectWorld {
 	}
 
 	void AddManna() throws GBAbort {
-		try {
-			for (mannaLeft += size.x * size.y * mannaRate
-					/ (kForegroundTileSize * kForegroundTileSize); mannaLeft > mannaSize; mannaLeft -= mannaSize)
-				AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
-			// AddObjectDirectly(new GBManna(RandomLocation(0), mannaSize));
-		} catch (GBError err) {
-			GBError.NonfatalError("Error adding manna: " + err.toString());
-		}
+		for (mannaLeft += size.x * size.y * mannaRate
+				/ (kForegroundTileSize * kForegroundTileSize); mannaLeft > mannaSize; mannaLeft -= mannaSize)
+			AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
 	}
 
 	void PickSeedPositions(FinePoint[] positions, int numSeeds)
@@ -191,7 +186,7 @@ public class GBWorld extends GBObjectWorld {
 		}
 	}
 
-	void AddInitialManna() throws GBNilPointerError, GBBadArgumentError {
+	void AddInitialManna() {
 		double amount = size.x * size.y
 				/ (kForegroundTileSize * kForegroundTileSize) * mannaDensity;
 		double placed;
@@ -204,7 +199,7 @@ public class GBWorld extends GBObjectWorld {
 		addNewObjects();
 	}
 
-	public GBWorld() throws GBNilPointerError, GBBadArgumentError {
+	public GBWorld() {
 		sides = new ArrayList<Side>();
 		roundScores = new GBScores();
 		tournamentScores = new GBScores();
@@ -257,9 +252,9 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public void AdvanceFrame() throws GBAbort, GBNilPointerError, GBBadArgumentError,
-			GBTooManyIterationsError, GBSimulationError, GBOutOfMemoryError,
-			GBGenericError {
+	public void AdvanceFrame() throws GBAbort, GBNilPointerError,
+			GBBadArgumentError, GBTooManyIterationsError, GBSimulationError,
+			GBOutOfMemoryError, GBGenericError {
 		SimulateOneFrame();
 		if (RoundOver())
 			EndRound();
@@ -375,8 +370,8 @@ public class GBWorld extends GBObjectWorld {
 				if (placee.hardware.constructor.MaxRate() != 0) {
 					double amt = Math.min(cost, side
 							.GetSeedType(lastPlaced + 1).Cost());
-					placee.hardware.constructor.Start(side
-							.GetSeedType(lastPlaced + 1), amt);
+					placee.hardware.constructor.Start(
+							side.GetSeedType(lastPlaced + 1), amt);
 					side.Scores().ReportSeeded(amt);
 					cost -= amt;
 					if (cost > 0)
@@ -676,8 +671,8 @@ public class GBWorld extends GBObjectWorld {
 			PutPercentCell(f, html, sc.BiomassFraction(), 1, true, 0.0, 1.0,
 					"", "");
 			PutPercentCell(f, html, sc.SurvivalNotSterile(), 0,
-					rounds >= kMinColorRounds, Math.min(survival, 0.2f), Math
-							.max(survival, 0.4f), "bad", "good");
+					rounds >= kMinColorRounds, Math.min(survival, 0.2f),
+					Math.max(survival, 0.4f), "bad", "good");
 			PutPercentCell(f, html, sc.EarlyDeathRate(), 0,
 					rounds >= kMinColorRounds, Math.min(0.2f, earlyDeaths),
 					Math.max(earlyDeaths, 0.4f), "good", "bad");
@@ -697,32 +692,32 @@ public class GBWorld extends GBObjectWorld {
 			f.write("<tfoot><tr><th colspan=4>Overall ("
 					+ tournamentScores.rounds
 					+ " rounds):<td>"
-					+ StringUtilities.toPercentString(tournamentScores
-							.SurvivalNotSterile(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.SurvivalNotSterile(), 0)
 					+ "<td>"
-					+ StringUtilities.toPercentString(tournamentScores
-							.EarlyDeathRate(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.EarlyDeathRate(), 0)
 					+ "<td>"
-					+ StringUtilities.toPercentString(tournamentScores
-							.LateDeathRate(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.LateDeathRate(), 0)
 					+ "<th colspan=2><td>"
-					+ StringUtilities.toPercentString(tournamentScores
-							.KillRate(), 0) + "\n</table>\n");
+					+ StringUtilities.toPercentString(
+							tournamentScores.KillRate(), 0) + "\n</table>\n");
 		else
 			f.write("|-\n!colspan='4'|Overall ("
 					+ tournamentScores.rounds
 					+ " rounds):||"
-					+ StringUtilities.toPercentString(tournamentScores
-							.SurvivalNotSterile(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.SurvivalNotSterile(), 0)
 					+ "||"
-					+ StringUtilities.toPercentString(tournamentScores
-							.EarlyDeathRate(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.EarlyDeathRate(), 0)
 					+ "||"
-					+ StringUtilities.toPercentString(tournamentScores
-							.LateDeathRate(), 0)
+					+ StringUtilities.toPercentString(
+							tournamentScores.LateDeathRate(), 0)
 					+ "!!colspan='2'| ||"
-					+ StringUtilities.toPercentString(tournamentScores
-							.KillRate(), 0) + "\n|}\n");
+					+ StringUtilities.toPercentString(
+							tournamentScores.KillRate(), 0) + "\n|}\n");
 	}
 
 	public GBScores RoundScores() {
@@ -735,10 +730,12 @@ public class GBWorld extends GBObjectWorld {
 
 	public void Follow(GBObject ob) {
 		followed = ob;
-		GBRobot bot = (GBRobot) ob;
-		if (bot != null) {
-			bot.Owner().SelectType(bot.Type());
-			SelectSide(bot.Owner());
+		if (ob.Class() == GBObjectClass.ocRobot) {
+			GBRobot bot = (GBRobot) ob;
+			if (bot != null) {
+				bot.Owner().SelectType(bot.Type());
+				SelectSide(bot.Owner());
+			}
 		}
 	}
 

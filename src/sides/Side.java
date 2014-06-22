@@ -50,8 +50,8 @@ public class Side extends Model implements Comparable<Side> {
 	public Side() {
 		id = 0;
 		seedIDs = new LinkedList<Integer>();
-		color=new GBColor(); 
-		//name(), author(),
+		color = new GBColor();
+		// name(), author(),
 		scores = new GBSideScores();
 		cScores = new GBScores();
 		center = new FinePoint();
@@ -68,7 +68,8 @@ public class Side extends Model implements Comparable<Side> {
 			side.AddType(types.get(i).clone());
 		side.name = name;
 		side.author = author;
-		 side.SetColor(GBRandomState.gRandoms.ColorNear(color, kSideCopyColorDistance));
+		side.SetColor(GBRandomState.gRandoms.ColorNear(color,
+				kSideCopyColorDistance));
 		for (int id : seedIDs)
 			side.seedIDs.add(id);
 		// id, comm and scores are not copied
@@ -102,11 +103,14 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	
-	  public GBColor Color() { return color; }
-	  
-	  public void SetColor(GBColor newcolor) { color = newcolor; Changed(); }
-	 
+	public GBColor Color() {
+		return color;
+	}
+
+	public void SetColor(GBColor newcolor) {
+		color = newcolor;
+		Changed();
+	}
 
 	public RobotType GetType(int index) throws GBIndexOutOfRangeError {
 		if (index <= 0 || index > types.size())
@@ -191,8 +195,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void ResetSampledStatistics() {
 		if (scores.population != 0)
-			center.add(groupPosition.divide(scores.Population())).divide(
-					2);
+			center.add(groupPosition.divide(scores.Population())).divide(2);
 		// center = (center + groupPosition / (int)scores.Population()) / 2;
 		groupPosition.set(0, 0);
 		scores.ResetSampledStatistics();
@@ -204,8 +207,8 @@ public class Side extends Model implements Comparable<Side> {
 	public void ReportRobot(double biomass, RobotType type,
 			support.FinePoint where) {
 		HardwareSpec hw = type.Hardware();
-		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(), hw
-				.CombatCost(), hw.BaseCost());
+		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(),
+				hw.CombatCost(), hw.BaseCost());
 		groupPosition.add(where);
 		Changed();
 	}

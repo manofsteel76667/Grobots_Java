@@ -66,26 +66,13 @@ enum GBElementType {
 }
 
 enum HardwareComponents {
-	hcNone("none_illegal"),
-	hcProcessor("processor"),
-	hcRadio("radio"),
-	hcEngine("engine"),
-	hcConstructor("constructor"),
-	hcEnergy("energy"),
-	hcSolarCells("solar-cells"),
-	hcEater("eater"),
-	hcArmor("armor"),
-	hcRepairRate("repair-rate"),
-	hcShield("shield"),
-	hcRobotSensor("robot-sensor"),
-	hcFoodSensor("food-sensor"),
-	hcShotSensor("shot-sensor"),
-	hcBlaster("blaster"),
-	hcGrenades("grenades"),
-	hcForceField("force-field"),
-	hcBomb("bomb"),
-	hcSyphon("syphon"),
-	hcEnemySyphon("enemy-syphon");
+	hcNone("none_illegal"), hcProcessor("processor"), hcRadio("radio"), hcEngine(
+			"engine"), hcConstructor("constructor"), hcEnergy("energy"), hcSolarCells(
+			"solar-cells"), hcEater("eater"), hcArmor("armor"), hcRepairRate(
+			"repair-rate"), hcShield("shield"), hcRobotSensor("robot-sensor"), hcFoodSensor(
+			"food-sensor"), hcShotSensor("shot-sensor"), hcBlaster("blaster"), hcGrenades(
+			"grenades"), hcForceField("force-field"), hcBomb("bomb"), hcSyphon(
+			"syphon"), hcEnemySyphon("enemy-syphon");
 	public final String tagName;
 
 	public static HardwareComponents byTag(String _tagName)
@@ -137,8 +124,8 @@ public class SideReader {
 	void ProcessLine() throws GBGenericError, GBReaderError,
 			GBOutOfMemoryError, GBNilPointerError {
 		lineno++;
-		tokens = new LinkedList<String>(Arrays
-				.asList(line.trim().split("\\s+")));
+		tokens = new LinkedList<String>(
+				Arrays.asList(line.trim().split("\\s+")));
 		while (tokens.size() > 0) {
 			if (tokens.getFirst().charAt(0) == '#') {
 				// Start of new section detected
@@ -309,8 +296,8 @@ public class SideReader {
 				if (side == null)
 					throw new GBGenericError("SideReader missing side");
 				type = new RobotType(side);
-				java.lang.StringBuilder sb = new java.lang.StringBuilder(tokens
-						.removeFirst());
+				java.lang.StringBuilder sb = new java.lang.StringBuilder(
+						tokens.removeFirst());
 				while (tokens.size() > 0) {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());

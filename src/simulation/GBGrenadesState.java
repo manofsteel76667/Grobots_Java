@@ -82,9 +82,8 @@ public class GBGrenadesState {
 						* effectiveness);
 				// TODO: put back in when sound is implemented
 				// StartSound(siGrenade);
-				int lifetime = (int) Math.max(Math.floor((distance - robot
-						.Radius())
-						/ Speed()), 1);
+				int lifetime = (int) Math.max(
+						Math.floor((distance - robot.Radius()) / Speed()), 1);
 				GBObject shot = new GBGrenade(robot.Position().addPolar(
 						robot.Radius(), direction), robot.Velocity().addPolar(
 						Speed(), direction), robot.Owner(), Damage()

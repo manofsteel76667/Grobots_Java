@@ -1,6 +1,7 @@
 package simulation;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Color;
 
@@ -33,13 +34,10 @@ public class GBFood extends GBObject {
 		mass = value * kFoodMassPerValue;
 	}
 
-	public GBFood(FinePoint where, double val) throws GBBadArgumentError {
+	public GBFood(FinePoint where, double val) {
 		super(where, Math.sqrt(val) * kFoodRadiusFactor + kFoodMinRadius, val
 				* kFoodMassPerValue);
-		value = val;
-
-		if (val < 0)
-			throw new GBBadArgumentError();
+		value = Math.max(val, 0);
 	}
 
 	public GBFood(FinePoint where, FinePoint vel, double val)
@@ -107,22 +105,17 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public String toString() {
-		// TODO Auto-generated method stub
-		return "";
-	}
-
-	@Override
 	public Color Color() {
 		return Color.white;
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj,
-			Rectangle where, boolean detailed) {
-		GBGraphics.fillRect(g, where, Color());
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setColor(Color());
+		g2d.fillRect(proj.ToScreenX(position.x), proj.ToScreenY(position.y),
+				(int) (Math.max(radius * proj.getScale(),2)), 
+				(int) (Math.max(radius * proj.getScale(),2)));
 	}
-
 };
-
-

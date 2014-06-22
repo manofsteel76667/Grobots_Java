@@ -232,8 +232,7 @@ public class GBHardwareState {
 							.LastHit()));
 			world.AddObjectNew(new GBExplosion(robot.Position(), robot.Owner(),
 					(robot.Biomass() * kDeathExplosionDamagePerBiomass + spec
-							.Bomb())
-							* robot.ShieldFraction()));
+							.Bomb()) * robot.ShieldFraction()));
 			return;
 		}
 		// energy intake
@@ -278,8 +277,9 @@ public class GBHardwareState {
 			robot.Owner().Scores().expenditure.ReportShield(shieldUsed);
 			actualShield += shieldUsed;
 		}
-		actualShield = Math.max(actualShield - kShieldDecayPerMass
-				* robot.Mass() - kShieldDecayPerShield * actualShield, 0);
+		actualShield = Math.max(
+				actualShield - kShieldDecayPerMass * robot.Mass()
+						- kShieldDecayPerShield * actualShield, 0);
 		// lose excess energy
 		if (energy > MaxEnergy()) {
 			robot.Owner().Scores().expenditure.ReportWasted(energy

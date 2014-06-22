@@ -9,10 +9,12 @@ public class GBError extends java.lang.Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = -6819324881379371856L;
+
 	@Override
-	public String getMessage(){
+	public String getMessage() {
 		return toString();
 	}
+
 	public GBError() {
 	}
 

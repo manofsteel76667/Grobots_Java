@@ -56,7 +56,7 @@ public class GBCorpse extends GBFood {
 	@Override
 	public void Draw(Graphics g, GBProjection proj, Rectangle where,
 			boolean detailed) {
-		Draw(g, proj, where, detailed);
+		//Draw(g, proj, where, detailed);
 		if (detailed && where.getWidth() >= 4) {
 			GBGraphics.drawRect(g, where, Owner().Color());
 			if (killer != null && where.getWidth() >= 6) {

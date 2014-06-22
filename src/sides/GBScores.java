@@ -235,19 +235,19 @@ public class GBScores {
 			return 0.0f;
 		double variance = biomassFractionSquared / rounds - frac * frac;
 		return variance < 0 ? 0 : Math.sqrt(variance); // rounding
-																	// error can
-																	// make
-																	// variance
-																	// slightly
-																	// negative
-																	// when it
-																	// should be
-																	// zero
+														// error can
+														// make
+														// variance
+														// slightly
+														// negative
+														// when it
+														// should be
+														// zero
 	}
 
 	// Sampling error: twice the standard deviation of the mean.
 	public double BiomassFractionError() {
-		return rounds > 1 ? BiomassFractionSD()
-				/ Math.sqrt(rounds - 1) * 2.0 : 1.0;
+		return rounds > 1 ? BiomassFractionSD() / Math.sqrt(rounds - 1) * 2.0
+				: 1.0;
 	}
 };

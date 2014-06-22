@@ -19,6 +19,7 @@ import sides.SideReader;
 import simulation.GBWorld;
 import views.GBPortal.toolTypes;
 
+
 /* @formatter:off */
 enum MenuItems {
 	//File menu
@@ -160,7 +161,7 @@ enum MenuItems {
 	}
 }
 
-class GBMenu extends JMenuBar implements ActionListener {
+class GBMenu extends JMenuBar {
 	/**
 	 * 
 	 */
@@ -171,10 +172,10 @@ class GBMenu extends JMenuBar implements ActionListener {
 	JMenu simulationMenu;
 	JMenu toolMenu;
 	GBWorld world;
-	public Map<MenuItems, AbstractButton> menuButtons;
 	public ButtonGroup speedControls;
 	public ButtonGroup toolSelectors;
 	public Map<MenuItems, JCheckBoxMenuItem> viewOptions;
+	public Map<MenuItems, AbstractButton> menuButtons;
 
 	public GBMenu(GBApplication _app) {
 		app = _app;
@@ -188,40 +189,9 @@ class GBMenu extends JMenuBar implements ActionListener {
 		buildButtonGroups();
 		for (MenuItems mi : MenuItems.values())
 			if (menuButtons.containsKey(mi))
-				menuButtons.get(mi).addActionListener(this);
+				menuButtons.get(mi).addActionListener(app);
 	}
-
-	/**
-	 * Returns the menu item that corresponds to the MenuItem enum passed, or
-	 * null if one is not found. Used for enabling and disabling menu options
-	 * 
-	 * @param cmd
-	 * @return
-	 */
-	public MenuElement getMenuItem(MenuItems cmd) {
-		return getMenuItem(this.getSubElements(), cmd);
-	}
-
-	MenuElement getMenuItem(MenuElement[] list, MenuItems cmd) {
-		MenuElement ret = null;
-		for (MenuElement item : list) {
-			if (item instanceof JMenuItem)
-				if (((JMenuItem) item).getText() == cmd.description)
-					ret = item;
-				else if (item instanceof JRadioButtonMenuItem)
-					if (((JRadioButtonMenuItem) item).getText() == cmd.description)
-						ret = item;
-					else if (item instanceof JCheckBoxMenuItem)
-						if (((JCheckBoxMenuItem) item).getText() == cmd.description)
-							ret = item;
-			if (ret != null)
-				break;
-			else if (item.getSubElements().length > 0)
-				ret = getMenuItem(item.getSubElements(), cmd);
-		}
-		return ret;
-	}
-
+	
 	void buildButtonGroups() {
 		speedControls = new ButtonGroup();
 		speedControls.add(menuButtons.get(MenuItems.slow));
@@ -430,203 +400,4 @@ class GBMenu extends JMenuBar implements ActionListener {
 		this.add(ret);
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// Handle Menu click
-		if (MenuItems.byDescription(e.getActionCommand()) != null) {
-			MenuItems mi = MenuItems.byDescription(e.getActionCommand());
-			try {
-				switch (mi) {
-				case addManna:
-					app.portal.tool = toolTypes.ptAddManna;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case addRobot:
-					app.portal.tool = toolTypes.ptAddRobot;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case addSeed:
-					app.portal.tool = toolTypes.ptAddSeed;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case addSeeds:
-					world.AddSeeds();
-					break;
-				case autoFollow:
-					break;
-				case blasts:
-					app.portal.tool = toolTypes.ptBlasts;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case clearMap:
-					break;
-				case duplicateSide:
-					break;
-				case erase:
-					app.portal.tool = toolTypes.ptErase;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case erasearea:
-					app.portal.tool = toolTypes.ptEraseBig;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case exit:
-					if (JOptionPane.showConfirmDialog(null,
-							"Are you sure you want to exit the game?",
-							"Confirm Exit", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
-						System.exit(0);
-					break;
-				case fast:
-					app.stepRate=StepRates.fast;
-					break;
-				case firstPage:
-					break;
-				case followRandom:
-					break;
-				case loadSide:
-					JFileChooser fc = new JFileChooser();
-					int retval = fc.showOpenDialog(app);
-					if (retval == JFileChooser.APPROVE_OPTION) {
-						JOptionPane.showMessageDialog(app,
-								fc.getSelectedFiles());
-						for (File f : fc.getSelectedFiles()) {
-							Side newside;
-							newside = SideReader.Load(f.getName());
-							world.AddSide(newside);
-
-						}
-					}
-					break;
-				case move:
-					app.portal.tool = toolTypes.ptMove;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case newRound:
-					world.Reset();
-					world.AddSeeds();
-					world.running = true;
-					break;
-				case nextPage:
-					break;
-				case normal:
-					app.stepRate=StepRates.normal;
-					break;
-				case pause:
-					world.running = false;
-					break;
-				case previousPage:
-					break;
-				case pull:
-					app.portal.tool = toolTypes.ptPull;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case randomNear:
-					break;
-				case refollow:
-					break;
-				case reloadSide:
-					break;
-				case removeAllSides:
-					world.Reset();
-					world.RemoveAllSides();
-					world.running = false;
-					break;
-				case removeSide:
-					break;
-				case reseedDeadSides:
-					world.ReseedDeadSides();
-					break;
-				case resetScores:
-					world.ResetTournamentScores();
-					break;
-				case rules:
-					break;
-				case run:
-					world.running = true;
-					app.lastStep = System.currentTimeMillis();
-					break;
-				case saveScores:
-					world.DumpTournamentScores(true);
-					break;
-				case scrollDown:
-					break;
-				case scrollFollow:
-					app.portal.tool = toolTypes.ptScroll;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-					break;
-				case scrollUp:
-					break;
-				case showAbout:
-					break;
-				case showDebugger:
-					break;
-				case showDecorations:
-					break;
-				case showMeters:					
-					break;
-				case showMiniMapTrails:
-					break;
-				case showMinimap:
-					break;
-				case showPrints:
-					world.reportPrints = !world.reportPrints;
-					break;
-				case showRobotErrors:
-					world.reportErrors = !world.reportErrors;
-					break;
-				case showRoster:
-					app.roster.setVisible(true);
-					break;
-				case showSensors:
-					break;
-				case showSharedMemory:
-					break;
-				case showStatistics:
-					break;
-				case showTournament:
-					break;
-				case showTypes:
-					break;
-				case singleFrame:
-					world.AdvanceFrame();
-					world.running = false;
-					break;
-				case slow:
-					app.stepRate=StepRates.slow;
-					break;
-				case smite:
-					app.portal.tool = toolTypes.ptSmite;
-					app.portal.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					break;
-				case stepBrain:
-					break;
-				case stopStartBrain:
-					break;
-				case tournament:
-					
-					break;
-				case unlimited:
-					app.stepRate=StepRates.unlimited;
-					break;
-				case zoomIn:
-					break;
-				case zoomOut:
-					break;
-				case zoomStandard:
-					break;
-				default:
-					break;
-				}
-			} catch (GBError | IOException err) {
-				try {
-					GBError.NonfatalError(err.getMessage());
-				} catch (GBAbort e1) {
-					System.exit(1);
-				}
-				catch(Exception ex){
-					GBError.FatalError(ex.getMessage());
-				}
-			}
-		}
 	}
-}

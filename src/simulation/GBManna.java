@@ -1,11 +1,13 @@
 package simulation;
 
 import support.FinePoint;
+import support.GBColor;
+import java.awt.Color;
 import exception.GBBadArgumentError;
 
 public class GBManna extends GBFood {
 	// public:
-	public GBManna(FinePoint where, double val) throws GBBadArgumentError {
+	public GBManna(FinePoint where, double val) {
 		super(where, val);
 	}
 
@@ -18,8 +20,5 @@ public class GBManna extends GBFood {
 	public String toString() {
 		return "Manna (" + value + ')';
 	}
-	// TODO: GUI
-	/*
-	 * public static final GBColor Color() { return GBColor::green; }
-	 */
+	public GBColor Color() { return new GBColor(Color.green); }
 }

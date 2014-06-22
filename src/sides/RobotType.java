@@ -17,9 +17,9 @@ public class RobotType extends support.Model {
 	public Side side;
 	public String name;
 	public int id;
-	 public GBColor color;
-	 public GBRobotDecoration decoration=GBRobotDecoration.none;
-	 public GBColor decorationColor;
+	public GBColor color;
+	public GBRobotDecoration decoration = GBRobotDecoration.none;
+	public GBColor decorationColor;
 	public HardwareSpec hardware;
 	public BrainSpec brain;
 	public long population;
@@ -37,14 +37,13 @@ public class RobotType extends support.Model {
 		side = owner;
 		debug = owner.debug;
 		/*
-		 * id(0), name(), decoration(rdNone),
-		 * decorationColor(GBColor::black),
+		 * id(0), name(), decoration(rdNone), decorationColor(GBColor::black),
 		 */
 		color = new GBColor();
-		//if (!debug)
-		//	hardware = new HardwareSpec();
-		//else
-			hardware = new HardwareSpec(debug);
+		// if (!debug)
+		// hardware = new HardwareSpec();
+		// else
+		hardware = new HardwareSpec(debug);
 		/*
 		 * brain(null), population(0), biomass(0)
 		 */
@@ -96,15 +95,27 @@ public class RobotType extends support.Model {
 		id = newid;
 	}
 
-	
-	 public GBColor Color() { return color; } void SetColor( GBColor newcolor) {
-	  color = newcolor; Changed(); }
-	  
-	  public GBRobotDecoration Decoration() { return decoration; } public GBColor
-	  DecorationColor() { return decorationColor; } void
-	  SetDecoration(GBRobotDecoration dec, GBColor col) { decoration = dec;
-	  decorationColor = col; }
-	 
+	public GBColor Color() {
+		return color;
+	}
+
+	void SetColor(GBColor newcolor) {
+		color = newcolor;
+		Changed();
+	}
+
+	public GBRobotDecoration Decoration() {
+		return decoration;
+	}
+
+	public GBColor DecorationColor() {
+		return decorationColor;
+	}
+
+	void SetDecoration(GBRobotDecoration dec, GBColor col) {
+		decoration = dec;
+		decorationColor = col;
+	}
 
 	public HardwareSpec Hardware() {
 		return hardware;

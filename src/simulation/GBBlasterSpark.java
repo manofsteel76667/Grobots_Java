@@ -23,13 +23,18 @@ public class GBBlasterSpark extends GBTimedDecoration {
 		radius = kBlasterSparkMaxRadius - kBlasterSparkGrowthRate
 				* (lifetime - 1);
 	}
+
 	// TODO: after GUI
-	
-	  @Override
-	public Color Color() { return Color.white; }
-	  
-	 @Override
-	public void Draw(Graphics  g, GBProjection proj, Rectangle where, boolean detailed ) { 
-		 GBGraphics.drawOval(g, where, Color()); }
+
+	@Override
+	public Color Color() {
+		return Color.white;
+	}
+
+	@Override
+	public void Draw(Graphics g, GBProjection proj, Rectangle where,
+			boolean detailed) {
+		GBGraphics.drawOval(g, where, Color());
+	}
 
 }

@@ -16,7 +16,11 @@ public abstract class GBShot extends GBObject {
 	// protected:
 	protected Side owner;
 	protected double power;
-	protected void DrawTail(Graphics g, GBProjection proj, double movement, Color color){}
+
+	protected void DrawTail(Graphics g, GBProjection proj, double movement,
+			Color color) {
+	}
+
 	// public:
 	public static final double kBlastPushRatio = 0.003;
 	public static final double kBlastRadius = 0.1875;

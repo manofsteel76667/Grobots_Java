@@ -73,21 +73,28 @@ public class GBForceField extends GBShot {
 		int weight = where.getWidth() >= 20 ? 2 : 1;
 		FinePoint edge = Position().subtract(
 				Velocity().unit().multiply(Radius()));
-		//From robot to target
-		((Graphics2D)g).setStroke(new BasicStroke(weight));
+		// From robot to target
+		((Graphics2D) g).setStroke(new BasicStroke(weight));
 		GBGraphics.drawLine(g, proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
 				proj.ToScreenX(Position().x - Velocity().x),
 				proj.ToScreenY(Position().y - Velocity().y),
 				Color().multiply(0.5f));
 		int cx = ((int) where.getWidth()) / 2;
 		int cy = ((int) where.getHeight()) / 2;
-		//From destination into the direction being pushed
-		((Graphics2D)g).setStroke(new BasicStroke(1));
-		GBGraphics.drawLine(g, cx, cy,  cx + Math.round(Math
-				.cos(direction) * where.getWidth() / 2),  (cy - Math
-				.round((Math.sin(direction) * where.getHeight() / 2))),
-				owner != null ? owner.Color() : Color());
-		//Force field radius
+		// From destination into the direction being pushed
+		((Graphics2D) g).setStroke(new BasicStroke(1));
+		GBGraphics
+				.drawLine(
+						g,
+						cx,
+						cy,
+						cx
+								+ Math.round(Math.cos(direction)
+										* where.getWidth() / 2),
+						(cy - Math.round((Math.sin(direction)
+								* where.getHeight() / 2))),
+						owner != null ? owner.Color() : Color());
+		// Force field radius
 		GBGraphics.drawOval(g, where, Color());
 	}
 

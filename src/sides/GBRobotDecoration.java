@@ -4,17 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum GBRobotDecoration {
-	none("none"),
-	dot("dot"),
-	circle("circle"),
-	square("square"),
-	triangle("triangle"),
-	cross("cross"),
-	x("x"),
-	hline("hline"),
-	vline("vline"),
-	slash("slash"),
-	backslash("backslash");
+	none("none"), dot("dot"), circle("circle"), square("square"), triangle(
+			"triangle"), cross("cross"), x("x"), hline("hline"), vline("vline"), slash(
+			"slash"), backslash("backslash");
 	public final String tagName;
 
 	public static GBRobotDecoration byTag(String _tagName)

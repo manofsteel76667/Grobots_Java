@@ -50,7 +50,7 @@ public class GBObjectWorld extends Model {
 	 * a tile, with the GBObject being the head of a singly-linked list of
 	 * GBObjects within the tile. Use GBObject.next to iterate through it.
 	 */
-	protected Map<GBObjectClass, GBObject[]> objects;
+	public Map<GBObjectClass, GBObject[]> objects;
 	// protected GBObject[][] objects;
 	protected List<GBObject> news; // Head of a singly-linked list of GBObject
 									// representing new objects to be handled
@@ -108,9 +108,10 @@ public class GBObjectWorld extends Model {
 	 * Clear all object lists except the main one, and reset each object's next
 	 */
 	protected void ClearLists() {
-		MakeTiles();
+		MakeTiles();		
 		for (GBObject obj : allObjects)
 			obj.next = null;
+		allObjects.clear();
 		news.clear();
 	}
 
@@ -121,29 +122,25 @@ public class GBObjectWorld extends Model {
 	 *             @
 	 */
 	protected void ResortObjects() throws GBAbort {
-		try {
-			GBObject[] template = new GBObject[tilesX * tilesY + 1];
-			for (GBObjectClass cl : GBObjectClass.values())
-				objects.put(cl, template.clone());
-			Iterator<GBObject> it = allObjects.iterator();
-			while (it.hasNext()) {
-				GBObject obj = it.next();
-				obj.next = null;
-				if (obj.Class() != GBObjectClass.ocDead) {
-					AddObjectDirectly(obj);
-				} else
-					// TODO: check that allObjects is the only place the dead
-					// object is referenced;
-					// otherwise GC won't happen
-					it.remove();
-			}
-			addNewObjects();
-		} catch (GBError err) {
-			GBError.NonfatalError("Error resorting objects: " + err.toString());
+		GBObject[] template = new GBObject[tilesX * tilesY + 1];
+		for (GBObjectClass cl : GBObjectClass.values())
+			objects.put(cl, template.clone());
+		Iterator<GBObject> it = allObjects.iterator();
+		while (it.hasNext()) {
+			GBObject obj = it.next();
+			obj.next = null;
+			if (obj.Class() != GBObjectClass.ocDead) {
+				AddObjectDirectly(obj);
+			} else
+				// TODO: check that allObjects is the only place the dead
+				// object is referenced;
+				// otherwise GC won't happen
+				it.remove();
 		}
+		addNewObjects();
 	}
 
-	protected void addNewObjects() throws GBNilPointerError {
+	protected void addNewObjects() {
 		Iterator<GBObject> it = news.iterator();
 		while (it.hasNext()) {
 			GBObject ob = it.next();
@@ -160,22 +157,20 @@ public class GBObjectWorld extends Model {
 	 * @param newOb
 	 * @throws GBNilPointerError
 	 */
-	public void AddObjectNew(GBObject newOb) throws GBNilPointerError {
-		if (newOb == null)
-			throw new GBNilPointerError();
-		news.add(newOb);
+	public void AddObjectNew(GBObject newOb) {
+		if (newOb != null)
+			news.add(newOb);
 	}
 
-	private void AddObjectDirectly(GBObject ob) throws GBNilPointerError {
-		if (ob == null)
-			throw new GBNilPointerError();
-		if (ob.Class() != GBObjectClass.ocDead) {
-			// If object is dead, leave it alone and let GC take care of it.
-			int tile = ob.Radius() * 2 >= kForegroundTileSize ? tilesX * tilesY
-					: FindTile(ob.Position());
-			ob.next = objects.get(ob.Class())[tile];
-			objects.get(ob.Class())[tile] = ob;
-		}
+	private void AddObjectDirectly(GBObject ob) {
+		if (ob != null)
+			if (ob.Class() != GBObjectClass.ocDead) {
+				// If object is dead, leave it alone and let GC take care of it.
+				int tile = ob.Radius() * 2 >= kForegroundTileSize ? tilesX
+						* tilesY : FindTile(ob.Position());
+				ob.next = objects.get(ob.Class())[tile];
+				objects.get(ob.Class())[tile] = ob;
+			}
 	}
 
 	protected void CollideObjectWithWalls(GBObject ob) {
@@ -212,13 +207,13 @@ public class GBObjectWorld extends Model {
 		// try {
 		for (int i = 0; i < tilesX * tilesY; i++)
 			for (GBObjectClass cl : GBObjectClass.values())
-					for (GBObject obj = objects.get(cl)[i]; obj != null; obj = obj.next) {
-						obj.Move();
-						if (i < tilesX || i > tilesX * (tilesY - 1)
-								|| i % tilesX == 0 || i % tilesX == tilesX - 1)
-							CollideObjectWithWalls(obj); // only large objects
-															// and edge tiles
-					}
+				for (GBObject obj = objects.get(cl)[i]; obj != null; obj = obj.next) {
+					obj.Move();
+					if (i < tilesX || i > tilesX * (tilesY - 1)
+							|| i % tilesX == 0 || i % tilesX == tilesX - 1)
+						CollideObjectWithWalls(obj); // only large objects
+														// and edge tiles
+				}
 		// }
 		// catch ( GBError err ) {
 		// GBError.NonfatalError("Error moving objects: " + err.toString());
@@ -268,7 +263,7 @@ public class GBObjectWorld extends Model {
 						// food, {
 						bot.BasicCollide(food);
 					}// )
-					// }
+						// }
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding robot and food: "
 							+ err.toString());
@@ -279,7 +274,7 @@ public class GBObjectWorld extends Model {
 					// shot, {
 					bot.BasicCollide(shot);
 				}// )
-				// }
+					// }
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robot and shot: "
 						+ err.toString());
@@ -290,7 +285,7 @@ public class GBObjectWorld extends Model {
 					// area, {
 					bot.BasicCollide(area);
 				}// )
-				// }
+					// }
 			} catch (GBError err) {
 				GBError.NonfatalError("Error colliding robot and area: "
 						+ err.toString());
@@ -352,7 +347,7 @@ public class GBObjectWorld extends Model {
 						// bot2, {
 						bot.SolidCollide(bot2, kRobotRestitution);
 					}// )
-					// }
+						// }
 				} catch (GBError err) {
 					GBError.NonfatalError("Error colliding robots: "
 							+ err.toString());
@@ -512,29 +507,25 @@ public class GBObjectWorld extends Model {
 		return ty * tilesX + tx;
 	}
 
-	public void EraseAt(FinePoint where, double radius) throws GBAbort {
+	public void EraseAt(FinePoint where, double radius) {
 		// modified from ResortObjects. Could be replaced with some dead-marking
 		// system
-		try {
-			ClearLists();
-			Iterator<GBObject> it = allObjects.iterator();
-			while (it.hasNext()) {
-				GBObject obj = it.next();
-				if (obj.Position().inRange(where, obj.Radius() + radius))
-					if (obj.Class() == GBObjectClass.ocRobot) { // must stick
-																// around a
-																// frame for
-																// sensors
-						((GBRobot) obj).Die(null);
-						AddObjectNew(obj); // new so it'll be deleted next
-											// resort
-					} else
-						it.remove();
-				else
-					AddObjectDirectly(obj);
-			}
-		} catch (GBError err) {
-			GBError.NonfatalError("Error erasing objects: " + err.toString());
+		ClearLists();
+		Iterator<GBObject> it = allObjects.iterator();
+		while (it.hasNext()) {
+			GBObject obj = it.next();
+			if (obj.Position().inRange(where, obj.Radius() + radius))
+				if (obj.Class() == GBObjectClass.ocRobot) { // must stick
+															// around a
+															// frame for
+															// sensors
+					((GBRobot) obj).Die(null);
+					AddObjectNew(obj); // new so it'll be deleted next
+										// resort
+				} else
+					it.remove();
+			else
+				AddObjectDirectly(obj);
 		}
 	}
 

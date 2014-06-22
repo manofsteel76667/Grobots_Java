@@ -25,10 +25,13 @@ public class SideReader_test {
 	List<Side> allsides = null;
 	Side side = null;
 	RobotType type = null;
-@Test
-public void testOneSide() throws GBIndexOutOfRangeError, GBAbort, GBGenericError{
-	TestBase.loadSide("active-4.gb");
-}
+
+	@Test
+	public void testOneSide() throws GBIndexOutOfRangeError, GBAbort,
+			GBGenericError {
+		TestBase.loadSide("active-4.gb");
+	}
+
 	/**
 	 * Load each side file in the sides directory. For each side, instantiate
 	 * one robot of each type in the side.
@@ -91,14 +94,14 @@ public void testOneSide() throws GBIndexOutOfRangeError, GBAbort, GBGenericError
 					TestBase.sidesFilePath() + "cyclops.gb",
 					TestBase.sidesFilePath() + "tomatoes.gb",
 					TestBase.sidesFilePath() + "move-zig-3.gb",
-					//"-t100",//Tournament
-					"-S",//Sound on
-					"-l18000",//Time limit
-					"-b500",//Stats period
-					"-w10",//World width
-					"-h10",//World height
-					"-s5",//Seed limit
-					"-H"};//HTML output
+					// "-t100",//Tournament
+					"-S",// Sound on
+					"-l18000",// Time limit
+					"-b500",// Stats period
+					"-w10",// World width
+					"-h10",// World height
+					"-s5",// Seed limit
+					"-H" };// HTML output
 			Headless.main(sides);
 		} catch (Exception e) {
 			e.printStackTrace();
