@@ -110,12 +110,10 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		Graphics2D g2d = (Graphics2D) g;
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle where = getScreenRect(proj);
 		g2d.setColor(Color());
-		g2d.fillRect(proj.ToScreenX(position.x), proj.ToScreenY(position.y),
-				(int) (Math.max(radius * proj.getScale(),2)), 
-				(int) (Math.max(radius * proj.getScale(),2)));
+		g2d.fillRect(where.x, where.y, where.width, where.height);
 	}
 };

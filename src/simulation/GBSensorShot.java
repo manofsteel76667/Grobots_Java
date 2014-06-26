@@ -77,8 +77,6 @@ class GBSensorShot extends GBObject {
 		return classname + " sensor for " + owner.toString();
 	}
 
-	// TODO: when GUI is done
-
 	@Override
 	public GBColor Color() {
 		float fraction = 1.0f - age / Lifetime();
@@ -109,10 +107,13 @@ class GBSensorShot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		// show focus, owner, and side?
-		GBGraphics.drawOval(g, where, Color());
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setColor(Color());
+		g2d.setStroke(new BasicStroke(1));
+		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
 	@Override

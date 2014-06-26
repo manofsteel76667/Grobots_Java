@@ -46,14 +46,16 @@ public class GBGrenade extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setPaint(Color());
 		if (where.getWidth() <= 3)
-			GBGraphics.fillRect(g, where, Color());
+			g2d.fillRect(where.x, where.y, where.width, where.height);
 		else {
 			if (detailed)
 				DrawShadow(g, proj, Velocity().multiply(-1.0f), Color.gray);
-			GBGraphics.fillOval(g, where, Color());
+			g2d.fillOval(where.x, where.y, where.width, where.height);
 		}
 	}
 

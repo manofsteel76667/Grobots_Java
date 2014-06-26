@@ -58,44 +58,39 @@ public class GBForceField extends GBShot {
 		return Math.abs(power) * 15 + 1;
 	}
 
-	// TODO: when the GUI is done
-
 	@Override
 	public GBColor Color() {
 		return new GBColor(0, 0.8f, 1);
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed
-
-	) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle where = getScreenRect(proj);
 		int weight = where.getWidth() >= 20 ? 2 : 1;
 		FinePoint edge = Position().subtract(
 				Velocity().unit().multiply(Radius()));
 		// From robot to target
-		((Graphics2D) g).setStroke(new BasicStroke(weight));
-		GBGraphics.drawLine(g, proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
+		g2d.setStroke(new BasicStroke(weight));
+		g2d.setColor(new GBColor(Color()).multiply(0.5f));
+		g2d.drawLine(proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
 				proj.ToScreenX(Position().x - Velocity().x),
-				proj.ToScreenY(Position().y - Velocity().y),
-				Color().multiply(0.5f));
-		int cx = ((int) where.getWidth()) / 2;
-		int cy = ((int) where.getHeight()) / 2;
+				proj.ToScreenY(Position().y - Velocity().y));
+		int cx = where.width / 2;
+		int cy = where.height / 2;
 		// From destination into the direction being pushed
-		((Graphics2D) g).setStroke(new BasicStroke(1));
-		GBGraphics
-				.drawLine(
-						g,
-						cx,
-						cy,
-						cx
-								+ Math.round(Math.cos(direction)
-										* where.getWidth() / 2),
-						(cy - Math.round((Math.sin(direction)
-								* where.getHeight() / 2))),
-						owner != null ? owner.Color() : Color());
+		g2d.setStroke(new BasicStroke(1));
+		g2d.setColor(owner != null ? owner.Color() : Color());
+		g2d.drawLine(
+				cx,
+				cy,
+				cx
+						+ (int) Math.round(Math.cos(direction)
+								* where.getWidth() / 2), (cy - (int) Math
+						.round((Math.sin(direction) * where.getHeight() / 2))));
 		// Force field radius
-		GBGraphics.drawOval(g, where, Color());
+		g2d.setColor(Color());
+		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
 	@Override

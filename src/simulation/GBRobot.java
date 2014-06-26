@@ -397,20 +397,19 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		if (where.getWidth() <= 5) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle where = getScreenRect(proj);
+		if (where.width <= 5) {
 			DrawMini(g, where);
 			return;
 		}
 		int meterWidth = (int) Math.max(1, (where.getWidth() + 10) / 10);
 		// background and rim
-		GBGraphics.fillOval(
-				g,
-				where,
-				new GBColor(Color.red).Mix(0.8f * recentDamage
-						/ kRecentDamageTime, Owner().Color()));
-		GBGraphics.drawOval(g, where, type.Color());
+		GBColor robotColor = (new GBColor(Color.red).Mix(0.8f * recentDamage
+				/ kRecentDamageTime, Owner().Color()));
+		g2d.setPaint(robotColor);
+		g2d.fillOval(where.x, where.y, where.width, where.height);
 		// meters
 		if (detailed) {
 			// energy meter
@@ -438,20 +437,18 @@ public class GBRobot extends GBObject {
 			}
 		}
 		// decoration
-		int thickness = (int) (15 + where.getWidth()) / 15; // was 2 for >15
-															// else 1
-		((Graphics2D) g).setStroke(new BasicStroke(thickness));
+		int thickness = (int) (15 + where.width) / 15; // was 2 for >15
+														// else 1
+		g2d.setStroke(new BasicStroke(thickness));
 		Rectangle dec = new Rectangle(
-				(int) (where.getX() * 2 + (where.getX() + where.getWidth()) + 2) / 3,
-				(int) (where.getY() * 2 + (where.getY() + where.getHeight()) + 2) / 3,
-				(int) (where.getX() + (where.getX() + where.getWidth()) * 2 + 1) / 3,
-				(int) (where.getY() + (where.getY() + where.getHeight()) * 2 + 1) / 3);
-		int dx = (int) (where.getWidth() / 4);
-		int dy = (int) (where.getHeight() / 4);
+				(int) (where.getCenterX() - where.getWidth() / 3),
+				(int) (where.getCenterY() - where.getHeight() / 3),
+				where.width * 2 / 3, where.height * 2 / 3);
+		int dx = (where.width / 4);
+		int dy = (where.height / 4);
 		// cross, hline, and vline draw in bigDec instead of dec
-		Rectangle bigDec = new Rectangle((int) where.getCenterX() - dx,
-				(int) where.getCenterY() - dy, (int) where.getCenterX() + dx,
-				(int) where.getCenterY() + dy);
+		Rectangle bigDec = new Rectangle(where.x - dx, where.y - dy,
+				where.width - dx * 2, where.height - dy * 2);
 		// flash decoration when reloading or sensing
 		GBColor basecolor = type.Decoration() == GBRobotDecoration.none ? Owner()
 				.Color() : type.DecorationColor();
@@ -464,6 +461,8 @@ public class GBRobot extends GBObject {
 			color = new GBColor(Color.magenta).Mix(
 					(float) hardware.blaster.Cooldown()
 							/ hardware.blaster.ReloadTime(), basecolor);
+		g2d.setColor(color);
+		g2d.setPaint(color);
 		switch (type.Decoration()) {
 		case none:
 		default:
@@ -472,58 +471,48 @@ public class GBRobot extends GBObject {
 				break;
 			// if we're flashing, fall through and draw a dot
 		case dot:
-			GBGraphics.fillOval(g,
-					new Rectangle(((int) where.getCenterX() - thickness),
-							(int) (where.getCenterY() - thickness),
-							(int) (where.getCenterX() + thickness),
-							(int) (where.getCenterY() + thickness)), color);
+			g2d.fillOval((int) where.getCenterX() - thickness,
+					(int) where.getCenterY() - thickness, thickness * 2,
+					thickness * 2);
 			break;
 		case circle:
-			GBGraphics.drawOval(g, dec, color);
+			g2d.drawOval((int) dec.getCenterX(), (int) dec.getCenterY(),
+					dec.width, dec.height);
 			break;
 		case square:
-			GBGraphics.drawRect(g, dec, color);
+			g2d.draw(dec);
 			break;
 		case triangle:
-			GBGraphics.drawLine(g, dec.getX(), dec.getY() + dec.getHeight(),
-					dec.getCenterX(), dec.getY(), color);
-			GBGraphics.drawLine(g, dec.getCenterX(), dec.getY(), dec.getX()
-					+ dec.getWidth(), dec.getY() + dec.getHeight(), color);
-			GBGraphics.drawLine(g, dec.getX(), dec.getY() + dec.getHeight(),
-					dec.getX() + dec.getWidth(), dec.getY() + dec.getHeight(),
-					color);
+			g2d.drawLine(dec.x, dec.y + dec.height, (int) dec.getCenterX(),
+					dec.y);
+			g2d.drawLine((int) dec.getCenterX(), dec.y, dec.x + dec.width,
+					dec.y + dec.height);
+			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y
+					+ dec.height);
 			break;
 		case cross:
-			GBGraphics.drawLine(g, where.getCenterX(), bigDec.getY(),
-					where.getCenterX(), bigDec.getY() + dec.getHeight(), color);
-			GBGraphics.drawLine(g, bigDec.getX(), where.getCenterY(),
-					bigDec.getX() + dec.getWidth(), where.getCenterY(), color);
+			g2d.drawLine((int) where.getCenterX(), bigDec.y,
+					(int) where.getCenterX(), bigDec.y + bigDec.height);
+			g2d.drawLine(bigDec.x, (int) where.getCenterY(), bigDec.x
+					+ dec.width, (int) where.getCenterY());
 			break;
 		case x:
-			GBGraphics.drawLine(g, dec.getX(), dec.getY(),
-					dec.getX() + dec.getWidth(), dec.getY() + dec.getHeight(),
-					color);
-			GBGraphics.drawLine(g, dec.getX(), dec.getY() + dec.getHeight(),
-					dec.getX() + dec.getWidth(), dec.getY(), color);
+			g2d.drawLine(dec.x, dec.y, dec.x + dec.width, dec.y + dec.height);
+			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
 			break;
 		case hline:
-			GBGraphics.drawLine(g, bigDec.getX(), where.getCenterY(),
-					bigDec.getX() + bigDec.getWidth(), where.getCenterY(),
-					color);
+			g2d.drawLine(bigDec.x, (int) where.getCenterY(), bigDec.x
+					+ bigDec.width, (int) where.getCenterY());
 			break;
 		case vline:
-			GBGraphics.drawLine(g, where.getCenterX(), bigDec.getY(),
-					where.getCenterX(), bigDec.getY() + bigDec.getHeight(),
-					color);
+			g2d.drawLine((int) where.getCenterX(), bigDec.y,
+					(int) where.getCenterX(), bigDec.y + bigDec.height);
 			break;
 		case slash:
-			GBGraphics.drawLine(g, dec.getX(), dec.getY() + dec.getHeight(),
-					dec.getX() + dec.getWidth(), dec.getY(), color);
+			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
 			break;
 		case backslash:
-			GBGraphics.drawLine(g, dec.getX(), dec.getY(),
-					dec.getX() + dec.getWidth(), dec.getY() + dec.getHeight(),
-					color);
+			g2d.drawLine(dec.x, dec.y, dec.x + dec.width, dec.y + dec.height);
 			break;
 		}
 	}
@@ -563,12 +552,14 @@ public class GBRobot extends GBObject {
 
 	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setPaint(Color());
 		if (where.getWidth() <= 4)
-			GBGraphics.fillRect(g, where, Color());
+			g2d.fill(where);
 		else {
-			GBGraphics.fillOval(g, where, Owner().Color());
-			GBGraphics.fillOval(g, where,
-					Owner().Color().Mix(0.5f, type.Color()));
+			g2d.fillOval(where.x+where.width/2, where.y+where.height/2, where.height, where.width);
+			//g2d.fillOval(where,
+			//		Owner().Color().Mix(0.5f, type.Color()));
 		}
 	}
 

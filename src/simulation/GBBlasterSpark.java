@@ -5,6 +5,7 @@ import support.GBGraphics;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 public class GBBlasterSpark extends GBTimedDecoration {
@@ -24,17 +25,17 @@ public class GBBlasterSpark extends GBTimedDecoration {
 				* (lifetime - 1);
 	}
 
-	// TODO: after GUI
-
 	@Override
 	public Color Color() {
 		return Color.white;
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		GBGraphics.drawOval(g, where, Color());
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setColor(Color());
+		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
 }

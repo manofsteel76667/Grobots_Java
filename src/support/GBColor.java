@@ -53,26 +53,12 @@ public class GBColor extends java.awt.Color {
 		b = root.getBlue() / 256f;
 	}
 
-	/**
-	 * TODO: This won't work in java; need to change all calls to this to create
-	 * a new GBColor object instead.
-	 * 
-	 * @param red
-	 * @param green
-	 * @param blue
-	 */
-	public void Set(float red, float green, float blue) {
-		r = Limit(red);
-		g = Limit(green);
-		b = Limit(blue);
-	}
-
 	public float Lightness() {
 		return r * kRedWeight + g * kGreenWeight + b * kBlueWeight;
 	}
 
 	public GBColor Mix(float fraction, GBColor other) {
-		return this.multiply(fraction).add(other).multiply(1.0f - fraction);
+		return this.multiply(fraction).add(other.multiply(1.0f - fraction));
 	}
 
 	public float Contrast(GBColor other) {

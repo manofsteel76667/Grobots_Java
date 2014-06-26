@@ -177,9 +177,9 @@ public class SideReader {
 		float r, g, b;
 		try {
 			if (token.length() == 3) {
-				r = Integer.parseInt(token.substring(0, 1), 16) / 255.0f;
-				g = Integer.parseInt(token.substring(1, 2), 16) / 255.0f;
-				b = Integer.parseInt(token.substring(2, 3), 16) / 255.0f;
+				r = Integer.parseInt(token.substring(0, 1), 16) / 16.0f;
+				g = Integer.parseInt(token.substring(1, 2), 16) / 16.0f;
+				b = Integer.parseInt(token.substring(2, 3), 16) / 16.0f;
 				color = new GBColor(r, g, b);
 			} else if (token.length() == 6) {
 				r = Integer.parseInt(token.substring(0, 2), 16) / 255.0f;
@@ -277,13 +277,13 @@ public class SideReader {
 				String token = tokens.removeFirst();
 				if (token == null)
 					throw new GBMissingElementArgumentError();
-				/*
-				 * GBColor color; if ( ! ParseColor(token, color) ) throw new
-				 * java.lang
-				 * .Exception("Element argument error");//GBElementArgumentError
-				 * (); if ( type ) type.SetColor(color); else
-				 * side.SetColor(color);
-				 */
+				GBColor color = new GBColor();
+				if (!ParseColor(token, color))
+					throw new GBElementArgumentError();
+				if (type != null)
+					type.SetColor(color);
+				else
+					side.SetColor(color);
 			}
 				break;
 			case etType:

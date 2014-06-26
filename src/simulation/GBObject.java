@@ -30,7 +30,7 @@ public abstract class GBObject {
 	public static final double kMaxOverlap = 0.04;
 	public static final short kMaxSquareMiniSize = 4;
 
-	// Some formerly abstract functions aren't implemented by all descendants
+	// Some abstract functions aren't implemented by all descendants.
 	// Java hates this so they were made protected and given default behavior
 	// here.
 	protected void TakeDamage(double amount, Side origin) {
@@ -60,7 +60,7 @@ public abstract class GBObject {
 
 	public abstract void Act(GBWorld world) throws GBNilPointerError,
 			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError;
+			GBOutOfMemoryError; //Everything can act
 
 	protected void CollideWithWall() {
 	}
@@ -87,18 +87,26 @@ public abstract class GBObject {
 		return 0;
 	} // how attractive to autocamera
 
-	// @Override
-	// public abstract String toString(); //Was Description()
-
 	public String Details() {
 		return "";
 	}
 
 	// evil antimodular drawing code
 	public abstract Color Color();
-
-	public abstract void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed);
+	/**
+	 * Returns a rectangle (approximately) representing the position of the 
+	 * rendered object on the screen. 
+	 * @param proj
+	 * @return
+	 */
+	protected Rectangle getScreenRect(GBProjection proj) {
+		int oWidth = (int)Math.max(radius * proj.getScale(),1);
+		return new Rectangle(proj.ToScreenX(position.x) - oWidth/2, 
+				proj.ToScreenY(position.y) - oWidth/2,
+				oWidth,
+				oWidth);
+	}
+	public abstract void Draw(Graphics g, GBProjection proj, boolean detailed);
 
 	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where,
 			boolean detailed) {

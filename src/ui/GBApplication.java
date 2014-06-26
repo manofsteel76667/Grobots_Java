@@ -52,12 +52,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public Side selectedSide;
 	public RobotType selectedType;
 	int stepCount;
+	long updateCount;
 
 	public static void main(String[] args) {
-		// Why this doesn't work, I have no idea. Sick of messing with it.
-		// SwingUtilities.invokeLater(new GBApplication());
-		// I know this works:
-		new GBApplication().run();
+		SwingUtilities.invokeLater(new GBApplication());
 	}
 
 	public GBApplication() {
@@ -77,12 +75,17 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		setVisible(true);
-		javax.swing.Timer refreshTimer = new javax.swing.Timer(40, new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				repaint();
-				//lastStep = System.currentTimeMillis();
-			}
-		});
+		javax.swing.Timer refreshTimer = new javax.swing.Timer(40,
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						portal.repaint();
+						portal.setVisible(true);
+						updateCount++;
+						setTitle(String.format("%s: %d Frames, %d updates",
+								"Grobots", world.CurrentFrame(), updateCount));
+					}
+				});
 		refreshTimer.setRepeats(true);
 		refreshTimer.setCoalesce(true);
 		refreshTimer.start();
@@ -90,31 +93,36 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void run() {
-		while (true) {
-			if (!world.running) {
-				// lastStep += 1000; // hack to prevent taking so much time when
-				// paused at Unlimited speed
-			}
-			if (System.currentTimeMillis() > lastTime + 1000L){
-				lastTime = System.currentTimeMillis();
-				stepCount = 0;
-			}
-			try {
-				while (world.running
-						&& (stepRate.value >= stepCount)
-						&& System.currentTimeMillis() <= lastTime
-								+ 1000L) {
-					world.AdvanceFrame();
-					++stepCount;
+		Thread newThread = new Thread() {
+			@Override
+			public void run() {
+				while (true) {
+					if (System.currentTimeMillis() > lastTime + 1000L) {
+						lastTime = System.currentTimeMillis();
+						stepCount = 0;
+					}
+					if (stepRate == StepRates.unlimited)
+						stepCount = 0;
+					try {
+						// If we haven't hit the frame rate limit this second
+						// yet,
+						// run 1 frame.
+						if (world.running && (stepRate.value > stepCount)) {
+							world.AdvanceFrame();
+							++stepCount;
+						}
+					} catch (GBError err) {
+						try {
+							GBError.NonfatalError("Error simulating: "
+									+ err.toString());
+						} catch (GBAbort e) {
+							// Retry
+						}
+					}
 				}
-			} catch (GBError err) {
-				try {
-					GBError.NonfatalError("Error simulating: " + err.toString());
-				} catch (GBAbort e) {
-					// Retry
-				}
 			}
-		}
+		};
+		newThread.start();
 	}
 
 	void enableMenuItem(MenuItems item) {
@@ -127,7 +135,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		
+
 		// Handle Menu click
 		if (MenuItems.byDescription(e.getActionCommand()) != null) {
 			MenuItems mi = MenuItems.byDescription(e.getActionCommand());
@@ -188,10 +196,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case loadSide:
 					JFileChooser fc = new JFileChooser();
 					fc.setMultiSelectionEnabled(true);
+					fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
 					int retval = fc.showOpenDialog(this);
 					if (retval == JFileChooser.APPROVE_OPTION) {
-						//JOptionPane.showMessageDialog(this,
-						//		fc.getSelectedFiles());
+						// JOptionPane.showMessageDialog(this,
+						// fc.getSelectedFiles());
 						for (File f : fc.getSelectedFiles()) {
 							Side newside;
 							newside = SideReader.Load(f.getPath());
@@ -266,6 +275,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showDebugger:
 					break;
 				case showDecorations:
+					portal.showDecorations = !portal.showDecorations;
 					break;
 				case showMeters:
 					break;
@@ -283,6 +293,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					roster.setVisible(true);
 					break;
 				case showSensors:
+					portal.showSensors = !portal.showSensors;
 					break;
 				case showSharedMemory:
 					break;
@@ -309,7 +320,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case stopStartBrain:
 					break;
 				case tournament:
-
+					world.tournament = !world.tournament;
+					world.tournamentLength = 100;
 					break;
 				case unlimited:
 					stepRate = StepRates.unlimited;

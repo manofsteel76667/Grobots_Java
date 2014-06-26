@@ -17,7 +17,7 @@ import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
-
+//This probably won't be used since it does most of what JPanel does anyways
 public abstract class GBView extends JPanel {
 
 	/**

@@ -1,6 +1,7 @@
 package simulation;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import support.GBGraphics;
@@ -74,9 +75,11 @@ public class GBExplosion extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		GBGraphics.fillOval(g, where, Color());
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setColor(Color());
+		g2d.fillOval(where.x, where.y, where.width, where.height);
 	}
 
 	public static final double PowerRadius(double pwr) {

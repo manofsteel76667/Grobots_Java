@@ -20,8 +20,6 @@ public class GBSmoke extends GBTimedDecoration {
 		return "Smoke";
 	}
 
-	// TODO: after GUI
-
 	@Override
 	public GBColor Color() {
 		float intensity = 0.8f * lifetime
@@ -30,9 +28,11 @@ public class GBSmoke extends GBTimedDecoration {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		GBGraphics.fillOval(g, where, Color());
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setPaint(Color());
+		g2d.fillOval(where.x, where.y, where.width, where.height);
 	}
 
 }

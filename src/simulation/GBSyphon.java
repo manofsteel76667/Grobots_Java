@@ -111,8 +111,6 @@ public class GBSyphon extends GBTimedShot {
 		return Math.abs(power) * (hitsEnemies ? 5 : 1) + (hitsEnemies ? 2 : 1);
 	}
 
-	// TODO: after GUI is done
-
 	@Override
 	public GBColor Color() {
 		return (hitsEnemies ? new GBColor(0.6f, 1, 0) : new GBColor(0.5f, 0.8f,
@@ -120,9 +118,13 @@ public class GBSyphon extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle where = getScreenRect(proj);
+		g2d.setPaint(Color());
 		// draw tail showing origin, rate and whether it's working
+		//Dashed line whose dashes move in the direction of energy
+		//transfer over time
 		if (detailed) {
 			GBColor tailcolor = Owner().Color().multiply(
 					creator.Syphoned() != 0 ? 0.8f : 0.4f);
@@ -132,18 +134,17 @@ public class GBSyphon extends GBTimedShot {
 					- sink.Radius(); d >= Radius(); d -= 1) {
 				int x = proj.ToScreenX(Position().x + unit.x * d);
 				int y = proj.ToScreenY(Position().y + unit.y * d);
-				Rectangle r = new Rectangle(x - 1, y - 1, x + 1, y + 1);
-				GBGraphics.fillRect(g, r, tailcolor);
+				g2d.setPaint(tailcolor);
+				g2d.fillRect(x-1, y-1, 2, 2);
 			}
 		}
-		// draw the syphon
-		((Graphics2D) g).setStroke(GBGraphics.dashedStroke(10));
-		GBGraphics.drawLine(g, where.getX(), where.getY(),
-				where.getX() + where.getWidth(),
-				where.getY() + where.getHeight(), Color());
-		// twice?
-		GBGraphics.drawLine(g, where.getX() + where.getWidth(), where.getY(),
-				where.getX(), where.getY() + where.getHeight(), Color());
+		// draw the syphon as a dashed X on the target
+		g2d.setStroke(GBGraphics.dashedStroke(10));
+		g2d.setColor(Color());
+		g2d.drawLine(where.x, where.y, where.x + where.width, where.y
+				+ where.height);
+		g2d.drawLine(where.x + where.width, where.y, where.x, where.y
+				+ where.height);
 	}
 
 }

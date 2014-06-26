@@ -119,6 +119,8 @@ public class Side extends Model implements Comparable<Side> {
 	}
 
 	public void SelectType(RobotType which) {
+		if (selected == null)
+			selected = which;
 		if (!selected.equals(which)) {
 			selected = which;
 			Changed();
