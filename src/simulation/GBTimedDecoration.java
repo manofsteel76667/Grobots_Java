@@ -1,8 +1,9 @@
 package simulation;
 
+import java.awt.Color;
+
 import support.FinePoint;
 import support.GBObjectClass;
-import java.awt.Color;
 
 // GBDecorations.cpp
 // Grobots (c) 2002-2004 Devon and Warren Schudy

@@ -3,10 +3,18 @@ package simulation;
 // GBRobot.cpp
 // Grobots (c) 2002-2007 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
 import sides.GBRobotDecoration;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
+import support.GBColor;
+import support.GBGraphics;
 import support.GBObjectClass;
 import brains.Brain;
 import brains.BrainStatus;
@@ -18,10 +26,6 @@ import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
 import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
-import support.GBColor;
-import support.GBGraphics;
-
-import java.awt.*;
 
 public class GBRobot extends GBObject {
 	RobotType type;
@@ -557,9 +561,10 @@ public class GBRobot extends GBObject {
 		if (where.getWidth() <= 4)
 			g2d.fill(where);
 		else {
-			g2d.fillOval(where.x+where.width/2, where.y+where.height/2, where.height, where.width);
-			//g2d.fillOval(where,
-			//		Owner().Color().Mix(0.5f, type.Color()));
+			g2d.fillOval(where.x + where.width / 2, where.y + where.height / 2,
+					where.height, where.width);
+			// g2d.fillOval(where,
+			// Owner().Color().Mix(0.5f, type.Color()));
 		}
 	}
 

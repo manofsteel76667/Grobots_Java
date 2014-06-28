@@ -9,6 +9,10 @@ package simulation;
  #else
  #define GBWORLD_PROFILING 0
  #endif*/
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -30,9 +34,6 @@ import exception.GBNilPointerError;
 import exception.GBOutOfMemoryError;
 import exception.GBSimulationError;
 import exception.GBTooManyIterationsError;
-
-import java.text.*;
-import java.io.*;
 
 public class GBWorld extends GBObjectWorld {
 	public static final double kRandomMinWallDistance = 2;
@@ -252,7 +253,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public void AdvanceFrame() throws GBAbort, GBNilPointerError,
+	public synchronized void AdvanceFrame() throws GBAbort, GBNilPointerError,
 			GBBadArgumentError, GBTooManyIterationsError, GBSimulationError,
 			GBOutOfMemoryError, GBGenericError {
 		SimulateOneFrame();

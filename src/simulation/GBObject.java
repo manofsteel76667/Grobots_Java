@@ -4,9 +4,9 @@ package simulation;
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.awt.Color;
 
 import sides.Side;
 //Maps FinePoints to screen locations
@@ -60,7 +60,7 @@ public abstract class GBObject {
 
 	public abstract void Act(GBWorld world) throws GBNilPointerError,
 			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError; //Everything can act
+			GBOutOfMemoryError; // Everything can act
 
 	protected void CollideWithWall() {
 	}
@@ -93,19 +93,20 @@ public abstract class GBObject {
 
 	// evil antimodular drawing code
 	public abstract Color Color();
+
 	/**
-	 * Returns a rectangle (approximately) representing the position of the 
-	 * rendered object on the screen. 
+	 * Returns a rectangle (approximately) representing the position of the
+	 * rendered object on the screen.
+	 * 
 	 * @param proj
 	 * @return
 	 */
 	protected Rectangle getScreenRect(GBProjection proj) {
-		int oWidth = (int)Math.max(radius * proj.getScale(),1);
-		return new Rectangle(proj.ToScreenX(position.x) - oWidth/2, 
-				proj.ToScreenY(position.y) - oWidth/2,
-				oWidth,
-				oWidth);
+		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
+		return new Rectangle(proj.ToScreenX(position.x) - oWidth / 2,
+				proj.ToScreenY(position.y) - oWidth / 2, oWidth, oWidth);
 	}
+
 	public abstract void Draw(Graphics g, GBProjection proj, boolean detailed);
 
 	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where,

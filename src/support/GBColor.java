@@ -6,7 +6,7 @@ package support;
 
 import java.awt.Color;
 
-import exception.*;
+import exception.GBDivideByZeroError;
 
 public class GBColor extends java.awt.Color {
 	/**

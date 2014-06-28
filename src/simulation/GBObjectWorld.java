@@ -45,12 +45,13 @@ public class GBObjectWorld extends Model {
 	 * All game objects that are not dead
 	 */
 	protected List<GBObject> allObjects;
+
 	/**
 	 * allObjects sorted by ObjectClass and tile. Each array element represents
 	 * a tile, with the GBObject being the head of a singly-linked list of
 	 * GBObjects within the tile. Use GBObject.next to iterate through it.
 	 */
-	public Map<GBObjectClass, GBObject[]> objects;
+	Map<GBObjectClass, GBObject[]> objects;
 	// protected GBObject[][] objects;
 	protected List<GBObject> news; // Head of a singly-linked list of GBObject
 									// representing new objects to be handled
@@ -108,7 +109,7 @@ public class GBObjectWorld extends Model {
 	 * Clear all object lists except the main one, and reset each object's next
 	 */
 	protected void ClearLists() {
-		MakeTiles();		
+		MakeTiles();
 		for (GBObject obj : allObjects)
 			obj.next = null;
 		allObjects.clear();
@@ -117,6 +118,7 @@ public class GBObjectWorld extends Model {
 
 	/**
 	 * Puts objects in the appropriate class and tile, and deletes dead ones.
+	 * Will wait until rendering is complete before starting sort.
 	 * 
 	 * @throws GBAbort
 	 *             @
@@ -138,6 +140,17 @@ public class GBObjectWorld extends Model {
 				it.remove();
 		}
 		addNewObjects();
+	}
+
+	/**
+	 * Returns a list of the active objects in the world that are of the
+	 * specified type.
+	 * 
+	 * @param type
+	 * @return
+	 */
+	public synchronized GBObject[] getObjects(GBObjectClass type) {
+		return objects.get(type);
 	}
 
 	protected void addNewObjects() {

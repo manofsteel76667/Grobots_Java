@@ -1,12 +1,14 @@
 package simulation;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
 import sides.Side;
 import support.FinePoint;
-import support.GBGraphics;
 import exception.GBBadArgumentError;
 import exception.GBNilPointerError;
-
-import java.awt.*;
 
 public class GBGrenade extends GBTimedShot {
 	// public:

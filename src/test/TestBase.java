@@ -8,11 +8,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import sides.Side;
+import sides.SideReader;
 import exception.GBAbort;
 import exception.GBGenericError;
 import exception.GBIndexOutOfRangeError;
-import sides.Side;
-import sides.SideReader;
 
 public class TestBase {
 	static String[] slotNames = { "chassis", "processor", "engine",

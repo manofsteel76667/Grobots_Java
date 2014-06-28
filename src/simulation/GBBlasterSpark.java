@@ -1,12 +1,11 @@
 package simulation;
 
-import support.FinePoint;
-import support.GBGraphics;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+
+import support.FinePoint;
 
 public class GBBlasterSpark extends GBTimedDecoration {
 	public static final int kBlasterSparkLifetime = 8;
@@ -32,7 +31,7 @@ public class GBBlasterSpark extends GBTimedDecoration {
 
 	@Override
 	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
-		Graphics2D g2d = (Graphics2D)g;
+		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		g2d.setColor(Color());
 		g2d.drawOval(where.x, where.y, where.width, where.height);

@@ -8,7 +8,6 @@ import java.awt.Rectangle;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
-import support.GBGraphics;
 import exception.GBBadArgumentError;
 
 public class GBCorpse extends GBFood {
@@ -56,7 +55,7 @@ public class GBCorpse extends GBFood {
 
 	@Override
 	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
-		Graphics2D g2d = (Graphics2D)g;
+		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		if (detailed && where.getWidth() >= 4) {
 			g2d.setColor(Owner().Color());

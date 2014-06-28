@@ -1,9 +1,9 @@
 package simulation;
 
+import java.awt.Color;
+
 import support.FinePoint;
 import support.GBColor;
-import java.awt.Color;
-import exception.GBBadArgumentError;
 
 public class GBManna extends GBFood {
 	// public:
@@ -20,5 +20,8 @@ public class GBManna extends GBFood {
 	public String toString() {
 		return "Manna (" + value + ')';
 	}
-	public GBColor Color() { return new GBColor(Color.green); }
+
+	public GBColor Color() {
+		return new GBColor(Color.green);
+	}
 }

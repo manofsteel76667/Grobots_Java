@@ -2,11 +2,12 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferStrategy;
 import java.io.File;
 import java.io.IOException;
 
@@ -21,12 +22,10 @@ import sides.Side;
 import sides.SideReader;
 import simulation.GBWorld;
 import views.GBPortal;
-import views.GBRosterView;
 import views.GBPortal.toolTypes;
+import views.GBRosterView;
 import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBNilPointerError;
 
 enum StepRates {
 	slow(10), normal(30), fast(60), unlimited(10000);
@@ -53,6 +52,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public RobotType selectedType;
 	int stepCount;
 	long updateCount;
+	BufferStrategy bs;
+	long prevFrameTime;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new GBApplication());
@@ -61,6 +62,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public GBApplication() {
 		world = new GBWorld();
 		portal = new GBPortal(this);
+		portal.setIgnoreRepaint(true);
 		roster = new GBRosterView(world);
 		stepRate = StepRates.normal;
 		mainMenu = new GBMenu(this);
@@ -75,15 +77,19 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		setVisible(true);
+		createBufferStrategy(2);
+		bs = getBufferStrategy();
 		javax.swing.Timer refreshTimer = new javax.swing.Timer(40,
+		// Repaint the world at 25Hz
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						portal.repaint();
-						portal.setVisible(true);
-						updateCount++;
-						setTitle(String.format("%s: %d Frames, %d updates",
-								"Grobots", world.CurrentFrame(), updateCount));
+						Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+						paint(g);
+						portal.draw(g);
+						bs.show();
+						Toolkit.getDefaultToolkit().sync();
+						g.dispose();
 					}
 				});
 		refreshTimer.setRepeats(true);
@@ -93,36 +99,39 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void run() {
-		Thread newThread = new Thread() {
+		// Create and start a game running thread. The thread stops and
+		// must be recreated whenever world.running() becomes false
+		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
-				while (true) {
-					if (System.currentTimeMillis() > lastTime + 1000L) {
-						lastTime = System.currentTimeMillis();
-						stepCount = 0;
-					}
-					if (stepRate == StepRates.unlimited)
-						stepCount = 0;
-					try {
-						// If we haven't hit the frame rate limit this second
-						// yet,
-						// run 1 frame.
-						if (world.running && (stepRate.value > stepCount)) {
-							world.AdvanceFrame();
-							++stepCount;
-						}
-					} catch (GBError err) {
+				while (world.running) {
+					long frameRate = 1000000000L / stepRate.value; // nanoseconds
+																	// per
+																	// frame
+
+					if (System.nanoTime() > prevFrameTime + frameRate) {
 						try {
-							GBError.NonfatalError("Error simulating: "
-									+ err.toString());
-						} catch (GBAbort e) {
-							// Retry
+							world.AdvanceFrame();
+							prevFrameTime = System.nanoTime();
+						} catch (GBError err) {
+							try {
+								GBError.NonfatalError("Error simulating: "
+										+ err.toString());
+							} catch (GBAbort e) {
+								// Retry
+							}
 						}
-					}
+					} else
+						try {
+							// Sleep until next time
+							Thread.sleep((prevFrameTime + frameRate - System
+									.nanoTime()) / 1000000);
+						} catch (InterruptedException e) {
+						}
 				}
 			}
 		};
-		newThread.start();
+		gameThread.start();
 	}
 
 	void enableMenuItem(MenuItems item) {
@@ -217,6 +226,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					world.AddSeeds();
 					world.running = true;
+					run();
 					break;
 				case nextPage:
 					break;
@@ -256,7 +266,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case run:
 					world.running = true;
-					lastTime = System.currentTimeMillis();
+					run();
 					break;
 				case saveScores:
 					world.DumpTournamentScores(true);

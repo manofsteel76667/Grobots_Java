@@ -3,6 +3,7 @@ package simulation;
 // GBShot.cpp
 // Grobots (c) 2002-2007 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
+import java.awt.Color;
 import java.awt.Graphics;
 
 import sides.Side;
@@ -10,7 +11,6 @@ import support.FinePoint;
 import support.GBObjectClass;
 import exception.GBBadArgumentError;
 import exception.GBNilPointerError;
-import java.awt.Color;
 
 public abstract class GBShot extends GBObject {
 	// protected:

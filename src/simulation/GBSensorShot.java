@@ -3,13 +3,16 @@ package simulation;
 // GBSensorShot.cpp
 // Grobots (c) 2002-2004 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
+import java.awt.BasicStroke;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
 import support.GBGraphics;
 import support.GBObjectClass;
-
-import java.awt.*;
 
 class GBSensorShot extends GBObject {
 	GBRobot owner;
@@ -109,7 +112,7 @@ class GBSensorShot extends GBObject {
 	@Override
 	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		// show focus, owner, and side?
-		Graphics2D g2d = (Graphics2D)g;
+		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		g2d.setColor(Color());
 		g2d.setStroke(new BasicStroke(1));

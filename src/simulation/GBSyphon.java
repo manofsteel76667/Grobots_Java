@@ -1,6 +1,8 @@
 package simulation;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 import support.FinePoint;
 import support.GBColor;
@@ -123,8 +125,8 @@ public class GBSyphon extends GBTimedShot {
 		Rectangle where = getScreenRect(proj);
 		g2d.setPaint(Color());
 		// draw tail showing origin, rate and whether it's working
-		//Dashed line whose dashes move in the direction of energy
-		//transfer over time
+		// Dashed line whose dashes move in the direction of energy
+		// transfer over time
 		if (detailed) {
 			GBColor tailcolor = Owner().Color().multiply(
 					creator.Syphoned() != 0 ? 0.8f : 0.4f);
@@ -135,7 +137,7 @@ public class GBSyphon extends GBTimedShot {
 				int x = proj.ToScreenX(Position().x + unit.x * d);
 				int y = proj.ToScreenY(Position().y + unit.y * d);
 				g2d.setPaint(tailcolor);
-				g2d.fillRect(x-1, y-1, 2, 2);
+				g2d.fillRect(x - 1, y - 1, 2, 2);
 			}
 		}
 		// draw the syphon as a dashed X on the target

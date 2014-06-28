@@ -5,31 +5,18 @@
 package views;
 
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
+import java.awt.image.BufferStrategy;
 
-import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 
-import brains.GBBadSymbolIndexError;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 import sides.RobotType;
 import sides.Side;
 import simulation.GBBlast;
@@ -48,6 +35,12 @@ import support.GBMath;
 import support.GBObjectClass;
 import support.GBRandomState;
 import ui.GBApplication;
+import brains.GBBadSymbolIndexError;
+import exception.GBAbort;
+import exception.GBGenericError;
+import exception.GBIndexOutOfRangeError;
+import exception.GBNilPointerError;
+import exception.GBOutOfMemoryError;
 
 public class GBPortal extends JPanel implements GBProjection {
 	/**
@@ -92,6 +85,8 @@ public class GBPortal extends JPanel implements GBProjection {
 	public boolean showDetails;
 	public boolean showSideNames;
 	// Drawing panels
+	BufferStrategy bs;
+	public long updates;
 
 	public static final int kScale = 8; // default number of pixels per unit.
 	public static final int kMinDetailsScale = 10;
@@ -209,10 +204,11 @@ public class GBPortal extends JPanel implements GBProjection {
 		return new Dimension(800, 600);
 	}
 
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
+	// @Override
+	// public void paintComponent(Graphics g) {
+	public void draw(Graphics g) {
 		// Set colors for grid lines
+		// super.paintComponent(g);
 		GBColor fineColor = new GBColor(Math.min(0.4f + 0.04f * scale / kScale,
 				0.15f + 0.25f * scale / kScale));
 		int coarseThickness = 1 + scale / 20;
@@ -236,31 +232,32 @@ public class GBPortal extends JPanel implements GBProjection {
 						GBObjectWorld.kBackgroundTileSize * scale,
 						GBObjectWorld.kBackgroundTileSize * scale); // Tile
 				g2d.setColor(Color.black);
-				g2d.fill(tile); // Fine grid
+				g2d.fill(tile); // Tiles
 				g2d.setStroke(new BasicStroke(coarseThickness));
-				g2d.setColor(fineColor);
+				g2d.setColor(coarseColor);
 				g2d.draw(tile); // Coarse grid }
 			}
 		// Draw all living objects in the game
-		for (GBObject spot : world.objects.get(GBObjectClass.ocFood))
+		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
-		for (GBObject spot : world.objects.get(GBObjectClass.ocArea))
+				ob.Draw(g2d, this, this.showDetails);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocArea))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
+				ob.Draw(g2d, this, this.showDetails);
 		if (this.showSensors)
-		for (GBObject spot : world.objects.get(GBObjectClass.ocSensorShot))
+			for (GBObject spot : world.getObjects(GBObjectClass.ocSensorShot))
+				for (GBObject ob = spot; ob != null; ob = ob.next)
+					ob.Draw(g2d, this, this.showDetails);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocShot))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
-		for (GBObject spot : world.objects.get(GBObjectClass.ocShot))
+				ob.Draw(g2d, this, this.showDetails);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
-		for (GBObject spot : world.objects.get(GBObjectClass.ocRobot))
+				ob.Draw(g2d, this, this.showDetails);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocDecoration))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
-		for (GBObject spot : world.objects.get(GBObjectClass.ocDecoration))
-			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g, this, this.showDetails);
+				ob.Draw(g2d, this, this.showDetails);
+		updates++;
 	}
 
 	void DrawObjects() throws GBIndexOutOfRangeError {

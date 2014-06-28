@@ -1,24 +1,20 @@
 package ui;
 
-import java.awt.Cursor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.KeyStroke;
 
-import exception.GBAbort;
-import exception.GBError;
-import sides.Side;
-import sides.SideReader;
 import simulation.GBWorld;
-import views.GBPortal.toolTypes;
-
 
 /* @formatter:off */
 enum MenuItems {
@@ -191,7 +187,7 @@ class GBMenu extends JMenuBar {
 			if (menuButtons.containsKey(mi))
 				menuButtons.get(mi).addActionListener(app);
 	}
-	
+
 	void buildButtonGroups() {
 		speedControls = new ButtonGroup();
 		speedControls.add(menuButtons.get(MenuItems.slow));
@@ -400,4 +396,4 @@ class GBMenu extends JMenuBar {
 		this.add(ret);
 	}
 
-	}
+}

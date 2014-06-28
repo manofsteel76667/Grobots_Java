@@ -4,6 +4,8 @@
 
 package sides;
 
+import java.awt.Color;
+
 import support.GBColor;
 import brains.Brain;
 import brains.BrainSpec;
@@ -39,6 +41,8 @@ public class RobotType extends support.Model {
 		/*
 		 * id(0), name(), decoration(rdNone), decorationColor(GBColor::black),
 		 */
+		decoration = GBRobotDecoration.none;
+		decorationColor = new GBColor(Color.black);
 		color = new GBColor();
 		// if (!debug)
 		// hardware = new HardwareSpec();
@@ -54,7 +58,7 @@ public class RobotType extends support.Model {
 		RobotType type = new RobotType(side);
 		type.name = name;
 		type.SetColor(color);
-		// type.SetDecoration(decoration, decorationColor);
+		type.SetDecoration(decoration, decorationColor);
 		type.hardware = hardware;
 		type.brain = brain.clone();
 		return type;

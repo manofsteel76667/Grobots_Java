@@ -19,6 +19,6 @@ public interface GBProjection {
 	public double FromScreenY(int v);
 
 	public FinePoint FromScreen(int x, int y);
-	
+
 	public int getScale();
 }
