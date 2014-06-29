@@ -38,19 +38,10 @@ public class RobotType extends support.Model {
 	public RobotType(Side owner) {
 		side = owner;
 		debug = owner.debug;
-		/*
-		 * id(0), name(), decoration(rdNone), decorationColor(GBColor::black),
-		 */
 		decoration = GBRobotDecoration.none;
 		decorationColor = new GBColor(Color.black);
 		color = new GBColor();
-		// if (!debug)
-		// hardware = new HardwareSpec();
-		// else
 		hardware = new HardwareSpec(debug);
-		/*
-		 * brain(null), population(0), biomass(0)
-		 */
 	}
 
 	@Override

@@ -38,7 +38,7 @@ import exception.GBTooManyIterationsError;
 public class GBWorld extends GBObjectWorld {
 	public static final double kRandomMinWallDistance = 2;
 	List<Side> sides;
-	Side selectedSide;
+	Side _selectedSide;
 	int currentFrame;
 	int previousSidesAlive; // num of non-extinct sides last frame
 	int sidesSeeded;
@@ -498,16 +498,16 @@ public class GBWorld extends GBObjectWorld {
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
 		sides.add(pos, newSide);
-		if (oldSide == selectedSide)
-			selectedSide = newSide;
+		//if (oldSide == selectedSide)
+		//	selectedSide = newSide;
 		Changed();
 	}
 
 	public void RemoveSide(Side side) throws GBNilPointerError {
 		if (side == null)
 			throw new GBNilPointerError();
-		if (side == selectedSide)
-			selectedSide = null;
+		//if (side == selectedSide)
+		//	selectedSide = null;
 		sides.remove(side);
 		Changed();
 	}
@@ -516,7 +516,7 @@ public class GBWorld extends GBObjectWorld {
 		// for (int i = 0; i < sides.size(); ++ i )
 		// delete sides.get(i);
 		sides.clear();
-		selectedSide = null;
+		//selectedSide = null;
 		ResetTournamentScores();
 		Changed();
 	}
@@ -529,17 +529,6 @@ public class GBWorld extends GBObjectWorld {
 		if (index <= 0 || index > sides.size())
 			throw new GBIndexOutOfRangeError();
 		return sides.get(index - 1);
-	}
-
-	public Side SelectedSide() {
-		return selectedSide;
-	}
-
-	public void SelectSide(Side which) {
-		if (selectedSide != which) {
-			selectedSide = which;
-			Changed();
-		}
 	}
 
 	public int CountSides() {
@@ -729,18 +718,18 @@ public class GBWorld extends GBObjectWorld {
 		return tournamentScores;
 	}
 
-	public void Follow(GBObject ob) {
+	public void _Follow(GBObject ob) {
 		followed = ob;
 		if (ob.Class() == GBObjectClass.ocRobot) {
 			GBRobot bot = (GBRobot) ob;
 			if (bot != null) {
 				bot.Owner().SelectType(bot.Type());
-				SelectSide(bot.Owner());
+				//SelectSide(bot.Owner());
 			}
 		}
 	}
 
-	public GBObject Followed() {
+	public GBObject _Followed() {
 		return followed;
 	}
 

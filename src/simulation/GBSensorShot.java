@@ -11,7 +11,6 @@ import java.awt.Rectangle;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
-import support.GBGraphics;
 import support.GBObjectClass;
 
 class GBSensorShot extends GBObject {
@@ -121,7 +120,7 @@ class GBSensorShot extends GBObject {
 
 	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
-		GBGraphics.drawOval(g, where, Color());
+		//GBGraphics.drawOval(g, where, Color());
 	}
 
 };

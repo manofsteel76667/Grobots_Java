@@ -7,6 +7,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 
 import sides.GBRobotDecoration;
@@ -14,7 +15,6 @@ import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
-import support.GBGraphics;
 import support.GBObjectClass;
 import brains.Brain;
 import brains.BrainStatus;
@@ -355,14 +355,20 @@ public class GBRobot extends GBObject {
 	static void DrawMeter(Graphics g, double fraction, Rectangle where,
 			int zeroAngle, int oneAngle, int width, GBColor color1,
 			GBColor color2, GBColor bgcolor, boolean pulse) {
+		Graphics2D g2d = (Graphics2D) g;
 		GBColor color = bgcolor.ChooseContrasting(color1, color2,
 				kMinMeterContrast);
 		int angle = (int) Math.ceil(fraction * (oneAngle - zeroAngle));
 		float phase = System.currentTimeMillis() * 6.28f / 500;
-		GBGraphics.drawArc(g, where, zeroAngle + (angle < 0 ? angle : 0), Math
-				.abs(angle), color
-				.multiply(pulse ? 0.85f + 0.15f * (float) Math.sin(phase)
-						: 1.0f), width);
+		/*
+		 * GBGraphics.drawArc(g, where, zeroAngle + (angle < 0 ? angle : 0),
+		 * Math .abs(angle), color .multiply(pulse ? 0.85f + 0.15f * (float)
+		 * Math.sin(phase) : 1.0f), width);
+		 */
+		g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
+				.sin(phase) : 1.0f));
+		g2d.drawArc(where.x, where.y, where.width, where.height, zeroAngle,
+				angle);
 
 	}
 
@@ -372,11 +378,11 @@ public class GBRobot extends GBObject {
 		// halo: crashes, prints
 		Rectangle halo = new Rectangle(where);
 		halo.grow(3, 3);
-		if (brain != null)
-			if (brain.status != BrainStatus.bsOK)
-				GBGraphics.fillOval(g, halo,
-						brain.status == BrainStatus.bsStopped ? Color.yellow
-								: Color.red);
+		/*
+		 * if (brain != null) if (brain.status != BrainStatus.bsOK)
+		 * GBGraphics.fillOval(g, halo, brain.status == BrainStatus.bsStopped ?
+		 * Color.yellow : Color.red);
+		 */
 		// velocity and engine-velocity
 		if (Velocity().isNonzero())
 			DrawShadow(g, proj, Velocity().multiply(-2.5),
@@ -390,14 +396,56 @@ public class GBRobot extends GBObject {
 								Radius() + hardware.EnginePower()
 										/ Math.sqrt(Mass()) * 30));
 				((Graphics2D) g).setStroke(new BasicStroke(2));
-				GBGraphics.drawLine(g, proj.ToScreenX(Position().x),
-						proj.ToScreenY(Position().y), proj.ToScreenX(head.x),
-						proj.ToScreenY(head.y), Color.GREEN);
+				/*
+				 * GBGraphics.drawLine(g, proj.ToScreenX(Position().x),
+				 * proj.ToScreenY(Position().y), proj.ToScreenX(head.x),
+				 * proj.ToScreenY(head.y), Color.GREEN);
+				 */
 				DrawShadow(g, proj, dv.unit().multiply(hardware.EnginePower())
 						.divide(Mass()).multiply(-30), Color.GREEN);
 			}
 		}
 		// weapon ranges? //sensor results?
+	}
+	/**
+	 * Moved from GBPortal
+	 * @param g
+	 * @param proj
+	 */
+	public void drawRangeCircles(Graphics g, GBProjection proj){
+		Point center = new Point(proj.ToScreenX(position.x),
+				proj.ToScreenY(position.y));
+		Graphics2D g2d = (Graphics2D)g;
+		if (hardware.blaster.MaxRange() > 0){
+			g2d.setColor(new GBColor(Color.magenta).multiply(0.5f));
+			g2d.drawOval(center.x,  center.y,  
+					(int)(radius +hardware.blaster.MaxRange()) * proj.getScale(), 
+					(int)(radius +hardware.blaster.MaxRange()) * proj.getScale());
+		}
+		if (hardware.grenades.MaxRange() > 0){
+			g2d.setColor(new GBColor(Color.yellow).multiply(0.5f));
+			g2d.drawOval(center.x,  center.y,  
+					(int)(radius +hardware.grenades.MaxRange()) * proj.getScale(), 
+					(int)(radius +hardware.grenades.MaxRange()) * proj.getScale());
+		}
+		if (hardware.syphon.MaxRate() > 0){
+			g2d.setColor(new GBColor(0.25f, 0.4f, 0.5f));
+			g2d.drawOval(center.x,  center.y,  
+					(int)(radius +hardware.syphon.MaxRate()) * proj.getScale(), 
+					(int)(radius +hardware.syphon.MaxRate()) * proj.getScale());
+		}
+		if (hardware.enemySyphon.MaxRate() > 0){
+			g2d.setColor(new GBColor(0.3f, 0.5f, 0));
+			g2d.drawOval(center.x,  center.y,  
+					(int)(radius +hardware.enemySyphon.MaxRate()) * proj.getScale(), 
+					(int)(radius +hardware.enemySyphon.MaxRate()) * proj.getScale());
+		}
+		if (hardware.forceField.MaxRange() > 0){
+			g2d.setColor(new GBColor(0,	0.4f, 0.5f));
+			g2d.drawOval(center.x,  center.y,  
+					(int)(radius +hardware.forceField.MaxRange()) * proj.getScale(), 
+					(int)(radius +hardware.forceField.MaxRange()) * proj.getScale());
+		}
 	}
 
 	@Override
@@ -445,9 +493,9 @@ public class GBRobot extends GBObject {
 														// else 1
 		g2d.setStroke(new BasicStroke(thickness));
 		Rectangle dec = new Rectangle(
-				(int) (where.getCenterX() - where.getWidth() / 3),
-				(int) (where.getCenterY() - where.getHeight() / 3),
-				where.width * 2 / 3, where.height * 2 / 3);
+				(int) (where.getCenterX() - where.getWidth() / 4),
+				(int) (where.getCenterY() - where.getHeight() / 4),
+				where.width / 2, where.height / 2);
 		int dx = (where.width / 4);
 		int dy = (where.height / 4);
 		// cross, hline, and vline draw in bigDec instead of dec
@@ -475,8 +523,8 @@ public class GBRobot extends GBObject {
 				break;
 			// if we're flashing, fall through and draw a dot
 		case dot:
-			g2d.fillOval((int) where.getCenterX() - thickness,
-					(int) where.getCenterY() - thickness, thickness * 2,
+			g2d.fillOval((int) dec.getCenterX() - thickness,
+					(int) dec.getCenterY() - thickness, thickness * 2,
 					thickness * 2);
 			break;
 		case circle:
@@ -495,22 +543,22 @@ public class GBRobot extends GBObject {
 					+ dec.height);
 			break;
 		case cross:
-			g2d.drawLine((int) where.getCenterX(), bigDec.y,
-					(int) where.getCenterX(), bigDec.y + bigDec.height);
-			g2d.drawLine(bigDec.x, (int) where.getCenterY(), bigDec.x
-					+ dec.width, (int) where.getCenterY());
+			g2d.drawLine(dec.x, (int)dec.getCenterY(),
+					dec.x + dec.width, (int)dec.getCenterY());
+			g2d.drawLine((int)dec.getCenterX(), dec.y, 
+					(int)dec.getCenterX(), dec.y + dec.height);
 			break;
 		case x:
 			g2d.drawLine(dec.x, dec.y, dec.x + dec.width, dec.y + dec.height);
 			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
 			break;
 		case hline:
-			g2d.drawLine(bigDec.x, (int) where.getCenterY(), bigDec.x
-					+ bigDec.width, (int) where.getCenterY());
+			g2d.drawLine(bigDec.x, (int) dec.getCenterY(), bigDec.x
+					+ bigDec.width, (int) dec.getCenterY());
 			break;
 		case vline:
-			g2d.drawLine((int) where.getCenterX(), bigDec.y,
-					(int) where.getCenterX(), bigDec.y + bigDec.height);
+			g2d.drawLine((int) dec.getCenterX(), bigDec.y,
+					(int) dec.getCenterX(), bigDec.y + bigDec.height);
 			break;
 		case slash:
 			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
@@ -528,12 +576,11 @@ public class GBRobot extends GBObject {
 		if (hardware.ActualShield() > 0) {
 			Rectangle halo = new Rectangle(where);
 			halo.grow(2, 2);
-			GBGraphics
-					.drawOval(
-							g,
-							halo,
-							new GBColor(0.3f, 0.5f, 1)
-									.multiply((float) (hardware.ActualShield() / (mass * kStandardShieldPerMass))));
+			/*
+			 * GBGraphics .drawOval( g, halo, new GBColor(0.3f, 0.5f, 1)
+			 * .multiply((float) (hardware.ActualShield() / (mass *
+			 * kStandardShieldPerMass))));
+			 */
 		}
 		// radio rings
 		for (int age = 0; age < GBRadioState.kRadioHistory; ++age) {
@@ -548,9 +595,11 @@ public class GBRobot extends GBObject {
 			float intensity = Math.min(2.0f
 					* (GBRadioState.kRadioHistory - age)
 					/ GBRadioState.kRadioHistory, 1.0f);
-			GBGraphics.drawOval(g, ring,
-					(hardware.radio.sent[age] != 0 ? new GBColor(0.6f, 0.5f, 1)
-							: new GBColor(1, 0.8f, 0.5f)).multiply(intensity));
+			/*
+			 * GBGraphics.drawOval(g, ring, (hardware.radio.sent[age] != 0 ? new
+			 * GBColor(0.6f, 0.5f, 1) : new GBColor(1, 0.8f,
+			 * 0.5f)).multiply(intensity));
+			 */
 		}
 	}
 

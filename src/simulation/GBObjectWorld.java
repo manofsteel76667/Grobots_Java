@@ -634,7 +634,6 @@ public class GBObjectWorld extends Model {
 	}
 
 	public GBObject RandomInterestingObject() {
-		// try {
 		double totalInterest = 0;
 		for (GBObject ob : allObjects)
 			totalInterest += ob.Interest();
@@ -646,10 +645,6 @@ public class GBObjectWorld extends Model {
 				return ob;
 			totalInterest -= interest;
 		}
-		// } catch ( GBError err ) {
-		// GBError.NonfatalError("Error in RandomInterestingObject: " +
-		// err.toString());
-		// }
 		return null;
 	}
 

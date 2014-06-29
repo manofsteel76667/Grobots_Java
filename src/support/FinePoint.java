@@ -10,8 +10,6 @@ public class FinePoint {
 	 * vectors throughout the program
 	 */
 
-	// typedef FinePoint GBVector;
-
 	// implementation //
 	public double x;
 	public double y;

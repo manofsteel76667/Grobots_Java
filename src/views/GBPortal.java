@@ -7,13 +7,14 @@ package views;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferStrategy;
 
 import javax.swing.JPanel;
 
@@ -30,7 +31,6 @@ import simulation.GBRobot;
 import simulation.GBWorld;
 import support.FinePoint;
 import support.GBColor;
-import support.GBGraphics;
 import support.GBMath;
 import support.GBObjectClass;
 import support.GBRandomState;
@@ -66,10 +66,24 @@ public class GBPortal extends JPanel implements GBProjection {
 	GBApplication app;
 	GBWorld world;
 	FinePoint viewpoint;
-	public int scale; // pixels per unit
-	boolean following;
+	/**
+	 * Screen pixels per game map unit
+	 */
+	public int scale;
+	/* Variables to control camera and viewpoint */
+	public boolean following;
+	/**
+	 * When true, the camera will periodically pick a new object to follow,
+	 * panning through various objects at random
+	 */
+	public boolean autofollow;
+	/**
+	 * Difference between viewpoint and position of the followed object
+	 */
 	FinePoint followPosition;
 	long lastFollow;
+	GBObject followedObject;
+
 	GBObject moving;
 	long worldChanges;
 	long selfChanges;
@@ -78,17 +92,14 @@ public class GBPortal extends JPanel implements GBProjection {
 	FinePoint lastClick;
 	int lastFrame; // when last tool effect was
 	// public:
-	public boolean autofollow;
+
 	public toolTypes currentTool;
 	public boolean showSensors;
 	public boolean showDecorations;
 	public boolean showDetails;
 	public boolean showSideNames;
-	// Drawing panels
-	BufferStrategy bs;
-	public long updates;
 
-	public static final int kScale = 8; // default number of pixels per unit.
+	public static final int kScale = 16; // default number of pixels per unit.
 	public static final int kMinDetailsScale = 10;
 	public static final double kAutoScrollSpeed = 0.4;
 	public static final double kFollowSpeed = 0.5;
@@ -110,7 +121,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	public static final double kEraseBigRadius = 2;
 
 	public GBPortal(GBApplication _app) {
-		super();
+		super(true);
 		app = _app;
 		world = _app.world;
 		viewpoint = new FinePoint(app.world.Size().divide(2));
@@ -140,12 +151,11 @@ public class GBPortal extends JPanel implements GBProjection {
 
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
-				// Follow object on double-click
-				if (arg0.getClickCount() != 0
+				// Follow object on click
+				if (arg0.getClickCount() > 0
 						&& currentTool == toolTypes.ptScroll)
-					Follow(world
-							.ObjectNear(FromScreen(arg0.getX(), arg0.getY()),
-									false /* showSensors */));
+					Follow(world.ObjectNear(
+							FromScreen(arg0.getX(), arg0.getY()), false));
 			}
 
 			@Override
@@ -185,18 +195,29 @@ public class GBPortal extends JPanel implements GBProjection {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent arg0) {
 				// Zoom with mouse wheel
+				// Zoom on the spot the mouse is on so it stays in the same
+				// screen position. Not perfect but pretty good.
 				int notches = arg0.getWheelRotation();
 				if (notches == 0)
 					return;
+				int originalScale = scale;
+				FinePoint zoomPosition = FromScreen(arg0.getPoint().x,
+						arg0.getPoint().y);
+				FinePoint dp = zoomPosition.subtract(viewpoint);
 				int dir = (int) (notches / Math.abs(notches));
 				doZoom(dir * -1);
+				viewpoint = new FinePoint(zoomPosition.x - dp.x / scale
+						* originalScale, zoomPosition.y - dp.y / scale
+						* originalScale);
 			}
 		};
 		addMouseListener(ma);
 		addMouseMotionListener(ma);
 		addMouseWheelListener(ma);
+		// Rather than determining the edges of the map and painting a wall,
+		// we will make the background wall-colored and paint over it
+		// with tiles.
 		setBackground(Color.LIGHT_GRAY);
-		this.setIgnoreRepaint(false);
 	}
 
 	@Override
@@ -204,16 +225,51 @@ public class GBPortal extends JPanel implements GBProjection {
 		return new Dimension(800, 600);
 	}
 
-	// @Override
-	// public void paintComponent(Graphics g) {
-	public void draw(Graphics g) {
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		draw(g);
+	}
+
+	void draw(Graphics g) {
+		// If the object you're following dies, handle it
+		if (followedObject != null)
+			if (followedObject.Class() == GBObjectClass.ocDead) {
+				followedObject = null;
+				following = false;
+			}
+		// Set viewpoint to followed object, if following
+		if (following) {
+			if (autofollow
+					&& (System.currentTimeMillis() > lastFollow
+							+ kAutofollowPeriod) || followedObject == null) {
+				FollowRandom();
+				if (followedObject != null)
+					viewpoint.set(followedObject.Position());
+				lastFollow = System.currentTimeMillis();
+			}
+			if (followedObject != null) {
+				if (panning())
+					if (!viewpoint.inRange(followedObject.Position(),
+							16.0d / scale)) {
+						FinePoint distance = followedObject.Position()
+								.subtract(viewpoint);
+						distance.setNorm(16.0d / scale);
+						viewpoint = viewpoint.add(distance);
+					} else
+						viewpoint.set(followedObject.Position());
+				else
+					viewpoint.set(followedObject.Position());
+			}
+		}
+		RestrictScrolling();
 		// Set colors for grid lines
-		// super.paintComponent(g);
 		GBColor fineColor = new GBColor(Math.min(0.4f + 0.04f * scale / kScale,
 				0.15f + 0.25f * scale / kScale));
 		int coarseThickness = 1 + scale / 20;
 		GBColor coarseColor = new GBColor(0.4f + 0.4f * scale / kScale);
 		Graphics2D g2d = (Graphics2D) g;
+		// Draw visible tiles
 		int minTileX = (int) Math.max(
 				Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
 		int minTileY = (int) Math
@@ -230,95 +286,87 @@ public class GBPortal extends JPanel implements GBProjection {
 						ToScreenX(GBObjectWorld.kBackgroundTileSize * xi),
 						ToScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
 						GBObjectWorld.kBackgroundTileSize * scale,
-						GBObjectWorld.kBackgroundTileSize * scale); // Tile
+						GBObjectWorld.kBackgroundTileSize * scale);
+				// Tile
 				g2d.setColor(Color.black);
-				g2d.fill(tile); // Tiles
+				g2d.fill(tile);
+				// Fine Grid
+				g2d.setColor(fineColor);
+				g2d.setStroke(new BasicStroke(1));
+				for (int yf = tile.y; yf < tile.y
+						+ GBObjectWorld.kForegroundTileSize * scale; yf += scale)
+					for (int xf = tile.x; xf < tile.x
+							+ GBObjectWorld.kForegroundTileSize * scale; xf += scale) {
+						g2d.drawLine(tile.x, yf, tile.x + tile.width, yf);
+						g2d.drawLine(xf, tile.y, xf, tile.y + tile.height);
+					}
+				// Coarse grid
 				g2d.setStroke(new BasicStroke(coarseThickness));
 				g2d.setColor(coarseColor);
-				g2d.draw(tile); // Coarse grid }
+				g2d.draw(tile);
 			}
 		// Draw all living objects in the game
+		// Draws everything even if it isn't on the screen.  This
+		// could probably be improved
+		boolean detailed = showDetails && scale >= kMinDetailsScale;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g2d, this, this.showDetails);
+				ob.Draw(g2d, this, detailed);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
+			for (GBObject ob = spot; ob != null; ob = ob.next)
+				ob.Draw(g2d, this, detailed);
 		for (GBObject spot : world.getObjects(GBObjectClass.ocArea))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g2d, this, this.showDetails);
+				ob.Draw(g2d, this, detailed);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocShot))
+			for (GBObject ob = spot; ob != null; ob = ob.next)
+				ob.Draw(g2d, this, detailed);
+		if (this.showDecorations)
+			for (GBObject spot : world.getObjects(GBObjectClass.ocDecoration))
+				for (GBObject ob = spot; ob != null; ob = ob.next)
+					ob.Draw(g2d, this, detailed);
 		if (this.showSensors)
 			for (GBObject spot : world.getObjects(GBObjectClass.ocSensorShot))
 				for (GBObject ob = spot; ob != null; ob = ob.next)
-					ob.Draw(g2d, this, this.showDetails);
-		for (GBObject spot : world.getObjects(GBObjectClass.ocShot))
-			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g2d, this, this.showDetails);
-		for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
-			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g2d, this, this.showDetails);
-		for (GBObject spot : world.getObjects(GBObjectClass.ocDecoration))
-			for (GBObject ob = spot; ob != null; ob = ob.next)
-				ob.Draw(g2d, this, this.showDetails);
-		updates++;
-	}
-
-	void DrawObjects() throws GBIndexOutOfRangeError {
-		int minTileX = (int) Math.max(Math.floor(viewLeft()
-				/ GBObjectWorld.kForegroundTileSize - 0.5), 0L);
-		int minTileY = (int) Math.max(
-				Math.floor(viewBottom() / GBObjectWorld.kForegroundTileSize
-						- 0.5), 0L);
-		int maxTileX = (int) Math.min(Math.ceil(viewRight()
-				/ GBObjectWorld.kForegroundTileSize + 0.5), world
-				.ForegroundTilesX() - 1);
-		int maxTileY = (int) Math.min(
-				Math.ceil(viewTop() / GBObjectWorld.kForegroundTileSize + 0.5),
-				world.ForegroundTilesY() - 1);
-		int yi, xi;
-		for (yi = minTileY; yi <= maxTileY; yi++)
-			for (xi = minTileX; xi <= maxTileX; xi++)
-				DrawObjectList(world.GetObjects(xi, yi, GBObjectClass.ocFood));
-		DrawObjectList(world.GetLargeObjects(GBObjectClass.ocFood));
-		for (yi = minTileY; yi <= maxTileY; yi++)
-			for (xi = minTileX; xi <= maxTileX; xi++)
-				DrawObjectList(world.GetObjects(xi, yi, GBObjectClass.ocRobot));
-		DrawObjectList(world.GetLargeObjects(GBObjectClass.ocRobot));
-		for (yi = minTileY; yi <= maxTileY; yi++)
-			for (xi = minTileX; xi <= maxTileX; xi++)
-				DrawObjectList(world.GetObjects(xi, yi, GBObjectClass.ocArea));
-		DrawObjectList(world.GetLargeObjects(GBObjectClass.ocArea));
-		for (yi = minTileY; yi <= maxTileY; yi++)
-			for (xi = minTileX; xi <= maxTileX; xi++)
-				DrawObjectList(world.GetObjects(xi, yi, GBObjectClass.ocShot));
-		DrawObjectList(world.GetLargeObjects(GBObjectClass.ocShot));
-		if (showDecorations) {
-			for (yi = minTileY; yi <= maxTileY; yi++)
-				for (xi = minTileX; xi <= maxTileX; xi++)
-					DrawObjectList(world.GetObjects(xi, yi,
-							GBObjectClass.ocDecoration));
-			DrawObjectList(world.GetLargeObjects(GBObjectClass.ocDecoration));
-		}
-		if (showSensors) {
-			for (yi = minTileY; yi <= maxTileY; yi++)
-				for (xi = minTileX; xi <= maxTileX; xi++)
-					DrawObjectList(world.GetObjects(xi, yi,
-							GBObjectClass.ocSensorShot));
-			DrawObjectList(world.GetLargeObjects(GBObjectClass.ocSensorShot));
-		}
-	}
-
-	void DrawObjectList(GBObject list) {
-		for (GBObject cur = list; cur != null; cur = cur.next) {
-			int diameter = (int) Math.round(Math.max(cur.Radius() * 2 * scale,
-					1));
-			Rectangle where = new Rectangle();
-			where.x = ToScreenX(cur.Left());
-			where.y = ToScreenY(cur.Top());
-			where.height = diameter;
-			where.width = diameter;
-			if (where.height > 0 && where.x < getWidth() && where.width > 0
-					&& where.y < getHeight()) {
-				cur.Draw(getGraphics(), this, showDetails
-						&& scale >= kMinDetailsScale);
+					ob.Draw(g2d, this, detailed);
+		// Details about the followed object
+		if (followedObject != null) {
+			FinePoint targetPos = followedObject.Position();
+			Font textFont = new Font("Serif", Font.PLAIN, 10);
+			g2d.setFont(textFont);
+			g2d.setColor(Color.white);
+			FontMetrics fm = g.getFontMetrics();
+			String s = followedObject.toString();
+			// Center the name below the object
+			int x = ToScreenX(targetPos.x) - fm.stringWidth(s) / 2;
+			int texty = ToScreenY(targetPos.y
+					- (followedObject.Radius() > 2 ? 0 : followedObject
+							.Radius())) + 13;
+			g2d.drawString(s, x, texty);
+			String details = followedObject.Details();
+			// Details go below that
+			if (details.length() > 0){
+				x = ToScreenX(targetPos.x) - fm.stringWidth(details) / 2;
+				g2d.drawString(details, x, texty + 10);
 			}
+			// Draw range circles if following a robot
+			if (followedObject.Class() == GBObjectClass.ocRobot)
+				((GBRobot) followedObject).drawRangeCircles(g2d, this);
+		}
+		// Side names
+		if (showSideNames) {
+			for (Side side : world.Sides())
+				if (side.Scores().Seeded() != 0) {
+					Font textFont = new Font("Serif", Font.PLAIN, 10);
+					g2d.setFont(textFont);
+					FontMetrics fm = g.getFontMetrics();
+					int tx = ToScreenX(side.center.x)
+							- fm.stringWidth(side.Name()) / 2;
+					int ty = ToScreenY(side.center.y);
+					g2d.setColor(side.Scores().sterile != 0 ? GBColor.gray
+							: GBColor.white);
+					g2d.drawString(side.Name(), tx, ty);
+				}
 		}
 	}
 
@@ -367,8 +415,8 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	void ScrollToFollowed() {
-		if (world.Followed() != null) {
-			followPosition = world.Followed().Position();
+		if (followedObject != null) {
+			followPosition = followedObject.Position().subtract(viewpoint);
 			// viewpoint += world.Followed().Velocity();
 		}
 		// User doesn't want to see what's off the edge.
@@ -388,8 +436,8 @@ public class GBPortal extends JPanel implements GBProjection {
 		} else if (followPosition.x <= minFollowX) {
 			if (viewpoint.x >= followPosition.x)
 				followPosition.x = Math.min(viewpoint.x, minFollowX);
-		} else if (world.Followed() != null)
-			viewpoint.x += world.Followed().Velocity().x;
+		} else if (followedObject != null)
+			viewpoint.x += followedObject.Velocity().x;
 
 		if (followPosition.y >= maxFollowY) {
 			if (viewpoint.y <= followPosition.y)
@@ -397,8 +445,8 @@ public class GBPortal extends JPanel implements GBProjection {
 		} else if (followPosition.y <= minFollowY) {
 			if (viewpoint.y >= followPosition.y)
 				followPosition.y = Math.min(viewpoint.y, minFollowY);
-		} else if (world.Followed() != null)
-			viewpoint.y += world.Followed().Velocity().y;
+		} else if (followedObject != null)
+			viewpoint.y += followedObject.Velocity().y;
 		// now scroll toward followPosition
 		if (followPosition.inRange(viewpoint, kFastFollowDistance))
 			ScrollToward(followPosition, kFollowSpeed);
@@ -408,67 +456,8 @@ public class GBPortal extends JPanel implements GBProjection {
 			viewpoint = followPosition;
 	}
 
-	void DrawRangeCircle(FinePoint center, double radius, GBColor color) {
-		if (radius <= 0)
-			return;
-		Rectangle where = new Rectangle(ToScreenX(center.x - radius),
-				ToScreenY(center.y + radius), ToScreenX(center.x + radius),
-				ToScreenY(center.y - radius));
-		GBGraphics.drawOval(this.getGraphics(), where, color);
-	}
-
-	public void Draw() throws GBIndexOutOfRangeError {
-		if (viewRight() < 0 || viewLeft() > world.Right() || viewTop() < 0
-				|| viewBottom() > world.Top())
-			viewpoint = world.Size().divide(2);
-		if (autofollow
-				&& System.currentTimeMillis() > lastFollow + kAutofollowPeriod)
-			FollowRandom();
-		if (following && moving == null)
-			ScrollToFollowed();
-		GBRobot bot = (GBRobot) world.Followed();
-		if (bot != null) {
-			DrawRangeCircle(bot.Position(), bot.hardware.blaster.MaxRange()
-					+ bot.Radius(), new GBColor(Color.magenta).multiply(0.5f));
-			DrawRangeCircle(bot.Position(), bot.hardware.grenades.MaxRange()
-					+ bot.Radius(), new GBColor(Color.yellow).multiply(0.5f));
-			if (bot.hardware.syphon.MaxRate() > 0)
-				DrawRangeCircle(bot.Position(), bot.hardware.syphon.MaxRange()
-						+ bot.Radius(), new GBColor(0.25f, 0.4f, 0.5f));
-			if (bot.hardware.enemySyphon.MaxRate() > 0)
-				DrawRangeCircle(bot.Position(),
-						bot.hardware.enemySyphon.MaxRange() + bot.Radius(),
-						new GBColor(0.3f, 0.5f, 0));
-			DrawRangeCircle(bot.Position(), bot.hardware.forceField.MaxRange(),
-					new GBColor(0, 0.4f, 0.5f));
-		}
-		DrawObjects();
-		/*
-		 * if ( world.Followed()!=null ) { FinePoint targetPos =
-		 * world.Followed().Position(); int texty = ToScreenY(targetPos.y -
-		 * (world.Followed().Radius() > 2 ? 0 : world.Followed().Radius())) +
-		 * 13; DrawStringCentered(world.Followed().toString(),
-		 * ToScreenX(targetPos.x), texty, 10, GBColor.white); String details =
-		 * world.Followed().Details(); if (details.length() > 0)
-		 * DrawStringCentered(details, ToScreenX(targetPos.x), texty + 10, 10,
-		 * GBColor.white); } if ( showSideNames ) { for ( Side side :
-		 * world.Sides()) if ( side.Scores().Seeded()!=0 )
-		 * DrawStringCentered(side.Name(), ToScreenX(side.center.x),
-		 * ToScreenY(side.center.y), 14, side.Scores().sterile!=0 ? GBColor.gray
-		 * : GBColor.white); }
-		 */
-		// record drawn
-		// worldChanges = world.ChangeCount();
-		// selfChanges = ChangeCount();
-	}
-
-	public boolean InstantChanges() {
-		// TODO: check what this does
-		return true;// worldChanges != world.ChangeCount() || selfChanges !=
-					// ChangeCount() || Following();
-	}
-
-	public final String Name() {
+	@Override
+	public String toString() {
 		return "World";
 	}
 
@@ -477,7 +466,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	 * 
 	 * @return
 	 */
-	public double viewLeft() {
+	double viewLeft() {
 		return viewpoint.x - getWidth() / (scale * 2);
 	}
 
@@ -486,7 +475,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	 * 
 	 * @return
 	 */
-	public double viewTop() {
+	double viewTop() {
 		return viewpoint.y + getHeight() / (scale * 2);
 	}
 
@@ -495,7 +484,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	 * 
 	 * @return
 	 */
-	public double viewRight() {
+	double viewRight() {
 		return viewpoint.x + getWidth() / (scale * 2);
 	}
 
@@ -504,7 +493,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	 * 
 	 * @return
 	 */
-	public double viewBottom() {
+	double viewBottom() {
 		return viewpoint.y - getHeight() / (scale * 2);
 	}
 
@@ -532,27 +521,26 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	public void Follow(GBObject ob) {
 		if (ob != null) {
-			world.Follow(ob);
-			followPosition = ob.Position();
+			// TODO select side and type if it's a robot
+			followedObject = ob;
+			followPosition = ob.Position().subtract(viewpoint);
 			following = true;
-			lastFollow = System.currentTimeMillis();
 		}
 	}
 
 	public void ResetZoom() {
 		scale = kScale;
-		repaint();
 	}
 
 	public void doZoom(int direction) {
 		if (direction < 0 ? scale <= 4 : scale >= 64)
 			return;
 		scale += direction * Math.max(1, scale / 9);
-		repaint();
 	}
 
-	public boolean Following() {
-		return following && followPosition != viewpoint;
+	public boolean panning() {
+		boolean ret = following && !followedObject.Position().equals(viewpoint);
+		return ret;
 	}
 
 	public void Unfollow() {
@@ -639,7 +627,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	public void DoAddSeed(FinePoint where) throws GBAbort {
-		Side side = world.SelectedSide();
+		Side side = app.selectedSide;
 		if (side != null) {
 			world.AddSeed(side, where);
 			world.Changed();

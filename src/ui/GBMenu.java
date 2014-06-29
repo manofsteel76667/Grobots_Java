@@ -170,6 +170,7 @@ class GBMenu extends JMenuBar {
 	GBWorld world;
 	public ButtonGroup speedControls;
 	public ButtonGroup toolSelectors;
+	public JCheckBoxMenuItem cbTournament;
 	public Map<MenuItems, JCheckBoxMenuItem> viewOptions;
 	public Map<MenuItems, AbstractButton> menuButtons;
 
@@ -308,8 +309,9 @@ class GBMenu extends JMenuBar {
 		ret.addSeparator();
 		menuButtons
 				.put(MenuItems.rules, ret.add(MenuItems.rules.asJMenuItem()));
+		cbTournament = MenuItems.tournament.asJCheckBoxMenuItem();
 		menuButtons.put(MenuItems.tournament,
-				ret.add(MenuItems.tournament.asJMenuItem()));
+				ret.add(cbTournament));
 		menuButtons.put(MenuItems.saveScores,
 				ret.add(MenuItems.saveScores.asJMenuItem()));
 		menuButtons.put(MenuItems.resetScores,

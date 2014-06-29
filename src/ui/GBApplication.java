@@ -46,12 +46,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public GBRosterView roster;
 	public StepRates stepRate;
 	public long lastTime;
-	public long redrawInterval = 20L;
+	int redrawInterval = 40;//Repaint at 25Hz
 	GBMenu mainMenu;
 	public Side selectedSide;
 	public RobotType selectedType;
-	int stepCount;
-	long updateCount;
+
 	BufferStrategy bs;
 	long prevFrameTime;
 
@@ -60,47 +59,43 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	public GBApplication() {
+		//Creation code found in run() method per recommended java Swing practices
+	}
+
+	@Override
+	public void run() {
 		world = new GBWorld();
 		portal = new GBPortal(this);
 		portal.setIgnoreRepaint(true);
 		roster = new GBRosterView(world);
 		stepRate = StepRates.normal;
 		mainMenu = new GBMenu(this);
-		stepCount = 0;
 		this.setLayout(new BorderLayout());
 		this.setJMenuBar(mainMenu);
 		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
 				.getImage();
 		setIconImage(icon);
 		this.setTitle("Grobots");
-		this.setContentPane(portal);
+		this.getContentPane().add(portal);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		setVisible(true);
 		createBufferStrategy(2);
 		bs = getBufferStrategy();
-		javax.swing.Timer refreshTimer = new javax.swing.Timer(40,
-		// Repaint the world at 25Hz
+		javax.swing.Timer refreshTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-						paint(g);
-						portal.draw(g);
-						bs.show();
-						Toolkit.getDefaultToolkit().sync();
-						g.dispose();
+						portal.repaint();
 					}
 				});
 		refreshTimer.setRepeats(true);
 		refreshTimer.setCoalesce(true);
 		refreshTimer.start();
 	}
-
-	@Override
-	public void run() {
+	public void simulate() {
 		// Create and start a game running thread. The thread stops and
-		// must be recreated whenever world.running() becomes false
+		// whenever world.running() becomes false.  
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
@@ -124,8 +119,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					} else
 						try {
 							// Sleep until next time
-							Thread.sleep((prevFrameTime + frameRate - System
-									.nanoTime()) / 1000000);
+							long snooze = prevFrameTime + frameRate - System
+									.nanoTime();
+							if (snooze > 0)
+								Thread.sleep(snooze / 1000000);
 						} catch (InterruptedException e) {
 						}
 				}
@@ -144,7 +141,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-
 		// Handle Menu click
 		if (MenuItems.byDescription(e.getActionCommand()) != null) {
 			MenuItems mi = MenuItems.byDescription(e.getActionCommand());
@@ -169,6 +165,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.AddSeeds();
 					break;
 				case autoFollow:
+					portal.autofollow = true;
+					portal.FollowRandom();
 					break;
 				case blasts:
 					portal.currentTool = toolTypes.ptBlasts;
@@ -176,6 +174,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case clearMap:
+					world.Reset();
 					break;
 				case duplicateSide:
 					break;
@@ -201,10 +200,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case firstPage:
 					break;
 				case followRandom:
+					portal.FollowRandom();
 					break;
 				case loadSide:
 					JFileChooser fc = new JFileChooser();
 					fc.setMultiSelectionEnabled(true);
+					// TODO default this to the app directory and only show .gb
+					// files
 					fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
 					int retval = fc.showOpenDialog(this);
 					if (retval == JFileChooser.APPROVE_OPTION) {
@@ -226,7 +228,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					world.AddSeeds();
 					world.running = true;
-					run();
+					simulate();
 					break;
 				case nextPage:
 					break;
@@ -244,10 +246,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case randomNear:
+					portal.FollowRandomNear();
 					break;
 				case refollow:
+					portal.Refollow();
 					break;
 				case reloadSide:
+					
 					break;
 				case removeAllSides:
 					world.Reset();
@@ -255,6 +260,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.running = false;
 					break;
 				case removeSide:
+					world.Sides().remove(selectedSide);
 					break;
 				case reseedDeadSides:
 					world.ReseedDeadSides();
@@ -266,7 +272,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case run:
 					world.running = true;
-					run();
+					simulate();
 					break;
 				case saveScores:
 					world.DumpTournamentScores(true);
@@ -285,25 +291,31 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showDebugger:
 					break;
 				case showDecorations:
-					portal.showDecorations = !portal.showDecorations;
+					portal.showDecorations = mainMenu.viewOptions.get(
+							ui.MenuItems.showDecorations).isSelected();
 					break;
 				case showMeters:
+					portal.showDetails = mainMenu.viewOptions.get(
+							ui.MenuItems.showMeters).isSelected();
 					break;
 				case showMiniMapTrails:
 					break;
 				case showMinimap:
 					break;
 				case showPrints:
-					world.reportPrints = !world.reportPrints;
+					world.reportPrints = mainMenu.viewOptions.get(
+							ui.MenuItems.showPrints).isSelected();
 					break;
 				case showRobotErrors:
-					world.reportErrors = !world.reportErrors;
+					world.reportErrors = mainMenu.viewOptions.get(
+							ui.MenuItems.showRobotErrors).isSelected();
 					break;
 				case showRoster:
 					roster.setVisible(true);
 					break;
 				case showSensors:
-					portal.showSensors = !portal.showSensors;
+					portal.showSensors = mainMenu.viewOptions.get(
+							ui.MenuItems.showSensors).isSelected();
 					break;
 				case showSharedMemory:
 					break;
@@ -330,17 +342,20 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case stopStartBrain:
 					break;
 				case tournament:
-					world.tournament = !world.tournament;
+					world.tournament = mainMenu.cbTournament.isSelected();
 					world.tournamentLength = 100;
 					break;
 				case unlimited:
 					stepRate = StepRates.unlimited;
 					break;
 				case zoomIn:
+					portal.doZoom(1);
 					break;
 				case zoomOut:
+					portal.doZoom(-1);
 					break;
 				case zoomStandard:
+					portal.scale = GBPortal.kScale;
 					break;
 				default:
 					break;

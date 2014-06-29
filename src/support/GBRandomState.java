@@ -11,7 +11,7 @@ public class GBRandomState {
 	java.util.Random rnd;
 
 	// convenient global generator
-	public static GBRandomState gRandoms;
+	public static GBRandomState gRandoms = new GBRandomState();
 
 	public GBRandomState() {
 		rnd = new java.util.Random();

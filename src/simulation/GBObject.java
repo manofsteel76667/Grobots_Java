@@ -11,7 +11,6 @@ import java.awt.Rectangle;
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
-import support.GBGraphics;
 import support.GBObjectClass;
 import brains.GBBadSymbolIndexError;
 import exception.GBAbort;
@@ -338,14 +337,14 @@ public abstract class GBObject {
 		Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
 				proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right()
 						+ offset.x), proj.ToScreenY(Bottom() + offset.y));
-		GBGraphics.fillOval(g, shadow, color);
+		//GBGraphics.fillOval(g, shadow, color);
 	}
 
 	public void DrawMini(Graphics g, Rectangle where) {
-		if (where.getWidth() < kMaxSquareMiniSize)
+		/*if (where.getWidth() < kMaxSquareMiniSize)
 			GBGraphics.fillRect(g, where, Color());
 		else
-			GBGraphics.fillOval(g, where, Color());
+			GBGraphics.fillOval(g, where, Color());*/
 	}
 
 };
