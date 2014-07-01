@@ -127,13 +127,13 @@ public class Side extends Model implements Comparable<Side> {
 		}
 	}
 
-	//public RobotType SelectedType() {
-	//	return selected;
-	//}
+	// public RobotType SelectedType() {
+	// return selected;
+	// }
 
-	//public int SelectedTypeID() {
-	//	return selected == null ? selected.ID() : 0;
-	//}
+	// public int SelectedTypeID() {
+	// return selected == null ? selected.ID() : 0;
+	// }
 
 	// used by brains
 	public int GetTypeIndex(RobotType type) {
@@ -197,7 +197,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void ResetSampledStatistics() {
 		if (scores.population != 0)
-			center = center.add(groupPosition.divide(scores.Population())).divide(2);
+			center = center.add(groupPosition.divide(scores.Population()))
+					.divide(2);
 		// center = (center + groupPosition / (int)scores.Population()) / 2;
 		groupPosition.set(0, 0);
 		scores.ResetSampledStatistics();

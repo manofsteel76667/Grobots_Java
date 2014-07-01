@@ -2,12 +2,9 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
-import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferStrategy;
 import java.io.File;
 import java.io.IOException;
 
@@ -46,12 +43,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public GBRosterView roster;
 	public StepRates stepRate;
 	public long lastTime;
-	int redrawInterval = 40;//Repaint at 25Hz
+	int redrawInterval = 40;// Repaint at 25Hz
 	GBMenu mainMenu;
 	public Side selectedSide;
 	public RobotType selectedType;
 
-	BufferStrategy bs;
 	long prevFrameTime;
 
 	public static void main(String[] args) {
@@ -59,7 +55,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	public GBApplication() {
-		//Creation code found in run() method per recommended java Swing practices
+		// Creation code found in run() method per recommended java Swing
+		// practices
 	}
 
 	@Override
@@ -67,7 +64,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		world = new GBWorld();
 		portal = new GBPortal(this);
 		portal.setIgnoreRepaint(true);
-		roster = new GBRosterView(world);
+		roster = new GBRosterView(this);
 		stepRate = StepRates.normal;
 		mainMenu = new GBMenu(this);
 		this.setLayout(new BorderLayout());
@@ -76,26 +73,36 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				.getImage();
 		setIconImage(icon);
 		this.setTitle("Grobots");
-		this.getContentPane().add(portal);
+		this.getContentPane().add(portal, BorderLayout.CENTER);
+		this.getContentPane().add(roster, BorderLayout.LINE_START);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		setVisible(true);
-		createBufferStrategy(2);
-		bs = getBufferStrategy();
-		javax.swing.Timer refreshTimer = new javax.swing.Timer(redrawInterval,
+		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						portal.repaint();
 					}
 				});
-		refreshTimer.setRepeats(true);
-		refreshTimer.setCoalesce(true);
-		refreshTimer.start();
+		portalTimer.setRepeats(true);
+		portalTimer.setCoalesce(true);
+		portalTimer.start();
+		javax.swing.Timer otherTimer = new javax.swing.Timer(1500,
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						roster.repaint();
+					}
+				});
+		otherTimer.setRepeats(true);
+		otherTimer.setCoalesce(true);
+		otherTimer.start();
 	}
+
 	public void simulate() {
-		// Create and start a game running thread. The thread stops and
-		// whenever world.running() becomes false.  
+		// Create and start a game running thread. The thread stops
+		// whenever world.running() becomes false.
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
@@ -119,8 +126,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					} else
 						try {
 							// Sleep until next time
-							long snooze = prevFrameTime + frameRate - System
-									.nanoTime();
+							long snooze = prevFrameTime + frameRate
+									- System.nanoTime();
 							if (snooze > 0)
 								Thread.sleep(snooze / 1000000);
 						} catch (InterruptedException e) {
@@ -177,6 +184,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					break;
 				case duplicateSide:
+					Side newside = SideReader.Load(selectedSide.filename);
+					world.AddSide(newside);
+					roster.repaint();
 					break;
 				case erase:
 					portal.currentTool = toolTypes.ptErase;
@@ -213,11 +223,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						// JOptionPane.showMessageDialog(this,
 						// fc.getSelectedFiles());
 						for (File f : fc.getSelectedFiles()) {
-							Side newside;
-							newside = SideReader.Load(f.getPath());
-							world.AddSide(newside);
+							Side _newside;
+							_newside = SideReader.Load(f.getPath());
+							world.AddSide(_newside);
 						}
 					}
+					roster.repaint();
 					break;
 				case move:
 					portal.currentTool = toolTypes.ptMove;
@@ -228,6 +239,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					world.AddSeeds();
 					world.running = true;
+					roster.repaint();
 					simulate();
 					break;
 				case nextPage:
@@ -237,6 +249,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case pause:
 					world.running = false;
+					roster.repaint();
 					break;
 				case previousPage:
 					break;
@@ -252,15 +265,17 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					portal.Refollow();
 					break;
 				case reloadSide:
-					
+
 					break;
 				case removeAllSides:
 					world.Reset();
 					world.RemoveAllSides();
 					world.running = false;
+					roster.repaint();
 					break;
 				case removeSide:
 					world.Sides().remove(selectedSide);
+					roster.repaint();
 					break;
 				case reseedDeadSides:
 					world.ReseedDeadSides();
@@ -311,7 +326,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							ui.MenuItems.showRobotErrors).isSelected();
 					break;
 				case showRoster:
-					roster.setVisible(true);
+					roster.setVisible(!roster.isVisible());
 					break;
 				case showSensors:
 					portal.showSensors = mainMenu.viewOptions.get(

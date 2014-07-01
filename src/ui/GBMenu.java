@@ -310,8 +310,7 @@ class GBMenu extends JMenuBar {
 		menuButtons
 				.put(MenuItems.rules, ret.add(MenuItems.rules.asJMenuItem()));
 		cbTournament = MenuItems.tournament.asJCheckBoxMenuItem();
-		menuButtons.put(MenuItems.tournament,
-				ret.add(cbTournament));
+		menuButtons.put(MenuItems.tournament, ret.add(cbTournament));
 		menuButtons.put(MenuItems.saveScores,
 				ret.add(MenuItems.saveScores.asJMenuItem()));
 		menuButtons.put(MenuItems.resetScores,

@@ -141,7 +141,8 @@ public class GBSyphon extends GBTimedShot {
 			}
 		}
 		// draw the syphon as a dashed X on the target
-		g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] {1,2}, 0));
+		g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT,
+				BasicStroke.JOIN_BEVEL, 0, new float[] { 1, 2 }, 0));
 		g2d.setColor(Color());
 		g2d.drawLine(where.x, where.y, where.x + where.width, where.y
 				+ where.height);

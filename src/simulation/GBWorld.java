@@ -498,16 +498,16 @@ public class GBWorld extends GBObjectWorld {
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
 		sides.add(pos, newSide);
-		//if (oldSide == selectedSide)
-		//	selectedSide = newSide;
+		// if (oldSide == selectedSide)
+		// selectedSide = newSide;
 		Changed();
 	}
 
 	public void RemoveSide(Side side) throws GBNilPointerError {
 		if (side == null)
 			throw new GBNilPointerError();
-		//if (side == selectedSide)
-		//	selectedSide = null;
+		// if (side == selectedSide)
+		// selectedSide = null;
 		sides.remove(side);
 		Changed();
 	}
@@ -516,7 +516,7 @@ public class GBWorld extends GBObjectWorld {
 		// for (int i = 0; i < sides.size(); ++ i )
 		// delete sides.get(i);
 		sides.clear();
-		//selectedSide = null;
+		// selectedSide = null;
 		ResetTournamentScores();
 		Changed();
 	}
@@ -724,7 +724,7 @@ public class GBWorld extends GBObjectWorld {
 			GBRobot bot = (GBRobot) ob;
 			if (bot != null) {
 				bot.Owner().SelectType(bot.Type());
-				//SelectSide(bot.Owner());
+				// SelectSide(bot.Owner());
 			}
 		}
 	}

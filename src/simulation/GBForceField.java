@@ -94,7 +94,7 @@ public class GBForceField extends GBShot {
 
 	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
-		//GBGraphics.drawOval(g, where, Color());
+		// GBGraphics.drawOval(g, where, Color());
 	}
 
 	public static final double PowerRadius(double pwr) {

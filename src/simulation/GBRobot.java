@@ -407,44 +407,66 @@ public class GBRobot extends GBObject {
 		}
 		// weapon ranges? //sensor results?
 	}
+
 	/**
 	 * Moved from GBPortal
+	 * 
 	 * @param g
 	 * @param proj
 	 */
-	public void drawRangeCircles(Graphics g, GBProjection proj){
+	public void drawRangeCircles(Graphics g, GBProjection proj) {
 		Point center = new Point(proj.ToScreenX(position.x),
 				proj.ToScreenY(position.y));
-		Graphics2D g2d = (Graphics2D)g;
-		if (hardware.blaster.MaxRange() > 0){
+		Graphics2D g2d = (Graphics2D) g;
+		if (hardware.blaster.MaxRange() > 0) {
 			g2d.setColor(new GBColor(Color.magenta).multiply(0.5f));
-			g2d.drawOval(center.x,  center.y,  
-					(int)(radius +hardware.blaster.MaxRange()) * proj.getScale(), 
-					(int)(radius +hardware.blaster.MaxRange()) * proj.getScale());
+			g2d.drawOval(
+					center.x,
+					center.y,
+					(int) (radius + hardware.blaster.MaxRange())
+							* proj.getScale(),
+					(int) (radius + hardware.blaster.MaxRange())
+							* proj.getScale());
 		}
-		if (hardware.grenades.MaxRange() > 0){
+		if (hardware.grenades.MaxRange() > 0) {
 			g2d.setColor(new GBColor(Color.yellow).multiply(0.5f));
-			g2d.drawOval(center.x,  center.y,  
-					(int)(radius +hardware.grenades.MaxRange()) * proj.getScale(), 
-					(int)(radius +hardware.grenades.MaxRange()) * proj.getScale());
+			g2d.drawOval(
+					center.x,
+					center.y,
+					(int) (radius + hardware.grenades.MaxRange())
+							* proj.getScale(),
+					(int) (radius + hardware.grenades.MaxRange())
+							* proj.getScale());
 		}
-		if (hardware.syphon.MaxRate() > 0){
+		if (hardware.syphon.MaxRate() > 0) {
 			g2d.setColor(new GBColor(0.25f, 0.4f, 0.5f));
-			g2d.drawOval(center.x,  center.y,  
-					(int)(radius +hardware.syphon.MaxRate()) * proj.getScale(), 
-					(int)(radius +hardware.syphon.MaxRate()) * proj.getScale());
+			g2d.drawOval(
+					center.x,
+					center.y,
+					(int) (radius + hardware.syphon.MaxRate())
+							* proj.getScale(),
+					(int) (radius + hardware.syphon.MaxRate())
+							* proj.getScale());
 		}
-		if (hardware.enemySyphon.MaxRate() > 0){
+		if (hardware.enemySyphon.MaxRate() > 0) {
 			g2d.setColor(new GBColor(0.3f, 0.5f, 0));
-			g2d.drawOval(center.x,  center.y,  
-					(int)(radius +hardware.enemySyphon.MaxRate()) * proj.getScale(), 
-					(int)(radius +hardware.enemySyphon.MaxRate()) * proj.getScale());
+			g2d.drawOval(
+					center.x,
+					center.y,
+					(int) (radius + hardware.enemySyphon.MaxRate())
+							* proj.getScale(),
+					(int) (radius + hardware.enemySyphon.MaxRate())
+							* proj.getScale());
 		}
-		if (hardware.forceField.MaxRange() > 0){
-			g2d.setColor(new GBColor(0,	0.4f, 0.5f));
-			g2d.drawOval(center.x,  center.y,  
-					(int)(radius +hardware.forceField.MaxRange()) * proj.getScale(), 
-					(int)(radius +hardware.forceField.MaxRange()) * proj.getScale());
+		if (hardware.forceField.MaxRange() > 0) {
+			g2d.setColor(new GBColor(0, 0.4f, 0.5f));
+			g2d.drawOval(
+					center.x,
+					center.y,
+					(int) (radius + hardware.forceField.MaxRange())
+							* proj.getScale(),
+					(int) (radius + hardware.forceField.MaxRange())
+							* proj.getScale());
 		}
 	}
 
@@ -543,10 +565,10 @@ public class GBRobot extends GBObject {
 					+ dec.height);
 			break;
 		case cross:
-			g2d.drawLine(dec.x, (int)dec.getCenterY(),
-					dec.x + dec.width, (int)dec.getCenterY());
-			g2d.drawLine((int)dec.getCenterX(), dec.y, 
-					(int)dec.getCenterX(), dec.y + dec.height);
+			g2d.drawLine(dec.x, (int) dec.getCenterY(), dec.x + dec.width,
+					(int) dec.getCenterY());
+			g2d.drawLine((int) dec.getCenterX(), dec.y, (int) dec.getCenterX(),
+					dec.y + dec.height);
 			break;
 		case x:
 			g2d.drawLine(dec.x, dec.y, dec.x + dec.width, dec.y + dec.height);

@@ -178,14 +178,14 @@ public class SideReader {
 		GBColor color = new GBColor();
 		try {
 			if (token.length() == 3) {
-				r = (float)Integer.parseInt(token.substring(0, 1), 16) / 16.0f;
-				g = (float)Integer.parseInt(token.substring(1, 2), 16) / 16.0f;
-				b = (float)Integer.parseInt(token.substring(2, 3), 16) / 16.0f;
-				color = new  GBColor(r, g, b);
+				r = (float) Integer.parseInt(token.substring(0, 1), 16) / 16.0f;
+				g = (float) Integer.parseInt(token.substring(1, 2), 16) / 16.0f;
+				b = (float) Integer.parseInt(token.substring(2, 3), 16) / 16.0f;
+				color = new GBColor(r, g, b);
 			} else if (token.length() == 6) {
-				r = (float)Integer.parseInt(token.substring(0, 2), 16) / 255.0f;
-				g = (float)Integer.parseInt(token.substring(2, 4), 16) / 255.0f;
-				b = (float)Integer.parseInt(token.substring(4, 6), 16) / 255.0f;
+				r = (float) Integer.parseInt(token.substring(0, 2), 16) / 255.0f;
+				g = (float) Integer.parseInt(token.substring(2, 4), 16) / 255.0f;
+				b = (float) Integer.parseInt(token.substring(4, 6), 16) / 255.0f;
 				color = new GBColor(r, g, b);
 			}
 			return color;

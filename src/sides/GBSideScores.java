@@ -110,7 +110,7 @@ public class GBSideScores extends GBScores {
 			biomassHistory.add((int) biomass);
 	}
 
-	int ExtinctTime() {
+	public int ExtinctTime() {
 		return extinctTime;
 	}
 

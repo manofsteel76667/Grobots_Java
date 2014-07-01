@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import sides.RobotType;
@@ -66,6 +67,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	GBApplication app;
 	GBWorld world;
 	FinePoint viewpoint;
+	boolean dragged;
 	/**
 	 * Screen pixels per game map unit
 	 */
@@ -152,10 +154,12 @@ public class GBPortal extends JPanel implements GBProjection {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				// Follow object on click
-				if (arg0.getClickCount() > 0
-						&& currentTool == toolTypes.ptScroll)
-					Follow(world.ObjectNear(
-							FromScreen(arg0.getX(), arg0.getY()), false));
+				if (!dragged)
+					if (arg0.getClickCount() > 0
+							&& currentTool == toolTypes.ptScroll)
+						Follow(world.ObjectNear(
+								FromScreen(arg0.getX(), arg0.getY()), false));
+				dragged = false;
 			}
 
 			@Override
@@ -190,6 +194,7 @@ public class GBPortal extends JPanel implements GBProjection {
 					}
 				}
 				moving = null;
+				dragged = true;
 			}
 
 			@Override
@@ -218,6 +223,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		// we will make the background wall-colored and paint over it
 		// with tiles.
 		setBackground(Color.LIGHT_GRAY);
+		this.setBorder(BorderFactory.createLineBorder(Color.black));
 	}
 
 	@Override
@@ -232,11 +238,19 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	void draw(Graphics g) {
+		Graphics2D g2d = (Graphics2D) g;
+		adjustViewpoint();
+		drawBackground(g2d);
+		drawObjects(g2d);
+		drawText(g2d);
+	}
+
+	void adjustViewpoint() {
 		// If the object you're following dies, handle it
 		if (followedObject != null)
 			if (followedObject.Class() == GBObjectClass.ocDead) {
 				followedObject = null;
-				following = false;
+				following = autofollow;
 			}
 		// Set viewpoint to followed object, if following
 		if (following) {
@@ -263,12 +277,15 @@ public class GBPortal extends JPanel implements GBProjection {
 			}
 		}
 		RestrictScrolling();
+	}
+
+	void drawBackground(Graphics2D g2d) {
 		// Set colors for grid lines
 		GBColor fineColor = new GBColor(Math.min(0.4f + 0.04f * scale / kScale,
 				0.15f + 0.25f * scale / kScale));
 		int coarseThickness = 1 + scale / 20;
 		GBColor coarseColor = new GBColor(0.4f + 0.4f * scale / kScale);
-		Graphics2D g2d = (Graphics2D) g;
+
 		// Draw visible tiles
 		int minTileX = (int) Math.max(
 				Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
@@ -305,8 +322,11 @@ public class GBPortal extends JPanel implements GBProjection {
 				g2d.setColor(coarseColor);
 				g2d.draw(tile);
 			}
+	}
+
+	void drawObjects(Graphics2D g2d) {
 		// Draw all living objects in the game
-		// Draws everything even if it isn't on the screen.  This
+		// Draws everything even if it isn't on the screen. This
 		// could probably be improved
 		boolean detailed = showDetails && scale >= kMinDetailsScale;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
@@ -329,13 +349,16 @@ public class GBPortal extends JPanel implements GBProjection {
 			for (GBObject spot : world.getObjects(GBObjectClass.ocSensorShot))
 				for (GBObject ob = spot; ob != null; ob = ob.next)
 					ob.Draw(g2d, this, detailed);
+	}
+
+	void drawText(Graphics2D g2d) {
 		// Details about the followed object
 		if (followedObject != null) {
 			FinePoint targetPos = followedObject.Position();
 			Font textFont = new Font("Serif", Font.PLAIN, 10);
 			g2d.setFont(textFont);
 			g2d.setColor(Color.white);
-			FontMetrics fm = g.getFontMetrics();
+			FontMetrics fm = g2d.getFontMetrics();
 			String s = followedObject.toString();
 			// Center the name below the object
 			int x = ToScreenX(targetPos.x) - fm.stringWidth(s) / 2;
@@ -345,7 +368,7 @@ public class GBPortal extends JPanel implements GBProjection {
 			g2d.drawString(s, x, texty);
 			String details = followedObject.Details();
 			// Details go below that
-			if (details.length() > 0){
+			if (details.length() > 0) {
 				x = ToScreenX(targetPos.x) - fm.stringWidth(details) / 2;
 				g2d.drawString(details, x, texty + 10);
 			}
@@ -359,7 +382,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				if (side.Scores().Seeded() != 0) {
 					Font textFont = new Font("Serif", Font.PLAIN, 10);
 					g2d.setFont(textFont);
-					FontMetrics fm = g.getFontMetrics();
+					FontMetrics fm = g2d.getFontMetrics();
 					int tx = ToScreenX(side.center.x)
 							- fm.stringWidth(side.Name()) / 2;
 					int ty = ToScreenY(side.center.y);
@@ -372,24 +395,24 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	@Override
 	public int ToScreenX(double x) {
-		return (int) (Math.floor((x - viewpoint.x) * scale) + this.getBounds()
-				.getCenterX());
+		return (int) (Math.floor((x - viewpoint.x) * scale) + this
+				.getVisibleRect().getCenterX());
 	}
 
 	@Override
 	public int ToScreenY(double y) {
-		return (int) (Math.floor((viewpoint.y - y) * scale) + this.getBounds()
-				.getCenterY());
+		return (int) (Math.floor((viewpoint.y - y) * scale) + this
+				.getVisibleRect().getCenterY());
 	}
 
 	@Override
 	public double FromScreenX(int h) {
-		return (h - this.getBounds().getCenterX()) / scale + viewpoint.x;
+		return (h - this.getVisibleRect().getCenterX()) / scale + viewpoint.x;
 	}
 
 	@Override
 	public double FromScreenY(int v) {
-		return (this.getBounds().getCenterY() - v) / scale + viewpoint.y;
+		return (this.getVisibleRect().getCenterY() - v) / scale + viewpoint.y;
 	}
 
 	@Override

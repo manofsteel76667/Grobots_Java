@@ -120,7 +120,7 @@ class GBSensorShot extends GBObject {
 
 	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
-		//GBGraphics.drawOval(g, where, Color());
+		// GBGraphics.drawOval(g, where, Color());
 	}
 
 };
