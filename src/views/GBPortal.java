@@ -6,7 +6,6 @@ package views;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -224,11 +223,6 @@ public class GBPortal extends JPanel implements GBProjection {
 		// with tiles.
 		setBackground(Color.LIGHT_GRAY);
 		this.setBorder(BorderFactory.createLineBorder(Color.black));
-	}
-
-	@Override
-	public Dimension getPreferredSize() {
-		return new Dimension(800, 600);
 	}
 
 	@Override

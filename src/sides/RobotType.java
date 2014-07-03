@@ -13,7 +13,7 @@ import brains.GBBadSymbolIndexError;
 import exception.GBGenericError;
 import exception.GBOutOfMemoryError;
 
-public class RobotType extends support.Model {
+public class RobotType extends support.Model implements Cloneable {
 	public static final double kStandardMass = 20;
 	public boolean debug = true;
 	public Side side;
@@ -54,11 +54,14 @@ public class RobotType extends support.Model {
 		type.brain = brain.clone();
 		return type;
 	}
-
-	public boolean equals(RobotType other) {
-		if (other == null)
+	@Override
+	public boolean equals(Object other) {
+		if (this == other)
+			return true;
+		if (other == null || !(other instanceof RobotType))
 			return false;
-		return this.side.name == other.side.name && this.name == other.name;
+		return this.side.name.equals(((RobotType)other).side.name) && 
+				this.name.equals(((RobotType)other).name);
 	}
 
 	public void ResetSampledStatistics() {

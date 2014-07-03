@@ -43,7 +43,6 @@ public class GBWorld extends GBObjectWorld {
 	int previousSidesAlive; // num of non-extinct sides last frame
 	int sidesSeeded;
 	GBRandomState random;
-	GBObject followed;
 	double mannaLeft;
 	// stats
 	int mannas, corpses;
@@ -485,7 +484,7 @@ public class GBWorld extends GBObjectWorld {
 		if (side == null)
 			throw new GBNilPointerError();
 		for (int i = 0; i < sides.size(); ++i)
-			if (sides.get(i).Name() == side.Name())
+			if (sides.get(i).Name().equals(side.Name()))
 				side.SetName(side.Name() + '\'');
 		sides.add(side);
 		Changed();
@@ -498,8 +497,6 @@ public class GBWorld extends GBObjectWorld {
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
 		sides.add(pos, newSide);
-		// if (oldSide == selectedSide)
-		// selectedSide = newSide;
 		Changed();
 	}
 
@@ -716,21 +713,6 @@ public class GBWorld extends GBObjectWorld {
 
 	public GBScores TournamentScores() {
 		return tournamentScores;
-	}
-
-	public void _Follow(GBObject ob) {
-		followed = ob;
-		if (ob.Class() == GBObjectClass.ocRobot) {
-			GBRobot bot = (GBRobot) ob;
-			if (bot != null) {
-				bot.Owner().SelectType(bot.Type());
-				// SelectSide(bot.Owner());
-			}
-		}
-	}
-
-	public GBObject _Followed() {
-		return followed;
 	}
 
 	/*

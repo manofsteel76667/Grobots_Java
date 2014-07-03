@@ -68,16 +68,39 @@ public class FinePoint {
 		return new FinePoint(x / divisor, y / divisor);
 	}
 
-	// comparisons
-	public boolean equals(FinePoint other) {
-		return (x == other.x && y == other.y);
-	}
-
 	public boolean inRange(FinePoint other, double range) {
 		double r = range;
 		double dx = x - other.x;
 		double dy = y - other.y;
 		return (dx * dx + dy * dy) <= r * r;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(x);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(y);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof FinePoint))
+			return false;
+		FinePoint other = (FinePoint) obj;
+		if (Double.doubleToLongBits(x) != Double.doubleToLongBits(other.x))
+			return false;
+		if (Double.doubleToLongBits(y) != Double.doubleToLongBits(other.y))
+			return false;
+		return true;
 	}
 
 	public boolean isNonzero() {

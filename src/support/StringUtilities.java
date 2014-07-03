@@ -1,32 +1,12 @@
 package support;
 
-public class StringUtilities {
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
-	/*
-	 * These might be necessary whenever we get around to adding the graphics
-	 * back. Or maybe not.
-	 * 
-	 * public static unsigned short HexDigitValue(char digit) { if (
-	 * isdigit((unsigned char)digit) ) return digit - '0'; return toupper(digit)
-	 * - 'A' + 10; }
-	 * 
-	 * public static float HexDigitIntensity(char digit) { return
-	 * HexDigitValue(digit) / 15.0; }
-	 * 
-	 * public static float HexDigitsIntensity(char d1, char d2) { return
-	 * (HexDigitValue(d1) 16 + HexDigitValue(d2)) / 255.0; }
-	 * 
-	 * 
-	 * public static boolean ParseColor(String token, GBColor color) { // could
-	 * do named colors, but not urgent // check digits for ( int i = 0; i <
-	 * token.length(); i ++ ) if ( ! isxdigit((unsigned char)token[i]) ) return
-	 * false; // check length if ( token.length() == 3 ) {
-	 * color.Set(HexDigitIntensity(token[0]), HexDigitIntensity(token[1]),
-	 * HexDigitIntensity(token[2])); return true; } else if ( token.length() ==
-	 * 6 ) { color.Set(HexDigitsIntensity(token[0], token[1]),
-	 * HexDigitsIntensity(token[2], token[3]), HexDigitsIntensity(token[4],
-	 * token[5])); return true; } return false; }
-	 */
+public class StringUtilities {
 
 	public static Integer parseInt(String str) {
 		try {
@@ -47,5 +27,29 @@ public class StringUtilities {
 	public static String toPercentString(double f, int digitsAfterDP) {
 		String formatstring = "%." + digitsAfterDP + "f";
 		return String.format(formatstring, f * 100) + "%";
+	}
+	
+	public static void drawStringRight(Graphics2D g, String text, Rectangle rect,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		FontMetrics fm = g.getFontMetrics();
+		g.setColor(c);
+		g.drawString(text, rect.x + rect.width - fm.stringWidth(text), rect.y + rect.height);
+	}
+	public static void drawStringLeft(Graphics2D g, String text, Rectangle rect,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		g.setColor(c);
+		g.drawString(text, rect.x, rect.y + rect.height);
+	}
+	public static void drawStringCenter(Graphics2D g, String text, Rectangle rect,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		FontMetrics fm = g.getFontMetrics();
+		g.setColor(c);
+		g.drawString(text, (int)rect.getCenterX() - fm.stringWidth(text)/2, rect.y + rect.height);
 	}
 }

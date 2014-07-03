@@ -2,6 +2,7 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -74,8 +75,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setIconImage(icon);
 		this.setTitle("Grobots");
 		this.getContentPane().add(portal, BorderLayout.CENTER);
-		this.getContentPane().add(roster, BorderLayout.LINE_START);
+		portal.setPreferredSize(new Dimension(600,400));
+		this.getContentPane().add(roster, BorderLayout.PAGE_END);
+		roster.setPreferredSize(new Dimension(270,200));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setExtendedState( getExtendedState()|JFrame.MAXIMIZED_BOTH );
 		this.pack();
 		setVisible(true);
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,

@@ -22,7 +22,7 @@ public class Headless {
 
 	public static void main(String[] argv) {
 		if (argv.length < 2)
-			DieWithUsage(argv[0]);
+			DieWithUsage("Not enough arguments");
 		try {
 			GBWorld world = new GBWorld();
 			world.timeLimit = 18000;
@@ -93,9 +93,9 @@ public class Headless {
 					+ world.TournamentScores().rounds + "\n#end");
 			Date end = new Date();
 			long dt = (end.getTime() - start.getTime()) / 1000;
-			System.err.println(totalFrames + " frames");
+			System.out.println(totalFrames + " frames");
 			if (dt != 0)
-				System.err.println(" in " + dt + " s (" + (totalFrames / dt)
+				System.out.println(" in " + dt + " s (" + (totalFrames / dt)
 						+ " fps)");
 			if (dumpHtml)
 				world.DumpTournamentScores(dumpHtml);

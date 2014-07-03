@@ -2,7 +2,6 @@ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -45,7 +44,6 @@ public class GBRosterView extends JPanel {
 		world = app.world;
 		slots = new ArrayList<Rectangle>();
 		setLayout(new BorderLayout());
-		setPreferredSize(new Dimension(270, 400));
 		setBackground(Color.lightGray);
 		this.setBorder(BorderFactory.createLineBorder(Color.black));
 		MouseAdapter ma = new MouseAdapter() {
@@ -85,8 +83,10 @@ public class GBRosterView extends JPanel {
 		g2d.fill(hdr);
 		g2d.setColor(Color.black);
 		g2d.draw(hdr);
+		Rectangle textRect = new Rectangle(hdr);
+		textRect.grow(-padding, -padding);
 		String text = String.format("Frame %d", world.CurrentFrame());
-		g2d.drawString(text, hdr.x + padding, hdr.y + hdr.height - padding);
+		StringUtilities.drawStringLeft(g2d, text, textRect, 10, Color.black);
 		String status = world.tournament ? "tournament " : ""
 				+ (world.running ? "running" : "paused");
 		if (world.running && lastTime >= 0 && world.CurrentFrame() > lastFrame) {
@@ -95,20 +95,17 @@ public class GBRosterView extends JPanel {
 			if (ms > 0)
 				status += " at " + frames * 1000 / ms + " fps";
 		}
-		g2d.drawString(status,
-				hdr.x + hdr.width - padding - fm.stringWidth(status), hdr.y
-						+ hdr.height - padding);
+		StringUtilities.drawStringRight(g2d, status, textRect, 10, Color.black);
 
 		// Sides
 		for (int i = 0; i < world.Sides().size(); i++) {
-			Rectangle slot = new Rectangle(margin, 0, getBounds().width
-					- margin * 2, fm.getHeight() + padding * 2);
 			f = new Font("Serif", Font.PLAIN, 12);
 			g.setFont(f);
+			Rectangle slot = new Rectangle(margin, 0, getBounds().width
+					- margin * 2, fm.getHeight() + padding * 2);
 			Side side = world.Sides().get(i);
 			if (side == null)
 				continue;
-			int x = slot.x + padding;
 			int y = hdr.height + margin + slotMargin
 					+ (slot.height + slotMargin) * i;
 			slot.setLocation(margin, y);
@@ -119,51 +116,42 @@ public class GBRosterView extends JPanel {
 			g2d.setColor(side.equals(app.selectedSide) ? Color.white
 					: Color.black);
 			g2d.draw(slot);
-			y = y + slot.height - padding;
-			g2d.setColor(side.Color().ContrastingTextColor());
+			textRect = new Rectangle(slot);
+			textRect.grow(-padding, -padding);
 			// Side ID
-			g2d.drawString(String.format("%d.", side.ID()), x, y);
+			StringUtilities.drawStringLeft(g2d, String.format("%d.", side.ID()), 
+					textRect, 12, side.Color().ContrastingTextColor());
 			// Side Name
-			g2d.setColor(side.equals(app.selectedSide) ? Color.white
-					: Color.black);
-			x = x + 25;
-			g2d.drawString(side.Name(), x, y);
+			StringUtilities.drawStringLeft(g2d, side.Name(), 
+					new Rectangle(textRect.x + 25, textRect.y, textRect.width-25, textRect.height), 
+					12, side.equals(app.selectedSide) ? Color.white
+							: Color.black);
 			if (side.Scores().Seeded() != 0) {
 				// Side status
-				x = slot.x + slot.width - padding;
 				if (side.Scores().Population() != 0) {
 					// Sterile?
 					if (side.Scores().sterile != 0) {
-						g2d.setFont(new Font("Serif", Font.PLAIN, 10));
-						g2d.setColor(new Color(1, 0, 1)); // purple?
 						text = String.format("Sterile at %d", side.Scores()
 								.SterileTime());
-						g2d.drawString(text, x - fm.stringWidth(text), y - 2);
+						StringUtilities.drawStringRight(g2d, text, textRect, 10, new Color(1,0,1));
 					} else {
 						// Doing fine
 						// Bio percentage
-						g2d.setFont(new Font("Serif", Font.PLAIN, 12));
 						text = StringUtilities.toPercentString(side.Scores()
 								.BiomassFraction(), 1);
-						x = slot.x + slot.width - padding - kPopulationWidth;
-						g2d.setColor(Color.black);
-						g2d.drawString(text, x, y);
+						StringUtilities.drawStringLeft(g2d, text, 
+								new Rectangle(textRect.x + textRect.width - padding - kPopulationWidth,
+										textRect.y, textRect.width, textRect.height), 
+								12, Color.black);
 						// Population
-						g2d.setFont(new Font("Serif", Font.PLAIN, 10));
 						text = Integer.toString(side.Scores().Population());
-						x = slot.x + slot.width - padding
-								- fm.stringWidth(text);
-						g2d.setColor(Color.blue);
-						g2d.drawString(text, x, y);
+						StringUtilities.drawStringRight(g2d, text, textRect, 10, Color.blue);
 					}
 				} else {
 					// Extinct
-					g2d.setFont(new Font("Serif", Font.PLAIN, 10));
 					text = String.format("Extinct at %d", side.Scores()
 							.ExtinctTime());
-					x = slot.x + slot.width - padding - fm.stringWidth(text);
-					g2d.setColor(Color.darkGray);
-					g2d.drawString(text, x, y);
+					StringUtilities.drawStringRight(g2d, text, textRect, 10, Color.darkGray);
 				}
 			}
 		}
