@@ -22,14 +22,6 @@ public class ForceFieldSpec extends HardwareItem {
 			return 0;
 	}
 
-	@Override
-	public ForceFieldSpec clone() {
-		ForceFieldSpec ret = new ForceFieldSpec();
-		ret.power = power;
-		ret.range = range;
-		return ret;
-	}
-
 	public double power;
 	public double range;
 

@@ -12,13 +12,6 @@ public class ConstructorSpec extends HardwareItem {
 		return rate * HardwareSpec.kConstructorCostPerRate;
 	}
 
-	@Override
-	public ConstructorSpec clone() {
-		ConstructorSpec ret = new ConstructorSpec();
-		ret.rate = rate;
-		return ret;
-	}
-
 	public ConstructorSpec() {
 		super(0, 0);
 		rate = 0;

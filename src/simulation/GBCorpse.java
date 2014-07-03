@@ -39,7 +39,7 @@ public class GBCorpse extends GBFood {
 
 	@Override
 	public String toString() {
-		return "Corpse of " + type.Description();
+		return "Corpse of " + type.toString();
 	}
 
 	@Override

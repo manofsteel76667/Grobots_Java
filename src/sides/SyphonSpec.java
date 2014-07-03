@@ -26,15 +26,6 @@ public class SyphonSpec extends HardwareItem {
 			return 0;
 	}
 
-	@Override
-	public SyphonSpec clone() {
-		SyphonSpec ret = new SyphonSpec();
-		ret.power = power;
-		ret.range = range;
-		ret.hitsEnemies = hitsEnemies;
-		return ret;
-	}
-
 	public SyphonSpec() {
 		super(0, 0);
 		power = 0;

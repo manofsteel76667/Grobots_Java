@@ -227,7 +227,7 @@ public class HardwareSpec {
 		mass = 0;
 	}
 
-	@Override
+	/*@Override
 	public HardwareSpec clone() {
 		HardwareSpec ret = new HardwareSpec();
 		ret.processor = processor;
@@ -256,7 +256,7 @@ public class HardwareSpec {
 		ret.hardwareCost = hardwareCost;
 		ret.mass = mass;
 		return ret;
-	}
+	}*/
 
 	public int Processor() {
 		return processor;

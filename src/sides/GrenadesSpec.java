@@ -28,16 +28,6 @@ public class GrenadesSpec extends HardwareItem {
 			return 0;
 	}
 
-	@Override
-	public GrenadesSpec clone() {
-		GrenadesSpec ret = new GrenadesSpec();
-		ret.damage = damage;
-		ret.range = range;
-		ret.speed = speed;
-		ret.reloadTime = reloadTime;
-		return ret;
-	}
-
 	double damage;
 	double range;
 	double speed;

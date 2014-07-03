@@ -26,15 +26,6 @@ public class SensorSpec extends HardwareItem {
 			return 0;
 	}
 
-	@Override
-	public SensorSpec clone() {
-		SensorSpec ret = new SensorSpec();
-		ret.range = range;
-		ret.numResults = numResults;
-		ret.seen = seen;
-		return ret;
-	}
-
 	public SensorSpec() {
 		super(0, 0);
 		range = 0;

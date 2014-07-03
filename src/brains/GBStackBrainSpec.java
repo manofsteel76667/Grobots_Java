@@ -41,9 +41,13 @@ class GBSymbol {
 	public int hashCode() {
 		return name.hashCode();
 	}
-
-	public boolean equals(GBSymbol other) {
-		return name.toLowerCase().equals(other.name.toLowerCase());
+	@Override
+	public boolean equals(Object other) {
+		if (this == other)
+			return true;
+		if (!(other instanceof GBSymbol))
+			return false;
+		return name.toLowerCase().equals(((GBSymbol)other).name.toLowerCase());
 	}
 };
 
@@ -106,10 +110,13 @@ class GBLabel extends GBSymbol {
 		address = arg.address;
 		gensym = arg.gensym;
 	}
-
-	public boolean equals(GBLabel other) {
-		return name.toLowerCase().equals(((GBSymbol) other).name.toLowerCase())
-				&& !gensym && !other.gensym;
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof GBLabel))
+			return false;
+		boolean ret = super.equals(other);
+		ret = ret && !gensym && !((GBLabel)other).gensym;
+		return ret;
 	}
 };
 

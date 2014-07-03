@@ -13,7 +13,7 @@ import brains.GBBadSymbolIndexError;
 import exception.GBGenericError;
 import exception.GBOutOfMemoryError;
 
-public class RobotType extends support.Model implements Cloneable {
+public class RobotType extends support.Model {
 	public static final double kStandardMass = 20;
 	public boolean debug = true;
 	public Side side;
@@ -44,18 +44,51 @@ public class RobotType extends support.Model implements Cloneable {
 		hardware = new HardwareSpec(debug);
 	}
 
-	@Override
-	public RobotType clone() {
-		RobotType type = new RobotType(side);
+	public RobotType (RobotType type) {
+		this(type.side);
 		type.name = name;
 		type.SetColor(color);
 		type.SetDecoration(decoration, decorationColor);
 		type.hardware = hardware;
 		type.brain = brain.clone();
-		return type;
 	}
+
 	@Override
-	public boolean equals(Object other) {
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((side == null) ? 0 : side.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof RobotType))
+			return false;
+		RobotType other = (RobotType) obj;
+		if (id != other.id)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (side == null) {
+			if (other.side != null)
+				return false;
+		} else if (!side.equals(other.side))
+			return false;
+		return true;
+	}
+
+	//@Override
+	public boolean _equals(Object other) {
 		if (this == other)
 			return true;
 		if (other == null || !(other instanceof RobotType))
@@ -78,11 +111,10 @@ public class RobotType extends support.Model implements Cloneable {
 		name = newname;
 		Changed();
 	}
-
-	public String Description() {
+	@Override
+	public String toString() {
 		return side.Name() + (side.Name().endsWith("s") ? "'" : "'s") + " "
-				+ name;// (sidename[sidename.size() - 1] == 's' ? "' " : "'s ")
-						// + name;
+				+ name;
 	}
 
 	public int ID() {

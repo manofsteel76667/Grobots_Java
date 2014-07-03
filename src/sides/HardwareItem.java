@@ -2,7 +2,7 @@ package sides;
 
 /*Common interface for all hardware items
  */
-public class HardwareItem implements Cloneable {
+public class HardwareItem {
 	double mass;
 	double cost;
 
@@ -17,10 +17,5 @@ public class HardwareItem implements Cloneable {
 
 	public double Cost() {
 		return cost;
-	}
-
-	@Override
-	public HardwareItem clone() {
-		return new HardwareItem(mass, cost);
 	}
 }

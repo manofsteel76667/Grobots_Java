@@ -109,7 +109,7 @@ public class GBRobot extends GBObject {
 
 	@Override
 	public String toString() {
-		return type.Description() + " #" + id;
+		return type.toString() + " #" + id;
 	}
 
 	@Override
@@ -391,12 +391,12 @@ public class GBRobot extends GBObject {
 				&& hardware.EngineVelocity().isNonzero()) {
 			FinePoint dv = hardware.EngineVelocity().subtract(Velocity());
 			if (dv.norm() > 0.01) {
-				FinePoint head = Position().add(
+				/*FinePoint head = Position().add(
 						dv.unit().multiply(
 								Radius() + hardware.EnginePower()
 										/ Math.sqrt(Mass()) * 30));
 				((Graphics2D) g).setStroke(new BasicStroke(2));
-				/*
+				
 				 * GBGraphics.drawLine(g, proj.ToScreenX(Position().x),
 				 * proj.ToScreenY(Position().y), proj.ToScreenX(head.x),
 				 * proj.ToScreenY(head.y), Color.GREEN);
@@ -609,8 +609,8 @@ public class GBRobot extends GBObject {
 			if (hardware.radio.sent[age] == 0
 					&& hardware.radio.writes[age] == 0)
 				continue;
-			double r = kRingGrowthRate * (age + 1);
-			Rectangle ring = new Rectangle(proj.ToScreenX(Position().x - r),
+			/*double r = kRingGrowthRate * (age + 1);
+			/*Rectangle ring = new Rectangle(proj.ToScreenX(Position().x - r),
 					proj.ToScreenY(Position().y + r),
 					proj.ToScreenX(Position().x + r),
 					proj.ToScreenY(Position().y - r));

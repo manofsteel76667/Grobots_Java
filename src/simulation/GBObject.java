@@ -334,9 +334,9 @@ public abstract class GBObject {
 
 	public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
 			Color color) {
-		Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
+		/*Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
 				proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right()
-						+ offset.x), proj.ToScreenY(Bottom() + offset.y));
+						+ offset.x), proj.ToScreenY(Bottom() + offset.y));*/
 		// GBGraphics.fillOval(g, shadow, color);
 	}
 

@@ -35,8 +35,6 @@ public class Side extends Model implements Comparable<Side> {
 	// scores
 	GBSideScores scores;
 	GBScores cScores;
-	// LinkedList<GBSideScores> scores;
-	// LinkedList<GBScores> tscores;
 	support.FinePoint groupPosition;
 	// communications
 	double[] sharedMemory;
@@ -51,7 +49,6 @@ public class Side extends Model implements Comparable<Side> {
 		id = 0;
 		seedIDs = new LinkedList<Integer>();
 		color = new GBColor();
-		// name(), author(),
 		scores = new GBSideScores();
 		cScores = new GBScores();
 		center = new FinePoint();
@@ -65,7 +62,7 @@ public class Side extends Model implements Comparable<Side> {
 	public Side copy() throws GBNilPointerError, GBGenericError {
 		Side side = new Side();
 		for (int i = 0; i < types.size(); ++i)
-			side.AddType(types.get(i).clone());
+			side.AddType(new RobotType(types.get(i)));
 		side.name = name;
 		side.author = author;
 		side.SetColor(GBRandomState.gRandoms.ColorNear(color,
@@ -74,6 +71,34 @@ public class Side extends Model implements Comparable<Side> {
 			side.seedIDs.add(id);
 		// id, comm and scores are not copied
 		return side;
+	}	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Side))
+			return false;
+		Side other = (Side) obj;
+		if (id != other.id)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
 	}
 
 	public String Name() {
@@ -117,23 +142,6 @@ public class Side extends Model implements Comparable<Side> {
 			throw new GBIndexOutOfRangeError();
 		return types.get(index - 1);
 	}
-
-	public void SelectType(RobotType which) {
-		if (selected == null)
-			selected = which;
-		if (!selected.equals(which)) {
-			selected = which;
-			Changed();
-		}
-	}
-
-	// public RobotType SelectedType() {
-	// return selected;
-	// }
-
-	// public int SelectedTypeID() {
-	// return selected == null ? selected.ID() : 0;
-	// }
 
 	// used by brains
 	public int GetTypeIndex(RobotType type) {
@@ -199,7 +207,6 @@ public class Side extends Model implements Comparable<Side> {
 		if (scores.population != 0)
 			center = center.add(groupPosition.divide(scores.Population()))
 					.divide(2);
-		// center = (center + groupPosition / (int)scores.Population()) / 2;
 		groupPosition.set(0, 0);
 		scores.ResetSampledStatistics();
 		for (int i = 0; i < types.size(); ++i)
@@ -320,12 +327,6 @@ public class Side extends Model implements Comparable<Side> {
 			return 0;
 		return msgQueues[channel - 1].MessagesWaiting(next);
 	}
-
-	/*
-	 * //for sorting public boolean Better(Side a, Side b) { return
-	 * a.TournamentScores().BiomassFraction() >
-	 * b.TournamentScores().BiomassFraction(); }
-	 */
 
 	@Override
 	public int compareTo(Side o) {

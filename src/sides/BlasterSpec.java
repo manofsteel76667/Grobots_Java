@@ -28,17 +28,6 @@ public class BlasterSpec extends HardwareItem {
 			return 0;
 	}
 
-	@Override
-	public BlasterSpec clone() {
-		BlasterSpec ret = new BlasterSpec();
-		ret.damage = damage;
-		ret.range = range;
-		ret.speed = speed;
-		ret.lifetime = lifetime;
-		ret.reloadTime = reloadTime;
-		return ret;
-	}
-
 	public BlasterSpec() {
 		super(0, 0);
 		damage = 0;
