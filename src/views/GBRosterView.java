@@ -84,7 +84,7 @@ public class GBRosterView extends JPanel {
 		g2d.setColor(Color.black);
 		g2d.draw(hdr);
 		Rectangle textRect = new Rectangle(hdr);
-		textRect.grow(-padding, -padding);
+		textRect.grow(-padding*2, -padding*2);
 		String text = String.format("Frame %d", world.CurrentFrame());
 		StringUtilities.drawStringLeft(g2d, text, textRect, 10, Color.black);
 		String status = world.tournament ? "tournament " : ""
@@ -117,7 +117,7 @@ public class GBRosterView extends JPanel {
 					: Color.black);
 			g2d.draw(slot);
 			textRect = new Rectangle(slot);
-			textRect.grow(-padding, -padding);
+			textRect.grow(-padding*2, -padding*2);
 			// Side ID
 			StringUtilities.drawStringLeft(g2d, String.format("%d.", side.ID()), 
 					textRect, 12, side.Color().ContrastingTextColor());

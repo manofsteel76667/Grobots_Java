@@ -52,4 +52,27 @@ public class StringUtilities {
 		g.setColor(c);
 		g.drawString(text, (int)rect.getCenterX() - fm.stringWidth(text)/2, rect.y + rect.height);
 	}
+	public static void drawStringRight(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		FontMetrics fm = g.getFontMetrics();
+		g.setColor(c);
+		g.drawString(text, x- fm.stringWidth(text), y);
+	}
+	public static void drawStringLeft(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		g.setColor(c);
+		g.drawString(text, x, y);
+	}
+	public static void drawStringCenter(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c){
+		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		g.setFont(f);
+		FontMetrics fm = g.getFontMetrics();
+		g.setColor(c);
+		g.drawString(text, x - fm.stringWidth(text)/2, y);
+	}
 }

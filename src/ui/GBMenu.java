@@ -40,7 +40,7 @@ enum MenuItems {
 			.getKeyStroke('Y', InputEvent.CTRL_DOWN_MASK)),
 	showDebugger("Debugger", KeyStroke
 			.getKeyStroke('D', InputEvent.CTRL_DOWN_MASK)),
-	showTournament("Tournament", KeyStroke
+	showTournament("Scores", KeyStroke
 			.getKeyStroke('E', InputEvent.CTRL_DOWN_MASK)),
 	showSharedMemory("Shared Memory"),
 	//Simulation menu

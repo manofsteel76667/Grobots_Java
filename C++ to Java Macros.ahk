@@ -69,7 +69,8 @@
 	replace("GBMilliseconds()","System.currentTimeMillis()")
 	replace("GBMilliseconds","long")
 	replace("GBChangeCount","long")
-	replace"GBBitMap","BufferedImage")
+	replace("GBBitMap","BufferedImage")
+	replace("drawstring", "StringUtilities.drawString")
 return
 
 ;use Eclipse's global find-and-replace.  All instances of x become y 

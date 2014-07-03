@@ -1,8 +1,10 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +15,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import sides.RobotType;
@@ -22,6 +25,7 @@ import simulation.GBWorld;
 import views.GBPortal;
 import views.GBPortal.toolTypes;
 import views.GBRosterView;
+import views.GBTournamentView;
 import exception.GBAbort;
 import exception.GBError;
 
@@ -40,8 +44,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	 */
 	private static final long serialVersionUID = -955217075865755516L;
 	public GBWorld world;
+	
+	//Views
 	public GBPortal portal;
 	public GBRosterView roster;
+	public GBTournamentView tournament;
+	
 	public StepRates stepRate;
 	public long lastTime;
 	int redrawInterval = 40;// Repaint at 25Hz
@@ -62,31 +70,47 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void run() {
+		//Create world and initial conditions
 		world = new GBWorld();
+		stepRate = StepRates.normal;
+		
+		//Create supporting views and menu
 		portal = new GBPortal(this);
 		portal.setIgnoreRepaint(true);
 		roster = new GBRosterView(this);
-		stepRate = StepRates.normal;
+		tournament = new GBTournamentView(this);
 		mainMenu = new GBMenu(this);
-		this.setLayout(new BorderLayout());
 		this.setJMenuBar(mainMenu);
+		
+		//Arrange the screen
+		this.setLayout(new BorderLayout());
+		setExtendedState( getExtendedState()|JFrame.MAXIMIZED_BOTH );
 		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
 				.getImage();
 		setIconImage(icon);
 		this.setTitle("Grobots");
 		this.getContentPane().add(portal, BorderLayout.CENTER);
 		portal.setPreferredSize(new Dimension(600,400));
-		this.getContentPane().add(roster, BorderLayout.PAGE_END);
-		roster.setPreferredSize(new Dimension(270,200));
+		JPanel bottom = new JPanel();
+		bottom.setLayout(new FlowLayout());
+		bottom.add(roster);
+		bottom.add(tournament);
+		Color backColor = Color.gray;
+		portal.setBackground(backColor);
+		bottom.setBackground(backColor);
+		this.getContentPane().add(bottom, BorderLayout.PAGE_END);
+		roster.setPreferredSize(new Dimension(270,260));
+		tournament.setPreferredSize(new Dimension(560,260));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setExtendedState( getExtendedState()|JFrame.MAXIMIZED_BOTH );
 		this.pack();
 		setVisible(true);
+		
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						portal.repaint();
+						if (portal.isVisible())
+							portal.repaint();
 					}
 				});
 		portalTimer.setRepeats(true);
@@ -96,7 +120,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						roster.repaint();
+						if (roster.isVisible())
+							roster.repaint();
+						if (tournament.isVisible())
+							tournament.repaint();
 					}
 				});
 		otherTimer.setRepeats(true);
@@ -341,6 +368,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showStatistics:
 					break;
 				case showTournament:
+					tournament.setVisible(!tournament.isVisible());
 					break;
 				case showTypes:
 					break;
