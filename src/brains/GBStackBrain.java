@@ -1693,12 +1693,12 @@ public class GBStackBrain extends Brain {
 	// pos and vel are relative to ourself
 	static FinePoint LeadShot(FinePoint pos, FinePoint vel, double shotSpeed,
 			double r) {
-		if (true) {
+		//if (true) {
 			double dt = (pos.add(vel.multiply(pos.norm() / shotSpeed))).norm()
 					/ shotSpeed; // two plies for accuracy with radially moving
 									// targets
 			return pos.add(vel.multiply(dt));
-		} else {
+		/*} else {
 			// Precise version, not used yet because it changes behavior.
 			// Solve for exact time of impact: (pos + vel * dt).Norm() =
 			// shotSpeed * dt + r
@@ -1720,7 +1720,7 @@ public class GBStackBrain extends Brain {
 				return pos.add(vel.multiply(dt1));
 			else
 				return pos.add(vel.multiply(dt2));
-		}
+		}*/
 	}
 
 	void FirePeriodic(GBSensorState sensor, GBWorld world)

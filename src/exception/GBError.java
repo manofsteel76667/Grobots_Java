@@ -7,7 +7,7 @@ public final class GBError {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -6819324881379371856L;
+	//private static final long serialVersionUID = -6819324881379371856L;
 
 	public static void FatalError(String message) {
 		javax.swing.JOptionPane.showMessageDialog(null, message);
@@ -15,7 +15,7 @@ public final class GBError {
 	}
 
 	public static void NonfatalError(String message) throws GBAbort {
-		String[] buttons = { "Abort", "Retry", "Ignore" };
+		String[] buttons = { "Quit", "Abort", "Continue" };
 		int rc = javax.swing.JOptionPane.showOptionDialog(null, message,
 				"Nonfatal error", javax.swing.JOptionPane.WARNING_MESSAGE, 0,
 				null, buttons, buttons[2]);

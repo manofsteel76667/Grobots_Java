@@ -9,7 +9,6 @@ import java.awt.Color;
 import support.GBColor;
 import brains.Brain;
 import brains.BrainSpec;
-import brains.GBBadSymbolIndexError;
 
 public class RobotType extends support.Model {
 	public static final double kStandardMass = 20;

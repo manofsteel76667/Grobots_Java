@@ -6,19 +6,19 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.ArrayList;
-import java.util.List;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import sides.Side;
 import simulation.GBWorld;
-import ui.GBApplication;
 import support.StringUtilities;
+import ui.GBApplication;
 
 public class GBRosterView extends JPanel {
 	/**

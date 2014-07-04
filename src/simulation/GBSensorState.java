@@ -153,11 +153,11 @@ public class GBSensorState {
 			return 0;
 	}
 
-	public Integer Type() {
+	public int Type() {
 		if (currentResult < NumResults())
 			return results[currentResult].type;
 		else
-			return null;
+			return 0;
 	}
 
 	public int ID() {

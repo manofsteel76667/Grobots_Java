@@ -17,7 +17,6 @@ import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
 import brains.Brain;
-import brains.BrainStatus;
 
 public class GBRobot extends GBObject {
 	RobotType type;

@@ -14,7 +14,6 @@ import sides.Side;
 import simulation.GBRobot;
 import simulation.GBWorld;
 import support.FinePoint;
-import test.TestBase;
 import exception.GBAbort;
 
 public class SideReader_test {
