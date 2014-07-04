@@ -8,16 +8,13 @@ import sides.Side;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBNilPointerError;
 
 public class GBExplosion extends GBTimedShot {
 	// public:
-	public GBExplosion(FinePoint where, Side who, double howMuch)
-			throws GBBadArgumentError {
+	public GBExplosion(FinePoint where, Side who, double howMuch) {
 		super(where, PowerRadius(howMuch), who, howMuch, kExplosionLifetime);
 		if (howMuch < 0)
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException("negative explosion");
 		// TODO: when sound is done
 		/*
 		 * if ( howMuch > 100 ) StartSound(siLargeExplosion); else if ( howMuch
@@ -53,7 +50,7 @@ public class GBExplosion extends GBTimedShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 		super.Act(world);
 		if (lifetime == 0) {
 			int maxLifetime = (int) (Math.floor(Math.sqrt(power)) * kExplosionSmokeLifetimeFactor);

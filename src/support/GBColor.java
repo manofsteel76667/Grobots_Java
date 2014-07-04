@@ -6,8 +6,6 @@ package support;
 
 import java.awt.Color;
 
-import exception.GBDivideByZeroError;
-
 public class GBColor extends java.awt.Color {
 	/**
 	 * 
@@ -116,9 +114,9 @@ public class GBColor extends java.awt.Color {
 		return new GBColor(r * multiplier, g * multiplier, b * multiplier);
 	}
 
-	public GBColor divide(float divisor) throws GBDivideByZeroError {
+	public GBColor divide(float divisor) {
 		if (divisor == 0)
-			throw new GBDivideByZeroError();
+			throw new ArithmeticException("dividing a color by zero");
 		return new GBColor(r / divisor, g / divisor, b / divisor);
 	}
 

@@ -8,9 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import support.FinePoint;
-import exception.GBError;
-import exception.GBGenericError;
-import exception.GBOutOfMemoryError;
 
 //typedef GBNumber GBStackDatum; doublr
 //typedef unsigned short GBStackInstruction; int
@@ -194,7 +191,7 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
+	public Brain MakeBrain() {
 		return new GBStackBrain(this);
 	}
 
@@ -243,8 +240,7 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	void ExecuteCWord(StackBrainOpcode _code, int line)
-			throws GBBadSymbolIndexError, GBCStackError,
-			GBUnknownInstructionError {
+			throws GBCStackError, GBUnknownInstructionError {
 		int temp, temp2;
 		switch (_code) {
 		case cwNop:
@@ -345,22 +341,21 @@ public class GBStackBrainSpec extends BrainSpec {
 		}
 	}
 
-	void AddLabelRead(int index, int line) throws GBBadSymbolIndexError {
+	void AddLabelRead(int index, int line) {
 		if (index >= labels.size() || index < 0)
 			throw new GBBadSymbolIndexError();
 		AddInstruction(OpType.otLabelRead.ID, index, line);
 		labels.get(index).referenced = true;
 	}
 
-	void AddLabelCall(int index, int line) throws GBBadSymbolIndexError {
+	void AddLabelCall(int index, int line) {
 		if (index >= labels.size() || index < 0)
 			throw new GBBadSymbolIndexError();
 		AddInstruction(OpType.otLabelCall.ID, index, line);
 		labels.get(index).referenced = true;
 	}
 
-	void AddImmediate(String name, double value, int line)
-			throws GBBadSymbolIndexError {
+	void AddImmediate(String name, double value, int line) {
 		// avoid proliferation of immediates
 		// (but should we require name equivalence?)
 		for (int i = 0; i < constants.size(); i++)
@@ -452,158 +447,150 @@ public class GBStackBrainSpec extends BrainSpec {
 		return labels.size() - 1;
 	}
 
-	public void ResolveGensym(int index) throws GBBadSymbolIndexError {
+	public void ResolveGensym(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		labels.get(index).address = code.size();
 	}
 
-	public void SetStartingLabel(int index) throws GBBadSymbolIndexError {
+	public void SetStartingLabel(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		startingLabel = index;
 		labels.get(index).referenced = true;
 	}
 
-	public void ParseLine(String line, int lineNum) throws GBGenericError {
-		try {
-			String[] tokens = line.trim().split("\\s+");
-			for (String token : tokens) {
-				int index;
-				StackBrainOpcode code;
-				String stem;
-				// Always try user-defined symbols first, so users can shadow
-				// anything safely.
-				// look for adornments
-				if (token.length() >= 2)
-					switch (token.charAt(token.length() - 1)) {
-					case '!':
-						stem = token.substring(0, token.length() - 1);
-						index = LookupVariable(stem);
-						if (index != -1) {
-							AddInstruction(OpType.otVariableWrite.ID, index,
-									lineNum);
-							continue;
-						}
-						index = LookupVectorVariable(stem);
-						if (index != -1) {
-							AddInstruction(OpType.otVectorWrite.ID, index,
-									lineNum);
-							continue;
-						}
-						// Must be a reserved word
-						code = StackBrainOpcode.byName(stem);
-						if (code != null) {
-							switch (code.type) {
-							case ocHardwareVariable:
-								AddInstruction(OpType.otHardwareWrite.ID,
-										code.ID, lineNum);
-								continue;
-							case ocHardwareVector:
-								AddInstruction(OpType.otHardwareVectorWrite.ID,
-										code.ID, lineNum);
-								continue;
-							default:
-								break;
-							}
-						}
-						// I have no idea what you just said
-						throw new GBUnknownSymbolError(stem);
-					case ':':
-						AddLabel(token.substring(0, token.length() - 1));
+	public void ParseLine(String line, int lineNum) throws GBBrainError {
+		String[] tokens = line.trim().split("\\s+");
+		for (String token : tokens) {
+			int index;
+			StackBrainOpcode code;
+			String stem;
+			// Always try user-defined symbols first, so users can shadow
+			// anything safely.
+			// look for adornments
+			if (token.length() >= 2)
+				switch (token.charAt(token.length() - 1)) {
+				case '!':
+					stem = token.substring(0, token.length() - 1);
+					index = LookupVariable(stem);
+					if (index != -1) {
+						AddInstruction(OpType.otVariableWrite.ID, index,
+									   lineNum);
 						continue;
-					case '&':
-						stem = token.substring(0, token.length() - 1);
-						index = LabelReferenced(stem);
-						if (index != -1) {
-							AddLabelRead(index, lineNum);
-							continue;
-						}
-						throw new GBUnknownSymbolError(stem); // shouldn't
-																// happen
-					case '^':
-						stem = token.substring(0, token.length() - 1);
-						index = LabelReferenced(stem);
-						if (index != -1) {
-							AddLabelCall(index, lineNum);
-							continue;
-						}
-						throw new GBUnknownSymbolError(stem); // shouldn't
-																// happen
-					default: // unadorned
-						break;
 					}
-				// unadorned - look up in various tables
-				index = LookupConstant(token);
-				if (index != -1) {
-					AddInstruction(OpType.otConstantRead.ID, index, lineNum);
-					continue;
-				}
-				index = LookupVariable(token);
-				if (index != -1) {
-					AddInstruction(OpType.otVariableRead.ID, index, lineNum);
-					continue;
-				}
-				index = LookupVectorVariable(token);
-				if (index != -1) {
-					AddInstruction(OpType.otVectorRead.ID, index, lineNum);
-					continue;
-				}
-				index = LookupLabel(token);
-				if (index != -1) {
-					AddLabelCall(index, lineNum);
-					continue;
-				}
-				code = StackBrainOpcode.byName(token);
-				if (code != null)
-					switch (code.type) {
-					case ocCompileWord:
-						ExecuteCWord(code, lineNum);
+					index = LookupVectorVariable(stem);
+					if (index != -1) {
+						AddInstruction(OpType.otVectorWrite.ID, index,
+									   lineNum);
 						continue;
-					case ocHardwareVariable:
-						AddInstruction(OpType.otHardwareRead.ID, code.ID,
-								lineNum);
-						continue;
-					case ocHardwareVector:
-						AddInstruction(OpType.otHardwareVectorRead.ID, code.ID,
-								lineNum);
-						continue;
-					case ocPrimitive:
-						AddInstruction(OpType.otPrimitive.ID, code.ID, lineNum);
-						continue;
-					default:
-						break;
 					}
-				// try as a number
-				try {
-					double num = Double.parseDouble(token);
-					AddImmediate(token, num, lineNum);
+					// Must be a reserved word
+					code = StackBrainOpcode.byName(stem);
+					if (code != null) {
+						switch (code.type) {
+						case ocHardwareVariable:
+							AddInstruction(OpType.otHardwareWrite.ID,
+										   code.ID, lineNum);
+							continue;
+						case ocHardwareVector:
+							AddInstruction(OpType.otHardwareVectorWrite.ID,
+										   code.ID, lineNum);
+							continue;
+						default:
+							break;
+						}
+					}
+					// I have no idea what you just said
+					throw new GBUnknownSymbolError(stem);
+				case ':':
+					AddLabel(token.substring(0, token.length() - 1));
 					continue;
-				} catch (NumberFormatException e) {
+				case '&':
+					stem = token.substring(0, token.length() - 1);
+					index = LabelReferenced(stem);
+					if (index != -1) {
+						AddLabelRead(index, lineNum);
+						continue;
+					}
+					throw new GBUnknownSymbolError(stem); // shouldn't
+					// happen
+				case '^':
+					stem = token.substring(0, token.length() - 1);
+					index = LabelReferenced(stem);
+					if (index != -1) {
+						AddLabelCall(index, lineNum);
+						continue;
+					}
+					throw new GBUnknownSymbolError(stem); // shouldn't
+					// happen
+				default: // unadorned
+					break;
 				}
-				// nothing's working
-				throw new GBUnknownSymbolError(token);
+			// unadorned - look up in various tables
+			index = LookupConstant(token);
+			if (index != -1) {
+				AddInstruction(OpType.otConstantRead.ID, index, lineNum);
+				continue;
 			}
-		} catch (GBError e) {
-			throw new GBGenericError(e.toString());
+			index = LookupVariable(token);
+			if (index != -1) {
+				AddInstruction(OpType.otVariableRead.ID, index, lineNum);
+				continue;
+			}
+			index = LookupVectorVariable(token);
+			if (index != -1) {
+				AddInstruction(OpType.otVectorRead.ID, index, lineNum);
+				continue;
+			}
+			index = LookupLabel(token);
+			if (index != -1) {
+				AddLabelCall(index, lineNum);
+				continue;
+			}
+			code = StackBrainOpcode.byName(token);
+			if (code != null)
+				switch (code.type) {
+				case ocCompileWord:
+					ExecuteCWord(code, lineNum);
+					continue;
+				case ocHardwareVariable:
+					AddInstruction(OpType.otHardwareRead.ID, code.ID,
+								   lineNum);
+					continue;
+				case ocHardwareVector:
+					AddInstruction(OpType.otHardwareVectorRead.ID, code.ID,
+								   lineNum);
+					continue;
+				case ocPrimitive:
+					AddInstruction(OpType.otPrimitive.ID, code.ID, lineNum);
+					continue;
+				default:
+					break;
+				}
+			// try as a number
+			try {
+				double num = Double.parseDouble(token);
+				AddImmediate(token, num, lineNum);
+				continue;
+			} catch (NumberFormatException e) {
+			}
+			// nothing's working
+			throw new GBUnknownSymbolError(token);
 		}
 	}
 
 	@Override
-	public void Check() throws GBGenericError {
-		try {
-			// check compile-time stack
-			if (!cStack.isEmpty())
-				throw new GBCStackError();
-			// check forwards
-			for (int i = 0; i < labels.size(); i++)
-				if (labels.get(i).address < 0)
-					throw new GBUnresolvedSymbolError(labels.get(i).name);
-			// add sentinel
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opEnd.ID, -1);
-		} catch (GBError e) {
-			throw new GBGenericError(e.toString());
-		}
+	public void Check() throws GBBrainError {
+		// check compile-time stack
+		if (!cStack.isEmpty())
+			throw new GBCStackError();
+		// check forwards
+		for (int i = 0; i < labels.size(); i++)
+			if (labels.get(i).address < 0)
+				throw new GBUnresolvedSymbolError(labels.get(i).name);
+		// add sentinel
+		AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opEnd.ID, -1);
 	}
 
 	int NumInstructions() {
@@ -630,31 +617,31 @@ public class GBStackBrainSpec extends BrainSpec {
 		return code.get(index);
 	}
 
-	double ReadConstant(int index) throws GBBadSymbolIndexError {
+	double ReadConstant(int index) {
 		if (index < 0 || index >= constants.size())
 			throw new GBBadSymbolIndexError();
 		return constants.get(index).value;
 	}
 
-	double ReadVariable(int index) throws GBBadSymbolIndexError {
+	double ReadVariable(int index) {
 		if (index < 0 || index >= variables.size())
 			throw new GBBadSymbolIndexError();
 		return variables.get(index).value;
 	}
 
-	FinePoint ReadVectorVariable(int index) throws GBBadSymbolIndexError {
+	FinePoint ReadVectorVariable(int index) {
 		if (index < 0 || index >= vectorVariables.size())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables.get(index).value;
 	}
 
-	int ReadLabel(int index) throws GBBadSymbolIndexError {
+	int ReadLabel(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		return labels.get(index).address;
 	}
 
-	int StartAddress() throws GBBadSymbolIndexError {
+	int StartAddress() {
 		if (startingLabel < 0)
 			return 0; // default to first instruction
 		return ReadLabel(startingLabel);
@@ -761,13 +748,13 @@ public class GBStackBrainSpec extends BrainSpec {
 		}
 	}
 
-	String VariableName(int index) throws GBBadSymbolIndexError {
+	String VariableName(int index) {
 		if (index >= variables.size())
 			throw new GBBadSymbolIndexError();
 		return variables.get(index).name;
 	}
 
-	String VectorVariableName(int index) throws GBBadSymbolIndexError {
+	String VectorVariableName(int index) {
 		if (index >= vectorVariables.size())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables.get(index).name;

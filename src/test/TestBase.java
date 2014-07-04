@@ -10,9 +10,6 @@ import java.util.List;
 
 import sides.Side;
 import sides.SideReader;
-import exception.GBAbort;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
 
 public class TestBase {
 	static String[] slotNames = { "chassis", "processor", "engine",
@@ -31,8 +28,7 @@ public class TestBase {
 		return "src" + sep + "test" + sep;
 	}
 
-	public static Side loadSide(String filename) throws GBIndexOutOfRangeError,
-			GBAbort, GBGenericError {
+	public static Side loadSide(String filename) {
 		Side ret = SideReader.Load(TestBase.sidesFilePath() + filename);
 		return ret;
 	}
@@ -41,8 +37,7 @@ public class TestBase {
 		System.out.println(msg);
 	}
 
-	public static List<Side> loadAllSides() throws FileNotFoundException,
-			GBIndexOutOfRangeError, GBAbort, GBGenericError {
+	public static List<Side> loadAllSides() throws FileNotFoundException {
 		String path = TestBase.sidesFilePath();
 		List<String> filenames = new LinkedList<String>();
 		List<Side> ret = new ArrayList<Side>();
@@ -61,8 +56,7 @@ public class TestBase {
 		return ret;
 	}
 
-	public static Side loadSideWithLogging(String filename, PrintWriter out)
-			throws GBIndexOutOfRangeError, GBAbort, GBGenericError {
+	public static Side loadSideWithLogging(String filename, PrintWriter out) {
 		String file = filename;
 		if (!filename.contains(sidesFilePath()))
 			file = sidesFilePath() + filename;

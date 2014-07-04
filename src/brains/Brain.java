@@ -5,10 +5,6 @@ package brains;
 
 import simulation.GBRobot;
 import simulation.GBWorld;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBOutOfMemoryError;
 
 public class Brain {
 	public BrainStatus status;
@@ -24,13 +20,8 @@ public class Brain {
 	 * 
 	 * @param robot
 	 * @param world
-	 * @throws GBAbort
-	 * @throws GBGenericError
-	 * @throws GBOutOfMemoryError
-	 * @throws GBBadArgumentError
 	 */
-	public void Step(GBRobot robot, GBWorld world) throws GBAbort,
-			GBBadArgumentError, GBOutOfMemoryError, GBGenericError {
+	public void Step(GBRobot robot, GBWorld world) {
 		think(robot, world);
 	}
 
@@ -39,13 +30,8 @@ public class Brain {
 	 * 
 	 * @param robot
 	 * @param world
-	 * @throws GBAbort
-	 * @throws GBGenericError
-	 * @throws GBOutOfMemoryError
-	 * @throws GBBadArgumentError
 	 */
-	public void think(GBRobot robot, GBWorld world) throws GBBadArgumentError,
-			GBOutOfMemoryError, GBGenericError, GBAbort {
+	public void think(GBRobot robot, GBWorld world) {
 
 	}
 
@@ -55,8 +41,7 @@ public class Brain {
 	public boolean ready;
 
 	protected class GBStackOverflowError extends GBBrainError {
-
-		/**
+	/**
 	 * 
 	 */
 		private static final long serialVersionUID = 1L;
@@ -69,7 +54,7 @@ public class Brain {
 
 	protected class GBStackUnderflowError extends GBBrainError {
 
-		/**
+	/**
 	 * 
 	 */
 		private static final long serialVersionUID = 1L;

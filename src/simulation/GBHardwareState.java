@@ -7,11 +7,6 @@ package simulation;
 import sides.HardwareSpec;
 import support.FinePoint;
 import support.GBMath;
-import brains.GBBadSymbolIndexError;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class GBHardwareState {
 	HardwareSpec spec;
@@ -66,7 +61,7 @@ public class GBHardwareState {
 																	// range.
 	public static final double kForceFieldRecoilPerPower = 0.25;
 
-	public GBHardwareState(HardwareSpec spc) throws GBGenericError {
+	public GBHardwareState(HardwareSpec spc) {
 		spec = spc;
 		enginePower = 0;
 		engineVelocity = new FinePoint();
@@ -187,9 +182,9 @@ public class GBHardwareState {
 		eater -= actual;
 	}
 
-	public double GiveEnergy(double amount) throws GBBadArgumentError {
+	public double GiveEnergy(double amount) {
 		if (amount < 0)
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException("can't give negative energy'");
 		double actual = Math.min(amount, MaxEnergy() - energy);
 		energy += actual;
 		return actual;
@@ -221,9 +216,7 @@ public class GBHardwareState {
 		shield = GBMath.clamp(power, 0, MaxShield());
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError,
-			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError {
+	public void Act(GBRobot robot, GBWorld world) {
 		// death check
 		if (armor <= 0 || robot.dead) {
 			robot.dead = true;

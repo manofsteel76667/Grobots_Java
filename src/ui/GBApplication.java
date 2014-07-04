@@ -146,11 +146,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						try {
 							world.AdvanceFrame();
 							prevFrameTime = System.nanoTime();
-						} catch (GBError err) {
+						} catch (Exception e) {
 							try {
 								GBError.NonfatalError("Error simulating: "
-										+ err.toString());
-							} catch (GBAbort e) {
+										+ e.toString());
+							} catch (GBAbort a) {
 								// Retry
 							}
 						}
@@ -407,7 +407,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				default:
 					break;
 				}
-			} catch (GBError | IOException err) {
+			} catch (Exception err) {
 				try {
 					GBError.NonfatalError(err.getMessage());
 				} catch (GBAbort e1) {

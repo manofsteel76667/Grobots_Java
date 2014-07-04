@@ -20,12 +20,7 @@ import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
 import brains.GBStackBrainSpec;
-import exception.GBAbort;
 import exception.GBError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 enum GBElementType {
 	etNone("none-illegal"), // Top of file. content: #side
@@ -75,8 +70,7 @@ enum HardwareComponents {
 			"syphon"), hcEnemySyphon("enemy-syphon");
 	public final String tagName;
 
-	public static HardwareComponents byTag(String _tagName)
-			throws GBElementArgumentError {
+	public static HardwareComponents byTag(String _tagName) throws GBElementArgumentError {
 		try {
 			return tagLookup.get(_tagName.toLowerCase());
 		} catch (Exception e) {
@@ -113,16 +107,12 @@ public class SideReader {
 	 * Process one line from the source file. Assumes comments (text after ;)
 	 * have already been removed
 	 * 
-	 * @throws GBGenericError
 	 * @throws GBReaderError
-	 * @throws GBNilPointerError
-	 * @throws GBOutOfMemoryError
 	 * @throws GBCStackError
 	 * @throws GBUnresolvedSymbolError
 	 * @throws java.lang.Exception
 	 */
-	void ProcessLine() throws GBGenericError, GBReaderError,
-			GBOutOfMemoryError, GBNilPointerError {
+	void ProcessLine() throws GBReaderError {
 		lineno++;
 		tokens = new LinkedList<String>(
 				Arrays.asList(line.trim().split("\\s+")));
@@ -132,7 +122,7 @@ public class SideReader {
 				String token = tokens.removeFirst();
 				token = token.substring(1, token.length());
 				if (token.length() == 0)
-					throw new GBGenericError("# but no token - huh?");
+					throw new RuntimeException("# but no token - huh?");
 				GBElementType typ = GBElementType.byTag(token);
 				if (typ != null) {
 					ProcessTag(typ);
@@ -194,238 +184,231 @@ public class SideReader {
 		}
 	}
 
-	void ProcessTag(GBElementType element) throws GBGenericError {
-		try {
-			// clean up type
-			if (type != null
-					&& (element == GBElementType.etType || element == GBElementType.etEnd)) {
-				if (brain != null) {
-					brain.Check();
-					type.SetBrain(brain);
-					brain = null;
-				}
-				side.AddType(type);
-				type = null;
+	void ProcessTag(GBElementType element) throws GBReaderError {
+		// clean up type
+		if (type != null
+			&& (element == GBElementType.etType || element == GBElementType.etEnd)) {
+			if (brain != null) {
+				brain.Check();
+				type.SetBrain(brain);
+				brain = null;
 			}
-			// legality check
-			if (state == GBElementType.etEnd)
-				throw new GBForbiddenContentError();
-			else if (state == GBElementType.etNone
-					&& element != GBElementType.etSide)
-				throw new GBMisplacedElementError();
-			// process it
-			switch (element) {
-			case etSide:
-				if (state == GBElementType.etNone) {
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					if (side != null)
-						throw new GBGenericError(
-								"SideReader already had side?!");
-					side = new Side();
-					side.debug = true;
-					if (side == null)
-						throw new GBOutOfMemoryError();
-					java.lang.StringBuilder sb = new java.lang.StringBuilder(
-							tokens.removeFirst());
-					while (tokens.size() > 0) {
-						sb.append(" ");
-						sb.append(tokens.removeFirst());
-					}
-					side.SetName(sb.toString());
-					state = GBElementType.etSide;
-				} else
-					throw new GBMisplacedElementError();
-				break;
-			case etSeed:
-				if (type != null)
-					throw new GBMisplacedElementError();
-				{
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					while (tokens.size() > 0) {
-						String token = tokens.removeFirst();
-						try {
-							side.AddSeedID(StringUtilities.parseInt(token));
-						} catch (NumberFormatException e) {
-							throw new GBElementArgumentError();
-						}
-					}
-				}
-				break;
-			case etAuthor:
-				if (type == null) {
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					if (side == null)
-						throw new GBGenericError("SideReader missing side");
-					java.lang.StringBuilder sb = new java.lang.StringBuilder(
-							tokens.removeFirst());
-					while (tokens.size() > 0) {
-						sb.append(" ");
-						sb.append(tokens.removeFirst());
-					}
-					side.SetAuthor(sb.toString());
-				}
-				break;
-			case etDate:
-				break; // ignore
-			case etDescription:
-				state = GBElementType.etDescription;
-				break;
-			case etColor: {
-				String token = tokens.removeFirst();
-				if (token == null)
-					throw new GBMissingElementArgumentError();
-				GBColor color = ParseColor(token);
-				if (type != null)
-					type.SetColor(color);
-				else
-					side.SetColor(color);
-			}
-				break;
-			case etType:
-				if (type == null && brain != null) {
-					commonBrain = brain;
-					brain = null;
-				}
+			side.AddType(type);
+			type = null;
+		}
+		// legality check
+		if (state == GBElementType.etEnd)
+			throw new GBForbiddenContentError();
+		else if (state == GBElementType.etNone
+				 && element != GBElementType.etSide)
+			throw new GBMisplacedElementError();
+		// process it
+		switch (element) {
+		case etSide:
+			if (state == GBElementType.etNone) {
 				if (tokens.size() == 0)
 					throw new GBMissingElementArgumentError();
-				if (side == null)
-					throw new GBGenericError("SideReader missing side");
-				type = new RobotType(side);
+				if (side != null)
+					throw new RuntimeException("SideReader already had side?!");
+				side = new Side();
+				side.debug = true;
 				java.lang.StringBuilder sb = new java.lang.StringBuilder(
-						tokens.removeFirst());
+																		 tokens.removeFirst());
 				while (tokens.size() > 0) {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());
 				}
-				type.SetName(sb.toString());
-				state = GBElementType.etType;
-				break;
-			case etDecoration:
-				if (type == null)
-					throw new GBMisplacedElementError();
-				{
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
+				side.SetName(sb.toString());
+				state = GBElementType.etSide;
+			} else
+				throw new GBMisplacedElementError();
+			break;
+		case etSeed:
+			if (type != null)
+				throw new GBMisplacedElementError();
+			{
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				while (tokens.size() > 0) {
 					String token = tokens.removeFirst();
-
-					GBColor color = ParseColor(token);
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					token = tokens.removeFirst();
-
-					GBRobotDecoration dec = GBRobotDecoration.byTag(token);
-					type.SetDecoration(dec, color);
-
-				}
-				break;
-			case etHardware:
-				if (type != null)
-					state = GBElementType.etHardware;
-				else
-					throw new GBMisplacedElementError();
-				break;
-			case etCode:
-				if (brain == null) {
-					if (type != null && commonBrain != null) {
-						brain = new GBStackBrainSpec(commonBrain); // default to
-																	// beginning
-																	// of
-																	// type-specific
-																	// code
-						int label = brain.AddGensym("start");
-						brain.ResolveGensym(label);
-						brain.SetStartingLabel(label);
-					} else
-						brain = new GBStackBrainSpec();
-				}
-
-				state = GBElementType.etCode;
-				break;
-			case etStart:
-				if (state == GBElementType.etCode) {
-					if (tokens.size() > 0)
-						brain.SetStartingLabel(brain.LabelReferenced(tokens
-								.removeFirst()));
-					else {
-						int label = brain.AddGensym("start");
-						brain.ResolveGensym(label);
-						brain.SetStartingLabel(label);
+					try {
+						side.AddSeedID(StringUtilities.parseInt(token));
+					} catch (NumberFormatException e) {
+						throw new GBElementArgumentError();
 					}
-				} else
-					throw new GBMisplacedElementError();
-				break;
-			case etVariable:
-			case etConstant:
-				if (state == GBElementType.etCode) {
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					String name = tokens.removeFirst();
-					Double num = 0.0;
-					// check if a value also exists
-					if (tokens.size() > 0) {
-						// TODO try looking it up as a constant
-						// TODO allow forward label references?
-						String val = tokens.removeFirst();
-						num = StringUtilities.parseDouble(val);
-						if (num == null)
-							throw new GBElementArgumentError();
-					} else if (element == GBElementType.etConstant)
-						throw new GBMissingElementArgumentError();
-					if (element == GBElementType.etVariable)
-						brain.AddVariable(name, num);
-					else
-						brain.AddConstant(name, num);
-
-				} else
-					throw new GBMisplacedElementError();
-				break;
-			case etVectorVariable:
-				if (state == GBElementType.etCode) {
-					if (tokens.size() == 0)
-						throw new GBMissingElementArgumentError();
-					String name = tokens.removeFirst();
-					Double x, y;
-					FinePoint f = new FinePoint();
-					if (tokens.size() != 0) {
-						x = StringUtilities.parseDouble(tokens.removeFirst());
-						if (tokens.size() == 0)
-							throw new GBMissingElementArgumentError();
-						else
-							y = StringUtilities.parseDouble(tokens
-									.removeFirst());
-						if (x == null || y == null)
-							throw new GBElementArgumentError();
-						else {
-							f.x = x;
-							f.y = y;
-						}
-					}
-					brain.AddVectorVariable(name, f);
-				} else
-					throw new GBMisplacedElementError();
-				break;
-			case etEnd:
-				state = GBElementType.etEnd;
-				break;
-			default:
-				throw new GBNoSuchElementError();
+				}
 			}
-			/*
-			 * Only 1 section per line is allowed. This was implied in the
-			 * ExtractToken and ExtractRest procedures but not stated explicitly
-			 */
-			tokens.clear();
-		} catch (GBError e) {
-			throw new GBGenericError(e.toString());
+			break;
+		case etAuthor:
+			if (type == null) {
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				if (side == null)
+					throw new RuntimeException("SideReader missing side");
+				java.lang.StringBuilder sb = new java.lang.StringBuilder(
+																		 tokens.removeFirst());
+				while (tokens.size() > 0) {
+					sb.append(" ");
+					sb.append(tokens.removeFirst());
+				}
+				side.SetAuthor(sb.toString());
+			}
+			break;
+		case etDate:
+			break; // ignore
+		case etDescription:
+			state = GBElementType.etDescription;
+			break;
+		case etColor: {
+			String token = tokens.removeFirst();
+			if (token == null)
+				throw new GBMissingElementArgumentError();
+			GBColor color = ParseColor(token);
+			if (type != null)
+				type.SetColor(color);
+			else
+				side.SetColor(color);
 		}
+			break;
+		case etType:
+			if (type == null && brain != null) {
+				commonBrain = brain;
+				brain = null;
+			}
+			if (tokens.size() == 0)
+				throw new GBMissingElementArgumentError();
+			if (side == null)
+				throw new RuntimeException("SideReader missing side");
+			type = new RobotType(side);
+			java.lang.StringBuilder sb = new java.lang.StringBuilder(
+																	 tokens.removeFirst());
+			while (tokens.size() > 0) {
+				sb.append(" ");
+				sb.append(tokens.removeFirst());
+			}
+			type.SetName(sb.toString());
+			state = GBElementType.etType;
+			break;
+		case etDecoration:
+			if (type == null)
+				throw new GBMisplacedElementError();
+			{
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				String token = tokens.removeFirst();
+
+				GBColor color = ParseColor(token);
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				token = tokens.removeFirst();
+
+				GBRobotDecoration dec = GBRobotDecoration.byTag(token);
+				type.SetDecoration(dec, color);
+
+			}
+			break;
+		case etHardware:
+			if (type != null)
+				state = GBElementType.etHardware;
+			else
+				throw new GBMisplacedElementError();
+			break;
+		case etCode:
+			if (brain == null) {
+				if (type != null && commonBrain != null) {
+					brain = new GBStackBrainSpec(commonBrain); // default to
+					// beginning
+					// of
+					// type-specific
+					// code
+					int label = brain.AddGensym("start");
+					brain.ResolveGensym(label);
+					brain.SetStartingLabel(label);
+				} else
+					brain = new GBStackBrainSpec();
+			}
+
+			state = GBElementType.etCode;
+			break;
+		case etStart:
+			if (state == GBElementType.etCode) {
+				if (tokens.size() > 0)
+					brain.SetStartingLabel(brain.LabelReferenced(tokens
+																 .removeFirst()));
+				else {
+					int label = brain.AddGensym("start");
+					brain.ResolveGensym(label);
+					brain.SetStartingLabel(label);
+				}
+			} else
+				throw new GBMisplacedElementError();
+			break;
+		case etVariable:
+		case etConstant:
+			if (state == GBElementType.etCode) {
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				String name = tokens.removeFirst();
+				Double num = 0.0;
+				// check if a value also exists
+				if (tokens.size() > 0) {
+					// TODO try looking it up as a constant
+					// TODO allow forward label references?
+					String val = tokens.removeFirst();
+					num = StringUtilities.parseDouble(val);
+					if (num == null)
+						throw new GBElementArgumentError();
+				} else if (element == GBElementType.etConstant)
+					throw new GBMissingElementArgumentError();
+				if (element == GBElementType.etVariable)
+					brain.AddVariable(name, num);
+				else
+					brain.AddConstant(name, num);
+
+			} else
+				throw new GBMisplacedElementError();
+			break;
+		case etVectorVariable:
+			if (state == GBElementType.etCode) {
+				if (tokens.size() == 0)
+					throw new GBMissingElementArgumentError();
+				String name = tokens.removeFirst();
+				Double x, y;
+				FinePoint f = new FinePoint();
+				if (tokens.size() != 0) {
+					x = StringUtilities.parseDouble(tokens.removeFirst());
+					if (tokens.size() == 0)
+						throw new GBMissingElementArgumentError();
+					else
+						y = StringUtilities.parseDouble(tokens
+														.removeFirst());
+					if (x == null || y == null)
+						throw new GBElementArgumentError();
+					else {
+						f.x = x;
+						f.y = y;
+					}
+				}
+				brain.AddVectorVariable(name, f);
+			} else
+				throw new GBMisplacedElementError();
+			break;
+		case etEnd:
+			state = GBElementType.etEnd;
+			break;
+		default:
+			throw new GBNoSuchElementError();
+		}
+		/*
+		 * Only 1 section per line is allowed. This was implied in the
+		 * ExtractToken and ExtractRest procedures but not stated explicitly
+		 */
+		tokens.clear();
 	}
 
-	void ProcessCodeLine() throws GBGenericError {
+	void ProcessCodeLine() {
 		if (brain == null)
-			throw new GBGenericError("can't compile code without a brain");
+			throw new RuntimeException("can't compile code without a brain");
 		brain.ParseLine(line, lineno);
 	}
 
@@ -579,7 +562,7 @@ public class SideReader {
 		fileName = _filename;
 	}
 
-	void LoadIt() throws GBAbort {
+	void LoadIt() {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(fileName));
 			while ((line = br.readLine()) != null) {
@@ -589,9 +572,9 @@ public class SideReader {
 				if (line.length() > 0)
 					try {
 						ProcessLine();
-					} catch (GBError err) {
+					} catch (Exception e) {
 						GBError.NonfatalError("Error loading side from "
-								+ fileName + ": " + err.toString()
+								+ fileName + ": " + e.toString()
 								+ " at line " + lineno);
 					}
 			}
@@ -602,7 +585,7 @@ public class SideReader {
 		}
 	}
 
-	Side Side() throws GBIndexOutOfRangeError, GBGenericError {
+	Side Side() {
 		if (state == GBElementType.etEnd && side != null) {
 			if (side.NumSeedTypes() == 0) // auto-generate seeding
 				for (int i = 1; i <= side.CountTypes(); ++i)
@@ -610,12 +593,11 @@ public class SideReader {
 						side.AddSeedID(side.GetType(i).ID());
 			return side;
 		} else
-			throw new GBGenericError(
+			throw new RuntimeException(
 					"tried to get unfinished side from SideReader - was #end missing?");
 	}
 
-	public static Side Load(String filename) throws GBAbort,
-			GBIndexOutOfRangeError, GBGenericError {
+	public static Side Load(String filename) {
 		try {
 			SideReader reader = new SideReader(filename);
 			reader.state = GBElementType.etNone;
@@ -623,18 +605,17 @@ public class SideReader {
 			Side side = reader.Side();
 			side.filename = filename;
 			return side;
-		} catch (GBError err) {
-			GBError.NonfatalError("Error loading side: " + err.toString());
+		} catch (Exception e) {
+			GBError.NonfatalError("Error loading side: " + e.toString());
 			return null;
-		} // catch ( GBAbort ) {}
-			// return null;
+		}
 	}
 
 };
 
 // error classes //
 
-class GBReaderError extends GBError {
+class GBReaderError extends Exception {
 	/**
 	 * 
 	 */

@@ -12,11 +12,7 @@ import simulation.GBWorld;
 import support.FinePoint;
 import support.GBMath;
 import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBOutOfMemoryError;
 
 //Clumsily trying to get around java's lack of custom opeators...
 enum VectortoVectorOperator {
@@ -58,37 +54,32 @@ public class GBStackBrain extends Brain {
 	int used;
 	String lastPrint;
 
-	double ReadVariable(int index) throws GBBadSymbolIndexError {
+	double ReadVariable(int index) {
 		if (index < 0 || index >= spec.NumVariables())
 			throw new GBBadSymbolIndexError();
 		return variables[index];
 	}
 
-	public FinePoint ReadVectorVariable(int index) throws GBBadSymbolIndexError {
+	public FinePoint ReadVectorVariable(int index) {
 		if (index < 0 || index >= spec.NumVectorVariables())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables[index];
 	}
 
-	void WriteVariable(int index, double value) throws GBBadSymbolIndexError {
+	void WriteVariable(int index, double value) {
 		if (index < 0 || index >= spec.NumVariables())
 			throw new GBBadSymbolIndexError();
 		variables[index] = value;
 	}
 
-	void WriteVectorVariable(int index, FinePoint value)
-			throws GBBadSymbolIndexError {
+	void WriteVectorVariable(int index, FinePoint value) {
 		if (index < 0 || index >= spec.NumVectorVariables())
 			throw new GBBadSymbolIndexError();
 		vectorVariables[index] = value;
 	}
 
 	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world)
-			throws GBUnknownInstructionError, GBStackOverflowError,
-			GBBadSymbolIndexError, GBStackUnderflowError, GBReadOnlyError,
-			GBUnknownHardwareVariableError, GBNotIntegerError,
-			GBBadArgumentError, GBBadAddressError, GBOutOfMemoryError,
-			GBGenericError, GBAbort {
+			throws GBBrainError {
 		int index = ins & StackBrainOpcode.kOpcodeIndexMask;
 		switch (OpType.byID(ins >> StackBrainOpcode.kOpcodeTypeShift)) {
 		case otPrimitive:
@@ -233,10 +224,9 @@ public class GBStackBrain extends Brain {
 		return stack[--stackHeight];
 	}
 
-	double Peek(int delta) throws GBBadArgumentError, GBStackUnderflowError,
-			GBStackOverflowError {
+	double Peek(int delta) throws GBStackUnderflowError, GBStackOverflowError {
 		if (delta < 1)
-			throw new GBBadArgumentError();
+			throw new IndexOutOfBoundsException("peeking stack element " + delta);
 		int where = stackHeight - delta;
 		if (where < 0)
 			throw new GBStackUnderflowError();
@@ -281,25 +271,21 @@ public class GBStackBrain extends Brain {
 		return returnStack[--returnStackHeight];
 	}
 
-	double ReadLocalMemory(int addr, GBRobot robot)
-			throws GBIndexOutOfRangeError {
+	double ReadLocalMemory(int addr, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to read at address " + addr);
 		if (memory == null)
 			return 0;
 		return memory[addr - 1];
 	}
 
-	void WriteLocalMemory(int addr, double val, GBRobot robot)
-			throws GBIndexOutOfRangeError, GBOutOfMemoryError {
+	void WriteLocalMemory(int addr, double val, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to write at address " + addr);
 		if (memory == null) {
 			if (robot.hardware.Memory() == 0)
 				return; // fail silently
 			memory = new double[robot.hardware.Memory()];
-			if (memory == null)
-				throw new GBOutOfMemoryError();
 		}
 		memory[addr - 1] = val;
 	}
@@ -325,7 +311,7 @@ public class GBStackBrain extends Brain {
 		return value ? 1 : 0;
 	}
 
-	void BrainError(GBError err, GBRobot robot, GBWorld world) throws GBAbort {
+	void BrainError(Exception err, GBRobot robot, GBWorld world) {
 		if (world.reportErrors)
 			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
@@ -333,8 +319,7 @@ public class GBStackBrain extends Brain {
 		status = BrainStatus.bsError;
 	}
 
-	public GBStackBrain(GBStackBrainSpec spc) throws GBBadSymbolIndexError,
-			GBOutOfMemoryError {
+	public GBStackBrain(GBStackBrainSpec spc) {
 		spec = spc;
 		pc = spc.StartAddress();
 		variables = new double[spc.variables.size()];
@@ -343,9 +328,6 @@ public class GBStackBrain extends Brain {
 		returnStack = new int[kReturnStackLimit];
 		memory = null;
 		lastPrint = null;
-		if (variables == null || vectorVariables == null || stack == null
-				|| returnStack == null)
-			throw new GBOutOfMemoryError();
 		int i;
 		for (i = 0; i < spc.NumVariables(); i++)
 			variables[i] = spc.ReadVariable(i);
@@ -354,8 +336,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	@Override
-	public void think(GBRobot robot, GBWorld world) throws GBBadArgumentError,
-			GBOutOfMemoryError, GBGenericError, GBAbort {
+	public void think(GBRobot robot, GBWorld world) {
 		try {
 			while (status == BrainStatus.bsOK && remaining > 0)
 				ThinkOne(robot, world);
@@ -372,12 +353,7 @@ public class GBStackBrain extends Brain {
 				+ robot.hardware.Processor();
 	}
 
-	public void ThinkOne(GBRobot robot, GBWorld world)
-			throws GBUnknownInstructionError, GBStackOverflowError,
-			GBBadSymbolIndexError, GBStackUnderflowError, GBReadOnlyError,
-			GBUnknownHardwareVariableError, GBNotIntegerError,
-			GBBadArgumentError, GBBadAddressError, GBOutOfMemoryError,
-			GBGenericError, GBAbort {
+	public void ThinkOne(GBRobot robot, GBWorld world) throws GBBrainError {
 		int ins = spec.ReadInstruction(pc++);
 		remaining--; // currently all instructions take one cycle
 		used++;
@@ -385,8 +361,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	@Override
-	public void Step(GBRobot robot, GBWorld world) throws GBAbort,
-			GBBadArgumentError, GBOutOfMemoryError, GBGenericError {
+	public void Step(GBRobot robot, GBWorld world) {
 		if (status != BrainStatus.bsOK)
 			return;
 		try {
@@ -418,15 +393,15 @@ public class GBStackBrain extends Brain {
 		return returnStackHeight;
 	}
 
-	public double StackAt(int index) throws GBIndexOutOfRangeError {
+	public double StackAt(int index) {
 		if (index < 0 || index >= stackHeight)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to read stack element " + index);
 		return stack[index];
 	}
 
-	public int ReturnStackAt(int index) throws GBIndexOutOfRangeError {
+	public int ReturnStackAt(int index) {
 		if (index < 0 || index >= returnStackHeight)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to read return stack element " + index);
 		return returnStack[index];
 	}
 
@@ -462,11 +437,11 @@ public class GBStackBrain extends Brain {
 		return spec.NumVectorVariables();
 	}
 
-	public String VariableName(int index) throws GBBadSymbolIndexError {
+	public String VariableName(int index) {
 		return spec.VariableName(index);
 	}
 
-	public String VectorVariableName(int index) throws GBBadSymbolIndexError {
+	public String VectorVariableName(int index) {
 		return spec.VectorVariableName(index);
 	}
 
@@ -780,7 +755,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	void WriteHardware(int index, double value, GBRobot robot, GBWorld world)
-			throws GBReadOnlyError, GBNotIntegerError, GBBadArgumentError,
+			throws GBReadOnlyError, GBNotIntegerError,
 			GBUnknownHardwareVariableError {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvTime:
@@ -1084,10 +1059,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	void ExecutePrimitive(int index, GBRobot robot, GBWorld world)
-			throws GBStackUnderflowError, GBNotIntegerError,
-			GBBadArgumentError, GBStackOverflowError, GBBadAddressError,
-			GBOutOfMemoryError, GBGenericError, GBUnknownInstructionError,
-			GBAbort {
+			throws GBBrainError {
 		double temp, temp2, temp3;
 		int tempInt;
 		switch (StackBrainOpcode.byID(index)) {
@@ -1112,7 +1084,7 @@ public class GBStackBrain extends Brain {
 		case opDropN: {
 			int n = PopInteger();
 			if (n > stackHeight)
-				throw new GBBadArgumentError();
+				throw new IllegalArgumentException("dropped " + n + " of " + stackHeight);
 			stackHeight -= n;
 		}
 			break;
@@ -1579,7 +1551,7 @@ public class GBStackBrain extends Brain {
 										// with earlier numbers in stack. :(
 			}
 			if (numArgs <= 0)
-				throw new GBGenericError(
+				throw new RuntimeException(
 						"Cannot send message of non-positive length");
 			robot.hardware.radio.Send(sendee, tempInt, robot.Owner());
 		}
@@ -1592,7 +1564,7 @@ public class GBStackBrain extends Brain {
 				Push(0);
 			} else {
 				if (received.length <= 0) {
-					throw new GBGenericError(
+					throw new RuntimeException(
 							"non-positive length message received");
 				}
 				for (int i = received.length - 1; i >= 0; i--)

@@ -8,8 +8,6 @@ import java.awt.Rectangle;
 import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBBadComputedValueError;
 
 // GBFood.cpp
 // Grobots (c) 2002-2007 Devon and Warren Schudy
@@ -39,14 +37,13 @@ public class GBFood extends GBObject {
 		value = Math.max(val, 0);
 	}
 
-	public GBFood(FinePoint where, FinePoint vel, double val)
-			throws GBBadArgumentError {
+	public GBFood(FinePoint where, FinePoint vel, double val) {
 		super(where, Math.sqrt(val) * kFoodRadiusFactor + kFoodMinRadius, vel,
 				val * kFoodMassPerValue);
 		value = val;
 
 		if (val < 0)
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException("negative-value food");
 	}
 
 	@Override
@@ -55,10 +52,9 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public double TakeEnergy(double limit) throws GBBadArgumentError,
-			GBBadComputedValueError {
+	public double TakeEnergy(double limit) {
 		if (limit < 0)
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException("can't take negative energy from food");
 		if (value <= limit) {
 			double amt = value;
 			value = 0;
@@ -67,7 +63,7 @@ public class GBFood extends GBObject {
 		} else {
 			value -= limit;
 			if (value < 0)
-				throw new GBBadComputedValueError();
+				throw new RuntimeException("taking negative energy from food");
 			Recalculate();
 			return limit;
 		}

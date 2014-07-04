@@ -1,6 +1,6 @@
 package exception;
 
-public class GBTooManyIterationsError extends GBError {
+public class GBTooManyIterationsError extends RuntimeException {
 	/**
 	 * 
 	 */

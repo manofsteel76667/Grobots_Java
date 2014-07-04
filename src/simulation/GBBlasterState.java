@@ -2,7 +2,6 @@ package simulation;
 
 import sides.BlasterSpec;
 import support.FinePoint;
-import exception.GBNilPointerError;
 
 public class GBBlasterState {
 	BlasterSpec spec;
@@ -63,7 +62,7 @@ public class GBBlasterState {
 		}
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (firing) {
 			double effectiveness = robot.hardware.EffectivenessFraction();
 			if (robot.hardware.ActualShield() == 0

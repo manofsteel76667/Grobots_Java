@@ -16,11 +16,6 @@ import simulation.GBWorld;
 import support.FinePoint;
 import test.TestBase;
 import exception.GBAbort;
-import exception.GBBadArgumentError;
-import exception.GBError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
 
 public class SideReader_test {
 	List<Side> allsides = null;
@@ -28,8 +23,7 @@ public class SideReader_test {
 	RobotType type = null;
 
 	@Test
-	public void testOneSide() throws GBIndexOutOfRangeError, GBAbort,
-			GBGenericError {
+	public void testOneSide() throws GBAbort {
 		TestBase.loadSide("active-4.gb");
 	}
 
@@ -38,7 +32,6 @@ public class SideReader_test {
 	 * one robot of each type in the side.
 	 * 
 	 * @throws IOException
-	 * @throws GBError
 	 */
 	@Test
 	public void testAllSides() {
@@ -60,15 +53,14 @@ public class SideReader_test {
 					TestBase.log("Created " + msg);
 				}
 			}
-		} catch (GBError e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Could not create " + msg + ": " + e.toString());
 		}
 	}
 
 	@Test
-	public void WorldTest() throws GBNilPointerError, GBBadArgumentError,
-			GBAbort {
+	public void WorldTest() throws GBAbort {
 		try {
 			TestBase.log("Creating world");
 			GBWorld world = new GBWorld();
@@ -82,7 +74,7 @@ public class SideReader_test {
 			world.Sides().add(side2);
 			TestBase.log("Seeding world");
 			world.AddSeeds();
-		} catch (GBError e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Failed:" + e.toString());
 		}

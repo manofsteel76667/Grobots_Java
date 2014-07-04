@@ -9,12 +9,6 @@ import org.junit.Test;
 import sides.Side;
 import simulation.GBRobot;
 import support.FinePoint;
-import brains.GBBadSymbolIndexError;
-import exception.GBAbort;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class GBRobot_test {
 
@@ -31,9 +25,7 @@ public class GBRobot_test {
 	}
 
 	@Test
-	public void test_GBObject_next() throws GBIndexOutOfRangeError,
-			FileNotFoundException, GBAbort, GBGenericError,
-			GBBadSymbolIndexError, GBNilPointerError, GBOutOfMemoryError {
+	public void test_GBObject_next() throws FileNotFoundException {
 		Side side1 = TestBase.loadSide("algae.gb");
 		GBRobot robot1 = new GBRobot(side1.types.get(0), new FinePoint(0, 0));
 		GBRobot robot2 = new GBRobot(side1.types.get(0), new FinePoint(0, 0));

@@ -2,7 +2,6 @@ package simulation;
 
 import sides.GrenadesSpec;
 import support.GBMath;
-import exception.GBNilPointerError;
 
 public class GBGrenadesState {
 	GrenadesSpec spec;
@@ -73,7 +72,7 @@ public class GBGrenadesState {
 		}
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (firing) {
 			double effectiveness = robot.hardware.EffectivenessFraction();
 			if (robot.hardware.ActualShield() == 0

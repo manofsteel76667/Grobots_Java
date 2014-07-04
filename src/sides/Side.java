@@ -14,11 +14,6 @@ import support.FinePoint;
 import support.GBColor;
 import support.GBRandomState;
 import support.Model;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class Side extends Model implements Comparable<Side> {
 
@@ -59,7 +54,7 @@ public class Side extends Model implements Comparable<Side> {
 		seedIDs = new ArrayList<Integer>();
 	}
 
-	public Side copy() throws GBNilPointerError, GBGenericError {
+	public Side copy()  {
 		Side side = new Side();
 		for (int i = 0; i < types.size(); ++i)
 			side.AddType(new RobotType(types.get(i)));
@@ -137,9 +132,9 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	public RobotType GetType(int index) throws GBIndexOutOfRangeError {
+	public RobotType GetType(int index) {
 		if (index <= 0 || index > types.size())
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("invalid type index: " + index);
 		return types.get(index - 1);
 	}
 
@@ -157,11 +152,10 @@ public class Side extends Model implements Comparable<Side> {
 		return types.size();
 	}
 
-	public void AddType(RobotType type) throws GBNilPointerError,
-			GBGenericError {
+	public void AddType(RobotType type) {
 		// adds type at end so they will stay in order
 		if (type == null)
-			throw new GBNilPointerError();
+			throw new NullPointerException();
 		type.Recalculate();
 		types.add(type);
 		type.SetID(types.size());
@@ -177,9 +171,9 @@ public class Side extends Model implements Comparable<Side> {
 		seedIDs.add(id);
 	}
 
-	public RobotType GetSeedType(int index) throws GBBadArgumentError {
+	public RobotType GetSeedType(int index) {
 		if (index < 0)
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException("type index must be positive: " + index);
 		if (seedIDs.isEmpty())
 			return null;
 		return GetType(seedIDs.get(index % seedIDs.size()));
@@ -275,54 +269,48 @@ public class Side extends Model implements Comparable<Side> {
 		return scores.GetNewRobotNumber();
 	}
 
-	public double ReadSharedMemory(int addr) throws GBIndexOutOfRangeError {
+	public double ReadSharedMemory(int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to read from shared memory at " + addr);
 		return sharedMemory[addr - 1];
 	}
 
-	public void WriteSharedMemory(double value, int addr)
-			throws GBIndexOutOfRangeError {
+	public void WriteSharedMemory(double value, int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to write to shared memory at " + addr);
 		sharedMemory[addr - 1] = value;
 	}
 
 	// Note: the pointer returned is to within an internal array and
 	// must be used and discarded before any robot calls SendMessage again!
-	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber)
-			throws GBIndexOutOfRangeError, GBGenericError {
+	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return null;
 		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
 	}
 
-	public void SendMessage(GBMessage msg, int channel)
-			throws GBOutOfMemoryError, GBGenericError, GBBadArgumentError {
+	public void SendMessage(GBMessage msg, int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to send on channel " + channel);
 		if (msgQueues[channel - 1] == null) {
 			msgQueues[channel - 1] = new GBMessageQueue();
-			if (msgQueues[channel - 1] == null)
-				throw new GBOutOfMemoryError();
 		}
 		msgQueues[channel - 1].AddMessage(msg);
 	}
 
-	public int NextMessageNumber(int channel) throws GBIndexOutOfRangeError {
+	public int NextMessageNumber(int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].NextMessageNumber();
 	}
 
-	public int MessagesWaiting(int channel, int next)
-			throws GBIndexOutOfRangeError {
+	public int MessagesWaiting(int channel, int next) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].MessagesWaiting(next);

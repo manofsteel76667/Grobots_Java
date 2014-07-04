@@ -25,13 +25,7 @@ import support.FinePoint;
 import support.GBObjectClass;
 import support.GBRandomState;
 import support.StringUtilities;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 import exception.GBSimulationError;
 import exception.GBTooManyIterationsError;
 
@@ -101,39 +95,35 @@ public class GBWorld extends GBObjectWorld {
 	 * code) code #endif
 	 */
 
-	void ThinkAllObjects() throws GBBadArgumentError, GBOutOfMemoryError,
-			GBGenericError, GBAbort {
+	void ThinkAllObjects() {
 		// only bothers with robots
 		// try {
 		for (int i = 0; i <= tilesX * tilesY; i++)
 			for (GBObject ob = objects.get(GBObjectClass.ocRobot)[i]; ob != null; ob = ob.next)
 				ob.Think(this);
-		// } catch ( GBError err ) {
+		// } catch ( Exception err ) {
 		// GBError.NonfatalError("Error thinking object: " + err.toString());
 		// }
 	}
 
-	void ActAllObjects() throws GBAbort {
+	void ActAllObjects() {
 		try {
 			for (int i = 0; i <= tilesX * tilesY; i++)
 				for (GBObjectClass cur : GBObjectClass.values())
 					for (GBObject ob = objects.get(cur)[i]; ob != null; ob = ob.next)
 						ob.Act(this);
-		} catch (GBError err) {
-			GBError.NonfatalError("Error acting object: " + err.toString());
+		} catch (Exception e) {
+			GBError.NonfatalError("Error acting object: " + e.toString());
 		}
 	}
 
-	void AddManna() throws GBAbort {
+	void AddManna() {
 		for (mannaLeft += size.x * size.y * mannaRate
 				/ (kForegroundTileSize * kForegroundTileSize); mannaLeft > mannaSize; mannaLeft -= mannaSize)
 			AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
 	}
 
-	void PickSeedPositions(FinePoint[] positions, int numSeeds)
-			throws GBNilPointerError, GBAbort {
-		if (positions == null)
-			throw new GBNilPointerError();
+	void PickSeedPositions(FinePoint[] positions, int numSeeds) {
 		if (numSeeds < 1)
 			return;
 		try {
@@ -224,8 +214,7 @@ public class GBWorld extends GBObjectWorld {
 	 * ~GBWorld() { RemoveAllSides(); }
 	 */
 
-	public void SimulateOneFrame() throws GBAbort, GBBadArgumentError,
-			GBOutOfMemoryError, GBGenericError {
+	public void SimulateOneFrame() {
 		/*
 		 * #if GBWORLD_PROFILING && MAC UnsignedWide start, phaseStart, end;
 		 * Microseconds(&start); #endif
@@ -252,16 +241,15 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public synchronized void AdvanceFrame() throws GBAbort, GBNilPointerError,
-			GBBadArgumentError, GBTooManyIterationsError, GBSimulationError,
-			GBOutOfMemoryError, GBGenericError {
+	public synchronized void AdvanceFrame() throws
+						       GBTooManyIterationsError,
+						       GBSimulationError {
 		SimulateOneFrame();
 		if (RoundOver())
 			EndRound();
 	}
 
-	public void EndRound() throws GBNilPointerError, GBBadArgumentError,
-			GBAbort, GBTooManyIterationsError, GBSimulationError {
+	public void EndRound() throws GBTooManyIterationsError, GBSimulationError {
 		// TODO: Replace when sound is implemented
 		// StartSound(siEndRound);
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
@@ -282,7 +270,7 @@ public class GBWorld extends GBObjectWorld {
 			running = false;
 	}
 
-	public void CollectStatistics() throws GBAbort {
+	public void CollectStatistics() {
 		// reset
 		mannas = 0;
 		corpses = 0;
@@ -329,7 +317,7 @@ public class GBWorld extends GBObjectWorld {
 			sides.get(i).Scores().ReportTotals(roundScores);
 	}
 
-	public void AddSeed(Side side, FinePoint where) throws GBAbort {
+	public void AddSeed(Side side, FinePoint where) {
 		try {
 			double cost = seedValue - seedTypePenalty * side.CountTypes();
 			// give side a number
@@ -343,7 +331,7 @@ public class GBWorld extends GBObjectWorld {
 			for (int i = 0;; i++) {
 				type = side.GetSeedType(i);
 				if (type == null)
-					throw new GBGenericError(
+					throw new RuntimeException(
 							"must have at least one type to seed");
 				if (type.Cost() <= cost) {
 					bot = new GBRobot(type, where.add(random
@@ -375,7 +363,7 @@ public class GBWorld extends GBObjectWorld {
 					side.Scores().ReportSeeded(amt);
 					cost -= amt;
 					if (cost > 0)
-						throw new GBGenericError(
+						throw new RuntimeException(
 								"When seeding, energy left-over after bonus fetus");
 				}
 			}
@@ -396,19 +384,18 @@ public class GBWorld extends GBObjectWorld {
 			// pretty
 			// worthless
 			addNewObjects();
-		} catch (GBError err) {
-			GBError.NonfatalError("Error adding seed:" + err.toString());
+		} catch (Exception e) {
+			GBError.NonfatalError("Error adding seed:" + e.toString());
 		}
 	}
 
-	public void AddSeeds() throws GBAbort, GBNilPointerError,
+	public void AddSeeds() throws
 			GBTooManyIterationsError, GBSimulationError {
 		int numSides = CountSides();
 		int numSeeds = seedLimit != 0 ? (seedLimit > numSides ? numSides
 				: seedLimit) : numSides;
 		// pick positions
 		FinePoint[] positions = new FinePoint[numSeeds];
-		// if ( positions==null ) throw new GBOutOfMemoryError();
 		PickSeedPositions(positions, numSeeds);
 		// seed sides
 		int seedsLeft = numSeeds;
@@ -429,7 +416,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public void ReseedDeadSides() throws GBAbort {
+	public void ReseedDeadSides() {
 		// since this uses side statistics, be sure statistics have been
 		// gathered
 		for (int i = 0; i < sides.size(); ++i)
@@ -440,7 +427,7 @@ public class GBWorld extends GBObjectWorld {
 		CollectStatistics();
 	}
 
-	public void Reset() throws GBNilPointerError, GBBadArgumentError {
+	public void Reset() {
 		currentFrame = 0;
 		mannaLeft = 0;
 		sidesSeeded = 0;
@@ -453,8 +440,7 @@ public class GBWorld extends GBObjectWorld {
 	}
 
 	@Override
-	public void Resize(FinePoint newsize) throws GBNilPointerError,
-			GBBadArgumentError, GBAbort {
+	public void Resize(FinePoint newsize) {
 		if (newsize == size)
 			return;
 		super.Resize(newsize);
@@ -480,9 +466,9 @@ public class GBWorld extends GBObjectWorld {
 				random.InRange(walldist, size.y - walldist));
 	}
 
-	public void AddSide(Side side) throws GBNilPointerError {
+	public void AddSide(Side side) {
 		if (side == null)
-			throw new GBNilPointerError();
+			throw new NullPointerException("tried to add null side");
 		for (int i = 0; i < sides.size(); ++i)
 			if (sides.get(i).Name().equals(side.Name()))
 				side.SetName(side.Name() + '\'');
@@ -490,19 +476,18 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public void ReplaceSide(Side oldSide, Side newSide)
-			throws GBNilPointerError {
+	public void ReplaceSide(Side oldSide, Side newSide) {
 		if (oldSide == null || newSide == null)
-			throw new GBNilPointerError();
+			throw new NullPointerException("replacing null side");
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
 		sides.add(pos, newSide);
 		Changed();
 	}
 
-	public void RemoveSide(Side side) throws GBNilPointerError {
+	public void RemoveSide(Side side) {
 		if (side == null)
-			throw new GBNilPointerError();
+			throw new NullPointerException("tried to remove null side");
 		// if (side == selectedSide)
 		// selectedSide = null;
 		sides.remove(side);
@@ -522,9 +507,9 @@ public class GBWorld extends GBObjectWorld {
 		return sides;
 	}
 
-	public Side GetSide(int index) throws GBIndexOutOfRangeError {
+	public Side GetSide(int index) {
 		if (index <= 0 || index > sides.size())
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException("invalid side index: " + index);
 		return sides.get(index - 1);
 	}
 

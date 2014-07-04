@@ -1,27 +1,13 @@
 package exception;
 
-// GBErrors.cpp
 // Grobots (c) 2002-2006 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
 
-public class GBError extends java.lang.Exception {
+public final class GBError {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -6819324881379371856L;
-
-	@Override
-	public String getMessage() {
-		return toString();
-	}
-
-	public GBError() {
-	}
-
-	@Override
-	public String toString() {
-		return "undifferentiated GBError (shouldn't be used)";
-	}
 
 	public static void FatalError(String message) {
 		javax.swing.JOptionPane.showMessageDialog(null, message);

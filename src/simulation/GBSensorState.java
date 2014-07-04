@@ -4,9 +4,6 @@ import sides.SensorSpec;
 import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBNilPointerError;
 
 /**
  * GBSensorState is public since it gets used directly by GBBrain in
@@ -29,7 +26,7 @@ public class GBSensorState {
 	GBSensorResult[] results; // dynamically allocated array
 	FinePoint whereOverall;
 
-	public GBSensorState(SensorSpec spc) throws GBGenericError {
+	public GBSensorState(SensorSpec spc) {
 		spec = spc;
 		seesFriendly = spc.Seen() == GBObjectClass.ocFood.value;
 		seesEnemy = true;
@@ -37,9 +34,6 @@ public class GBSensorState {
 		whereOverall = new FinePoint();
 
 		results = new GBSensorResult[MaxResults()];
-		if (results == null)
-			throw new GBGenericError(
-					"Out of memory creating sensor results array");
 	}
 
 	public double MaxRange() {
@@ -108,9 +102,9 @@ public class GBSensorState {
 		return currentResult;
 	}
 
-	public void SetCurrentResult(int newCurrent) throws GBBadArgumentError {
+	public void SetCurrentResult(int newCurrent) {
 		if (newCurrent < 0 || newCurrent >= NumResults())
-			throw new GBBadArgumentError();
+			throw new IllegalArgumentException();
 		currentResult = newCurrent;
 	}
 
@@ -128,14 +122,14 @@ public class GBSensorState {
 			return new FinePoint();
 	}
 
-	public Integer Side() {
+	public int Side() {
 		if (currentResult < NumResults())
 			if (results[currentResult].side == null)
 				return 0;
 			else
 				return results[currentResult].side.ID();
 		else
-			return null;
+			return 0;
 	}
 
 	public double Radius() {
@@ -248,7 +242,7 @@ public class GBSensorState {
 		whereOverall = whereOverall.add(find.where);
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (firing && spec.Seen() != GBObjectClass.ocDead.value /*
 																 * if sensor
 																 * exists

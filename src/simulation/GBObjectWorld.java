@@ -13,11 +13,7 @@ import support.FinePoint;
 import support.GBObjectClass;
 import support.GBRandomState;
 import support.Model;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
 
 public class GBObjectWorld extends Model {
 	/**
@@ -89,11 +85,8 @@ public class GBObjectWorld extends Model {
 	/**
 	 * Puts objects in the appropriate class and tile, and deletes dead ones.
 	 * Will wait until rendering is complete before starting sort.
-	 * 
-	 * @throws GBAbort
-	 *             @
 	 */
-	protected void ResortObjects() throws GBAbort {
+	protected void ResortObjects() {
 		GBObject[] template = new GBObject[tilesX * tilesY + 1];
 		for (GBObjectClass cl : GBObjectClass.values())
 			objects.put(cl, template.clone());
@@ -138,7 +131,6 @@ public class GBObjectWorld extends Model {
 	 * to the world on the next call to addNewObjects
 	 * 
 	 * @param newOb
-	 * @throws GBNilPointerError
 	 */
 	public void AddObjectNew(GBObject newOb) {
 		if (newOb != null)
@@ -198,7 +190,7 @@ public class GBObjectWorld extends Model {
 				}
 	}
 
-	protected void CollideAllObjects() throws GBAbort {
+	protected void CollideAllObjects() {
 		for (int tx = 0; tx < tilesX; tx++)
 			for (int ty = 0; ty < tilesY; ty++) {
 				int t = ty * tilesX + tx;
@@ -221,13 +213,13 @@ public class GBObjectWorld extends Model {
 		CollideSameTile(tilesX * tilesY);
 	}
 
-	protected void CollideSameTile(int t) throws GBAbort {
+	protected void CollideSameTile(int t) {
 		for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t]; bot != null; bot = bot.next) {
 			try {
 				for (GBObject bot2 = bot.next; bot2 != null; bot2 = bot2.next) {
 					bot.SolidCollide(bot2, kRobotRestitution);
 				}// )
-			} catch (GBError err) {
+			} catch (Exception err) {
 				GBError.NonfatalError("Error colliding robots: "
 						+ err.toString());
 			}
@@ -236,7 +228,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next) {
 						bot.BasicCollide(food);
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding robot and food: "
 							+ err.toString());
 				}
@@ -244,7 +236,7 @@ public class GBObjectWorld extends Model {
 				for (GBObject shot = objects.get(GBObjectClass.ocShot)[t]; shot != null; shot = shot.next) {
 					bot.BasicCollide(shot);
 				}
-			} catch (GBError err) {
+			} catch (Exception err) {
 				GBError.NonfatalError("Error colliding robot and shot: "
 						+ err.toString());
 			}
@@ -252,7 +244,7 @@ public class GBObjectWorld extends Model {
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next) {
 					bot.BasicCollide(area);
 				}
-			} catch (GBError err) {
+			} catch (Exception err) {
 				GBError.NonfatalError("Error colliding robot and area: "
 						+ err.toString());
 			}
@@ -263,7 +255,7 @@ public class GBObjectWorld extends Model {
 					area.BasicCollide(food);
 				}
 			}
-			} catch (GBError err) {
+			} catch (Exception err) {
 			GBError.NonfatalError("Error colliding area and food: "
 					+ err.toString());
 		}
@@ -293,7 +285,7 @@ public class GBObjectWorld extends Model {
 		return true;
 	}
 
-	protected void CollideTwoTiles(int t1, int t2) throws GBAbort {
+	protected void CollideTwoTiles(int t1, int t2) {
 		// Now tries to avoid looking at t2 when the object in t1 isn't even
 		// close to it.
 		double t2edge = (t2 / tilesX) * kForegroundTileSize - 2;
@@ -305,7 +297,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject bot2 = objects.get(GBObjectClass.ocRobot)[t2]; bot2 != null; bot2 = bot2.next) {
 						bot.SolidCollide(bot2, kRobotRestitution);
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding robots: "
 							+ err.toString());
 				}
@@ -314,7 +306,7 @@ public class GBObjectWorld extends Model {
 						for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
 							bot.BasicCollide(food); 
 						}
-					} catch (GBError err) {
+					} catch (Exception err) {
 						GBError.NonfatalError("Error colliding robot and food: "
 								+ err.toString());
 					}
@@ -322,7 +314,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject shot = objects.get(GBObjectClass.ocShot)[t2]; shot != null; shot = shot.next) {
 						bot.BasicCollide(shot); 
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding robot and shot: "
 							+ err.toString());
 				}
@@ -331,7 +323,7 @@ public class GBObjectWorld extends Model {
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
 					bot.BasicCollide(area);
 				}
-			} catch (GBError err) {
+			} catch (Exception err) {
 				GBError.NonfatalError("Error colliding robot and area: "
 						+ err.toString());
 			}
@@ -342,7 +334,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
 						food.BasicCollide(bot); 
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding food and robot: "
 							+ err.toString());
 				}
@@ -350,7 +342,7 @@ public class GBObjectWorld extends Model {
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
 					food.BasicCollide(area); 
 				}
-			} catch (GBError err) {
+			} catch (Exception err) {
 				GBError.NonfatalError("Error colliding food and area: "
 						+ err.toString());
 			}
@@ -362,7 +354,7 @@ public class GBObjectWorld extends Model {
 						shot.BasicCollide(bot);
 					}
 			}
-		} catch (GBError err) {
+		} catch (Exception err) {
 			GBError.NonfatalError("Error colliding shot and robot: "
 					+ err.toString());
 		}
@@ -372,7 +364,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
 						area.BasicCollide(bot); 
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding area and robot: "
 							+ err.toString());
 				}
@@ -380,7 +372,7 @@ public class GBObjectWorld extends Model {
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
 						area.BasicCollide(food); 
 					}
-				} catch (GBError err) {
+				} catch (Exception err) {
 					GBError.NonfatalError("Error colliding area and food: "
 							+ err.toString());
 				}
@@ -390,7 +382,7 @@ public class GBObjectWorld extends Model {
 		CollideSensors(t2, t1);
 	}
 
-	protected void CollideSensors(int sensorTile, int otherTile) throws GBAbort {
+	protected void CollideSensors(int sensorTile, int otherTile) {
 		try {
 			double tileBottom = (otherTile / tilesX) * kForegroundTileSize - 2;
 			double tileTop = (otherTile / tilesX + 1) * kForegroundTileSize - 2;
@@ -416,7 +408,7 @@ public class GBObjectWorld extends Model {
 						}
 				}
 			}
-		} catch (GBError err) {
+		} catch (Exception err) {
 			GBError.NonfatalError("Error colliding sensor-shot with other object: "
 					+ err.toString());
 		}
@@ -459,8 +451,7 @@ public class GBObjectWorld extends Model {
 	}
 
 	// TODO: Find where this is used and make sure it acts like it should
-	public void Resize(FinePoint newsize) throws GBNilPointerError,
-			GBBadArgumentError, GBAbort {
+	public void Resize(FinePoint newsize) {
 		size = newsize;
 		tilesX = (int) Math.ceil(size.x / kForegroundTileSize);
 		tilesY = (int) Math.ceil(size.y / kForegroundTileSize);
@@ -525,9 +516,9 @@ public class GBObjectWorld extends Model {
 	}
 
 	public GBObject GetObjects(int tilex, int tiley, GBObjectClass which)
-			throws GBIndexOutOfRangeError {
+			 {
 		if (tilex < 0 || tilex >= tilesX || tiley < 0 || tiley >= tilesY)
-			throw new GBIndexOutOfRangeError();
+			throw new IndexOutOfBoundsException();
 		return objects.get(which)[tilex + tiley * tilesX];
 	}
 

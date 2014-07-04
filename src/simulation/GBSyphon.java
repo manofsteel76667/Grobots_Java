@@ -8,10 +8,7 @@ import java.awt.Rectangle;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
 import exception.GBError;
-import exception.GBGenericError;
 
 public class GBSyphon extends GBTimedShot {
 	GBRobot sink;
@@ -34,8 +31,7 @@ public class GBSyphon extends GBTimedShot {
 	}
 
 	@Override
-	public void CollideWith(GBObject other) throws GBAbort, GBGenericError,
-			GBBadArgumentError {
+	public void CollideWith(GBObject other) {
 		if (other.Class() == GBObjectClass.ocRobot && power != 0
 				&& other != sink
 				&& (hitsEnemies || other.Owner() == sink.Owner())) {
@@ -67,13 +63,13 @@ public class GBSyphon extends GBTimedShot {
 									.ReportStolen(taken);
 						}
 						if (taken != given || taken != actual) {
-							throw new GBGenericError(
+							throw new RuntimeException(
 									"Given != taken in CollideWith");
 						}
 					}
-				} catch (GBError e) {
+				} catch (Exception e) {
 					GBError.NonfatalError("Error in CollideWith: "
-							+ e.getMessage());
+							+ e.toString());
 				}
 			} else { // giving energy: like taking, but target energy isn't a
 						// factor
@@ -97,7 +93,7 @@ public class GBSyphon extends GBTimedShot {
 					owner.Scores().expenditure.ReportStolen(given);
 				}
 				if (taken != given || taken != actual) {
-					throw new GBGenericError("Given != taken in CollideWith");
+					throw new RuntimeException("Given != taken in CollideWith");
 				}
 			}
 		}

@@ -2,7 +2,6 @@ package simulation;
 
 import sides.SyphonSpec;
 import support.GBMath;
-import exception.GBNilPointerError;
 
 public class GBSyphonState {
 	SyphonSpec spec;
@@ -58,7 +57,7 @@ public class GBSyphonState {
 		syphoned += pwr;
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (rate != 0) {
 			double limit = MaxRate() * robot.ShieldFraction(); // should maybe
 																// diminish with

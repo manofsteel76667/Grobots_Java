@@ -102,11 +102,9 @@ public class Headless {
 			// clean up
 			// if ( SoundActive() ) CleanupSound();
 			System.exit(0);
-		} catch (GBError err) {
-			GBError.FatalError("Uncaught GBError: " + err.toString());
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
-			GBError.FatalError("Uncaught java exception: " + e.toString()
+			GBError.FatalError("Uncaught exception: " + e.toString()
 					+ "\nTrace:\n" + e.getStackTrace());
 		}
 		System.exit(1);

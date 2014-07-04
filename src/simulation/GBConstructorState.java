@@ -3,11 +3,6 @@ package simulation;
 import sides.ConstructorSpec;
 import sides.RobotType;
 import support.GBMath;
-import brains.GBBadSymbolIndexError;
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class GBConstructorState {
 	ConstructorSpec spec;
@@ -74,9 +69,7 @@ public class GBConstructorState {
 		rate = GBMath.clamp(nrate, 0, MaxRate());
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError,
-			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (type != null && rate != 0) {
 			double actual = robot.hardware.UseEnergyUpTo(Math.min(rate,
 					Remaining()));

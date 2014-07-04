@@ -1,8 +1,5 @@
 package simulation;
 
-import exception.GBBadArgumentError;
-import exception.GBGenericError;
-
 public class GBMessageQueue {
 	public static final int kMaxMessageNumber = 2000000;
 	public static final int kMaxMessages = 50;
@@ -25,15 +22,14 @@ public class GBMessageQueue {
 		nextNumber = 0;
 	}
 
-	public void AddMessage(GBMessage newMess) throws GBGenericError,
-			GBBadArgumentError {
+	public void AddMessage(GBMessage newMess) {
 		buffer[nextNumber % kMaxMessages] = newMess;
 		buffer[nextNumber % kMaxMessages].SetMessageNumber(nextNumber);
 		if (++nextNumber >= kMaxMessageNumber)
-			throw new GBGenericError("Message number got too high.");
+			throw new RuntimeException("Message number got too high.");
 	}
 
-	public GBMessage GetMessage(int num) throws GBGenericError {
+	public GBMessage GetMessage(int num) {
 		int potential = num % kMaxMessages;
 		if (buffer[potential].sequenceNum == num)
 			return buffer[potential];
@@ -45,7 +41,7 @@ public class GBMessageQueue {
 										// hasn't appeared yet?
 			return null;
 		else
-			throw new GBGenericError("Unexpected condition in GetMessage()");
+			throw new RuntimeException("Unexpected condition in GetMessage()");
 	}
 
 	public int NextMessageNumber() {

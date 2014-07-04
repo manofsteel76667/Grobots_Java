@@ -10,8 +10,6 @@ import support.GBColor;
 import brains.Brain;
 import brains.BrainSpec;
 import brains.GBBadSymbolIndexError;
-import exception.GBGenericError;
-import exception.GBOutOfMemoryError;
 
 public class RobotType extends support.Model {
 	public static final double kStandardMass = 20;
@@ -29,11 +27,6 @@ public class RobotType extends support.Model {
 	// private:
 	double cost;
 	double mass;
-
-	// cpp file
-	public RobotType() throws GBGenericError {
-		throw new GBGenericError("Bad constructor");
-	}
 
 	public RobotType(Side owner) {
 		side = owner;
@@ -155,20 +148,20 @@ public class RobotType extends support.Model {
 		return brain;
 	}
 
-	public void SetBrain(BrainSpec spec) throws GBGenericError {
+	public void SetBrain(BrainSpec spec) {
 		spec.Check();
 		brain = spec;
 		Changed();
 	}
 
-	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
+	public Brain MakeBrain() {
 		if (brain == null) {
 			return null;
 		}
 		return brain.MakeBrain();
 	}
 
-	public void Recalculate() throws GBGenericError {
+	public void Recalculate() {
 		hardware.Recalculate();
 		cost = hardware.Cost() + (brain != null ? brain.Cost() : 0);
 		mass = hardware.Mass() + (brain != null ? brain.Mass() : 0);

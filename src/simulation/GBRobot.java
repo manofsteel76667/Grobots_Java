@@ -18,14 +18,6 @@ import support.GBColor;
 import support.GBObjectClass;
 import brains.Brain;
 import brains.BrainStatus;
-import brains.GBBadSymbolIndexError;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
-import exception.GBBadComputedValueError;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class GBRobot extends GBObject {
 	RobotType type;
@@ -66,31 +58,23 @@ public class GBRobot extends GBObject {
 		radius = Math.sqrt(mass + kRobotRadiusPadding) * kRobotRadiusFactor;
 	}
 
-	public GBRobot(RobotType rtype, FinePoint where) throws GBGenericError,
-			GBNilPointerError, GBIndexOutOfRangeError, GBBadSymbolIndexError,
-			GBOutOfMemoryError {
+	public GBRobot(RobotType rtype, FinePoint where) {
 		super(where, 0.5, rtype.Mass());
 		type = rtype;
 		brain = rtype.MakeBrain();
 		id = rtype.side.GetNewRobotNumber();
 		hardware = new GBHardwareState(rtype.Hardware());
-		// if (rtype == null)
-		// throw new GBNilPointerError();
 		hardware.radio.Reset(Owner());
 		Recalculate();
 	}
 
-	public GBRobot(RobotType rtype, FinePoint where, FinePoint vel, int parentID)
-			throws GBGenericError, GBIndexOutOfRangeError, GBNilPointerError,
-			GBBadSymbolIndexError, GBOutOfMemoryError {
+	public GBRobot(RobotType rtype, FinePoint where, FinePoint vel, int parentID) {
 		super(where, 0.5, vel, rtype.Mass());
 		type = rtype;
 		brain = rtype.MakeBrain();
 		id = rtype.side.GetNewRobotNumber();
 		parent = parentID;
 		hardware = new GBHardwareState(rtype.Hardware());
-		// if (rtype == null)
-		// throw new GBNilPointerError();
 		hardware.radio.Reset(Owner());
 		Recalculate();
 	}
@@ -186,7 +170,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public double GiveEnergy(double amount) throws GBBadArgumentError {
+	public double GiveEnergy(double amount) {
 		return hardware.GiveEnergy(amount);
 	}
 
@@ -235,8 +219,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void CollideWith(GBObject other) throws GBBadComputedValueError,
-			GBBadArgumentError {
+	public void CollideWith(GBObject other) {
 		switch (other.Class()) {
 		case ocRobot:
 			if (other.Owner() == Owner())
@@ -267,16 +250,13 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void Think(GBWorld world) throws GBBadArgumentError,
-			GBOutOfMemoryError, GBGenericError, GBAbort {
+	public void Think(GBWorld world) {
 		if (brain != null)
 			brain.think(this, world);
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError,
-			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError {
+	public void Act(GBWorld world) {
 		hardware.Act(this, world);
 		if (dead) {
 			if (lastHit == null)
@@ -484,6 +464,8 @@ public class GBRobot extends GBObject {
 				/ kRecentDamageTime, Owner().Color()));
 		g2d.setPaint(robotColor);
 		g2d.fillOval(where.x, where.y, where.width, where.height);
+		g2d.setPaint(type.Color());
+		g2d.drawOval(where.x, where.y, where.width, where.height);
 		// meters
 		if (detailed) {
 			// energy meter
@@ -502,8 +484,8 @@ public class GBRobot extends GBObject {
 						hardware.RepairRate() != 0);
 			// gestation meter
 			if (hardware.constructor.Progress() != 0) {
-				Rectangle meterRect = where;
-				meterRect.grow(meterWidth, meterWidth);
+				Rectangle meterRect = new Rectangle(where);
+				meterRect.grow(- meterWidth, - meterWidth);
 				DrawMeter(g, hardware.constructor.Fraction(), meterRect, 0,
 						360, 1, new GBColor(Color.yellow), new GBColor(
 								Color.GREEN), Owner().Color(),
@@ -521,7 +503,7 @@ public class GBRobot extends GBObject {
 		int dx = (where.width / 4);
 		int dy = (where.height / 4);
 		// cross, hline, and vline draw in bigDec instead of dec
-		Rectangle bigDec = new Rectangle(where.x - dx, where.y - dy,
+		Rectangle bigDec = new Rectangle(where.x + dx, where.y + dy,
 				where.width - dx * 2, where.height - dy * 2);
 		// flash decoration when reloading or sensing
 		GBColor basecolor = type.Decoration() == GBRobotDecoration.none ? Owner()

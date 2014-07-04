@@ -10,8 +10,6 @@ import sides.Side;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBNilPointerError;
 
 public class GBBlast extends GBTimedShot {
 	boolean hit;
@@ -40,7 +38,7 @@ public class GBBlast extends GBTimedShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 		super.Act(world);
 		if (hit) {
 			world.AddObjectNew(new GBBlasterSpark(Position()));

@@ -9,8 +9,6 @@ import java.awt.Graphics;
 import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBNilPointerError;
 
 public abstract class GBShot extends GBObject {
 	// protected:
@@ -70,7 +68,7 @@ public abstract class GBShot extends GBObject {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 
 	}
 
@@ -115,7 +113,7 @@ abstract class GBTimedShot extends GBShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 		super.Act(world);
 		lifetime--;
 	}

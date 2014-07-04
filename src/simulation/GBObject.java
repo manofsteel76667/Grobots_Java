@@ -12,13 +12,6 @@ import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
 import support.GBObjectClass;
-import brains.GBBadSymbolIndexError;
-import exception.GBAbort;
-import exception.GBBadArgumentError;
-import exception.GBBadComputedValueError;
-import exception.GBGenericError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public abstract class GBObject {
 	FinePoint position;
@@ -35,12 +28,11 @@ public abstract class GBObject {
 	protected void TakeDamage(double amount, Side origin) {
 	}
 
-	protected double TakeEnergy(double amount) throws GBBadArgumentError,
-			GBBadComputedValueError {
+	protected double TakeEnergy(double amount) {
 		return 0;
 	}
 
-	protected double GiveEnergy(double amount) throws GBBadArgumentError {
+	protected double GiveEnergy(double amount) {
 		return 0;
 	}
 
@@ -53,19 +45,15 @@ public abstract class GBObject {
 	}
 
 	// high-level actions
-	protected void Think(GBWorld world) throws GBBadArgumentError,
-			GBOutOfMemoryError, GBGenericError, GBAbort {
+	protected void Think(GBWorld world) {
 	} // Not everything has a brain
 
-	public abstract void Act(GBWorld world) throws GBNilPointerError,
-			GBBadArgumentError, GBGenericError, GBBadSymbolIndexError,
-			GBOutOfMemoryError; // Everything can act
+	public abstract void Act(GBWorld world); // Everything can act
 
 	protected void CollideWithWall() {
 	}
 
-	protected void CollideWith(GBObject other) throws GBGenericError, GBAbort,
-			GBBadArgumentError, GBBadComputedValueError {
+	protected void CollideWith(GBObject other) {
 	}
 
 	protected void CollectStatistics(GBWorld world) {
@@ -245,17 +233,14 @@ public abstract class GBObject {
 		return Math.min(dist / radius, 1.0); // don't overlap more than 1
 	}
 
-	public void BasicCollide(GBObject other) throws GBGenericError, GBAbort,
-			GBBadComputedValueError, GBBadArgumentError {
+	public void BasicCollide(GBObject other) {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);
 		}
 	}
 
-	public void SolidCollide(GBObject other, double coefficient)
-			throws GBGenericError, GBAbort, GBBadComputedValueError,
-			GBBadArgumentError {
+	public void SolidCollide(GBObject other, double coefficient) {
 		if (Intersects(other)) {
 			CollideWith(other);
 			other.CollideWith(this);

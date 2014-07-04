@@ -7,8 +7,6 @@ import java.awt.Rectangle;
 
 import sides.Side;
 import support.FinePoint;
-import exception.GBBadArgumentError;
-import exception.GBNilPointerError;
 
 public class GBGrenade extends GBTimedShot {
 	// public:
@@ -30,7 +28,7 @@ public class GBGrenade extends GBTimedShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 		super.Act(world);
 		if (lifetime <= 0) {
 			world.AddObjectNew(new GBExplosion(Position(), owner, power));

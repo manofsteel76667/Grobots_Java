@@ -1,8 +1,6 @@
 package brains;
 
 import sides.HardwareItem;
-import exception.GBGenericError;
-import exception.GBOutOfMemoryError;
 import exception.GBSimulationError;
 
 // GBBrainSpec.cpp
@@ -10,7 +8,7 @@ import exception.GBSimulationError;
 // Distributed under the GNU General Public License.
 
 public class BrainSpec extends HardwareItem {
-	public Brain MakeBrain() throws GBBadSymbolIndexError, GBOutOfMemoryError {
+	public Brain MakeBrain() {
 		return null;
 	};
 
@@ -34,7 +32,7 @@ public class BrainSpec extends HardwareItem {
 	public void ParseLine(String line, short lineNum) {
 	};
 
-	public void Check() throws GBGenericError {
+	public void Check() {
 	} // check OK to use
 
 	public BrainSpec() {

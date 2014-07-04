@@ -1,7 +1,5 @@
 package sides;
 
-import exception.GBGenericError;
-
 public class HardwareSpec {
 	public static final double kStandardMassPerCost = 0.02;
 	public static final double kStandardCost = 1000;
@@ -342,7 +340,7 @@ public class HardwareSpec {
 		bomb = Math.max(amt, 0);
 	}
 
-	public void Recalculate() throws GBGenericError {
+	public void Recalculate() {
 		growthCost = EnergyHardwareCost() + SolarCellsCost() + EaterCost()
 				+ constructor.Cost() + syphon.Cost();
 		combatCost = ArmorCost() + RepairCost() + ShieldCost() + blaster.Cost()
@@ -362,8 +360,7 @@ public class HardwareSpec {
 		if (debug)
 			buildHardwareList();
 		if (hardwareCost < kBaseCost || mass < kBaseMass)
-			// throw new GBBadComputedValueError();
-			throw new GBGenericError("Bad computed value");
+			throw new RuntimeException("impossibly low cost or mass");
 	}
 
 	void buildHardwareList() {

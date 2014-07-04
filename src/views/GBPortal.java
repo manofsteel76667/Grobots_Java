@@ -35,12 +35,6 @@ import support.GBMath;
 import support.GBObjectClass;
 import support.GBRandomState;
 import ui.GBApplication;
-import brains.GBBadSymbolIndexError;
-import exception.GBAbort;
-import exception.GBGenericError;
-import exception.GBIndexOutOfRangeError;
-import exception.GBNilPointerError;
-import exception.GBOutOfMemoryError;
 
 public class GBPortal extends JPanel implements GBProjection {
 	/**
@@ -625,9 +619,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		}
 	}
 
-	public void DoAddRobot(FinePoint where) throws GBBadSymbolIndexError,
-			GBIndexOutOfRangeError, GBNilPointerError, GBGenericError,
-			GBOutOfMemoryError, GBAbort {
+	public void DoAddRobot(FinePoint where) {
 		Side side = app.selectedSide;
 		if (side != null) {
 			RobotType type = app.selectedType;
@@ -643,7 +635,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		}
 	}
 
-	public void DoAddSeed(FinePoint where) throws GBAbort {
+	public void DoAddSeed(FinePoint where) {
 		Side side = app.selectedSide;
 		if (side != null) {
 			world.AddSeed(side, where);
@@ -662,7 +654,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		}
 	}
 
-	public void DoPull(FinePoint where) throws GBNilPointerError {
+	public void DoPull(FinePoint where) {
 		if (where == lastClick)
 			return;
 		GBForceField ff = new GBForceField(where, where.subtract(lastClick),
@@ -671,7 +663,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		world.Changed();
 	}
 
-	public void DoBlasts(FinePoint where) throws GBNilPointerError {
+	public void DoBlasts(FinePoint where)  {
 		double base = GBRandomState.gRandoms.Angle();
 		for (int i = kNumBlasts; i > 0; i--)
 			world.AddObjectNew(new GBBlast(where, FinePoint.makePolar(

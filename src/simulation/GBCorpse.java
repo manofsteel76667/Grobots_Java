@@ -8,7 +8,6 @@ import java.awt.Rectangle;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
-import exception.GBBadArgumentError;
 
 public class GBCorpse extends GBFood {
 	RobotType type;
@@ -16,7 +15,7 @@ public class GBCorpse extends GBFood {
 
 	// public:
 	public GBCorpse(FinePoint where, FinePoint vel, double val, RobotType who,
-			Side cause) throws GBBadArgumentError {
+			Side cause) {
 		super(where, vel, val);
 		type = who;
 		killer = cause;
@@ -57,6 +56,7 @@ public class GBCorpse extends GBFood {
 	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
+		super.Draw(g, proj, detailed);
 		if (detailed && where.getWidth() >= 4) {
 			g2d.setColor(Owner().Color());
 			g2d.drawRect(where.x, where.y, where.width, where.height);

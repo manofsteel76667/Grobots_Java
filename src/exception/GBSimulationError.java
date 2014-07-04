@@ -1,6 +1,6 @@
 package exception;
 
-public class GBSimulationError extends GBError {
+public class GBSimulationError extends RuntimeException {
 	/**
 	 * 
 	 */

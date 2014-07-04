@@ -3,7 +3,6 @@ package simulation;
 import sides.ForceFieldSpec;
 import support.FinePoint;
 import support.GBMath;
-import exception.GBNilPointerError;
 
 public class GBForceFieldState {
 	ForceFieldSpec spec;
@@ -63,7 +62,7 @@ public class GBForceFieldState {
 		angle = ang;
 	}
 
-	public void Act(GBRobot robot, GBWorld world) throws GBNilPointerError {
+	public void Act(GBRobot robot, GBWorld world) {
 		if (power == 0)
 			return;
 		double effective = power * robot.hardware.EffectivenessFraction()

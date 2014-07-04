@@ -9,8 +9,6 @@ import sides.Side;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
-import exception.GBBadArgumentError;
-import exception.GBNilPointerError;
 
 public class GBForceField extends GBShot {
 	boolean dead;
@@ -42,7 +40,7 @@ public class GBForceField extends GBShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) throws GBNilPointerError, GBBadArgumentError {
+	public void Act(GBWorld world) {
 		super.Act(world);
 		dead = true;
 	}
@@ -75,8 +73,8 @@ public class GBForceField extends GBShot {
 		g2d.drawLine(proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
 				proj.ToScreenX(Position().x - Velocity().x),
 				proj.ToScreenY(Position().y - Velocity().y));
-		int cx = where.width / 2;
-		int cy = where.height / 2;
+		int cx = where.x + where.width / 2;
+		int cy = where.y + where.height / 2;
 		// From destination into the direction being pushed
 		g2d.setStroke(new BasicStroke(1));
 		g2d.setColor(owner != null ? owner.Color() : Color());
