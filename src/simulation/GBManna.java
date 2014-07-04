@@ -18,7 +18,7 @@ public class GBManna extends GBFood {
 
 	@Override
 	public String toString() {
-		return "Manna (" + value + ')';
+		return String.format("Manna (%.0f)", value);
 	}
 
 	public GBColor Color() {

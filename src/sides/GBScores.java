@@ -207,7 +207,7 @@ public class GBScores {
 	}
 
 	public double KilledFraction() {
-		return (int) (killedFraction / (rounds != 0 ? rounds : 1));
+		return killedFraction / (rounds != 0 ? rounds : 1);
 	}
 
 	public double KillRate() {

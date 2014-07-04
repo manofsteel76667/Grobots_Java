@@ -84,7 +84,6 @@ public abstract class GBObject {
 	/**
 	 * Returns a rectangle (approximately) representing the position of the
 	 * rendered object on the screen.
-	 * 
 	 * @param proj
 	 * @return
 	 */
@@ -151,7 +150,7 @@ public abstract class GBObject {
 	}
 
 	public void MoveBy(FinePoint delta) {
-		position.add(delta);
+		position = position.add(delta);
 	}
 
 	public void MoveBy(double deltax, double deltay) {

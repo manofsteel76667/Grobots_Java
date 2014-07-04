@@ -50,7 +50,7 @@ public class GBRandomState {
 	}
 
 	public double Angle() {
-		return InRange(Number.kEpsilon - Number.kPi, Number.kPi);
+		return InRange(GBMath.kEpsilon - GBMath.kPi, GBMath.kPi);
 	}
 
 	public FinePoint Vector(double maxLength) {
@@ -70,7 +70,7 @@ public class GBRandomState {
 	}
 
 	public boolean bool(double probability) {
-		return InRange(0, 1 - Number.kEpsilon) < probability;
+		return InRange(0, 1 - GBMath.kEpsilon) < probability;
 	}
 
 	public boolean bool(int num, int denom) {
