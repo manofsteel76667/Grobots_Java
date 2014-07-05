@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBMain.cpp
 // main for Grobots with GBApplication.
 // Grobots (c) 2002-2004 Devon and Warren Schudy

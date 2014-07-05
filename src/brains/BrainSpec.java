@@ -1,11 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
+
+
 package brains;
 
 import sides.HardwareItem;
 import exception.GBSimulationError;
-
-// GBBrainSpec.cpp
-// Grobots (c) 2002-2004 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
 
 public class BrainSpec extends HardwareItem {
 	public Brain MakeBrain() {

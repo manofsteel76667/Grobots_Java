@@ -1,8 +1,10 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 package support;
 
-// GBRandomState.cpp
-// Grobots (c) 2002-2004 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
+
 
 //Modified to use java's built-in Random class
 
