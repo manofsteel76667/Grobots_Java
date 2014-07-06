@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -21,6 +22,7 @@ import sides.RobotType;
 import sides.Side;
 import sides.SideReader;
 import simulation.GBWorld;
+import views.AboutBox;
 import views.GBPortal;
 import views.GBPortal.toolTypes;
 import views.GBRosterView;
@@ -43,12 +45,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	 */
 	private static final long serialVersionUID = -955217075865755516L;
 	public GBWorld world;
-	
-	//Views
+
+	// Views
 	public GBPortal portal;
 	public GBRosterView roster;
 	public GBTournamentView tournament;
-	
+	public AboutBox about;
+
 	public StepRates stepRate;
 	public long lastTime;
 	int redrawInterval = 40;// Repaint at 25Hz
@@ -69,27 +72,27 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	@Override
 	public void run() {
-		//Create world and initial conditions
+		// Create world and initial conditions
 		world = new GBWorld();
 		stepRate = StepRates.normal;
-		
-		//Create supporting views and menu
+
+		// Create supporting views and menu
 		portal = new GBPortal(this);
 		portal.setIgnoreRepaint(true);
 		roster = new GBRosterView(this);
 		tournament = new GBTournamentView(this);
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
-		
-		//Arrange the screen
+
+		// Arrange the screen
 		this.setLayout(new BorderLayout());
-		setExtendedState( getExtendedState()|JFrame.MAXIMIZED_BOTH );
+		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
 		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
 				.getImage();
 		setIconImage(icon);
 		this.setTitle("Grobots");
 		this.getContentPane().add(portal, BorderLayout.CENTER);
-		portal.setPreferredSize(new Dimension(600,400));
+		portal.setPreferredSize(new Dimension(600, 400));
 		JPanel bottom = new JPanel();
 		bottom.setLayout(new FlowLayout());
 		bottom.add(roster);
@@ -98,12 +101,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		portal.setBackground(backColor);
 		bottom.setBackground(backColor);
 		this.getContentPane().add(bottom, BorderLayout.PAGE_END);
-		roster.setPreferredSize(new Dimension(270,260));
-		tournament.setPreferredSize(new Dimension(560,260));
+		roster.setPreferredSize(new Dimension(270, 260));
+		tournament.setPreferredSize(new Dimension(560, 260));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		setVisible(true);
-		
+
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
 					@Override
@@ -214,9 +217,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					break;
 				case duplicateSide:
+					if (selectedSide == null)
+						return;
 					Side newside = SideReader.Load(selectedSide.filename);
 					world.AddSide(newside);
-					roster.repaint();
+					repaint();
 					break;
 				case erase:
 					portal.currentTool = toolTypes.ptErase;
@@ -250,15 +255,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
 					int retval = fc.showOpenDialog(this);
 					if (retval == JFileChooser.APPROVE_OPTION) {
-						// JOptionPane.showMessageDialog(this,
-						// fc.getSelectedFiles());
 						for (File f : fc.getSelectedFiles()) {
 							Side _newside;
 							_newside = SideReader.Load(f.getPath());
 							world.AddSide(_newside);
 						}
 					}
-					roster.repaint();
+					repaint();
 					break;
 				case move:
 					portal.currentTool = toolTypes.ptMove;
@@ -269,7 +272,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					world.AddSeeds();
 					world.running = true;
-					roster.repaint();
+					repaint();
 					simulate();
 					break;
 				case nextPage:
@@ -279,7 +282,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case pause:
 					world.running = false;
-					roster.repaint();
+					repaint();
 					break;
 				case previousPage:
 					break;
@@ -295,17 +298,23 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					portal.Refollow();
 					break;
 				case reloadSide:
-
+					if (selectedSide == null)
+						break;
+					Side reload = SideReader.Load(selectedSide.filename);
+					world.ReplaceSide(selectedSide, reload);
+					roster.repaint();
+					selectedSide = reload;
 					break;
 				case removeAllSides:
 					world.Reset();
 					world.RemoveAllSides();
 					world.running = false;
-					roster.repaint();
+					repaint();
 					break;
 				case removeSide:
-					world.Sides().remove(selectedSide);
-					roster.repaint();
+					world.RemoveSide(selectedSide);
+					selectedSide = null;
+					repaint();
 					break;
 				case reseedDeadSides:
 					world.ReseedDeadSides();
@@ -332,6 +341,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case scrollUp:
 					break;
 				case showAbout:
+					JDialog dlg = new JDialog();
+					AboutBox box = new AboutBox();
+					dlg.getContentPane().add(box);
+					dlg.setBounds(getWidth() / 2 - 135, getHeight() / 2 - 145,
+							270, 290);
+					box.setPreferredSize(new Dimension(270, 290));
+					dlg.pack();
+					dlg.setVisible(true);
 					break;
 				case showDebugger:
 					break;

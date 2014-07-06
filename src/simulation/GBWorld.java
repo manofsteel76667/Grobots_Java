@@ -481,6 +481,9 @@ public class GBWorld extends GBObjectWorld {
 			throw new NullPointerException("replacing null side");
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
+		for (int i = 0; i < sides.size(); ++i)
+			if (sides.get(i).Name().equals(newSide.Name()))
+				newSide.SetName(newSide.Name() + '\'');
 		sides.add(pos, newSide);
 		Changed();
 	}
@@ -488,17 +491,12 @@ public class GBWorld extends GBObjectWorld {
 	public void RemoveSide(Side side) {
 		if (side == null)
 			throw new NullPointerException("tried to remove null side");
-		// if (side == selectedSide)
-		// selectedSide = null;
 		sides.remove(side);
 		Changed();
 	}
 
 	public void RemoveAllSides() {
-		// for (int i = 0; i < sides.size(); ++ i )
-		// delete sides.get(i);
 		sides.clear();
-		// selectedSide = null;
 		ResetTournamentScores();
 		Changed();
 	}
