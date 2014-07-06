@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBScores.cpp
 // Grobots (c) 2002-2006 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
@@ -207,7 +211,7 @@ public class GBScores {
 	}
 
 	public double KilledFraction() {
-		return (int) (killedFraction / (rounds != 0 ? rounds : 1));
+		return killedFraction / (rounds != 0 ? rounds : 1);
 	}
 
 	public double KillRate() {

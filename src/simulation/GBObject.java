@@ -1,8 +1,10 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 package simulation;
 
-// GBObject.cpp
-// Grobots (c) 2002-2004 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
+
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -84,7 +86,6 @@ public abstract class GBObject {
 	/**
 	 * Returns a rectangle (approximately) representing the position of the
 	 * rendered object on the screen.
-	 * 
 	 * @param proj
 	 * @return
 	 */
@@ -151,7 +152,7 @@ public abstract class GBObject {
 	}
 
 	public void MoveBy(FinePoint delta) {
-		position.add(delta);
+		position = position.add(delta);
 	}
 
 	public void MoveBy(double deltax, double deltay) {

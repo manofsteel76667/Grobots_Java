@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 package simulation;
 
 // GBRobot.cpp
@@ -97,12 +101,10 @@ public class GBRobot extends GBObject {
 
 	@Override
 	public String Details() {
-		String dets = Energy() + " energy, " + hardware.Armor() + " armor";
+		String dets = String.format("%.0f energy, %.0f armor", Energy(), hardware.armor);
 		if (hardware.constructor.Progress() != 0)
-			dets += ", "
-					+ Math.round(hardware.constructor.Progress()
-							/ hardware.constructor.Type().Cost() * 100) + "%"
-					+ " " + hardware.constructor.Type().name;
+			dets += String.format(", %.1f% %s", Math.round(hardware.constructor.Progress()
+					/ hardware.constructor.Type().Cost() * 100), hardware.constructor.Type().name );
 		return dets;
 	}
 
@@ -339,11 +341,6 @@ public class GBRobot extends GBObject {
 				kMinMeterContrast);
 		int angle = (int) Math.ceil(fraction * (oneAngle - zeroAngle));
 		float phase = System.currentTimeMillis() * 6.28f / 500;
-		/*
-		 * GBGraphics.drawArc(g, where, zeroAngle + (angle < 0 ? angle : 0),
-		 * Math .abs(angle), color .multiply(pulse ? 0.85f + 0.15f * (float)
-		 * Math.sin(phase) : 1.0f), width);
-		 */
 		g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
 				.sin(phase) : 1.0f));
 		g2d.drawArc(where.x, where.y, where.width, where.height, zeroAngle,
@@ -389,19 +386,18 @@ public class GBRobot extends GBObject {
 
 	/**
 	 * Moved from GBPortal
-	 * 
+	 * Shows weapon ranges if this robot is selected
 	 * @param g
 	 * @param proj
 	 */
 	public void drawRangeCircles(Graphics g, GBProjection proj) {
-		Point center = new Point(proj.ToScreenX(position.x),
-				proj.ToScreenY(position.y));
+		Rectangle where = getScreenRect(proj);
 		Graphics2D g2d = (Graphics2D) g;
 		if (hardware.blaster.MaxRange() > 0) {
 			g2d.setColor(new GBColor(Color.magenta).multiply(0.5f));
 			g2d.drawOval(
-					center.x,
-					center.y,
+					where.x,
+					where.y,
 					(int) (radius + hardware.blaster.MaxRange())
 							* proj.getScale(),
 					(int) (radius + hardware.blaster.MaxRange())
@@ -410,8 +406,8 @@ public class GBRobot extends GBObject {
 		if (hardware.grenades.MaxRange() > 0) {
 			g2d.setColor(new GBColor(Color.yellow).multiply(0.5f));
 			g2d.drawOval(
-					center.x,
-					center.y,
+					where.x,
+					where.y,
 					(int) (radius + hardware.grenades.MaxRange())
 							* proj.getScale(),
 					(int) (radius + hardware.grenades.MaxRange())
@@ -420,8 +416,8 @@ public class GBRobot extends GBObject {
 		if (hardware.syphon.MaxRate() > 0) {
 			g2d.setColor(new GBColor(0.25f, 0.4f, 0.5f));
 			g2d.drawOval(
-					center.x,
-					center.y,
+					where.x,
+					where.y,
 					(int) (radius + hardware.syphon.MaxRate())
 							* proj.getScale(),
 					(int) (radius + hardware.syphon.MaxRate())
@@ -430,8 +426,8 @@ public class GBRobot extends GBObject {
 		if (hardware.enemySyphon.MaxRate() > 0) {
 			g2d.setColor(new GBColor(0.3f, 0.5f, 0));
 			g2d.drawOval(
-					center.x,
-					center.y,
+					where.x,
+					where.y,
 					(int) (radius + hardware.enemySyphon.MaxRate())
 							* proj.getScale(),
 					(int) (radius + hardware.enemySyphon.MaxRate())
@@ -440,8 +436,8 @@ public class GBRobot extends GBObject {
 		if (hardware.forceField.MaxRange() > 0) {
 			g2d.setColor(new GBColor(0, 0.4f, 0.5f));
 			g2d.drawOval(
-					center.x,
-					center.y,
+					where.x,
+					where.y,
 					(int) (radius + hardware.forceField.MaxRange())
 							* proj.getScale(),
 					(int) (radius + hardware.forceField.MaxRange())

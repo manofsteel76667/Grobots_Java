@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBFinePoint.h
 // point (or 2-vector) class based on GBNumber.
 // Grobots (c) 2002-2004 Devon and Warren Schudy

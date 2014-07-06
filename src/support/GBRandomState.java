@@ -1,8 +1,10 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 package support;
 
-// GBRandomState.cpp
-// Grobots (c) 2002-2004 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
+
 
 //Modified to use java's built-in Random class
 
@@ -50,7 +52,7 @@ public class GBRandomState {
 	}
 
 	public double Angle() {
-		return InRange(Number.kEpsilon - Number.kPi, Number.kPi);
+		return InRange(GBMath.kEpsilon - GBMath.kPi, GBMath.kPi);
 	}
 
 	public FinePoint Vector(double maxLength) {
@@ -70,7 +72,7 @@ public class GBRandomState {
 	}
 
 	public boolean bool(double probability) {
-		return InRange(0, 1 - Number.kEpsilon) < probability;
+		return InRange(0, 1 - GBMath.kEpsilon) < probability;
 	}
 
 	public boolean bool(int num, int denom) {

@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // Side.cpp
 // Grobots (c) 2002-2006 Devon and Warren Schudy
 // Distributed under the GNU General Public License.
@@ -23,14 +27,13 @@ public class Side extends Model implements Comparable<Side> {
 
 	public boolean debug = false;
 	public List<RobotType> types;
-	RobotType selected; // really a view property - could remove
 	String name, author;
 	int id;
 	GBColor color;
 	// scores
 	GBSideScores scores;
 	GBScores cScores;
-	support.FinePoint groupPosition;
+	FinePoint groupPosition;
 	// communications
 	double[] sharedMemory;
 	GBMessageQueue[] msgQueues;
@@ -38,7 +41,7 @@ public class Side extends Model implements Comparable<Side> {
 	List<Integer> seedIDs;
 	// public:
 	public String filename;
-	public support.FinePoint center;
+	public FinePoint center;
 
 	public Side() {
 		id = 0;
@@ -54,7 +57,7 @@ public class Side extends Model implements Comparable<Side> {
 		seedIDs = new ArrayList<Integer>();
 	}
 
-	public Side copy()  {
+	public Side copy() {
 		Side side = new Side();
 		for (int i = 0; i < types.size(); ++i)
 			side.AddType(new RobotType(types.get(i)));
@@ -66,7 +69,7 @@ public class Side extends Model implements Comparable<Side> {
 			side.seedIDs.add(id);
 		// id, comm and scores are not copied
 		return side;
-	}	
+	}
 
 	@Override
 	public int hashCode() {
@@ -173,7 +176,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	public RobotType GetSeedType(int index) {
 		if (index < 0)
-			throw new IllegalArgumentException("type index must be positive: " + index);
+			throw new IllegalArgumentException("type index must be positive: "
+					+ index);
 		if (seedIDs.isEmpty())
 			return null;
 		return GetType(seedIDs.get(index % seedIDs.size()));
@@ -271,13 +275,15 @@ public class Side extends Model implements Comparable<Side> {
 
 	public double ReadSharedMemory(int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new IndexOutOfBoundsException("tried to read from shared memory at " + addr);
+			throw new IndexOutOfBoundsException(
+					"tried to read from shared memory at " + addr);
 		return sharedMemory[addr - 1];
 	}
 
 	public void WriteSharedMemory(double value, int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new IndexOutOfBoundsException("tried to write to shared memory at " + addr);
+			throw new IndexOutOfBoundsException(
+					"tried to write to shared memory at " + addr);
 		sharedMemory[addr - 1] = value;
 	}
 
@@ -285,7 +291,8 @@ public class Side extends Model implements Comparable<Side> {
 	// must be used and discarded before any robot calls SendMessage again!
 	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
+			throw new IndexOutOfBoundsException("tried to receive on channel "
+					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return null;
 		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
@@ -293,7 +300,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SendMessage(GBMessage msg, int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to send on channel " + channel);
+			throw new IndexOutOfBoundsException("tried to send on channel "
+					+ channel);
 		if (msgQueues[channel - 1] == null) {
 			msgQueues[channel - 1] = new GBMessageQueue();
 		}
@@ -302,7 +310,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int NextMessageNumber(int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
+			throw new IndexOutOfBoundsException("tried to receive on channel "
+					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].NextMessageNumber();
@@ -310,7 +319,8 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int MessagesWaiting(int channel, int next) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
+			throw new IndexOutOfBoundsException("tried to receive on channel "
+					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].MessagesWaiting(next);
@@ -319,8 +329,8 @@ public class Side extends Model implements Comparable<Side> {
 	@Override
 	public int compareTo(Side o) {
 		// Replaces the Better function, used for sorting
-		return (int) (TournamentScores().BiomassFraction() - o
-				.TournamentScores().BiomassFraction());
+		return (int) (o.TournamentScores().BiomassFraction() * 100 - TournamentScores()
+				.BiomassFraction() * 100);
 	}
 
 }

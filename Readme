@@ -1,0 +1,38 @@
+Grobots, a programming game
+(c) 2002-2014 Devon and Warren Schudy
+(c) 2014 Devon Schudy, Warren Schudy, Mike Anderson
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+(Or see <http://www.gnu.org/licenses/gpl.html>.)
+
+----- Website, info sites, and email -----
+
+There is more information at http://grobots.sourceforge.net
+A wiki exists at http://grobots.wikia.com/wiki/Grobots_Wiki
+As user group exists at https://groups.yahoo.com/neo/groups/grobots/info
+
+The authors' email addresses are:
+
+dschudy@yahoo.com
+wschudy@alum.wpi.edu
+jmanderson07@users.sf.net
+
+----- Compiling and Running -----
+Developed using Eclipse Kepler edition on Windows 7 64-bit edition, but should work on anything.
+Main method for the GUI is in ui/gbapplication.java.
+Main method for headless mode is in /headless/headless.java (duh)
+
+
+

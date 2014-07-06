@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBWorld.h
 // the slightly overstuffed main simulation class.
 // Grobots (c) 2002-2006 Devon and Warren Schudy

@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBPortal.cpp
 // code for the Portal view of a GBWorld
 // Grobots (c) 2002-2008 Devon and Warren Schudy

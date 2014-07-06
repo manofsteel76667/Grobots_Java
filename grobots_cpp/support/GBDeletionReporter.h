@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
+ * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
 // GBDeletionReporter.h
 // pair of mixins for notifying dependents when an object dies.
 // Grobots (c) 2002-2004 Devon and Warren Schudy
