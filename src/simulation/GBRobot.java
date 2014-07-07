@@ -103,8 +103,8 @@ public class GBRobot extends GBObject {
 	public String Details() {
 		String dets = String.format("%.0f energy, %.0f armor", Energy(), hardware.armor);
 		if (hardware.constructor.Progress() != 0)
-			dets += String.format(", %.1f% %s", Math.round(hardware.constructor.Progress()
-					/ hardware.constructor.Type().Cost() * 100), hardware.constructor.Type().name );
+			dets += String.format(", %.1f%% %s", hardware.constructor.Progress()
+					/ hardware.constructor.Type().Cost() * 100, hardware.constructor.Type().name );
 		return dets;
 	}
 
