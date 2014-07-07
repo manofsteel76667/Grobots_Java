@@ -109,7 +109,10 @@ public class Side extends Model implements Comparable<Side> {
 	}
 
 	public String Author() {
-		return author;
+		if (author != null)
+			return author;
+		else
+			return "";
 	}
 
 	public void SetAuthor(String newauthor) {

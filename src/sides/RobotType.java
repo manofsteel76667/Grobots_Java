@@ -25,7 +25,7 @@ public class RobotType extends support.Model {
 	public GBColor decorationColor;
 	public HardwareSpec hardware;
 	public BrainSpec brain;
-	public long population;
+	public int population;
 	public double biomass;
 	// private:
 	double cost;

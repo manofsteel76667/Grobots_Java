@@ -16,7 +16,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import sides.Side;
@@ -33,6 +32,7 @@ public class GBRosterView extends JPanel {
 	static final int kPopulationWidth = 50;
 
 	private static final long serialVersionUID = 6135247814368773456L;
+	
 	GBWorld world;
 	GBApplication app;
 	int margin = 6;
@@ -48,16 +48,14 @@ public class GBRosterView extends JPanel {
 		world = app.world;
 		slots = new ArrayList<Rectangle>();
 		setLayout(new BorderLayout());
-		setBackground(Color.lightGray);
-		this.setBorder(BorderFactory.createLineBorder(Color.black));
 		MouseAdapter ma = new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				// Select side on click
-				app.selectedSide = null;
+				app.setSelectedSide(null);
 				for (int i = 0; i < slots.size(); i++)
 					if (slots.get(i).contains(arg0.getPoint())) {
-						app.selectedSide = world.Sides().get(i);
+						app.setSelectedSide(world.Sides().get(i));
 					}
 				repaint();
 			}
@@ -114,10 +112,10 @@ public class GBRosterView extends JPanel {
 					+ (slot.height + slotMargin) * i;
 			slot.setLocation(margin, y);
 			slots.add(slot);
-			g2d.setPaint(side.equals(app.selectedSide) ? Color.black
+			g2d.setPaint(side.equals(app.getSelectedSide()) ? Color.black
 					: Color.white);
 			g2d.fill(slot);
-			g2d.setColor(side.equals(app.selectedSide) ? Color.white
+			g2d.setColor(side.equals(app.getSelectedSide()) ? Color.white
 					: Color.black);
 			g2d.draw(slot);
 			textRect = new Rectangle(slot);
@@ -128,7 +126,7 @@ public class GBRosterView extends JPanel {
 			// Side Name
 			StringUtilities.drawStringLeft(g2d, side.Name(), 
 					new Rectangle(textRect.x + 25, textRect.y, textRect.width-25, textRect.height), 
-					12, side.equals(app.selectedSide) ? Color.white
+					12, side.equals(app.getSelectedSide()) ? Color.white
 							: Color.black);
 			if (side.Scores().Seeded() != 0) {
 				// Side status

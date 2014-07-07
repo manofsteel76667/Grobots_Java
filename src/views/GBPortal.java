@@ -624,9 +624,9 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	public void DoAddRobot(FinePoint where) {
-		Side side = app.selectedSide;
+		Side side = app.getSelectedSide();
 		if (side != null) {
-			RobotType type = app.selectedType;
+			RobotType type = app.getSelectedType();
 			if (type == null)
 				if (side.types.size() > 0)
 					type = side.types.get(0);
@@ -640,7 +640,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	public void DoAddSeed(FinePoint where) {
-		Side side = app.selectedSide;
+		Side side = app.getSelectedSide();
 		if (side != null) {
 			world.AddSeed(side, where);
 			world.Changed();

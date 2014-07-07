@@ -14,6 +14,11 @@ public class GBColor extends java.awt.Color {
 	/**
 	 * 
 	 */
+	//Some standard colors that aren't a named color
+	public static final Color darkRed = new Color(139, 0, 0);
+	public static final Color darkGreen = new Color(0, 100, 0);
+	public static final Color purple = new Color(1, 0, 1);
+	
 	private static final long serialVersionUID = 5956330979660343356L;
 	float r, g, b;
 

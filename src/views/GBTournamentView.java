@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import sides.GBScores;
 import sides.Side;
 import simulation.GBWorld;
+import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
 
@@ -28,9 +29,6 @@ public class GBTournamentView extends JPanel {
 	 */
 	private static final long serialVersionUID = -4253425791054675659L;
 
-	Color darkRed = new Color(139, 0, 0);
-	Color darkGreen = new Color(0, 100, 0);
-	Color purple = new Color(1, 0, 1);
 	GBApplication app;
 	GBWorld world;
 	int margin = 6;
@@ -45,8 +43,7 @@ public class GBTournamentView extends JPanel {
 	public GBTournamentView(GBApplication _app) {
 		app = _app;
 		world = _app.world;
-		setBackground(Color.lightGray);
-		this.setBorder(BorderFactory.createLineBorder(Color.black));
+		//this.setBorder(BorderFactory.createLineBorder(Color.black));
 		sides = new ArrayList<Side>();
 	}
 
@@ -178,13 +175,13 @@ public class GBTournamentView extends JPanel {
 					box.x + kSurvivalRight,
 					box.y + box.height,
 					10,
-					rangeColor(survival, 0.2, 0.4, darkRed, darkGreen, rounds,
+					rangeColor(survival, 0.2, 0.4, GBColor.darkRed, GBColor.darkGreen, rounds,
 							0));
 			double early = scores.EarlyDeathRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(early, 0), box.x
 							+ kEarlyDeathRight, box.y + box.height, 10,
-					rangeColor(early, 0.2, 0.4, darkGreen, darkRed, rounds, 0));
+					rangeColor(early, 0.2, 0.4, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
 		}
 		if (notearly > 0) {
 			double late = scores.LateDeathRate();
@@ -195,7 +192,7 @@ public class GBTournamentView extends JPanel {
 							box.x + kLateDeathRight,
 							box.y + box.height,
 							10,
-							rangeColor(late, 0.4, 0.6, darkGreen, darkRed,
+							rangeColor(late, 0.4, 0.6, GBColor.darkGreen, GBColor.darkRed,
 									notearly, 0));
 		}
 		if (rounds > 0) {
@@ -206,7 +203,7 @@ public class GBTournamentView extends JPanel {
 					box.x + kEarlyScoreRight,
 					box.y + box.height,
 					10,
-					rangeColor(early, 0.08f, 0.12f, darkRed, darkGreen, rounds
+					rangeColor(early, 0.08f, 0.12f, GBColor.darkRed, GBColor.darkGreen, rounds
 							+ notearly, kMinColorRounds * 2));
 		}
 		if (survived > 0) {
@@ -217,7 +214,7 @@ public class GBTournamentView extends JPanel {
 					box.x + kFractionRight,
 					box.y + box.height,
 					10,
-					rangeColor(fraction, 0.2, 0.4, Color.blue, purple,
+					rangeColor(fraction, 0.2, 0.4, Color.blue, GBColor.purple,
 							survived, 0));
 		}
 		if (rounds > 0) {
@@ -228,12 +225,12 @@ public class GBTournamentView extends JPanel {
 					box.x + kKillsRight,
 					box.y + box.height,
 					10,
-					rangeColor(kills, 0.05, 0.15, Color.blue, purple, survived,
+					rangeColor(kills, 0.05, 0.15, Color.blue, GBColor.purple, survived,
 							0));
 		}
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
-				rounds < kMinColorRounds ? darkRed : Color.black);
+				rounds < kMinColorRounds ? GBColor.darkRed : Color.black);
 	}
 
 	void drawFooter(Graphics2D g) {
@@ -258,31 +255,31 @@ public class GBTournamentView extends JPanel {
 					box.x + kSurvivalRight,
 					box.y + box.height,
 					10,
-					rangeColor(survival, 0.25, 0.5, darkRed, darkGreen, rounds,
+					rangeColor(survival, 0.25, 0.5, GBColor.darkRed, GBColor.darkGreen, rounds,
 							0));
 			double early = world.TournamentScores().EarlyDeathRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(early, 0), box.x
 							+ kEarlyDeathRight, box.y + box.height, 10,
-					rangeColor(early, 0.2, 0.4, darkGreen, darkRed, rounds, 0));
+					rangeColor(early, 0.2, 0.4, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
 		}
 		if (notearly > 0) {
 			double late = world.TournamentScores().LateDeathRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(late, 0), box.x
 							+ kLateDeathRight, box.y + box.height, 10,
-					rangeColor(late, 0.45, 0.6, darkGreen, darkRed, rounds, 0));
+					rangeColor(late, 0.45, 0.6, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
 		}
 		if (rounds > 0) {
 			double kills = world.TournamentScores().KillRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(kills, 0), box.x
 							+ kKillsRight, box.y + box.height, 10,
-					rangeColor(kills, 1.2, 1.8, Color.blue, purple, rounds, 0));
+					rangeColor(kills, 1.2, 1.8, Color.blue, GBColor.purple, rounds, 0));
 		}
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
-				rounds < kMinColorRounds ? darkRed : Color.blue);
+				rounds < kMinColorRounds ? GBColor.darkRed : Color.blue);
 	}
 
 }

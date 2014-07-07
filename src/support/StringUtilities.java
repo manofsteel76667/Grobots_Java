@@ -58,7 +58,11 @@ public class StringUtilities {
 	}
 	public static void drawStringRight(Graphics2D g, String text, int x, int y,
 			int fontHeight, Color c){
-		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		drawStringRight(g, text, x, y, fontHeight, c, false);
+	}
+	public static void drawStringRight(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c, boolean bold){
+		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
@@ -66,17 +70,30 @@ public class StringUtilities {
 	}
 	public static void drawStringLeft(Graphics2D g, String text, int x, int y,
 			int fontHeight, Color c){
-		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		drawStringLeft(g, text, x, y, fontHeight, c, false);
+	}
+	public static void drawStringLeft(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c, boolean bold){
+		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		g.setColor(c);
 		g.drawString(text, x, y);
 	}
-	public static void drawStringCenter(Graphics2D g, String text, int x, int y,
+	public static void drawStringCentered(Graphics2D g, String text, int x, int y,
 			int fontHeight, Color c){
-		Font f = new Font("Serif", Font.PLAIN, fontHeight);
+		drawStringCentered(g, text, x, y, fontHeight, c, false);
+	}
+	public static void drawStringCentered(Graphics2D g, String text, int x, int y,
+			int fontHeight, Color c, boolean bold){
+		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
 		g.drawString(text, x - fm.stringWidth(text)/2, y);
+	}
+	public static void drawStringPair(Graphics2D g, String str1, String str2,
+			int left, int right, int y, int size, Color color, boolean bold) {
+		drawStringLeft(g, str1, left, y, size, color, bold);
+		drawStringRight(g, str2, right, y, size, color, bold);
 	}
 }

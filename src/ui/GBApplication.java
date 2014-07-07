@@ -5,11 +5,10 @@
 package ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -19,7 +18,6 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import sides.RobotType;
@@ -31,6 +29,7 @@ import views.GBPortal;
 import views.GBPortal.toolTypes;
 import views.GBRosterView;
 import views.GBTournamentView;
+import views.RobotTypeView;
 import exception.GBAbort;
 import exception.GBError;
 
@@ -51,19 +50,22 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public GBWorld world;
 
 	// Views
-	public GBPortal portal;
-	public GBRosterView roster;
-	public GBTournamentView tournament;
-	public AboutBox about;
+	GBPortal portal;
+	GBRosterView roster;
+	GBTournamentView tournament;
+	AboutBox about;
+	RobotTypeView type;
+	JDialog tournDialog;
+	JDialog aboutDialog;	
 
 	public StepRates stepRate;
 	public long lastTime;
 	int redrawInterval = 40;// Repaint at 25Hz
 	GBMenu mainMenu;
-	public Side selectedSide;
-	public RobotType selectedType;
 
 	long prevFrameTime;
+	Side selectedSide;
+	RobotType selectedType;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new GBApplication());
@@ -81,10 +83,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		stepRate = StepRates.normal;
 
 		// Create supporting views and menu
-		portal = new GBPortal(this);
-		portal.setIgnoreRepaint(true);
-		roster = new GBRosterView(this);
-		tournament = new GBTournamentView(this);
+		createChildViews();
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
 
@@ -96,19 +95,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setIconImage(icon);
 		this.setTitle("Grobots");
 		this.getContentPane().add(portal, BorderLayout.CENTER);
-		portal.setPreferredSize(new Dimension(600, 400));
-		JPanel bottom = new JPanel();
-		bottom.setLayout(new FlowLayout());
-		bottom.add(roster);
-		bottom.add(tournament);
-		Color backColor = Color.gray;
-		portal.setBackground(backColor);
-		bottom.setBackground(backColor);
-		this.getContentPane().add(bottom, BorderLayout.PAGE_END);
-		roster.setPreferredSize(new Dimension(270, 260));
-		tournament.setPreferredSize(new Dimension(560, 260));
+		this.getContentPane().add(roster, BorderLayout.LINE_START);
+		this.getContentPane().add(type, BorderLayout.LINE_END);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
+		createDialogs();
 		setVisible(true);
 
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
@@ -130,11 +121,42 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							roster.repaint();
 						if (tournament.isVisible())
 							tournament.repaint();
+						if (type.isVisible())
+							type.repaint();
 					}
 				});
 		otherTimer.setRepeats(true);
 		otherTimer.setCoalesce(true);
 		otherTimer.start();
+	}
+	
+	void createChildViews(){
+		about = new AboutBox();
+		about.setPreferredSize(new Dimension(270, 290));
+		portal = new GBPortal(this);
+		portal.setPreferredSize(new Dimension(600, 400));
+		roster = new GBRosterView(this);
+		roster.setPreferredSize(new Dimension(270, 260));
+		tournament = new GBTournamentView(this);
+		tournament.setPreferredSize(new Dimension(560, 260));
+		type = new RobotTypeView(this);
+	}
+	
+	void createDialogs(){
+		tournDialog = new JDialog(this, "Tournament Scores");	
+		tournDialog.setResizable(false);
+		tournDialog.getContentPane().add(tournament);
+		Rectangle rect = tournament.getBounds();
+		tournDialog.setBounds(getWidth() / 2 - rect.width / 2, getHeight() / 2 - rect.height / 2,
+				rect.width, rect.height);
+		tournDialog.pack();
+		aboutDialog = new JDialog(this, "About Grobots");
+		aboutDialog.setResizable(false);
+		aboutDialog.getContentPane().add(about);
+		rect = about.getBounds();
+		aboutDialog.setBounds(getWidth() / 2 - rect.width / 2, getHeight() / 2 - rect.height / 2,
+				rect.width, rect.height);
+		aboutDialog.pack();
 	}
 
 	public void simulate() {
@@ -181,6 +203,38 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	void disableMenuItem(MenuItems item) {
 		mainMenu.menuButtons.get(item).setEnabled(false);
+	}
+	
+	public Side getSelectedSide(){
+		return selectedSide;
+	}
+	
+	public void setSelectedType(RobotType _type){
+		if (_type == null || selectedType == null){
+			selectedType = _type;
+			repaint();
+			return;
+		}
+		if (!selectedType.equals(_type)){
+			selectedType = _type;
+			repaint();
+		}
+	}
+	
+	public RobotType getSelectedType(){
+		return selectedType;
+	}
+	
+	public void setSelectedSide(Side _side){
+		if (_side == null || selectedSide == null) {
+			selectedSide = _side;
+			repaint();
+			return;
+		}
+		if (!selectedSide.equals(_side) ) {
+			selectedSide = _side;
+			repaint();
+		}
 	}
 
 	@Override
@@ -345,14 +399,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case scrollUp:
 					break;
 				case showAbout:
-					JDialog dlg = new JDialog();
-					AboutBox box = new AboutBox();
-					dlg.getContentPane().add(box);
-					dlg.setBounds(getWidth() / 2 - 135, getHeight() / 2 - 145,
-							270, 290);
-					box.setPreferredSize(new Dimension(270, 290));
-					dlg.pack();
-					dlg.setVisible(true);
+					aboutDialog.setVisible(true);
 					break;
 				case showDebugger:
 					break;
@@ -388,9 +435,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showStatistics:
 					break;
 				case showTournament:
-					tournament.setVisible(!tournament.isVisible());
+					tournDialog.setVisible(true);
 					break;
 				case showTypes:
+					type.setVisible(!type.isVisible());
 					break;
 				case singleFrame:
 					world.AdvanceFrame();
