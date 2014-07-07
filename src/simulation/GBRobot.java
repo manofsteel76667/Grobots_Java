@@ -101,10 +101,13 @@ public class GBRobot extends GBObject {
 
 	@Override
 	public String Details() {
-		String dets = String.format("%.0f energy, %.0f armor", Energy(), hardware.armor);
+		String dets = String.format("%.0f energy, %.0f armor", Energy(),
+				hardware.armor);
 		if (hardware.constructor.Progress() != 0)
-			dets += String.format(", %.1f%% %s", hardware.constructor.Progress()
-					/ hardware.constructor.Type().Cost() * 100, hardware.constructor.Type().name );
+			dets += String.format(", %.1f%% %s",
+					hardware.constructor.Progress()
+							/ hardware.constructor.Type().Cost() * 100,
+					hardware.constructor.Type().name);
 		return dets;
 	}
 
@@ -367,12 +370,11 @@ public class GBRobot extends GBObject {
 				&& hardware.EngineVelocity().isNonzero()) {
 			FinePoint dv = hardware.EngineVelocity().subtract(Velocity());
 			if (dv.norm() > 0.01) {
-				/*FinePoint head = Position().add(
-						dv.unit().multiply(
-								Radius() + hardware.EnginePower()
-										/ Math.sqrt(Mass()) * 30));
-				((Graphics2D) g).setStroke(new BasicStroke(2));
-				
+				/*
+				 * FinePoint head = Position().add( dv.unit().multiply( Radius()
+				 * + hardware.EnginePower() / Math.sqrt(Mass()) * 30));
+				 * ((Graphics2D) g).setStroke(new BasicStroke(2));
+				 * 
 				 * GBGraphics.drawLine(g, proj.ToScreenX(Position().x),
 				 * proj.ToScreenY(Position().y), proj.ToScreenX(head.x),
 				 * proj.ToScreenY(head.y), Color.GREEN);
@@ -384,65 +386,39 @@ public class GBRobot extends GBObject {
 		// weapon ranges? //sensor results?
 	}
 
+	void drawRangeCircle(Graphics g, GBProjection proj, double r, Color color) {
+		if (r <= 0)
+			return;
+		r += radius;
+		g.setColor(color);
+		g.drawOval(proj.ToScreenX(position.x - r),
+				proj.ToScreenY(position.y + r),
+				(int) (r * 2 * proj.getScale()),
+				(int) (r * 2 * proj.getScale()));
+	}
+
+	/** Draw circles showing the range of each weapon. */
+	// Moved from GBPortal
 	/**
-	 * Moved from GBPortal
-	 * Shows weapon ranges if this robot is selected
+	 * Moved from GBPortal Shows weapon ranges if this robot is selected
+	 * 
 	 * @param g
 	 * @param proj
 	 */
 	public void drawRangeCircles(Graphics g, GBProjection proj) {
-		Rectangle where = getScreenRect(proj);
-		Graphics2D g2d = (Graphics2D) g;
-		if (hardware.blaster.MaxRange() > 0) {
-			g2d.setColor(new GBColor(Color.magenta).multiply(0.5f));
-			g2d.drawOval(
-					where.x,
-					where.y,
-					(int) (radius + hardware.blaster.MaxRange())
-							* proj.getScale(),
-					(int) (radius + hardware.blaster.MaxRange())
-							* proj.getScale());
-		}
-		if (hardware.grenades.MaxRange() > 0) {
-			g2d.setColor(new GBColor(Color.yellow).multiply(0.5f));
-			g2d.drawOval(
-					where.x,
-					where.y,
-					(int) (radius + hardware.grenades.MaxRange())
-							* proj.getScale(),
-					(int) (radius + hardware.grenades.MaxRange())
-							* proj.getScale());
-		}
-		if (hardware.syphon.MaxRate() > 0) {
-			g2d.setColor(new GBColor(0.25f, 0.4f, 0.5f));
-			g2d.drawOval(
-					where.x,
-					where.y,
-					(int) (radius + hardware.syphon.MaxRate())
-							* proj.getScale(),
-					(int) (radius + hardware.syphon.MaxRate())
-							* proj.getScale());
-		}
-		if (hardware.enemySyphon.MaxRate() > 0) {
-			g2d.setColor(new GBColor(0.3f, 0.5f, 0));
-			g2d.drawOval(
-					where.x,
-					where.y,
-					(int) (radius + hardware.enemySyphon.MaxRate())
-							* proj.getScale(),
-					(int) (radius + hardware.enemySyphon.MaxRate())
-							* proj.getScale());
-		}
-		if (hardware.forceField.MaxRange() > 0) {
-			g2d.setColor(new GBColor(0, 0.4f, 0.5f));
-			g2d.drawOval(
-					where.x,
-					where.y,
-					(int) (radius + hardware.forceField.MaxRange())
-							* proj.getScale(),
-					(int) (radius + hardware.forceField.MaxRange())
-							* proj.getScale());
-		}
+		((Graphics2D) g).setStroke(new BasicStroke(1));
+		drawRangeCircle(g, proj, hardware.blaster.MaxRange(), new Color(1f, 0f,
+				1f, .5f));
+		drawRangeCircle(g, proj, hardware.grenades.MaxRange(), new Color(1f,
+				1f, 0f, .5f));
+		if (hardware.syphon.MaxRate() > 0)
+			drawRangeCircle(g, proj, hardware.syphon.MaxRange(), new Color(.5f,
+					.8f, 1f, .5f));
+		if (hardware.enemySyphon.MaxRate() > 0)
+			drawRangeCircle(g, proj, hardware.enemySyphon.MaxRange(),
+					new Color(.6f, 1f, 0f, .5f));
+		drawRangeCircle(g, proj, hardware.forceField.MaxRange(), new Color(0f,
+				.8f, 1f, .5f));
 	}
 
 	@Override
@@ -480,7 +456,7 @@ public class GBRobot extends GBObject {
 			// gestation meter
 			if (hardware.constructor.Progress() != 0) {
 				Rectangle meterRect = new Rectangle(where);
-				meterRect.grow(- meterWidth, - meterWidth);
+				meterRect.grow(-meterWidth, -meterWidth);
 				DrawMeter(g, hardware.constructor.Fraction(), meterRect, 0,
 						360, 1, new GBColor(Color.yellow), new GBColor(
 								Color.GREEN), Owner().Color(),
@@ -586,18 +562,15 @@ public class GBRobot extends GBObject {
 			if (hardware.radio.sent[age] == 0
 					&& hardware.radio.writes[age] == 0)
 				continue;
-			/*double r = kRingGrowthRate * (age + 1);
-			/*Rectangle ring = new Rectangle(proj.ToScreenX(Position().x - r),
-					proj.ToScreenY(Position().y + r),
-					proj.ToScreenX(Position().x + r),
-					proj.ToScreenY(Position().y - r));
-			float intensity = Math.min(2.0f
-					* (GBRadioState.kRadioHistory - age)
-					/ GBRadioState.kRadioHistory, 1.0f);
 			/*
-			 * GBGraphics.drawOval(g, ring, (hardware.radio.sent[age] != 0 ? new
-			 * GBColor(0.6f, 0.5f, 1) : new GBColor(1, 0.8f,
-			 * 0.5f)).multiply(intensity));
+			 * double r = kRingGrowthRate * (age + 1); /*Rectangle ring = new
+			 * Rectangle(proj.ToScreenX(Position().x - r),
+			 * proj.ToScreenY(Position().y + r), proj.ToScreenX(Position().x +
+			 * r), proj.ToScreenY(Position().y - r)); float intensity =
+			 * Math.min(2.0f (GBRadioState.kRadioHistory - age) /
+			 * GBRadioState.kRadioHistory, 1.0f); /* GBGraphics.drawOval(g,
+			 * ring, (hardware.radio.sent[age] != 0 ? new GBColor(0.6f, 0.5f, 1)
+			 * : new GBColor(1, 0.8f, 0.5f)).multiply(intensity));
 			 */
 		}
 	}
