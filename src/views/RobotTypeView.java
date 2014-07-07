@@ -40,9 +40,10 @@ public class RobotTypeView extends ListView {
 			public void mouseReleased(MouseEvent arg0) {
 				// Select side on click
 				app.setSelectedType(null);
-				for (int i = 0; i < itemlist.size(); i++)
+				for (int i = 0; i < itemlist.size() && i < app.getSelectedSide().types.size(); i++)
 					if (itemlist.get(i).contains(arg0.getPoint())) {
 						app.setSelectedType(app.getSelectedSide().types.get(i));
+						break;
 					}
 				repaint();
 			}
@@ -94,7 +95,7 @@ public class RobotTypeView extends ListView {
 
 	void DrawNumericHardwareLine(Graphics2D g, Rectangle box, int base,
 			String name, Color color, double arg, double cost, double mass) {
-		DrawHardwareLine(g, box, base, name, color, String.format("%.3f", arg),
+		DrawHardwareLine(g, box, base, name, color, Double.toString(arg),
 				"", "", "", cost, mass);
 	}
 
@@ -102,7 +103,7 @@ public class RobotTypeView extends ListView {
 			String name, Color color, double arg1, double arg2, double cost,
 			double mass) {
 		DrawHardwareLine(g, box, base, name, color,
-				String.format("%.3f", arg1), String.format("%.3f", arg2), "",
+				Double.toString(arg1), Double.toString(arg2), "",
 				"", cost, mass);
 	}
 
@@ -110,8 +111,8 @@ public class RobotTypeView extends ListView {
 			String name, Color color, double arg1, double arg2, double arg3,
 			double cost, double mass) {
 		DrawHardwareLine(g, box, base, name, color,
-				String.format("%.3f", arg1), String.format("%.3f", arg2),
-				String.format("%.3f", arg3), "", cost, mass);
+				Double.toString(arg1), Double.toString(arg2),
+				Double.toString(arg3), "", cost, mass);
 	}
 
 	void DrawHardwareSummaryLine(Graphics2D g, Rectangle box, int base,

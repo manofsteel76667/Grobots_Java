@@ -80,6 +80,7 @@ public abstract class ListView extends JPanel {
 	}
 	
 	protected void draw(Graphics2D g){
+		itemlist.clear();
 		Graphics2D g2d = (Graphics2D)g;
 		header = drawHeader(g2d);
 		items = drawItems(g2d);
