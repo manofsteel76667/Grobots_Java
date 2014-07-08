@@ -5,15 +5,11 @@
 package views;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
+import java.util.List;
 
 import sides.GBScores;
 import sides.Side;
@@ -22,7 +18,7 @@ import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
 
-public class GBTournamentView extends JPanel {
+public class GBTournamentView extends ListView {
 
 	/**
 	 * 
@@ -31,20 +27,18 @@ public class GBTournamentView extends JPanel {
 
 	GBApplication app;
 	GBWorld world;
-	int margin = 6;
-	int padding = 2;
-	int slotMargin = 3;
 	int headerHeight = 24;
 	int itemHeight = 15;
 	int footerHeight = 15;
 	int fontSize = 10;
-	ArrayList<Side> sides;
+	boolean drawn;
+	
+	List<Side> sideList;
 
 	public GBTournamentView(GBApplication _app) {
 		app = _app;
 		world = _app.world;
-		//this.setBorder(BorderFactory.createLineBorder(Color.black));
-		sides = new ArrayList<Side>();
+		preferredWidth = 570;
 	}
 
 	public static final int kNameLeft = 25;
@@ -76,32 +70,14 @@ public class GBTournamentView extends JPanel {
 	}
 
 	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		draw((Graphics2D) g);
-	}
-
-	void draw(Graphics2D g) {
-		sides.clear();
-		sides.addAll(world.Sides());
-		Collections.sort(sides);
-		Font f = new Font("Serif", Font.PLAIN, 10);
-		g.setFont(f);
-		drawHeader(g);
-		for (int i = 0; i < sides.size(); i++) {
-			drawItem(g, i);
-		}
-		drawFooter(g);
-	}
-
-	void drawHeader(Graphics2D g) {
+	Rectangle drawHeader(Graphics2D g) {
+		sideList = new ArrayList<Side>();
+		sideList.addAll(world.Sides());
+		Collections.sort(sideList);
 		headerHeight = g.getFontMetrics().getHeight() * 2 + padding * 2;
-		Rectangle box = new Rectangle(margin, margin,
-				getBounds().width - margin * 2, headerHeight);
-		g.setPaint(Color.white);
-		g.fill(box);
-		g.setColor(Color.black);
-		g.draw(box);
+		Rectangle box = getStartingHeaderRect(10, false);
+		box.setSize(box.width, headerHeight);
+		drawBox(g, box);
 		box.grow(-padding * 2, -padding * 2);
 		StringUtilities.drawStringLeft(g, "Side", box.x, box.y+box.height, 10, Color.black);
 		// draw various column headers
@@ -127,22 +103,20 @@ public class GBTournamentView extends JPanel {
 				+ box.height, 10, Color.black);
 		StringUtilities.drawStringRight(g, "Rounds", box.x + kRoundsRight,
 				box.y + box.height, 10, Color.black);
+		box.grow(padding * 2,  padding * 2);
+		drawn = true;//Hack so the tournDialog has a valid preferredsize to work with the first time
+		return box;
 	}
-
-	void drawItem(Graphics2D g, int index) {
+	@Override
+	Rectangle drawOneItem(Graphics2D g, int index) {
 		itemHeight = g.getFontMetrics().getHeight() + padding * 2;
-		Rectangle box = new Rectangle(margin, margin + headerHeight + slotMargin
-				+ (itemHeight + slotMargin) * index, getBounds().width - margin
-				* 2, itemHeight);
-		g.setPaint(Color.white);
-		g.fill(box);
-		g.setColor(Color.black);
-		g.draw(box);
-		box.grow(-padding * 2, -padding * 2);
+		Rectangle box = getStartingItemRect(index, 10, false);
+		drawBox(g, box);
 		// DrawBox(box);
-		Side side = sides.get(index);
+		Side side = sideList.get(index);
 		if (side == null)
-			return;
+			return box;
+		box.grow(-padding * 2, -padding * 2);
 		GBScores scores = side.TournamentScores();
 		// draw ID and name
 		StringUtilities.drawStringRight(g, Integer.toString(index + 1) + '.', box.x
@@ -231,16 +205,13 @@ public class GBTournamentView extends JPanel {
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.black);
+		box.grow(padding * 2,  padding * 2);
+		return box;
 	}
-
-	void drawFooter(Graphics2D g) {
-		Rectangle box = new Rectangle(margin, margin + headerHeight + slotMargin
-				+ (itemHeight + slotMargin) * sides.size() - 1,
-				getBounds().width - margin * 2, g.getFontMetrics().getHeight() + padding * 2);
-		g.setPaint(Color.white);
-		g.fill(box);
-		g.setColor(Color.black);
-		g.draw(box);
+	@Override
+	Rectangle drawFooter(Graphics2D g) {
+		Rectangle box = getStartingFooterRect(10, false);
+		drawBox(g, box);
 		box.grow(-padding * 2, -padding * 2);
 		StringUtilities.drawStringLeft(g, "Overall:", box.x + kNameLeft, box.y
 				+ box.height, 10, Color.black);
@@ -280,6 +251,12 @@ public class GBTournamentView extends JPanel {
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.blue);
+		box.grow(padding * 2,  padding * 2);
+		return box;
 	}
 
+	@Override
+	int setLength() {
+		return world.Sides().size();
+	}
 }

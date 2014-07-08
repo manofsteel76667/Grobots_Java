@@ -501,6 +501,7 @@ public class GBWorld extends GBObjectWorld {
 
 	public void RemoveAllSides() {
 		sides.clear();
+		allObjects.clear();
 		ResetTournamentScores();
 		Changed();
 	}

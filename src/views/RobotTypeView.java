@@ -7,11 +7,8 @@ package views;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 import sides.HardwareSpec;
 import sides.RobotType;
@@ -34,27 +31,7 @@ public class RobotTypeView extends ListView {
 		app = _app;
 		world = app.world;
 		preferredWidth = 250;
-		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));
-		MouseAdapter ma = new MouseAdapter() {
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				// Select side on click
-				app.setSelectedType(null);
-				for (int i = 0; i < itemlist.size() && i < app.getSelectedSide().types.size(); i++)
-					if (itemlist.get(i).contains(arg0.getPoint())) {
-						app.setSelectedType(app.getSelectedSide().types.get(i));
-						break;
-					}
-				repaint();
-			}
-		};
-		addMouseListener(ma);
-	}
-
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		super.draw((Graphics2D) g);
+		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));		
 	}
 
 	public static final int kTypeStatsWidth = 80;
@@ -65,6 +42,16 @@ public class RobotTypeView extends ListView {
 	public static final int kHardwareCostRight = 60;
 	public static final int kHardwarePercentRight = 38;
 	public static final int kHardwareMassRight = 5;
+	
+	@Override
+	protected void itemClicked(int index){
+		if (index < 0)
+			return;
+		Side side = app.getSelectedSide();
+		if (side == null) return;
+		if (index < side.types.size())
+			app.setSelectedType(side.types.get(index));
+	}
 
 	void DrawHardwareLine(Graphics2D g, Rectangle box, int base, String name,
 			Color color, String arg1, String arg2, String arg3, String arg4,
@@ -128,8 +115,7 @@ public class RobotTypeView extends ListView {
 
 	@Override
 	Rectangle drawHeader(Graphics2D g) {
-		Rectangle box = new Rectangle(margin, margin, getWidth() - margin * 2, 
-				g.getFontMetrics(new Font("Serif", Font.PLAIN, 12)).getHeight() + padding * 2);
+		Rectangle box = getStartingHeaderRect(12, false);
 		Side side = app.getSelectedSide();
 		if (side != null) {
 			drawBox(g, box);
@@ -147,7 +133,7 @@ public class RobotTypeView extends ListView {
 
 	@Override
 	protected Rectangle drawOneItem(Graphics2D g, int index) {
-		Rectangle box = getItemRect(index, 12, false);
+		Rectangle box = getStartingItemRect(index, 12, false);
 		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height + 
 				g.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight()));
 		Side side = app.getSelectedSide();
@@ -205,8 +191,7 @@ public class RobotTypeView extends ListView {
 	Rectangle drawFooter(Graphics2D g) {
 		int textHeightNormal = g.getFontMetrics(new Font("Serif", Font.PLAIN, 10)).getHeight();
 		int textHeightSmall = g.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight();
-		Rectangle box = new Rectangle(margin, margin + header.height + items.height,
-				getWidth() - margin * 2, textHeightNormal + padding * 2);
+		Rectangle box = getStartingFooterRect(textHeightNormal, false);
 		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height + 
 				textHeightNormal * 3 + 
 				textHeightSmall * 22 +
@@ -357,17 +342,11 @@ public class RobotTypeView extends ListView {
 	}
 
 	@Override
-	Rectangle drawItems(Graphics2D g) {
+	int setLength() {
 		Side side = app.getSelectedSide();
 		if (side == null)
-			return new Rectangle(0, 0, 0, 0);
-		items = getStartingItemsRect(10, false);
-		for (int i = 0; i < side.types.size(); i++) {
-			Rectangle item = drawOneItem(g, i);
-			if (item != null)
-				addItem(item);
-		}
-		return items;
+			return 0;
+		else
+			return side.types.size();
 	}
-
 }

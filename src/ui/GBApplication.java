@@ -8,7 +8,6 @@ import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Image;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -56,7 +55,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	AboutBox about;
 	RobotTypeView type;
 	JDialog tournDialog;
-	JDialog aboutDialog;	
+	JDialog aboutDialog;
 
 	public StepRates stepRate;
 	public long lastTime;
@@ -86,6 +85,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		createChildViews();
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
+		updateMenu();
 
 		// Arrange the screen
 		this.setLayout(new BorderLayout());
@@ -99,7 +99,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		this.getContentPane().add(type, BorderLayout.LINE_END);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
-		createDialogs();
 		setVisible(true);
 
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
@@ -129,34 +128,23 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		otherTimer.setCoalesce(true);
 		otherTimer.start();
 	}
-	
-	void createChildViews(){
+
+	void createChildViews() {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
 		portal = new GBPortal(this);
-		portal.setPreferredSize(new Dimension(600, 400));
 		roster = new GBRosterView(this);
-		roster.setPreferredSize(new Dimension(270, 260));
 		tournament = new GBTournamentView(this);
-		tournament.setPreferredSize(new Dimension(560, 260));
 		type = new RobotTypeView(this);
 	}
-	
-	void createDialogs(){
-		tournDialog = new JDialog(this, "Tournament Scores");	
-		tournDialog.setResizable(false);
-		tournDialog.getContentPane().add(tournament);
-		Rectangle rect = tournament.getBounds();
-		tournDialog.setBounds(getWidth() / 2 - rect.width / 2, getHeight() / 2 - rect.height / 2,
-				rect.width, rect.height);
-		tournDialog.pack();
-		aboutDialog = new JDialog(this, "About Grobots");
-		aboutDialog.setResizable(false);
-		aboutDialog.getContentPane().add(about);
-		rect = about.getBounds();
-		aboutDialog.setBounds(getWidth() / 2 - rect.width / 2, getHeight() / 2 - rect.height / 2,
-				rect.width, rect.height);
-		aboutDialog.pack();
+
+	void updateMenu() {
+		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0 && !world.running);
+		setMenuItem(MenuItems.reloadSide, selectedSide != null && !world.running);
+		setMenuItem(MenuItems.duplicateSide, selectedSide != null && !world.running);
+		setMenuItem(MenuItems.removeSide, selectedSide != null && !world.running);
+		setMenuItem(MenuItems.addRobot, selectedType != null);
+		setMenuItem(MenuItems.addSeed, selectedSide != null);
 	}
 
 	public void simulate() {
@@ -165,6 +153,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
+				// Removing an active side causes a crash
+				setMenuItem(MenuItems.removeSide, false);
+				setMenuItem(MenuItems.removeAllSides, false);
 				while (world.running) {
 					long frameRate = 1000000000L / stepRate.value; // nanoseconds
 																	// per
@@ -192,49 +183,56 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						} catch (InterruptedException e) {
 						}
 				}
+				updateMenu();
 			}
 		};
 		gameThread.start();
 	}
 
-	void enableMenuItem(MenuItems item) {
-		mainMenu.menuButtons.get(item).setEnabled(true);
+	void setMenuItem(MenuItems item, boolean state) {
+		try {
+			mainMenu.menuButtons.get(item).setEnabled(state);
+		}
+		catch (Exception e) {
+			//Some menu options may not be mapped to buttons
+		}
+		
 	}
 
-	void disableMenuItem(MenuItems item) {
-		mainMenu.menuButtons.get(item).setEnabled(false);
-	}
-	
-	public Side getSelectedSide(){
+	public Side getSelectedSide() {
 		return selectedSide;
 	}
-	
-	public void setSelectedType(RobotType _type){
-		if (_type == null || selectedType == null){
+
+	public void setSelectedType(RobotType _type) {
+		if (_type == null || selectedType == null) {
 			selectedType = _type;
 			repaint();
+			updateMenu();
 			return;
 		}
-		if (!selectedType.equals(_type)){
+		if (!selectedType.equals(_type)) {
 			selectedType = _type;
 			repaint();
 		}
+		updateMenu();
 	}
-	
-	public RobotType getSelectedType(){
+
+	public RobotType getSelectedType() {
 		return selectedType;
 	}
-	
-	public void setSelectedSide(Side _side){
+
+	public void setSelectedSide(Side _side) {
 		if (_side == null || selectedSide == null) {
 			selectedSide = _side;
 			repaint();
+			updateMenu();
 			return;
 		}
-		if (!selectedSide.equals(_side) ) {
+		if (!selectedSide.equals(_side)) {
 			selectedSide = _side;
 			repaint();
 		}
+		updateMenu();
 	}
 
 	@Override
@@ -319,6 +317,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							world.AddSide(_newside);
 						}
 					}
+					updateMenu();
 					repaint();
 					break;
 				case move:
@@ -361,17 +360,19 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					Side reload = SideReader.Load(selectedSide.filename);
 					world.ReplaceSide(selectedSide, reload);
 					roster.repaint();
-					selectedSide = reload;
+					setSelectedSide(reload);
 					break;
 				case removeAllSides:
 					world.Reset();
 					world.RemoveAllSides();
 					world.running = false;
+					updateMenu();
 					repaint();
 					break;
 				case removeSide:
 					world.RemoveSide(selectedSide);
-					selectedSide = null;
+					setSelectedSide(null);
+					updateMenu();
 					repaint();
 					break;
 				case reseedDeadSides:
@@ -399,6 +400,16 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case scrollUp:
 					break;
 				case showAbout:
+					if (aboutDialog == null) {
+						aboutDialog = new JDialog(this, "About Grobots");
+						aboutDialog.setResizable(false);
+						about.repaint();
+						aboutDialog.getContentPane().add(about);
+						aboutDialog.pack();
+						aboutDialog.setLocation(
+								getWidth() / 2 - aboutDialog.getWidth() / 2,
+								getHeight() / 2 - aboutDialog.getHeight() / 2);
+					}
 					aboutDialog.setVisible(true);
 					break;
 				case showDebugger:
@@ -435,7 +446,20 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showStatistics:
 					break;
 				case showTournament:
-					tournDialog.setVisible(true);
+					if (tournDialog == null) {
+						tournDialog = new JDialog(this, "Tournament Scores");
+						tournament.drawInBackground();
+						tournDialog.getContentPane().add(tournament);
+						tournDialog.pack();
+						tournDialog.setLocation(
+								getWidth() / 2 - tournDialog.getWidth() / 2,
+								getHeight() / 2 - tournDialog.getHeight() / 2);
+						tournDialog.setVisible(true);
+					} else {
+						tournament.drawInBackground();
+						tournDialog.pack();
+						tournDialog.setVisible(true);
+					}
 					break;
 				case showTypes:
 					type.setVisible(!type.isVisible());
