@@ -429,48 +429,6 @@ public class GBPortal extends JPanel implements GBProjection {
 			viewpoint.y = (int) world.Top();
 	}
 
-	void ScrollToFollowed() {
-		if (followedObject != null) {
-			followPosition = followedObject.Position().subtract(viewpoint);
-			// viewpoint += world.Followed().Velocity();
-		}
-		// User doesn't want to see what's off the edge.
-		// a bit complicated because:
-		// 1) If the view is already near edge, don't scroll away from followed
-		// to fix
-		// 2) if zoomed out a lot, minFollowX could be greater than maxFollowX
-		double minFollowX = (getWidth()) / (scale * 2) - kFollowViewOffEdge; // half-width
-																				// of
-																				// viewport
-		double maxFollowX = world.Right() - minFollowX;
-		double minFollowY = (getHeight()) / (scale * 2) - kFollowViewOffEdge;
-		double maxFollowY = world.Top() - minFollowY;
-		if (followPosition.x >= maxFollowX) {
-			if (viewpoint.x <= followPosition.x)
-				followPosition.x = Math.max(viewpoint.x, maxFollowX);
-		} else if (followPosition.x <= minFollowX) {
-			if (viewpoint.x >= followPosition.x)
-				followPosition.x = Math.min(viewpoint.x, minFollowX);
-		} else if (followedObject != null)
-			viewpoint.x += followedObject.Velocity().x;
-
-		if (followPosition.y >= maxFollowY) {
-			if (viewpoint.y <= followPosition.y)
-				followPosition.y = Math.max(viewpoint.y, maxFollowY);
-		} else if (followPosition.y <= minFollowY) {
-			if (viewpoint.y >= followPosition.y)
-				followPosition.y = Math.min(viewpoint.y, minFollowY);
-		} else if (followedObject != null)
-			viewpoint.y += followedObject.Velocity().y;
-		// now scroll toward followPosition
-		if (followPosition.inRange(viewpoint, kFastFollowDistance))
-			ScrollToward(followPosition, kFollowSpeed);
-		else if (followPosition.inRange(viewpoint, kFollowJumpDistance))
-			ScrollToward(followPosition, kFastFollowSpeed);
-		else
-			viewpoint = followPosition;
-	}
-
 	@Override
 	public String toString() {
 		return "World";
@@ -515,7 +473,6 @@ public class GBPortal extends JPanel implements GBProjection {
 	public void ScrollTo(FinePoint p) {
 		viewpoint = p;
 		RestrictScrolling();
-		// Changed();
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {
@@ -525,13 +482,11 @@ public class GBPortal extends JPanel implements GBProjection {
 			viewpoint = viewpoint.add(p.subtract(viewpoint).unit()
 					.multiply(speed));
 		RestrictScrolling();
-		// Changed();
 	}
 
 	public void ScrollBy(FinePoint delta) {
 		viewpoint = viewpoint.add(delta);
 		RestrictScrolling();
-		// Changed();
 	}
 
 	public void Follow(GBObject ob) {
@@ -583,8 +538,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				following = false;
 				break;
 			case ptAddManna:
-				world.AddObjectNew(new GBManna(where, world.mannaSize));
-				world.Changed();
+				world.addObjectManual(new GBManna(where, world.mannaSize));
 				break;
 			case ptAddRobot:
 				DoAddRobot(where);
@@ -601,19 +555,16 @@ public class GBPortal extends JPanel implements GBProjection {
 			case ptSmite:
 				world.AddObjectNew(new GBExplosion(where, null /* nobody */,
 						kSmiteDamage));
-				world.Changed();
 				break;
 			case ptBlasts:
 				DoBlasts(where);
 				break;
 			case ptErase:
 				world.EraseAt(where, 0);
-				world.Changed();
 				world.CollectStatistics();
 				break;
 			case ptEraseBig:
 				world.EraseAt(where, kEraseBigRadius);
-				world.Changed();
 				world.CollectStatistics();
 				break;
 			default:
@@ -631,9 +582,8 @@ public class GBPortal extends JPanel implements GBProjection {
 				if (side.types.size() > 0)
 					type = side.types.get(0);
 			if (type != null) {
-				world.AddObjectNew(new GBRobot(type, where));
+				world.addObjectManual(new GBRobot(type, where));
 				side.Scores().ReportSeeded(type.Cost());
-				world.Changed();
 				world.CollectStatistics();
 			}
 		}
@@ -643,7 +593,6 @@ public class GBPortal extends JPanel implements GBProjection {
 		Side side = app.getSelectedSide();
 		if (side != null) {
 			world.AddSeed(side, where);
-			world.Changed();
 			world.CollectStatistics();
 		}
 	}
@@ -654,7 +603,6 @@ public class GBPortal extends JPanel implements GBProjection {
 		}
 		if (moving != null) {
 			moving.MoveBy(where.subtract(lastClick));
-			world.Changed();
 		}
 	}
 
@@ -664,15 +612,13 @@ public class GBPortal extends JPanel implements GBProjection {
 		GBForceField ff = new GBForceField(where, where.subtract(lastClick),
 				null, kMoveForce, where.subtract(lastClick).angle());
 		world.AddObjectNew(ff);
-		world.Changed();
 	}
 
-	public void DoBlasts(FinePoint where)  {
+	public void DoBlasts(FinePoint where) {
 		double base = GBRandomState.gRandoms.Angle();
 		for (int i = kNumBlasts; i > 0; i--)
 			world.AddObjectNew(new GBBlast(where, FinePoint.makePolar(
 					kBlastSpeed, base + GBMath.kPi * 2 * i / kNumBlasts), null,
 					kBlastDamage, (int) Math.ceil(kBlastRange / kBlastSpeed)));
-		world.Changed();
 	}
 }

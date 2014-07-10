@@ -5,10 +5,10 @@
 package simulation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.Map;
 
 import support.FinePoint;
@@ -61,9 +61,9 @@ public class GBObjectWorld extends Model {
 		size = new FinePoint(kWorldWidth, kWorldHeight);
 		tilesX = (int) (Math.ceil(kWorldWidth / kForegroundTileSize));
 		tilesY = (int) (Math.ceil(kWorldHeight / kForegroundTileSize));
-		allObjects = new ArrayList<GBObject>(100000);
-		objects = new HashMap<GBObjectClass, GBObject[]>();
-		news = new ArrayList<GBObject>(2000);
+		allObjects = Collections.synchronizedList(new ArrayList<GBObject>(100000));
+		objects = Collections.synchronizedMap(new HashMap<GBObjectClass, GBObject[]>());
+		news = Collections.synchronizedList(new ArrayList<GBObject>(2000));
 		MakeTiles();
 	}
 
@@ -74,7 +74,7 @@ public class GBObjectWorld extends Model {
 	}
 
 	/**
-	 * Clear all object lists except the main one, and reset each object's next
+	 * Clear all object lists and reset each object's next
 	 */
 	protected void ClearLists() {
 		MakeTiles();
@@ -86,7 +86,6 @@ public class GBObjectWorld extends Model {
 
 	/**
 	 * Puts objects in the appropriate class and tile, and deletes dead ones.
-	 * Will wait until rendering is complete before starting sort.
 	 */
 	protected void ResortObjects() {
 		GBObject[] template = new GBObject[tilesX * tilesY + 1];
@@ -114,7 +113,7 @@ public class GBObjectWorld extends Model {
 	 * @param type
 	 * @return
 	 */
-	public synchronized GBObject[] getObjects(GBObjectClass type) {
+	public GBObject[] getObjects(GBObjectClass type) {
 		return objects.get(type);
 	}
 
@@ -138,11 +137,16 @@ public class GBObjectWorld extends Model {
 		if (newOb != null)
 			news.add(newOb);
 	}
+	
+	public void addObjectManual(GBObject newOb) {
+		allObjects.add(newOb);
+		AddObjectDirectly(newOb);
+	}
 
-	private void AddObjectDirectly(GBObject ob) {
+	protected void AddObjectDirectly(GBObject ob) {
 		if (ob != null)
 			if (ob.Class() != GBObjectClass.ocDead) {
-				// If object is dead, leave it alone and let GC take care of it.
+				// If object is dead, leave it alone.
 				int tile = ob.Radius() * 2 >= kForegroundTileSize ? tilesX
 						* tilesY : FindTile(ob.Position());
 				ob.next = objects.get(ob.Class())[tile];
@@ -431,9 +435,7 @@ public class GBObjectWorld extends Model {
 	}
 
 	public void EraseAt(FinePoint where, double radius) {
-		// modified from ResortObjects. Could be replaced with some dead-marking
-		// system
-		ClearLists();
+		MakeTiles();
 		Iterator<GBObject> it = allObjects.iterator();
 		while (it.hasNext()) {
 			GBObject obj = it.next();

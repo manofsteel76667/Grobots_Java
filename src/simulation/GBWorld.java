@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import sides.GBScores;
@@ -88,7 +89,7 @@ public class GBWorld extends GBObjectWorld {
 	public static final int kDefaultTimeLimit = 18000;
 
 	public static final double kSeedRadius = 2;
-	public static final double kDefaultSeedValue = 5000;
+	public static final double kDefaultSeedValue = 5035; //Was 5000 but some giants won't seed without redesign
 	public static final double kDefaultSeedTypePenalty = 100;
 
 	/*
@@ -214,10 +215,6 @@ public class GBWorld extends GBObjectWorld {
 		 */
 	}
 
-	/*
-	 * ~GBWorld() { RemoveAllSides(); }
-	 */
-
 	public void SimulateOneFrame() {
 		/*
 		 * #if GBWORLD_PROFILING && MAC UnsignedWide start, phaseStart, end;
@@ -245,7 +242,7 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public synchronized void AdvanceFrame() throws
+	public void AdvanceFrame() throws
 						       GBTooManyIterationsError,
 						       GBSimulationError {
 		SimulateOneFrame();
@@ -496,6 +493,8 @@ public class GBWorld extends GBObjectWorld {
 		if (side == null)
 			throw new NullPointerException("tried to remove null side");
 		sides.remove(side);
+		//clearSideObjects(side);
+		//ResortObjects();
 		Changed();
 	}
 
@@ -504,6 +503,15 @@ public class GBWorld extends GBObjectWorld {
 		allObjects.clear();
 		ResetTournamentScores();
 		Changed();
+	}
+	
+	void clearSideObjects(Side side){
+		if (side == null)
+			throw new NullPointerException("can't clear objects for null side");
+		Iterator<GBObject> it = allObjects.iterator();
+		while (it.hasNext()) 
+			if (side.equals(it.next().Owner()))
+				it.remove();
 	}
 
 	public List<Side> Sides() {

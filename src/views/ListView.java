@@ -124,6 +124,9 @@ public abstract class ListView extends JPanel {
 	}
 	
 	protected void draw(Graphics2D g){
+		header = new Rectangle(0,0,0,0);
+		items = new Rectangle(0,0,0,0);
+		footer = new Rectangle(0,0,0,0);
 		itemlist.clear();
 		size = setLength();
 		header = drawHeader(g);
@@ -140,9 +143,11 @@ public abstract class ListView extends JPanel {
 	
 	protected void drawBox(Graphics2D g, Rectangle box, boolean selected){
 		g.setPaint(selected ? boxSelectedColor : boxFillColor);
-		g.fill(box);
+		//g.fill(box);
+		g.fillRoundRect(box.x, box.y, box.width, box.height, 10, 10);
 		g.setColor(boxBorderColor);
-		g.draw(box);
+		//g.draw(box);
+		g.drawRoundRect(box.x, box.y, box.width, box.height, 10, 10);
 	}
 	
 	protected void drawBox(Graphics2D g, Rectangle box){

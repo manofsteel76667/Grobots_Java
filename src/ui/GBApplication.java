@@ -139,10 +139,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	void updateMenu() {
-		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0 && !world.running);
-		setMenuItem(MenuItems.reloadSide, selectedSide != null && !world.running);
-		setMenuItem(MenuItems.duplicateSide, selectedSide != null && !world.running);
-		setMenuItem(MenuItems.removeSide, selectedSide != null && !world.running);
+		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
+				&& !world.running);
+		setMenuItem(MenuItems.reloadSide, selectedSide != null
+				&& !world.running);
+		setMenuItem(MenuItems.duplicateSide, selectedSide != null
+				&& !world.running);
+		setMenuItem(MenuItems.removeSide, selectedSide != null
+				&& !world.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 	}
@@ -192,11 +196,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	void setMenuItem(MenuItems item, boolean state) {
 		try {
 			mainMenu.menuButtons.get(item).setEnabled(state);
+		} catch (Exception e) {
+			// Some menu options may not be mapped to buttons
 		}
-		catch (Exception e) {
-			//Some menu options may not be mapped to buttons
-		}
-		
+
 	}
 
 	public Side getSelectedSide() {
@@ -222,14 +225,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	public void setSelectedSide(Side _side) {
-		if (_side == null || selectedSide == null) {
+		if (_side == null) {
 			selectedSide = _side;
 			repaint();
 			updateMenu();
+			setSelectedType(null);
 			return;
-		}
-		if (!selectedSide.equals(_side)) {
+		} else if (!_side.equals(selectedSide)) {
 			selectedSide = _side;
+			setSelectedType(_side.types.size() > 0 ? _side.types.get(0) : null);
 			repaint();
 		}
 		updateMenu();
@@ -326,6 +330,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case newRound:
+					if (world.running){
+						world.running = false;
+						Thread.sleep(100); //Let simulate thread end
+					}
 					world.Reset();
 					world.AddSeeds();
 					world.running = true;
@@ -482,7 +490,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case tournament:
 					world.tournament = mainMenu.cbTournament.isSelected();
-					world.tournamentLength = 100;
+					world.tournamentLength = -1;
 					break;
 				case unlimited:
 					stepRate = StepRates.unlimited;

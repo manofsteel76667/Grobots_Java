@@ -497,12 +497,12 @@ public class GBRobot extends GBObject {
 				break;
 			// if we're flashing, fall through and draw a dot
 		case dot:
-			g2d.fillOval((int) dec.getCenterX() - thickness,
-					(int) dec.getCenterY() - thickness, thickness * 2,
+			g2d.fillOval(dec.x - thickness,
+					dec.y - thickness, thickness * 2,
 					thickness * 2);
 			break;
 		case circle:
-			g2d.drawOval((int) dec.getCenterX(), (int) dec.getCenterY(),
+			g2d.drawOval(dec.x, dec.y,
 					dec.width, dec.height);
 			break;
 		case square:
