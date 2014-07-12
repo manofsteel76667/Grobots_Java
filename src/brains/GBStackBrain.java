@@ -4,7 +4,6 @@
  *******************************************************************************/
 package brains;
 
-
 import sides.RobotType;
 import simulation.GBConstructorState;
 import simulation.GBMessage;
@@ -228,7 +227,8 @@ public class GBStackBrain extends Brain {
 
 	double Peek(int delta) throws GBStackUnderflowError, GBStackOverflowError {
 		if (delta < 1)
-			throw new IndexOutOfBoundsException("peeking stack element " + delta);
+			throw new IndexOutOfBoundsException("peeking stack element "
+					+ delta);
 		int where = stackHeight - delta;
 		if (where < 0)
 			throw new GBStackUnderflowError();
@@ -275,7 +275,8 @@ public class GBStackBrain extends Brain {
 
 	double ReadLocalMemory(int addr, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new IndexOutOfBoundsException("tried to read at address " + addr);
+			throw new IndexOutOfBoundsException("tried to read at address "
+					+ addr);
 		if (memory == null)
 			return 0;
 		return memory[addr - 1];
@@ -283,7 +284,8 @@ public class GBStackBrain extends Brain {
 
 	void WriteLocalMemory(int addr, double val, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new IndexOutOfBoundsException("tried to write at address " + addr);
+			throw new IndexOutOfBoundsException("tried to write at address "
+					+ addr);
 		if (memory == null) {
 			if (robot.hardware.Memory() == 0)
 				return; // fail silently
@@ -314,11 +316,11 @@ public class GBStackBrain extends Brain {
 	}
 
 	void BrainError(Exception err, GBRobot robot, GBWorld world) {
+		status = BrainStatus.bsError;
 		if (world.reportErrors)
 			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
 					+ AddressAndLine(pc - 1) + ": " + err.toString());
-		status = BrainStatus.bsError;
 	}
 
 	public GBStackBrain(GBStackBrainSpec spc) {
@@ -343,9 +345,11 @@ public class GBStackBrain extends Brain {
 			while (status == BrainStatus.bsOK && remaining > 0)
 				ThinkOne(robot, world);
 		} catch (GBBrainError err) {
-			BrainError(err, robot, world);
-		} catch (GBAbort err) {
-			status = BrainStatus.bsStopped;
+			try {
+				BrainError(err, robot, world);
+			} catch (GBAbort a) {
+				status = BrainStatus.bsStopped;
+			}
 		}
 		double en = kProcessorUseCost * used;
 		robot.hardware.UseEnergy(en);
@@ -397,13 +401,15 @@ public class GBStackBrain extends Brain {
 
 	public double StackAt(int index) {
 		if (index < 0 || index >= stackHeight)
-			throw new IndexOutOfBoundsException("tried to read stack element " + index);
+			throw new IndexOutOfBoundsException("tried to read stack element "
+					+ index);
 		return stack[index];
 	}
 
 	public int ReturnStackAt(int index) {
 		if (index < 0 || index >= returnStackHeight)
-			throw new IndexOutOfBoundsException("tried to read return stack element " + index);
+			throw new IndexOutOfBoundsException(
+					"tried to read return stack element " + index);
 		return returnStack[index];
 	}
 
@@ -1086,7 +1092,8 @@ public class GBStackBrain extends Brain {
 		case opDropN: {
 			int n = PopInteger();
 			if (n > stackHeight)
-				throw new IllegalArgumentException("dropped " + n + " of " + stackHeight);
+				throw new IllegalArgumentException("dropped " + n + " of "
+						+ stackHeight);
 			stackHeight -= n;
 		}
 			break;
@@ -1695,34 +1702,25 @@ public class GBStackBrain extends Brain {
 	// pos and vel are relative to ourself
 	static FinePoint LeadShot(FinePoint pos, FinePoint vel, double shotSpeed,
 			double r) {
-		//if (true) {
-			double dt = (pos.add(vel.multiply(pos.norm() / shotSpeed))).norm()
-					/ shotSpeed; // two plies for accuracy with radially moving
-									// targets
-			return pos.add(vel.multiply(dt));
-		/*} else {
-			// Precise version, not used yet because it changes behavior.
-			// Solve for exact time of impact: (pos + vel * dt).Norm() =
-			// shotSpeed * dt + r
-			double a = vel.normSquare() - shotSpeed * shotSpeed;
-			double b = (pos.dotProduct(vel) - shotSpeed * r) * 2;
-			double c = pos.normSquare() - r * r;
-			double det = b * b - a * c * 4;
-			if (det < 0 || a == 0)
-				return new FinePoint(0, 0); // don't shoot
-			// try both roots and use least positive root
-			double dt1 = b * -1 - Math.sqrt(det) / (a * 2);
-			double dt2 = b * -1 + Math.sqrt(det) / (a * 2);
-			if (dt1 < 0) {
-				if (dt2 < 0)
-					return new FinePoint(0, 0);
-				else
-					return pos.add(vel.multiply(dt2));
-			} else if (dt2 < 0 || dt1 < dt2)
-				return pos.add(vel.multiply(dt1));
-			else
-				return pos.add(vel.multiply(dt2));
-		}*/
+		// if (true) {
+		double dt = (pos.add(vel.multiply(pos.norm() / shotSpeed))).norm()
+				/ shotSpeed; // two plies for accuracy with radially moving
+								// targets
+		return pos.add(vel.multiply(dt));
+		/*
+		 * } else { // Precise version, not used yet because it changes
+		 * behavior. // Solve for exact time of impact: (pos + vel * dt).Norm()
+		 * = // shotSpeed * dt + r double a = vel.normSquare() - shotSpeed *
+		 * shotSpeed; double b = (pos.dotProduct(vel) - shotSpeed * r) * 2;
+		 * double c = pos.normSquare() - r * r; double det = b * b - a * c * 4;
+		 * if (det < 0 || a == 0) return new FinePoint(0, 0); // don't shoot //
+		 * try both roots and use least positive root double dt1 = b * -1 -
+		 * Math.sqrt(det) / (a * 2); double dt2 = b * -1 + Math.sqrt(det) / (a *
+		 * 2); if (dt1 < 0) { if (dt2 < 0) return new FinePoint(0, 0); else
+		 * return pos.add(vel.multiply(dt2)); } else if (dt2 < 0 || dt1 < dt2)
+		 * return pos.add(vel.multiply(dt1)); else return
+		 * pos.add(vel.multiply(dt2)); }
+		 */
 	}
 
 	void FirePeriodic(GBSensorState sensor, GBWorld world)

@@ -493,8 +493,8 @@ public class GBWorld extends GBObjectWorld {
 		if (side == null)
 			throw new NullPointerException("tried to remove null side");
 		sides.remove(side);
-		//clearSideObjects(side);
-		//ResortObjects();
+		clearSideObjects(side);
+		ResortObjects();
 		Changed();
 	}
 

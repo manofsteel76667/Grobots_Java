@@ -139,14 +139,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	void updateMenu() {
-		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
-				&& !world.running);
+		//setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
+		//		&& !world.running);
 		setMenuItem(MenuItems.reloadSide, selectedSide != null
 				&& !world.running);
 		setMenuItem(MenuItems.duplicateSide, selectedSide != null
-				&& !world.running);
+				/*&& !world.running*/);
 		setMenuItem(MenuItems.removeSide, selectedSide != null
-				&& !world.running);
+				/*&& !world.running*/);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 	}
@@ -158,8 +158,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 			@Override
 			public void run() {
 				// Removing an active side causes a crash
-				setMenuItem(MenuItems.removeSide, false);
-				setMenuItem(MenuItems.removeAllSides, false);
+				//setMenuItem(MenuItems.removeSide, false);
+				//setMenuItem(MenuItems.removeAllSides, false);
 				while (world.running) {
 					long frameRate = 1000000000L / stepRate.value; // nanoseconds
 																	// per
