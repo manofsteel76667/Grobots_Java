@@ -4,9 +4,10 @@
  *******************************************************************************/
 package ui;
 
-import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +28,7 @@ import views.AboutBox;
 import views.GBPortal;
 import views.GBPortal.toolTypes;
 import views.GBRosterView;
+import views.GBScoresView;
 import views.GBTournamentView;
 import views.RobotTypeView;
 import exception.GBAbort;
@@ -52,6 +54,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	GBPortal portal;
 	GBRosterView roster;
 	GBTournamentView tournament;
+	GBScoresView statistics;
 	AboutBox about;
 	RobotTypeView type;
 	JDialog tournDialog;
@@ -88,17 +91,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		updateMenu();
 
 		// Arrange the screen
-		this.setLayout(new BorderLayout());
-		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
+		setLayouts();
 		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
 				.getImage();
 		setIconImage(icon);
 		this.setTitle("Grobots");
-		this.getContentPane().add(portal, BorderLayout.CENTER);
-		this.getContentPane().add(roster, BorderLayout.LINE_START);
-		this.getContentPane().add(type, BorderLayout.LINE_END);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
+		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
 		setVisible(true);
 
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
@@ -122,11 +122,59 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							tournament.repaint();
 						if (type.isVisible())
 							type.repaint();
+						if (statistics.isVisible())
+							statistics.repaint();
 					}
 				});
 		otherTimer.setRepeats(true);
 		otherTimer.setCoalesce(true);
 		otherTimer.start();
+	}
+	
+	void setLayouts(){
+		this.getContentPane().setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		
+		//Roster
+		c.fill = GridBagConstraints.VERTICAL;
+		c.anchor = GridBagConstraints.FIRST_LINE_START;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weighty = 1;
+		c.weightx = 0;
+		c.gridheight = 2;
+		this.getContentPane().add(roster, c);
+		
+		//Portal
+		//portal.setPreferredSize(new Dimension(600, 300));
+		c.fill = GridBagConstraints.BOTH;
+		c.anchor = GridBagConstraints.ABOVE_BASELINE;
+		c.gridx = 1;
+		c.gridy = 0;
+		c.weightx = 1;
+		c.gridheight = 2;
+		this.getContentPane().add(portal, c);
+		
+		//Statistics
+		c.fill = GridBagConstraints.BOTH;
+		c.anchor = GridBagConstraints.SOUTH;
+		c.gridx = 1;
+		c.gridy = 2;
+		c.weightx = 0;
+		c.weighty = 0;
+		c.gridheight = 1;
+		c.gridwidth = 1;
+		this.getContentPane().add(statistics, c);
+		
+		//Type View
+		c.fill = GridBagConstraints.VERTICAL;
+		c.anchor = GridBagConstraints.FIRST_LINE_END;
+		c.gridx = 2;
+		c.gridy = 0;
+		c.weighty = 1;
+		c.gridwidth = 1;
+		c.gridheight = 2;
+		this.getContentPane().add(type);
 	}
 
 	void createChildViews() {
@@ -136,6 +184,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		roster = new GBRosterView(this);
 		tournament = new GBTournamentView(this);
 		type = new RobotTypeView(this);
+		statistics = new GBScoresView(this);
 	}
 
 	void updateMenu() {
@@ -374,6 +423,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.Reset();
 					world.RemoveAllSides();
 					world.running = false;
+					setSelectedSide(null);
 					updateMenu();
 					repaint();
 					break;
@@ -452,6 +502,22 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showSharedMemory:
 					break;
 				case showStatistics:
+					statistics.setVisible(!statistics.isVisible());
+					if (statistics.isVisible()){
+						GridBagConstraints c = new GridBagConstraints();
+						c.fill = GridBagConstraints.BOTH;
+						c.anchor = GridBagConstraints.SOUTH;
+						c.gridx = 1;
+						c.gridy = 2;
+						c.weightx = 0;
+						c.weighty = 0;
+						c.gridheight = 1;
+						c.gridwidth = 2;
+						this.getContentPane().add(statistics, c);
+						int state = getExtendedState();
+						pack();
+						setExtendedState(state);
+					}
 					break;
 				case showTournament:
 					if (tournDialog == null) {
