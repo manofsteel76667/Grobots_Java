@@ -47,9 +47,9 @@ public class GBIncomeStatistics {
 		kleptotrophy += en;
 	}
 
-	public long Total() {
+	public int Total() {
 		// excludes cannibalism and seeded
-		return (long) (autotrophy + theotrophy + heterotrophy + kleptotrophy);
+		return (int)(autotrophy + theotrophy + heterotrophy + kleptotrophy);
 	}
 
 	public void add(GBIncomeStatistics other) {

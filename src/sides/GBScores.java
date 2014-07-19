@@ -111,7 +111,7 @@ public class GBScores {
 		}
 	}
 
-	double Survival() {
+	public double Survival() {
 		return sides != 0 ? (double) survived / sides : 0;
 	}
 
@@ -137,7 +137,7 @@ public class GBScores {
 		return population / (rounds != 0 ? rounds : 1);
 	}
 
-	int PopulationEver() {
+	public int PopulationEver() {
 		return populationEver / (rounds != 0 ? rounds : 1);
 	}
 
@@ -169,7 +169,7 @@ public class GBScores {
 		return biomassFraction / (survived != 0 ? survived : 1);
 	}
 
-	List<Integer> BiomassHistory() {
+	public List<Integer> BiomassHistory() {
 		if (rounds <= 1)
 			return biomassHistory;
 		List<Integer> avg = biomassHistory;
@@ -221,13 +221,13 @@ public class GBScores {
 	}
 
 	// What fraction of income has ended up as growth?
-	double Efficiency() {
+	public double Efficiency() {
 		if (income.Total() == 0)
 			return 0.0f;
 		return (biomass - seeded) / income.Total();
 	}
 
-	int Doubletime(int currentTime) {
+	public int Doubletime(int currentTime) {
 		if (seeded == 0 || biomass <= 1)
 			return 0;
 		return (int) (currentTime * Math.log(2.0) / Math.log(biomass) / seeded);

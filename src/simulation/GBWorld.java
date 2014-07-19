@@ -544,11 +544,11 @@ public class GBWorld extends GBObjectWorld {
 		return corpses;
 	}
 
-	int MannaValue() {
+	public int MannaValue() {
 		return mannaValue;
 	}
 
-	int CorpseValue() {
+	public int CorpseValue() {
 		return corpseValue;
 	}
 

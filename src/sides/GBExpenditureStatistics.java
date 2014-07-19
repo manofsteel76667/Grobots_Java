@@ -77,8 +77,8 @@ public class GBExpenditureStatistics {
 		wasted += en;
 	}
 
-	public long Total() {
-		return (long) (construction + engine + weapons + forceField + shield
+	public int Total() {
+		return (int) (construction + engine + weapons + forceField + shield
 				+ repairs + sensors + brain + stolen + wasted);
 	}
 
