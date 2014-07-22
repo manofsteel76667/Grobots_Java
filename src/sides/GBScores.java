@@ -186,11 +186,11 @@ public class GBScores {
 		return territory;
 	}
 
-	double EconFraction() {
+	public double EconFraction() {
 		return economyHardware / totalHardware;
 	}
 
-	double CombatFraction() {
+	public double CombatFraction() {
 		return combatHardware / totalHardware;
 	}
 

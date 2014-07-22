@@ -1,10 +1,16 @@
 package views;
 
+/*******************************************************************************
+ * Copyright (c) 2002-2013 (c) Devon and Warren Schudy Copyright (c) 2014
+ * Devon and Warren Schudy, Mike Anderson
+ *******************************************************************************/
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -15,395 +21,353 @@ import sides.GBScores;
 import sides.Side;
 import simulation.GBWorld;
 import support.GBColor;
-import support.GBObjectClass;
 import support.StringUtilities;
 import ui.GBApplication;
+
+class StatisticsLine implements Comparable<StatisticsLine> {
+	public String name;
+	public String value;
+	public Color color;
+	public int order;
+	public int group;
+	public int fontHeight = 10;
+	public boolean bold = false;
+
+	public StatisticsLine(String statName, String statValue, Color statColor,
+			int _group, int _order) {
+		name = statName;
+		value = statValue;
+		color = statColor;
+		group = _group;
+		order = _order;
+	}
+
+	public StatisticsLine(String statName, String statValue, Color statColor,
+			int _group, int _order, int _fontHeight, boolean _bold) {
+		name = statName;
+		value = statValue;
+		color = statColor;
+		group = _group;
+		order = _order;
+		fontHeight = _fontHeight;
+		bold = _bold;
+	}
+
+	@Override
+	public int compareTo(StatisticsLine arg0) {
+		if (this.group != arg0.group)
+			return this.order - arg0.order;
+		else
+			return this.group - arg0.group;
+	}
+}
 
 public class GBScoresView extends JPanel {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 4827315972785490558L;
-	/*******************************************************************************
-	 * Copyright (c) 2002-2013 (c) Devon and Warren Schudy Copyright (c) 2014
-	 * Devon and Warren Schudy, Mike Anderson
-	 *******************************************************************************/
-
-	public static final int kGraphHeight = 120;
-	public static final int kInfoBoxHeight = 184;
-	public static final int kTotalsHeight = 56;
+	static final int kGraphTop = 15;
+	int kGraphWidth = 1;
+	static final int kGraphHeight = 120;
+	static final int kInfoBoxHeight = 85;
+	static final int kTotalsHeight = 66;
+	static final int kTableHeight = 113;
 	GBApplication app;
 	GBWorld world;
 	Side lastSideDrawn = null;
-	boolean graphAllLastDrawn;
-	boolean graphAllRounds;
 	int kEdgeSpace;
 	Color boxfillcolor = Color.white;
 	Color boxbordercolor = Color.black;
-	int colwidth=50;
+	int colwidth = 50;
 	int graphwidth = 150;
-	
+	int padding = 2;
+	List<StatisticsLine> roundStatsList;
+	List<StatisticsLine> tournStatsList;
+
 	public GBScoresView(GBApplication _app) {
 		app = _app;
 		world = app.world;
 		lastSideDrawn = null;
-		graphAllLastDrawn = true;
-		graphAllRounds = true;
 		kEdgeSpace = 4;
 	}
 
 	public final String Name() {
 		return "Statistics";
 	}
+
 	@Override
 	public void paintComponent(Graphics g) {
-		colwidth = (getWidth() - kEdgeSpace * 8) / 6;
-		graphwidth = (getWidth() - kEdgeSpace * 3) / 2;
+		colwidth = (getWidth() - kEdgeSpace * 5) / 6;
+		graphwidth = (getWidth() - kEdgeSpace) / 2;
+		kGraphWidth = colwidth * 3 + kEdgeSpace * 2;
+		;
 		super.paintComponent(g);
 		Draw((Graphics2D) g);
 	}
+
 	@Override
-	public Dimension getPreferredSize(){
-		int height = kGraphHeight + kInfoBoxHeight + kTotalsHeight + kEdgeSpace * 4;
-		int width = 400;
-		return new Dimension(height, width);
+	public Dimension getPreferredSize() {
+		int height = kGraphTop + kGraphHeight + kInfoBoxHeight + kTotalsHeight
+				+ kEdgeSpace * 3;
+		return new Dimension(200, height);
 	}
-	
-	void drawBox(Graphics2D g, Rectangle box){
+
+	void drawBox(Graphics2D g, Rectangle box) {
 		g.setPaint(boxfillcolor);
 		g.fill(box);
 		g.setColor(boxbordercolor);
 		g.draw(box);
 	}
 
-	void DrawIncome(Graphics2D g, GBIncomeStatistics income, int left,
-			int right, int top) {
+	ArrayList<StatisticsLine> buildStatsList(GBScores in, boolean tournament) {
+		ArrayList<StatisticsLine> ret = new ArrayList<StatisticsLine>();
+		// Income
+		GBIncomeStatistics income = in.income;
 		int total = income.Total();
-		if (total == 0)
-			return;
-		StringUtilities.drawStringPair(g, "Solar:",
-				StringUtilities.toPercentString(income.autotrophy/total, 1),
-				left, right, top + 10, 9, GBColor.darkGreen, false);
-		StringUtilities.drawStringPair(g, "Manna:",
-				StringUtilities.toPercentString(income.theotrophy/total, 1),
-				left, right, top + 20, 9, GBColor.darkGreen, false);
-		StringUtilities.drawStringPair(g, "Enemies:",
-				StringUtilities.toPercentString(income.heterotrophy/total, 1),
-				left, right, top + 30, 9, GBColor.purple, false);
-		StringUtilities.drawStringPair(g, "Stolen:",
-				StringUtilities.toPercentString(income.kleptotrophy/total, 1),
-				left, right, top + 40, 9, new GBColor(0.4f, 0.6f, 0), false);
-		StringUtilities.drawStringPair(g, "Cannibal:",
-				StringUtilities.toPercentString(income.cannibalism/total, 1),
-				left, right, top + 50, 9, GBColor.darkRed, false);
+		ret.add(new StatisticsLine("Income", Integer.toString(total),
+				Color.black, 0, 0, 10, true));
+		if (total != 0) {
+			ret.add(new StatisticsLine("Solar", StringUtilities
+					.toPercentString(income.autotrophy / total, 1),
+					GBColor.darkGreen, 0, 1));
+			ret.add(new StatisticsLine("Manna", StringUtilities
+					.toPercentString(income.theotrophy / total, 1),
+					GBColor.darkGreen, 0, 2));
+			ret.add(new StatisticsLine("Enemies", StringUtilities
+					.toPercentString(income.heterotrophy / total, 1),
+					GBColor.purple, 0, 3));
+			ret.add(new StatisticsLine("Stolen", StringUtilities
+					.toPercentString(income.kleptotrophy / total, 1),
+					GBColor.gold, 0, 4));
+			ret.add(new StatisticsLine("Cannibal", StringUtilities
+					.toPercentString(income.cannibalism / total, 1),
+					GBColor.darkRed, 0, 5));
+		}
+		// Deaths
+		ret.add(new StatisticsLine("Kill Rate", StringUtilities
+				.toPercentString(in.KilledFraction(), 0), Color.black, 1, 0));
+		if (in.survived != 0)
+			ret.add(new StatisticsLine("Relative:", StringUtilities
+					.toPercentString(in.KillRate(), 0), Color.black, 1, 1));
+		ret.add(new StatisticsLine("Kills", Integer.toString((int) in.killed),
+				GBColor.purple, 1, 2));
+		ret.add(new StatisticsLine("Losses",
+				Integer.toString((int) in.dead, 0), Color.black, 1, 3));
+		ret.add(new StatisticsLine("Suicides", Integer.toString(
+				(int) in.suicide, 0), GBColor.darkRed, 1, 4));
+		// Expenditures
+		GBExpenditureStatistics spent = in.expenditure;
+		total = spent.Total();
+		ret.add(new StatisticsLine("Spent", Integer.toString(total),
+				Color.black, 2, 0, 10, true));
+		if (total != 0) {
+			ret.add(new StatisticsLine("Growth", StringUtilities
+					.toPercentString(spent.construction / total, 1),
+					GBColor.darkGreen, 2, 1));
+			ret.add(new StatisticsLine("Engine", StringUtilities
+					.toPercentString(spent.engine / total, 1), Color.black, 2,
+					2));
+			ret.add(new StatisticsLine("Sensors", StringUtilities
+					.toPercentString(spent.sensors / total, 1), Color.blue, 2,
+					3));
+			ret.add(new StatisticsLine("Weapons", StringUtilities
+					.toPercentString(spent.weapons / total, 1), GBColor.purple,
+					2, 4));
+			ret.add(new StatisticsLine("Force", StringUtilities
+					.toPercentString(spent.forceField / total, 1), Color.blue,
+					2, 5));
+			ret.add(new StatisticsLine("Shield", StringUtilities
+					.toPercentString(spent.shield / total, 1), Color.black, 2,
+					6));
+			ret.add(new StatisticsLine("Repairs", StringUtilities
+					.toPercentString(spent.repairs / total, 1), Color.black, 2,
+					7));
+			ret.add(new StatisticsLine("Brains", StringUtilities
+					.toPercentString(spent.brain / total, 1), Color.black, 2, 8));
+			ret.add(new StatisticsLine("Stolen", StringUtilities
+					.toPercentString(spent.stolen / total, 1), GBColor.gold, 2,
+					9));
+			ret.add(new StatisticsLine("Overflow", StringUtilities
+					.toPercentString(spent.wasted / total, 1), GBColor.darkRed,
+					2, 10));
+		}
+		// Biomass, population, misc
+		if (tournament) {
+			// Show tournament stats
+			ret.add(new StatisticsLine("Biomass",
+					Integer.toString(in.Biomass()), Color.black, 3, 0, 10, true));
+			ret.add(new StatisticsLine("Early", Integer
+					.toString((int) in.earlyBiomass), Color.black, 3, 1));
+			ret.add(new StatisticsLine("Survival", StringUtilities
+					.toPercentString(in.Survival(), 1), Color.black, 3, 2));
+			ret.add(new StatisticsLine("Early Death", StringUtilities
+					.toPercentString(in.EarlyDeathRate(), 1), GBColor.black, 3,
+					3));
+			ret.add(new StatisticsLine("Late Death", StringUtilities
+					.toPercentString(in.LateDeathRate(), 1), GBColor.black, 3,
+					4));
+			ret.add(new StatisticsLine("Seeded", Integer.toString(in.Seeded()),
+					GBColor.black, 3, 5));
+			ret.add(new StatisticsLine("Efficiency", StringUtilities
+					.toPercentString(in.Efficiency(), 1), GBColor.black, 3, 6));
+		} else {
+			// Show this round's stats
+			ret.add(new StatisticsLine("Biomass", StringUtilities
+					.toPercentString(in.BiomassFraction(), 0), Color.black, 3,
+					0));
+			ret.add(new StatisticsLine("Population", Integer
+					.toString(in.population), Color.blue, 3, 1));
+			ret.add(new StatisticsLine("Ever", Integer.toString(in
+					.PopulationEver()), Color.blue, 3, 2));
+			ret.add(new StatisticsLine("Manna", Integer.toString(world
+					.MannaValue()), GBColor.darkGreen, 3, 3));
+			ret.add(new StatisticsLine("Corpses", Integer.toString(world
+					.CorpseValue()), Color.red, 3, 4));
+			ret.add(new StatisticsLine("Seeded", Integer
+					.toString((int) in.seeded), Color.black, 3, 5));
+			ret.add(new StatisticsLine("Efficiency", StringUtilities
+					.toPercentString(in.Efficiency(), 0), Color.black, 3, 6));
+		}
+		int doubletime = in.Doubletime(world.CurrentFrame());
+		if (tournament && doubletime != 0 && doubletime < 100000)
+			ret.add(new StatisticsLine("DoubleTime", Integer
+					.toString(doubletime), Color.black, 3, 7));// Blank line
+		if (in.population != 0) {
+			ret.add(new StatisticsLine("Economy", StringUtilities
+					.toPercentString(in.EconFraction(), 1), Color.black, 3, 8));
+			ret.add(new StatisticsLine("Combat", StringUtilities
+					.toPercentString(in.CombatFraction(), 1), Color.black, 3, 9));
+		}
+		ret.add(new StatisticsLine("Territory", Integer.toString(in.territory),
+				Color.black, 3, 10));
+		return ret;
 	}
 
-	void DrawExpenditures(Graphics2D g, GBExpenditureStatistics spent,
-			int left, int right, int top) {
-		int total = spent.Total();
-		if (total == 0)
-			return;
-		StringUtilities.drawStringPair(g, "Growth:",
-				StringUtilities.toPercentString(spent.construction/total,1),
-				left, right, top + 10, 9, GBColor.darkGreen, false);
-		StringUtilities.drawStringPair(g, "Engine:",
-				StringUtilities.toPercentString(spent.engine/total,1), left,
-				right, top + 20, 9, GBColor.black, false);
-		StringUtilities.drawStringPair(g, "Sensors:",
-				StringUtilities.toPercentString(spent.sensors/total,1), left,
-				right, top + 30, 9, GBColor.blue, false);
-		StringUtilities.drawStringPair(g, "Weapons:",
-				StringUtilities.toPercentString(spent.weapons/total,1), left,
-				right, top + 40, 9, GBColor.purple, false);
-		StringUtilities.drawStringPair(g, "Force:",
-				StringUtilities.toPercentString(spent.forceField/total,1), left,
-				right, top + 50, 9, GBColor.blue, false);
-		StringUtilities.drawStringPair(g, "Shield:",
-				StringUtilities.toPercentString(spent.shield/total,1), left,
-				right, top + 60, 9, GBColor.blue, false);
-		StringUtilities.drawStringPair(g, "Repairs:",
-				StringUtilities.toPercentString(spent.repairs/total,1), left,
-				right, top + 70, 9, GBColor.black, false);
-		StringUtilities.drawStringPair(g, "Brains:",
-				StringUtilities.toPercentString(spent.brain/total,1), left,
-				right, top + 80, 9, GBColor.black, false);
-		StringUtilities.drawStringPair(g, "Stolen:",
-				StringUtilities.toPercentString(spent.stolen/total,1), left,
-				right, top + 90, 9, new GBColor(0.4f, 0.6f, 0), false);
-		StringUtilities.drawStringPair(g, "Overflow:",
-				StringUtilities.toPercentString(spent.wasted/total,1), left,
-				right, top + 100, 9, GBColor.darkRed, false);
+	void Draw(Graphics2D g) {
+		roundStatsList = buildStatsList(
+				app.getSelectedSide() == null ? world.RoundScores() : app
+						.getSelectedSide().Scores(), false);
+		tournStatsList = buildStatsList(
+				app.getSelectedSide() == null ? world.TournamentScores() : app
+						.getSelectedSide().TournamentScores(), true);
+		List<Rectangle> boxes = new ArrayList<Rectangle>();
+		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace,
+				colwidth, kInfoBoxHeight)); // Income
+		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace *2 
+				+ kInfoBoxHeight, colwidth, kTotalsHeight)); // Deaths
+		boxes.add(new Rectangle(kEdgeSpace + colwidth, kEdgeSpace
+				+ kGraphHeight + kGraphTop, colwidth, kInfoBoxHeight
+				+ kTotalsHeight + kEdgeSpace)); // Expenditures
+		boxes.add(new Rectangle(kEdgeSpace * 2 + colwidth * 2, kEdgeSpace
+				+ kGraphHeight + kGraphTop, colwidth - 1, kInfoBoxHeight
+				+ kTotalsHeight + kEdgeSpace)); // Biomass
+		drawGroups(g, boxes, roundStatsList);
+		// Offset the group statistics boxes to the right to be used again for
+		// tournament stats
+		for (Rectangle box : boxes)
+			box.x += kEdgeSpace * 3 + colwidth * 3;
+		drawGroups(g, boxes, tournStatsList);
+		// drawing graphs last to reduce flicker
+		Rectangle graphbox = new Rectangle(0, kGraphTop, kGraphWidth - 1,
+				kGraphHeight);
+		DrawGraph(g, graphbox, false);
+		graphbox.x += graphbox.width + kEdgeSpace + 1;
+		if (world.TournamentScores().rounds != 0)
+			DrawGraph(g, graphbox, true);
+		// record
+		lastSideDrawn = app.getSelectedSide();
 	}
 
-	void DrawDeaths(Graphics2D g, GBScores scores, int left, int right, int top) {
-		StringUtilities.drawStringPair(g, "Kills:",
-				StringUtilities.toPercentString(scores.KilledFraction(), 0),
-				left, right, top + 10, 9, GBColor.purple, false);
-		if (scores.survived != 0)
-			StringUtilities.drawStringPair(g, "Relative:",
-					StringUtilities.toPercentString(scores.KillRate(), 0),
-					left, right, top + 20, 9, GBColor.black, false);
-		StringUtilities.drawStringPair(g, "Kills:",
-				Double.toString(scores.killed), left, right, top + 30, 9,
-				GBColor.purple, false);
-		StringUtilities.drawStringPair(g, "Dead:",
-				Double.toString(scores.dead), left, right, top + 40, 9,
-				GBColor.black, false);
-		StringUtilities.drawStringPair(g, "Suicide:",
-				Double.toString(scores.suicide), left, right, top + 50, 9,
-				GBColor.darkRed, false);
+	void drawGroups(Graphics2D g, List<Rectangle> boxes,
+			List<StatisticsLine> stats) {
+		for (int i = 0; i < boxes.size(); i++) {
+			Rectangle box = boxes.get(i);
+			drawBox(g, box);
+			for (StatisticsLine l : stats)
+				if (l.group == i)
+					StringUtilities.drawStringPair(g, l.name, l.value, box.x
+							+ padding, box.x + box.width - padding, box.y
+							+ padding + (l.order + 1)
+							* (l.fontHeight + padding), l.fontHeight, l.color,
+							l.bold);
+		}
 	}
 
 	void DrawGraph(Graphics2D g, Rectangle box, int vscale, int hscale,
-			List<Integer> hist, Color color) {
-		g.setColor(color);
+			List<Integer> hist, Color color, int weight) {
+		int n = hist.size() - 1;
 		// draw lines
-		for (int i = 0; i < hist.size() - 1; ++i) 
+		for (int i = 0; i < n; ++i) {
+			g.setColor(color);
+			g.setStroke(new BasicStroke(weight));
 			g.drawLine(box.x + box.width * i / hscale, box.y + box.height
 					- hist.get(i) * box.height / vscale, box.x + box.width
 					* (i + 1) / hscale, box.y + box.height - hist.get(i + 1)
 					* box.height / vscale);
+		}
 	}
 
-	void DrawGraphs(Graphics2D g, Rectangle box) {
-		if (world.Sides() == null)
+	void DrawGraph(Graphics2D g, Rectangle box, boolean allRounds) {
+		if (world.CountSides() == 0)
 			return;
 		drawBox(g, box);
-		Rectangle graph = box;
-		graph.grow(-1, -1);
+		Rectangle graph = new Rectangle(box.x + 1, box.y + 1, box.width - 2,
+				box.height - 2);
 		Side side = app.getSelectedSide();
+		// find scale
 		int scale = 1;
 		int hscale = 1;
-		if (side != null) {
-			List<Integer> hist = side.Scores().BiomassHistory();
-			for (int i = 0; i < hist.size(); ++i)
-				if (hist.get(i) > scale)
-					scale = hist.get(i);
-			hscale = hist.size();
-			// average biomass, if available
-			int rounds = side.TournamentScores().rounds;
-			if (rounds != 0) {
-				List<Integer> avg = side.TournamentScores().BiomassHistory();
-				if (avg.size() > hscale)
-					hscale = avg.size();
-				for (int i = 0; i < avg.size(); ++i)
-					if (avg.get(i) > scale)
-						scale = avg.get(i);
-				DrawGraph(g, graph, scale, hscale - 1, avg,
-						rounds > 20 ? GBColor.black : GBColor.darkGray);
-			}
-			DrawGraph(g, graph, scale, hscale - 1, hist, side.Color()
-					.ContrastingTextColor());
-		} else { // all sides
-			boolean allRounds = graphAllRounds
-					&& world.TournamentScores().rounds != 0;
-			for (Side s : world.Sides()) {
-				if ((allRounds ? s.TournamentScores().rounds
-						: s.Scores().rounds) == 0)
-					continue;
-				List<Integer> hist = (allRounds ? s.TournamentScores()
-						.BiomassHistory() : s.Scores().BiomassHistory());
-				for (int i = 0; i < hist.size(); ++i)
-					if (hist.get(i) > scale)
-						scale = hist.get(i);
-				if (hist.size() > hscale)
-					hscale = hist.size();
-			}
-			for (Side s : world.Sides()) {
-				if ((allRounds ? s.TournamentScores().rounds
-						: s.Scores().rounds) == 0)
-					continue;
-				DrawGraph(g, graph, scale, hscale - 1, (allRounds ? s
-						.TournamentScores().BiomassHistory() : s.Scores()
-						.BiomassHistory()), s.Color().ContrastingTextColor());
+		List<Side> sides = world.Sides();
+		for (int i = 0; i < sides.size(); ++i) {
+			Side s = sides.get(i);
+			if ((allRounds ? s.TournamentScores().rounds : s.Scores().rounds) == 0)
+				continue;
+			List<Integer> hist = allRounds ? s.TournamentScores()
+					.BiomassHistory() : s.Scores().BiomassHistory();
+			for (Integer value : hist)
+				scale = (int) Math.max(value, scale);
+			hscale = Math.max((int) hist.size() - 1, hscale);
+		}
+		if (hscale < 1)
+			return;
+		// draw gridlines
+		for (int t = 45; t < hscale; t += 45) {
+			int x = graph.x + t * graph.width / hscale;
+			g.setColor(Color.lightGray);
+			g.drawLine(x, graph.y + graph.height, x, graph.y);
+		}
+		for (int quantum = 1000; quantum < scale; quantum *= 10) {
+			if (quantum < scale / 40)
+				continue;
+			for (int en = quantum; en < scale; en += quantum) {
+				int y = graph.y + graph.height - en * graph.height / scale;
+				g.setColor(new GBColor(0.98f - 0.4f * quantum / scale));
+				g.drawLine(graph.x, y, graph.x + graph.width, y);
 			}
 		}
-		StringUtilities.drawStringLeft(g, Integer.toString(scale), box.x + 4,
-				box.y + 13, 10, GBColor.darkGray, false);
-	}
-
-	void DrawRoundScores(Graphics2D g, GBScores scores, Rectangle box) {
-		int c1 = box.x + 3;
-		int c2 = (box.x * 2 + box.width) / 2 + 2;
-		// basics
-		StringUtilities.drawStringPair(g, "Biomass:",
-				Integer.toString(scores.Biomass()), c1, c2 - 4, box.y + 25, 9,
-				GBColor.darkGreen, false);
-		StringUtilities.drawStringPair(g, "Population:",
-				Integer.toString(scores.Population()), c1, c2 - 4, box.y + 35,
-				9, GBColor.blue, false);
-		StringUtilities.drawStringPair(g, "Ever:",
-				Integer.toString(scores.PopulationEver()), c1 + 10, c2 - 4,
-				box.y + 45, 9, GBColor.blue, false);
-		Side side = app.getSelectedSide();
-		if (side != null) {
-			if (side.Scores().sterile != 0
-					&& side.Scores().SterileTime() != side.Scores()
-							.ExtinctTime())
-				StringUtilities.drawStringPair(g, "Sterile:",
-						Integer.toString(side.Scores().SterileTime()), c1,
-						c2 - 4, box.y + 60, 9, GBColor.purple, false);
-			if (side.Scores().Population() == 0)
-				StringUtilities.drawStringPair(g, "Extinct:",
-						Integer.toString(side.Scores().ExtinctTime()), c1,
-						c2 - 4, box.y + 70, 9, GBColor.red, false);
+		// draw curves
+		for (int i = 0; i < sides.size(); ++i) {
+			Side s = sides.get(i);
+			if ((allRounds ? s.TournamentScores().rounds : s.Scores().rounds) == 0)
+				continue;
+			List<Integer> hist = (allRounds ? s.TournamentScores()
+					.BiomassHistory() : s.Scores().BiomassHistory());
+			DrawGraph(g, graph, scale, hscale, hist, s.Color()
+					.ContrastingTextColor(), s == side ? 2 : 1);
 		}
-		// income
-		StringUtilities.drawStringPair(g, "Income:",
-				Integer.toString(scores.income.Total()), c1, c2 - 4,
-				box.y + 95, 9, GBColor.black, false);
-		DrawIncome(g, scores.income, c1, c2 - 4, box.y + 95);
-		StringUtilities.drawStringPair(g, "Seed:",
-				Integer.toString(scores.Seeded()), c1, c2 - 4, box.y + 155, 9,
-				GBColor.black, false);
-		if (scores.Efficiency() > 0)
-			StringUtilities.drawStringPair(g, "Efficiency:",
-					StringUtilities.toPercentString(scores.Efficiency(), 0),
-					c1, c2 - 4, box.y + 170, 9, GBColor.black, false);
-		if (scores.Doubletime(world.CurrentFrame()) != 0)
-			StringUtilities.drawStringPair(g, "Double:",
-					Integer.toString(scores.Doubletime(world.CurrentFrame())),
-					c1, c2 - 4, box.y + 180, 9, GBColor.black, false);
-		// expenditures
-		StringUtilities.drawStringPair(g, "Spent:",
-				Integer.toString(scores.expenditure.Total()), c2, box.x
-						+ box.width - 3, box.y + 25, 9, GBColor.black, false);
-		DrawExpenditures(g, scores.expenditure, c2, box.x + box.width - 3,
-				box.y + 25);
-		// death
-		DrawDeaths(g, scores, c2, box.x + box.width - 3, box.y + 130);
-	}
-
-	void DrawTournamentScores(Graphics2D g, GBScores tscores, Rectangle box) {
-		int c3 = box.x + 3;
-		int c4 = (box.x + box.x + box.width) / 2 + 2;
-		StringUtilities.drawStringPair(g, "Rounds:",
-				Integer.toString(tscores.rounds), c3, c4 - 4, box.y + 10, 9,
-				GBColor.black, false);
-		if (tscores.rounds != 0) {
-			StringUtilities.drawStringPair(g, "Biomass:", StringUtilities
-					.toPercentString(tscores.BiomassFraction(), 0), c3, c4 - 4,
-					box.y + 25, 9, GBColor.darkGreen, false);
-			StringUtilities.drawStringPair(
-					g,
-					"Early:",
-					StringUtilities.toPercentString(
-							tscores.EarlyBiomassFraction(), 0), c3 + 10,
-					c4 - 4, box.y + 35, 9, GBColor.darkGreen, false);
-			StringUtilities.drawStringPair(g, "Survival:",
-					StringUtilities.toPercentString(tscores.Survival(), 0), c3,
-					c4 - 4, box.y + 50, 9, GBColor.black, false);
-			StringUtilities.drawStringPair(g, "Early death:", StringUtilities
-					.toPercentString(tscores.EarlyDeathRate(), 0), c3, c4 - 4,
-					box.y + 60, 9, GBColor.black, false);
-			StringUtilities
-					.drawStringPair(
-							g,
-							"Late death:",
-							StringUtilities.toPercentString(
-									tscores.LateDeathRate(), 0), c3, c4 - 4,
-							box.y + 70, 9, GBColor.black, false);
-			// income
-			StringUtilities.drawStringPair(g, "Avg income:",
-					Integer.toString(tscores.income.Total() / tscores.rounds),
-					c3, c4 - 4, box.y + 95, 9, GBColor.darkGreen, false);
-			DrawIncome(g, tscores.income, c3, c4 - 4, box.y + 95);
-			StringUtilities.drawStringPair(g, "Avg seed:",
-					Integer.toString(tscores.Seeded()), c3, c4 - 4,
-					box.y + 155, 9, GBColor.black, false);
-			if (tscores.Efficiency() > 0)
-				StringUtilities
-						.drawStringPair(
-								g,
-								"Efficiency:",
-								StringUtilities.toPercentString(
-										tscores.Efficiency(), 0), c3, c4 - 4,
-								box.y + 170, 9, GBColor.black, false);
-			// expenditures
-			StringUtilities.drawStringPair(
-					g,
-					"Avg spent:",
-					Integer.toString(tscores.expenditure.Total()
-							/ tscores.rounds), c4, box.x + box.width - 4,
-					box.y + 25, 9, GBColor.black, false);
-			DrawExpenditures(g, tscores.expenditure, c4, box.x + box.width - 4,
-					box.y + 25);
-			// death
-			DrawDeaths(g, tscores, c4, box.x + box.width - 4, box.y + 130);
-		}
-	}
-
-	void Draw(Graphics2D g) {
-		Side side = app.getSelectedSide();
-		// DrawBackground();
-		Rectangle graphbox = new Rectangle(kEdgeSpace, kEdgeSpace, getWidth()
-				- kEdgeSpace * 2, kGraphHeight + kEdgeSpace * 2);
-		// round statistics
-		Rectangle box = new Rectangle(kEdgeSpace, graphbox.y + graphbox.height
-				+ kEdgeSpace, (getWidth() - kEdgeSpace) / 2, graphbox.y
-				+ graphbox.height + kEdgeSpace + kInfoBoxHeight);
-		drawBox(g, box);
-		StringUtilities.drawStringLeft(g, side != null ? side.Name()
-				: "Overall statistics", box.x + 3, box.y + 13, 12,
-				GBColor.black, false);
-		// draw stats...
-		if (side != null)
-			DrawRoundScores(g, side.Scores(), box);
-		else
-			DrawRoundScores(g, world.RoundScores(), box);
-		// tournament stats:
-		box.x = box.x + box.width + kEdgeSpace;
-		box.width = getWidth() - kEdgeSpace - box.x;
-		drawBox(g, box);
-		if (side != null)
-			DrawTournamentScores(g, side.TournamentScores(), box);
-		else
-			DrawTournamentScores(g, world.TournamentScores(), box);
-		// simulation total values
-		box.y = box.y + box.height + kEdgeSpace;
-		box.height = kTotalsHeight;
-		drawBox(g, box);
-		StringUtilities.drawStringLeft(g, "Total values:", box.x + 3,
-				box.y + 13, 10, Color.black, false);
-		StringUtilities.drawStringPair(g, "Manna:",
-				Integer.toString(world.MannaValue()), box.x + 3, box.x
-						+ box.width - 3, box.y + 23, 10, GBColor.darkGreen,
-				false);
-		StringUtilities.drawStringPair(g, "Corpses:",
-				Integer.toString(world.CorpseValue()), box.x + 3, box.x
-						+ box.width - 3, box.y + 33, 10, Color.red, false);
-		StringUtilities.drawStringPair(g, "Robots:",
-				Integer.toString(world.RobotValue()), box.x + 3, box.x
-						+ box.width - 3, box.y + 43, 10, Color.blue, false);
-		// object counts
-		box.x = kEdgeSpace;
-		box.width = (getWidth() - kEdgeSpace) / 2 - box.x;
-		drawBox(g, box);
-		StringUtilities.drawStringPair(g, "Robots:",
-				Integer.toString(world.CountObjects(GBObjectClass.ocRobot)),
-				box.x + 3, box.x + box.width - 3, box.y + 13, 10, Color.black,
-				false);
-		StringUtilities.drawStringPair(g, "Foods:",
-				Integer.toString(world.CountObjects(GBObjectClass.ocFood)),
-				box.x + 3, box.x + box.width - 3, box.y + 23, 10, Color.black,
-				false);
-		StringUtilities.drawStringPair(
-				g,
-				"Shots:",
-				Integer.toString(world.CountObjects(GBObjectClass.ocShot)
-						+ world.CountObjects(GBObjectClass.ocArea)), box.x + 3,
-				box.x + box.width - 3, box.y + 33, 10, Color.black, false);
-		StringUtilities.drawStringPair(g, "Sensors:", Integer.toString(world
-				.CountObjects(GBObjectClass.ocSensorShot)), box.x + 3, box.x
-				+ box.width - 3, box.y + 43, 10, Color.black, false);
-		StringUtilities.drawStringPair(g, "Decorations:", Integer
-				.toString(world.CountObjects(GBObjectClass.ocDecoration)),
-				box.x + 3, box.x + box.width - 3, box.y + 53, 10, Color.black,
-				false);
-		// drawing graph last to reduce flicker
-		DrawGraphs(g, graphbox);
-		// record
-		lastSideDrawn = app.getSelectedSide();
-		graphAllLastDrawn = graphAllRounds;
+		StringUtilities.drawStringLeft(g, Integer.toString(scale), box.x + 3,
+				box.y + 10, 9, Color.gray);
+		StringUtilities.drawStringRight(g, Integer.toString(hscale * 100),
+				box.x + box.width - 3, box.y + box.height - 3, 9, Color.gray);
+		g.setColor(Color.black);
+		GBScores scores = world.TournamentScores();
+		String title = allRounds ? "Average over "
+				+ Integer.toString(scores.rounds)
+				+ (scores.rounds == 1 ? " round" : " rounds")
+				: side != null ? side.Name() + " this round" : "This round";
+		StringUtilities.drawStringLeft(g, title + ":", box.x + 3,
+				kGraphTop - 4, 10, Color.black);
+		g.draw(box); // clean up spills
 	}
 }

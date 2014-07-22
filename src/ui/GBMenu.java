@@ -199,7 +199,7 @@ class GBMenu extends JMenuBar {
 		speedControls.add(menuButtons.get(MenuItems.normal));
 		speedControls.add(menuButtons.get(MenuItems.fast));
 		speedControls.add(menuButtons.get(MenuItems.unlimited));
-		speedControls.setSelected(menuButtons.get(MenuItems.normal).getModel(),
+		speedControls.setSelected(menuButtons.get(MenuItems.fast).getModel(),
 				true);
 		toolSelectors = new ButtonGroup();
 		toolSelectors.add(menuButtons.get(MenuItems.scrollFollow));
@@ -314,6 +314,8 @@ class GBMenu extends JMenuBar {
 		menuButtons
 				.put(MenuItems.rules, ret.add(MenuItems.rules.asJMenuItem()));
 		cbTournament = MenuItems.tournament.asJCheckBoxMenuItem();
+		cbTournament.setSelected(true);
+		world.tournament = true;
 		menuButtons.put(MenuItems.tournament, ret.add(cbTournament));
 		menuButtons.put(MenuItems.saveScores,
 				ret.add(MenuItems.saveScores.asJMenuItem()));

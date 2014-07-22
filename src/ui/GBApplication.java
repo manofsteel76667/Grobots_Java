@@ -4,6 +4,7 @@
  *******************************************************************************/
 package ui;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -82,15 +83,16 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public void run() {
 		// Create world and initial conditions
 		world = new GBWorld();
-		stepRate = StepRates.normal;
+		stepRate = StepRates.fast;
 
-		// Create supporting views and menu
+		// Create supporting views and menu.  
 		createChildViews();
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
 		updateMenu();
 
 		// Arrange the screen
+		this.getContentPane().setLayout(new GridBagLayout());
 		setLayouts();
 		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
 				.getImage();
@@ -132,9 +134,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 	
 	void setLayouts(){
-		this.getContentPane().setLayout(new GridBagLayout());
+		for (Component c : this.getContentPane().getComponents())
+			this.getContentPane().remove(c);
 		GridBagConstraints c = new GridBagConstraints();
-		
+				
 		//Roster
 		c.fill = GridBagConstraints.VERTICAL;
 		c.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -146,18 +149,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		this.getContentPane().add(roster, c);
 		
 		//Portal
-		//portal.setPreferredSize(new Dimension(600, 300));
+		portal.setPreferredSize(new Dimension(1, 1));
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.ABOVE_BASELINE;
 		c.gridx = 1;
 		c.gridy = 0;
 		c.weightx = 1;
-		c.gridheight = 2;
+		c.gridheight = 1;
 		this.getContentPane().add(portal, c);
 		
 		//Statistics
-		c.fill = GridBagConstraints.BOTH;
-		c.anchor = GridBagConstraints.SOUTH;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.anchor = GridBagConstraints.BELOW_BASELINE;
 		c.gridx = 1;
 		c.gridy = 2;
 		c.weightx = 0;
@@ -168,13 +171,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		
 		//Type View
 		c.fill = GridBagConstraints.VERTICAL;
-		c.anchor = GridBagConstraints.FIRST_LINE_END;
+		c.anchor = GridBagConstraints.ABOVE_BASELINE;
 		c.gridx = 2;
 		c.gridy = 0;
-		c.weighty = 1;
+		c.weighty = 0;
 		c.gridwidth = 1;
-		c.gridheight = 2;
-		this.getContentPane().add(type);
+		c.gridheight = 3;
+		this.getContentPane().add(type, c);				
 	}
 
 	void createChildViews() {
@@ -188,14 +191,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	}
 
 	void updateMenu() {
-		//setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
-		//		&& !world.running);
+		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
+				&& !world.running);
 		setMenuItem(MenuItems.reloadSide, selectedSide != null
 				&& !world.running);
 		setMenuItem(MenuItems.duplicateSide, selectedSide != null
-				/*&& !world.running*/);
+				&& !world.running);
 		setMenuItem(MenuItems.removeSide, selectedSide != null
-				/*&& !world.running*/);
+				&& !world.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 	}
@@ -494,6 +497,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case showRoster:
 					roster.setVisible(!roster.isVisible());
+					setLayouts();
 					break;
 				case showSensors:
 					portal.showSensors = mainMenu.viewOptions.get(
@@ -503,21 +507,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case showStatistics:
 					statistics.setVisible(!statistics.isVisible());
-					if (statistics.isVisible()){
-						GridBagConstraints c = new GridBagConstraints();
-						c.fill = GridBagConstraints.BOTH;
-						c.anchor = GridBagConstraints.SOUTH;
-						c.gridx = 1;
-						c.gridy = 2;
-						c.weightx = 0;
-						c.weighty = 0;
-						c.gridheight = 1;
-						c.gridwidth = 2;
-						this.getContentPane().add(statistics, c);
-						int state = getExtendedState();
-						pack();
-						setExtendedState(state);
-					}
+					setLayouts();
 					break;
 				case showTournament:
 					if (tournDialog == null) {
@@ -537,10 +527,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case showTypes:
 					type.setVisible(!type.isVisible());
+					setLayouts();
 					break;
 				case singleFrame:
 					world.AdvanceFrame();
 					world.running = false;
+					repaint();
 					break;
 				case slow:
 					stepRate = StepRates.slow;
