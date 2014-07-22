@@ -44,7 +44,7 @@ enum MenuItems {
 			.getKeyStroke('Y', InputEvent.CTRL_DOWN_MASK)),
 	showDebugger("Debugger", KeyStroke
 			.getKeyStroke('D', InputEvent.CTRL_DOWN_MASK)),
-	showTournament("Scores", KeyStroke
+	showTournament("Tournament Scores", KeyStroke
 			.getKeyStroke('E', InputEvent.CTRL_DOWN_MASK)),
 	showSharedMemory("Shared Memory"),
 	//Simulation menu
@@ -171,6 +171,7 @@ class GBMenu extends JMenuBar {
 	JMenu windowMenu;
 	JMenu simulationMenu;
 	JMenu toolMenu;
+	JMenu helpMenu;
 	GBWorld world;
 	public ButtonGroup speedControls;
 	public ButtonGroup toolSelectors;
@@ -188,6 +189,7 @@ class GBMenu extends JMenuBar {
 		buildViewMenu();
 		buildToolsMenu();
 		buildButtonGroups();
+		buildHelpMenu();
 		for (MenuItems mi : MenuItems.values())
 			if (menuButtons.containsKey(mi))
 				menuButtons.get(mi).addActionListener(app);
@@ -259,8 +261,6 @@ class GBMenu extends JMenuBar {
 	 */
 	void buildWindowMenu() {
 		JMenu ret = new JMenu("Window");
-		menuButtons.put(MenuItems.showAbout,
-				ret.add(MenuItems.showAbout.asJMenuItem()));
 		menuButtons.put(MenuItems.showRoster,
 				ret.add(MenuItems.showRoster.asJMenuItem()));
 		menuButtons.put(MenuItems.showMinimap,
@@ -402,5 +402,11 @@ class GBMenu extends JMenuBar {
 				ret.add(MenuItems.erasearea.asJCheckBoxMenuItem()));
 		this.add(ret);
 	}
-
+	
+	void buildHelpMenu(){
+		JMenu ret = new JMenu("Help");
+		menuButtons.put(MenuItems.showAbout,
+				ret.add(MenuItems.showAbout.asJMenuItem()));
+		this.add(ret);
+	}
 }

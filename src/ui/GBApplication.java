@@ -102,6 +102,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		this.pack();
 		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
 		setVisible(true);
+		statistics.setVisible(false);
 
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
@@ -201,6 +202,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				&& !world.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
+		//Unimplemented items
+		setMenuItem(MenuItems.showDebugger, false);
+		setMenuItem(MenuItems.showMinimap, false);
+		setMenuItem(MenuItems.showSharedMemory, false);
 	}
 
 	public void simulate() {

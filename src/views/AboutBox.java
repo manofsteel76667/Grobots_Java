@@ -23,7 +23,7 @@ public class AboutBox extends JPanel {
 		StringUtilities.drawStringCentered(g2d, "Grobots", getWidth() / 2, 50, 40, Color.green);
 		StringUtilities.drawStringCentered(g2d, "by Devon and Warren Schudy", getWidth() / 2, 75, 12, Color.white);
 		//TODO get actual build date from manifest?
-		StringUtilities.drawStringCentered(g2d, "built July 5, 2014 for Java", getWidth() / 2, 95, 10, Color.magenta);
+		StringUtilities.drawStringCentered(g2d, "built July 22, 2014 for Java", getWidth() / 2, 95, 10, Color.magenta);
 		StringUtilities.drawStringLeft(g2d, "Additional contributors:", 15, 115, 10, Color.white);
 		StringUtilities.drawStringLeft(g2d, "Tilendor", 35, 128, 10, Color.white);
 		StringUtilities.drawStringLeft(g2d, "Daniel von Fange", 35, 138, 10, Color.white);
