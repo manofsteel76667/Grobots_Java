@@ -22,7 +22,7 @@ public class GBRosterView extends ListView {
 	static final int kPopulationWidth = 50;
 
 	private static final long serialVersionUID = 6135247814368773456L;
-	
+
 	GBWorld world;
 	GBApplication app;
 	int margin = 6;
@@ -39,9 +39,10 @@ public class GBRosterView extends ListView {
 		preferredWidth = 250;
 		setVisible(true);
 	}
+
 	@Override
-	protected void itemClicked(int index){
-		if (index == -1 || index > world.Sides().size()) 
+	protected void itemClicked(int index) {
+		if (index == -1 || index > world.Sides().size())
 			app.setSelectedSide(null);
 		else
 			app.setSelectedSide(world.Sides().get(index));
@@ -52,7 +53,7 @@ public class GBRosterView extends ListView {
 		Rectangle hdr = getStartingHeaderRect(10, false);
 		drawBox(g, hdr);
 		Rectangle textRect = new Rectangle(hdr);
-		textRect.grow(-padding*2, -padding*2);
+		textRect.grow(-padding * 2, -padding * 2);
 		String text = String.format("Frame %d", world.CurrentFrame());
 		StringUtilities.drawStringLeft(g, text, textRect, 10, Color.black);
 		String status = world.tournament ? "tournament " : ""
@@ -77,15 +78,15 @@ public class GBRosterView extends ListView {
 		Rectangle slot = getStartingItemRect(index, 12, false);
 		drawBox(g, slot, side.equals(app.getSelectedSide()));
 		Rectangle textRect = new Rectangle(slot);
-		textRect.grow(-padding*2, -padding*2);
+		textRect.grow(-padding * 2, -padding * 2);
 		// Side ID
-		StringUtilities.drawStringLeft(g, String.format("%d.", side.ID()), 
+		StringUtilities.drawStringLeft(g, String.format("%d.", side.ID()),
 				textRect, 12, side.Color().ContrastingTextColor());
 		// Side Name
-		StringUtilities.drawStringLeft(g, side.Name(), 
-				new Rectangle(textRect.x + 25, textRect.y, textRect.width-25, textRect.height), 
-				12, side.equals(app.getSelectedSide()) ? Color.white
-						: Color.black);
+		StringUtilities.drawStringLeft(g, side.Name(), new Rectangle(
+				textRect.x + 25, textRect.y, textRect.width - 25,
+				textRect.height), 12,
+				side.equals(app.getSelectedSide()) ? Color.white : Color.black);
 		String text = "";
 		if (side.Scores().Seeded() != 0) {
 			// Side status
@@ -94,25 +95,28 @@ public class GBRosterView extends ListView {
 				if (side.Scores().sterile != 0) {
 					text = String.format("Sterile at %d", side.Scores()
 							.SterileTime());
-					StringUtilities.drawStringRight(g, text, textRect, 10, new Color(1,0,1));
+					StringUtilities.drawStringRight(g, text, textRect, 10,
+							new Color(1, 0, 1));
 				} else {
 					// Doing fine
 					// Bio percentage
 					text = StringUtilities.toPercentString(side.Scores()
 							.BiomassFraction(), 1);
-					StringUtilities.drawStringLeft(g, text, 
-							new Rectangle(textRect.x + textRect.width - padding - kPopulationWidth,
-									textRect.y, textRect.width, textRect.height), 
-							12, Color.black);
+					StringUtilities.drawStringLeft(g, text, new Rectangle(
+							textRect.x + textRect.width - padding
+									- kPopulationWidth, textRect.y,
+							textRect.width, textRect.height), 12, Color.black);
 					// Population
 					text = Integer.toString(side.Scores().Population());
-					StringUtilities.drawStringRight(g, text, textRect, 10, Color.blue);
+					StringUtilities.drawStringRight(g, text, textRect, 10,
+							Color.blue);
 				}
 			} else {
 				// Extinct
 				text = String.format("Extinct at %d", side.Scores()
 						.ExtinctTime());
-				StringUtilities.drawStringRight(g, text, textRect, 10, Color.darkGray);
+				StringUtilities.drawStringRight(g, text, textRect, 10,
+						Color.darkGray);
 			}
 		}
 		return slot;
@@ -120,9 +124,26 @@ public class GBRosterView extends ListView {
 
 	@Override
 	Rectangle drawFooter(Graphics2D g) {
-		// TODO Auto-generated method stub
-		return null;
+		if (world.Sides().size() == 0) {
+			Rectangle slot = getStartingFooterRect(20, false);
+			drawBox(g, slot);
+			slot.grow(-padding, -padding);
+			StringUtilities
+					.drawStringCenter(
+							g,
+							"No sides loaded.",
+							new Rectangle(slot.x, slot.y, slot.width, slot.height/2), 10, Color.blue);
+			StringUtilities
+			.drawStringCenter(
+					g,
+					"Why not download some from the help menu?",
+					slot, 10, Color.blue);
+			return slot;
+		} else
+			return null;
+
 	}
+
 	@Override
 	int setLength() {
 		return world.Sides().size();

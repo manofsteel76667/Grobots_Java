@@ -34,7 +34,6 @@ enum MenuItems {
 	exit("Exit", KeyStroke
 			.getKeyStroke('Q', InputEvent.CTRL_DOWN_MASK)),
 	//Window menu
-	showAbout("About Grobots"),
 	showRoster("Roster"),
 	showMinimap("Minimap", KeyStroke
 			.getKeyStroke('M', InputEvent.CTRL_DOWN_MASK)),
@@ -113,7 +112,15 @@ enum MenuItems {
 	smite("Smite", KeyStroke.getKeyStroke('X')),
 	blasts("Blasts", KeyStroke.getKeyStroke('B')),
 	erase("Erase", KeyStroke.getKeyStroke('W')),
-	erasearea("Erase Area", KeyStroke.getKeyStroke('A'));
+	erasearea("Erase Area", KeyStroke.getKeyStroke('A')),
+	//Help menu
+	gotoDocs("Documentation"),
+	gotoWebsite("Website"),
+	gotoWiki("Wiki"),
+	gotoGroup("Discuss"),
+	gotoSides("More Sides"),
+	showAbout("About Grobots");
+	
 	MenuItems(String desc, KeyStroke accel) {
 		description = desc;
 		accelerator = accel;
@@ -405,6 +412,17 @@ class GBMenu extends JMenuBar {
 	
 	void buildHelpMenu(){
 		JMenu ret = new JMenu("Help");
+		menuButtons.put(MenuItems.gotoDocs,
+				ret.add(MenuItems.gotoDocs.asJMenuItem()));
+		menuButtons.put(MenuItems.gotoWiki,
+				ret.add(MenuItems.gotoWiki.asJMenuItem()));
+		menuButtons.put(MenuItems.gotoGroup,
+				ret.add(MenuItems.gotoGroup.asJMenuItem()));
+		menuButtons.put(MenuItems.gotoSides,
+				ret.add(MenuItems.gotoSides.asJMenuItem()));
+		ret.addSeparator();
+		menuButtons.put(MenuItems.gotoWebsite,
+				ret.add(MenuItems.gotoWebsite.asJMenuItem()));
 		menuButtons.put(MenuItems.showAbout,
 				ret.add(MenuItems.showAbout.asJMenuItem()));
 		this.add(ret);

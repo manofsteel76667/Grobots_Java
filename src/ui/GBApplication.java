@@ -13,6 +13,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.URI;
 
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -363,6 +364,21 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					break;
 				case followRandom:
 					portal.FollowRandom();
+					break;
+				case gotoDocs:
+					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net/docs/"));
+					break;
+				case gotoGroup:
+					support.Toolbox.openWebpage(URI.create("http://groups.yahoo.com/neo/groups/grobots/info"));
+					break;
+				case gotoSides:
+					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net/sides/"));
+					break;
+				case gotoWebsite:
+					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net"));
+					break;
+				case gotoWiki:
+					support.Toolbox.openWebpage(URI.create("http://grobots.wikia.com/wiki/Grobots_Wiki"));
 					break;
 				case loadSide:
 					JFileChooser fc = new JFileChooser();
