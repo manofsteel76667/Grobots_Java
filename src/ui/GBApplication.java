@@ -4,22 +4,29 @@
  *******************************************************************************/
 package ui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
 import sides.RobotType;
@@ -32,10 +39,10 @@ import views.GBPortal.toolTypes;
 import views.GBRosterView;
 import views.GBScoresView;
 import views.GBTournamentView;
+import views.PlayBar;
 import views.RobotTypeView;
 import exception.GBAbort;
 import exception.GBError;
-
 enum StepRates {
 	slow(10), normal(30), fast(60), unlimited(10000);
 	public final int value;
@@ -44,7 +51,6 @@ enum StepRates {
 		value = val;
 	}
 }
-
 public class GBApplication extends JFrame implements Runnable, ActionListener {
 	/**
 	 * 
@@ -61,6 +67,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	RobotTypeView type;
 	JDialog tournDialog;
 	JDialog aboutDialog;
+	PlayBar portalControls;
+	JPanel center;
 
 	public StepRates stepRate;
 	public long lastTime;
@@ -70,6 +78,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	long prevFrameTime;
 	Side selectedSide;
 	RobotType selectedType;
+
+	int rendering; // Rendering, don't run a turn
+	boolean running; // Running a turn, don't render
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new GBApplication());
@@ -86,7 +97,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		world = new GBWorld();
 		stepRate = StepRates.fast;
 
-		// Create supporting views and menu.  
+		// Create supporting views and menu.
 		createChildViews();
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
@@ -95,9 +106,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		// Arrange the screen
 		this.getContentPane().setLayout(new GridBagLayout());
 		setLayouts();
-		Image icon = new ImageIcon(getClass().getResource("grobots 32x32.png"))
-				.getImage();
-		setIconImage(icon);
+		List<BufferedImage> icons = new ArrayList<BufferedImage>();
+		String[] resources = new String[] { "grobots16.png", "grobots32.png",
+				"grobots48.png", "grobots64.png", "grobots128.png" };
+		for (String s : resources) {
+			try {
+				icons.add(ImageIO.read(getClass().getResourceAsStream(s)));
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		setIconImages(icons);
 		this.setTitle("Grobots");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
@@ -109,8 +129,17 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
+						while (running)
+							try {
+								Thread.sleep(1);
+							} catch (InterruptedException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						rendering++;
 						if (portal.isVisible())
 							portal.repaint();
+						rendering--;
 					}
 				});
 		portalTimer.setRepeats(true);
@@ -120,6 +149,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
+						while (running) {
+							try {
+								Thread.sleep(1);
+							} catch (InterruptedException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						}
+						rendering++;
 						if (roster.isVisible())
 							roster.repaint();
 						if (tournament.isVisible())
@@ -128,19 +166,20 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							type.repaint();
 						if (statistics.isVisible())
 							statistics.repaint();
+						rendering--;
 					}
 				});
 		otherTimer.setRepeats(true);
 		otherTimer.setCoalesce(true);
 		otherTimer.start();
 	}
-	
-	void setLayouts(){
+
+	void setLayouts() {
 		for (Component c : this.getContentPane().getComponents())
 			this.getContentPane().remove(c);
 		GridBagConstraints c = new GridBagConstraints();
-				
-		//Roster
+
+		// Roster
 		c.fill = GridBagConstraints.VERTICAL;
 		c.anchor = GridBagConstraints.FIRST_LINE_START;
 		c.gridx = 0;
@@ -149,18 +188,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.weightx = 0;
 		c.gridheight = 2;
 		this.getContentPane().add(roster, c);
-		
-		//Portal
-		portal.setPreferredSize(new Dimension(1, 1));
+
+		// Portal and toolbar
+		center.setPreferredSize(new Dimension(1, 1));
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.ABOVE_BASELINE;
 		c.gridx = 1;
 		c.gridy = 0;
 		c.weightx = 1;
 		c.gridheight = 1;
-		this.getContentPane().add(portal, c);
-		
-		//Statistics
+		this.getContentPane().add(center, c);
+
+		// Statistics
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.anchor = GridBagConstraints.BELOW_BASELINE;
 		c.gridx = 1;
@@ -170,8 +209,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridheight = 1;
 		c.gridwidth = 1;
 		this.getContentPane().add(statistics, c);
-		
-		//Type View
+
+		// Type View
 		c.fill = GridBagConstraints.VERTICAL;
 		c.anchor = GridBagConstraints.ABOVE_BASELINE;
 		c.gridx = 2;
@@ -179,7 +218,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 3;
-		this.getContentPane().add(type, c);				
+		this.getContentPane().add(type, c);
 	}
 
 	void createChildViews() {
@@ -190,6 +229,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		tournament = new GBTournamentView(this);
 		type = new RobotTypeView(this);
 		statistics = new GBScoresView(this);
+		center = new JPanel();
+		center.setLayout(new BorderLayout());
+		portalControls = new PlayBar(this);
+		portalControls.setFloatable(false);
+		portalControls.setOrientation(JToolBar.VERTICAL);
+		center.add(portal);
+		center.add(portalControls, BorderLayout.LINE_START);
 	}
 
 	void updateMenu() {
@@ -203,7 +249,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				&& !world.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
-		//Unimplemented items
+		// Unimplemented items
 		setMenuItem(MenuItems.showDebugger, false);
 		setMenuItem(MenuItems.showMinimap, false);
 		setMenuItem(MenuItems.showSharedMemory, false);
@@ -216,8 +262,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 			@Override
 			public void run() {
 				// Removing an active side causes a crash
-				//setMenuItem(MenuItems.removeSide, false);
-				//setMenuItem(MenuItems.removeAllSides, false);
+				// setMenuItem(MenuItems.removeSide, false);
+				// setMenuItem(MenuItems.removeAllSides, false);
 				while (world.running) {
 					long frameRate = 1000000000L / stepRate.value; // nanoseconds
 																	// per
@@ -225,7 +271,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 					if (System.nanoTime() > prevFrameTime + frameRate) {
 						try {
+							while (rendering > 0) {
+								Thread.sleep(1);
+							}
+							running = true;
 							world.AdvanceFrame();
+							running = false;
 							prevFrameTime = System.nanoTime();
 						} catch (Exception e) {
 							try {
@@ -366,19 +417,26 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					portal.FollowRandom();
 					break;
 				case gotoDocs:
-					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net/docs/"));
+					support.Toolbox.openWebpage(URI
+							.create("http://grobots.sourceforge.net/docs/"));
 					break;
 				case gotoGroup:
-					support.Toolbox.openWebpage(URI.create("http://groups.yahoo.com/neo/groups/grobots/info"));
+					support.Toolbox
+							.openWebpage(URI
+									.create("http://groups.yahoo.com/neo/groups/grobots/info"));
 					break;
 				case gotoSides:
-					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net/sides/"));
+					support.Toolbox.openWebpage(URI
+							.create("http://grobots.sourceforge.net/sides/"));
 					break;
 				case gotoWebsite:
-					support.Toolbox.openWebpage(URI.create("http://grobots.sourceforge.net"));
+					support.Toolbox.openWebpage(URI
+							.create("http://grobots.sourceforge.net"));
 					break;
 				case gotoWiki:
-					support.Toolbox.openWebpage(URI.create("http://grobots.wikia.com/wiki/Grobots_Wiki"));
+					support.Toolbox
+							.openWebpage(URI
+									.create("http://grobots.wikia.com/wiki/Grobots_Wiki"));
 					break;
 				case loadSide:
 					JFileChooser fc = new JFileChooser();
@@ -403,9 +461,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case newRound:
-					if (world.running){
+					if (world.running) {
 						world.running = false;
-						Thread.sleep(100); //Let simulate thread end
+						Thread.sleep(100); // Let simulate thread end
 					}
 					world.Reset();
 					world.AddSeeds();
@@ -436,7 +494,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					portal.Refollow();
 					break;
 				case reloadSide:
-					if (selectedSide == null)
+					if (getSelectedSide() == null)
 						break;
 					Side reload = SideReader.Load(selectedSide.filename);
 					world.ReplaceSide(selectedSide, reload);
@@ -452,6 +510,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					repaint();
 					break;
 				case removeSide:
+					if (getSelectedSide() == null)
+						break;
 					world.RemoveSide(selectedSide);
 					setSelectedSide(null);
 					updateMenu();
@@ -596,6 +656,41 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				}
 			}
 		}
+		// Handle portalControls toolbar clicks
+		if (Arrays.asList(portalControls.getComponents()).contains(
+				e.getSource()))
+			switch (e.getActionCommand()) {
+			case "play":
+				if (world.sidesSeeded > 0) {
+					world.running = true;
+					simulate();
+				} else {
+					world.Reset();
+					world.AddSeeds();
+					world.running = true;
+					repaint();
+					simulate();
+				}
+				break;
+			case "pause":
+				world.running = false;
+				repaint();
+				break;
+			case "forward":
+				if (stepRate.ordinal() < StepRates.values().length - 1) {
+					int i = stepRate.ordinal();
+					stepRate = StepRates.values()[i+1];
+				}					
+				break;
+			case "back":
+				if (stepRate.ordinal() > 0) {
+					int i = stepRate.ordinal();
+					stepRate = StepRates.values()[i-1];
+				}	
+				break;
+			default:
+				break;
+			}
 	}
 
 }

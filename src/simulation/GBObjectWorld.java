@@ -5,7 +5,6 @@
 package simulation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -61,9 +60,9 @@ public class GBObjectWorld extends Model {
 		size = new FinePoint(kWorldWidth, kWorldHeight);
 		tilesX = (int) (Math.ceil(kWorldWidth / kForegroundTileSize));
 		tilesY = (int) (Math.ceil(kWorldHeight / kForegroundTileSize));
-		allObjects = Collections.synchronizedList(new ArrayList<GBObject>(100000));
-		objects = Collections.synchronizedMap(new HashMap<GBObjectClass, GBObject[]>());
-		news = Collections.synchronizedList(new ArrayList<GBObject>(2000));
+		allObjects = new ArrayList<GBObject>(100000);
+		objects = new HashMap<GBObjectClass, GBObject[]>();
+		news = new ArrayList<GBObject>(2000);
 		MakeTiles();
 	}
 

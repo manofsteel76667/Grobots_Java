@@ -98,7 +98,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	public boolean showDetails;
 	public boolean showSideNames;
 
-	public static final int kScale = 16; // default number of pixels per unit.
+	public static final int kScale = 6; // default number of pixels per unit.
 	public static final int kMinDetailsScale = 10;
 	public static final double kAutoScrollSpeed = 0.4;
 	public static final double kFollowSpeed = 0.5;

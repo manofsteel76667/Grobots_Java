@@ -40,7 +40,7 @@ public class GBWorld extends GBObjectWorld {
 	Side _selectedSide;
 	int currentFrame;
 	int previousSidesAlive; // num of non-extinct sides last frame
-	int sidesSeeded;
+	public int sidesSeeded;
 	GBRandomState random;
 	double mannaLeft;
 	// stats
@@ -70,8 +70,6 @@ public class GBWorld extends GBObjectWorld {
 	public double mannaRate;
 	public double seedValue;
 	public double seedTypePenalty;
-
-	// //public:
 
 	// timing
 	/*
