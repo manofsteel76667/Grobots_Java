@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -29,20 +28,26 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
+import brains.Brain;
+import brains.BrainStatus;
 import sides.RobotType;
 import sides.Side;
 import sides.SideReader;
+import simulation.GBObject;
+import simulation.GBRobot;
 import simulation.GBWorld;
+import support.GBObjectClass;
 import views.AboutBox;
+import views.Debugger;
 import views.GBPortal;
 import views.GBPortal.toolTypes;
 import views.GBRosterView;
 import views.GBScoresView;
 import views.GBTournamentView;
-import views.PlayBar;
 import views.RobotTypeView;
 import exception.GBAbort;
 import exception.GBError;
+
 enum StepRates {
 	slow(10), normal(30), fast(60), unlimited(10000);
 	public final int value;
@@ -51,6 +56,7 @@ enum StepRates {
 		value = val;
 	}
 }
+
 public class GBApplication extends JFrame implements Runnable, ActionListener {
 	/**
 	 * 
@@ -67,8 +73,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	RobotTypeView type;
 	JDialog tournDialog;
 	JDialog aboutDialog;
-	PlayBar portalControls;
+	JDialog debugDialog;
+	JToolBar portalControls;
 	JPanel center;
+	Debugger debug;
 
 	public StepRates stepRate;
 	public long lastTime;
@@ -98,10 +106,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		stepRate = StepRates.fast;
 
 		// Create supporting views and menu.
-		createChildViews();
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
 		updateMenu();
+		createChildViews();
 
 		// Arrange the screen
 		this.getContentPane().setLayout(new GridBagLayout());
@@ -139,6 +147,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						rendering++;
 						if (portal.isVisible())
 							portal.repaint();
+						if (debug.isVisible())
+							debug.repaint();
 						rendering--;
 					}
 				});
@@ -219,6 +229,16 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridwidth = 1;
 		c.gridheight = 3;
 		this.getContentPane().add(type, c);
+
+		// Debugger
+		c.fill = GridBagConstraints.VERTICAL;
+		c.anchor = GridBagConstraints.ABOVE_BASELINE;
+		c.gridx = 2;
+		c.gridy = 0;
+		c.weighty = 0;
+		c.gridwidth = 1;
+		c.gridheight = 3;
+		// this.getContentPane().add(debug, c);
 	}
 
 	void createChildViews() {
@@ -231,11 +251,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		statistics = new GBScoresView(this);
 		center = new JPanel();
 		center.setLayout(new BorderLayout());
-		portalControls = new PlayBar(this);
+		portalControls = mainMenu.simToolbar(this);
 		portalControls.setFloatable(false);
 		portalControls.setOrientation(JToolBar.VERTICAL);
 		center.add(portal);
 		center.add(portalControls, BorderLayout.LINE_START);
+		debug = new Debugger(this);
+		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
+				.getPreferredHeight()));
 	}
 
 	void updateMenu() {
@@ -250,7 +273,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 		// Unimplemented items
-		setMenuItem(MenuItems.showDebugger, false);
+		// setMenuItem(MenuItems.showDebugger, false);
 		setMenuItem(MenuItems.showMinimap, false);
 		setMenuItem(MenuItems.showSharedMemory, false);
 	}
@@ -480,6 +503,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					world.running = false;
 					repaint();
 					break;
+				case play:
+					if (world.sidesSeeded > 0) {
+						world.running = true;
+						simulate();
+					} else {
+						world.Reset();
+						world.AddSeeds();
+						world.running = true;
+						repaint();
+						simulate();
+					}
+					break;
 				case previousPage:
 					break;
 				case pull:
@@ -555,6 +590,21 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					aboutDialog.setVisible(true);
 					break;
 				case showDebugger:
+					if (debugDialog == null) {
+						debugDialog = new JDialog(this, "Debug");
+						//TODO: do the setsize step when Followed() changes, then make debug 
+						//not resizable again
+						// debugDialog.setResizable(false);
+						debug.repaint();
+						debugDialog.getContentPane().add(debug);
+						debugDialog.pack();
+						debugDialog.setLocation(
+								getWidth() / 2 - debugDialog.getWidth() / 2,
+								getHeight() / 2 - debugDialog.getHeight() / 2);
+					}
+					debug.setSize(debug.getPreferredSize());
+					debugDialog.pack();
+					debugDialog.setVisible(true);
 					break;
 				case showDecorations:
 					portal.showDecorations = mainMenu.viewOptions.get(
@@ -618,14 +668,55 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case slow:
 					stepRate = StepRates.slow;
 					break;
+				case slowdown:
+					if (stepRate.ordinal() > 0) {
+						int i = stepRate.ordinal();
+						stepRate = StepRates.values()[i - 1];
+					}
+					break;
 				case smite:
 					portal.currentTool = toolTypes.ptSmite;
 					portal.setCursor(Cursor
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
+				case speedup:
+					if (stepRate.ordinal() < StepRates.values().length - 1) {
+						int i = stepRate.ordinal();
+						stepRate = StepRates.values()[i + 1];
+					}
+					break;
 				case stepBrain:
+					GBObject obj = Followed();
+					if (obj == null)
+						return;
+					if (obj instanceof GBRobot
+							&& obj.Class() != GBObjectClass.ocDead) {
+						world.running = false;
+						Thread.sleep(100);
+						GBRobot target = (GBRobot) obj;
+						Brain brain = target.Brain();
+						if (brain == null)
+							return;
+						if (!brain.Ready())
+							return;
+						brain.Step(target, world);
+						if (debug.isVisible())
+							debug.repaint();
+					}
 					break;
 				case stopStartBrain:
+					if (Followed() == null)
+						return;
+					if (Followed() instanceof GBRobot
+							&& Followed().Class() != GBObjectClass.ocDead) {
+						Brain brain = ((GBRobot) Followed()).Brain();
+						if (brain == null)
+							return;
+						brain.status = brain.status == BrainStatus.bsOK ? BrainStatus.bsStopped
+								: BrainStatus.bsOK;
+						if (debug.isVisible())
+							debug.repaint();
+					}
 					break;
 				case tournament:
 					world.tournament = mainMenu.cbTournament.isSelected();
@@ -656,41 +747,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				}
 			}
 		}
-		// Handle portalControls toolbar clicks
-		if (Arrays.asList(portalControls.getComponents()).contains(
-				e.getSource()))
-			switch (e.getActionCommand()) {
-			case "play":
-				if (world.sidesSeeded > 0) {
-					world.running = true;
-					simulate();
-				} else {
-					world.Reset();
-					world.AddSeeds();
-					world.running = true;
-					repaint();
-					simulate();
-				}
-				break;
-			case "pause":
-				world.running = false;
-				repaint();
-				break;
-			case "forward":
-				if (stepRate.ordinal() < StepRates.values().length - 1) {
-					int i = stepRate.ordinal();
-					stepRate = StepRates.values()[i+1];
-				}					
-				break;
-			case "back":
-				if (stepRate.ordinal() > 0) {
-					int i = stepRate.ordinal();
-					stepRate = StepRates.values()[i-1];
-				}	
-				break;
-			default:
-				break;
-			}
 	}
 
+	public GBObject Followed() {
+		return portal.followedObject;
+	}
 }

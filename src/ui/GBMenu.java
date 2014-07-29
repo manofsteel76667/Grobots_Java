@@ -4,18 +4,23 @@
  *******************************************************************************/
 package ui;
 
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
 import simulation.GBWorld;
@@ -119,7 +124,12 @@ enum MenuItems {
 	gotoWiki("Wiki"),
 	gotoGroup("Discuss"),
 	gotoSides("More Sides"),
-	showAbout("About Grobots");
+	showAbout("About Grobots"),
+	//Buttons found on the simulation toolbar
+	play("playpause"),
+	speedup("speedup"),
+	slowdown("slowdown")
+	;
 	
 	MenuItems(String desc, KeyStroke accel) {
 		description = desc;
@@ -151,6 +161,12 @@ enum MenuItems {
 		JCheckBoxMenuItem ret = new JCheckBoxMenuItem(description);
 		if (accelerator != null)
 			ret.setAccelerator(accelerator);
+		return ret;
+	}
+	
+	public JButton asJButton() {
+		JButton ret = new JButton(description);
+		//No accelerator key for a button
 		return ret;
 	}
 
@@ -426,5 +442,50 @@ class GBMenu extends JMenuBar {
 		menuButtons.put(MenuItems.showAbout,
 				ret.add(MenuItems.showAbout.asJMenuItem()));
 		this.add(ret);
+	}
+	
+	public JToolBar simToolbar(ActionListener l) {
+		JToolBar ret = new JToolBar();
+		JButton btn;
+		btn = makeButton("back", MenuItems.slowdown.description, "Slow Down Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("pause", MenuItems.pause.description, "Pause Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("play", MenuItems.play.description, "Run Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("advance", MenuItems.singleFrame.description, "Advance 1 Frame", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("forward", MenuItems.speedup.description, "Speed Up Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("step", MenuItems.stepBrain.description, "Step Brain", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		return ret;
+	}
+	
+	protected JButton makeButton(String imageName,
+			String actionCommand, String toolTipText, String altText) {
+		// Look for the image.
+		String imgLocation = imageName + ".png";
+		URL imageURL = getClass().getResource(imgLocation);
+
+		// Create and initialize the button.
+		JButton button = new JButton();
+		button.setActionCommand(actionCommand);
+		button.setToolTipText(toolTipText);
+
+		if (imageURL != null) { // image found
+			button.setIcon(new ImageIcon(imageURL, altText));
+		} else { // no image found
+			button.setText(altText);
+			System.err.println("Resource not found: " + imgLocation);
+		}
+
+		return button;
 	}
 }

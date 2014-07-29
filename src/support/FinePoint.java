@@ -177,4 +177,12 @@ public class FinePoint {
 		return new FinePoint(x * u.x + y * u.y, y * u.x - x * u.y);
 	}
 
+	public String toString() {
+		return String.format("(%f,  %f)", x, y);
+	}
+
+	public String toString(int decimals) {
+		return String.format("(%." + Integer.toString(decimals) + "f,  %."
+				+ Integer.toString(decimals) + "f)", x, y);
+	}
 }

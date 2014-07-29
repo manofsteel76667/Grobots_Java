@@ -55,7 +55,7 @@ public class GBStackBrain extends Brain {
 	int used;
 	String lastPrint;
 
-	double ReadVariable(int index) {
+	public double ReadVariable(int index) {
 		if (index < 0 || index >= spec.NumVariables())
 			throw new GBBadSymbolIndexError();
 		return variables[index];
@@ -378,7 +378,7 @@ public class GBStackBrain extends Brain {
 			status = BrainStatus.bsStopped;
 		}
 	}
-
+	@Override
 	public boolean Ready() {
 		return remaining > 0;
 	}
@@ -391,11 +391,11 @@ public class GBStackBrain extends Brain {
 		return pc;
 	}
 
-	public long StackHeight() {
+	public int StackHeight() {
 		return stackHeight;
 	}
 
-	public long ReturnStackHeight() {
+	public int ReturnStackHeight() {
 		return returnStackHeight;
 	}
 
@@ -424,9 +424,21 @@ public class GBStackBrain extends Brain {
 	public String AddressDescription(int addr) {
 		return spec.AddressDescription(addr);
 	}
+	
+	public String AddressLastLabel(int addr) {
+		GBLabel ret = spec.AddressLastLabel(addr-1);
+		if (ret != null)
+			return ret.name;
+		else
+			return "";
+	}
 
 	public String AddressAndLine(int addr) {
 		return spec.AddressAndLine(addr);
+	}
+	
+	public int PCLine(){
+		return spec.LineNumber(pc);
 	}
 
 	public String DisassembleAddress(int addr) {
@@ -434,7 +446,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	public String LastPrint() {
-		return lastPrint == null ? lastPrint : "none";
+		return lastPrint != null ? lastPrint : "none";
 	}
 
 	public int NumVariables() {

@@ -81,7 +81,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	 */
 	FinePoint followPosition;
 	long lastFollow;
-	GBObject followedObject;
+	public GBObject followedObject;
 
 	GBObject moving;
 	long worldChanges;

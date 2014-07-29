@@ -40,7 +40,9 @@ public class Brain {
 	/**
 	 * Can we think now?
 	 */
-	public boolean ready;
+	public boolean Ready() {
+		return false;
+	}
 
 	protected class GBStackOverflowError extends GBBrainError {
 	/**

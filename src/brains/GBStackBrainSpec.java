@@ -730,19 +730,23 @@ public class GBStackBrainSpec extends BrainSpec {
 				return "bad-label-call";
 			return labels.get(index).name + "^";
 		case otHardwareRead:
-			if (index >= StackBrainOpcode.kNumHardwareVariables())
+			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVariable)
+			//if (index >= StackBrainOpcode.kNumHardwareVariables())
 				return "bad-hardware-variable-read";
 			return StackBrainOpcode.byID(index).name;
 		case otHardwareWrite:
-			if (index >= StackBrainOpcode.kNumHardwareVariables())
+			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVariable)
+			//if (index >= StackBrainOpcode.kNumHardwareVariables())
 				return "bad-hardware-variable-write";
 			return StackBrainOpcode.byID(index).name + "!";
 		case otHardwareVectorRead:
-			if (index >= StackBrainOpcode.kNumHardwareVectors())
+			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVector)
+			//if (index >= StackBrainOpcode.kNumHardwareVectors())
 				return "bad-hardware-vector-read";
 			return StackBrainOpcode.byID(index).name;
 		case otHardwareVectorWrite:
-			if (index >= StackBrainOpcode.kNumHardwareVectors())
+			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVector)
+			//if (index >= StackBrainOpcode.kNumHardwareVectors())
 				return "bad-hardware-vector-write";
 			return StackBrainOpcode.byID(index).name + "!";
 		default:
