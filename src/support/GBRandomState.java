@@ -4,7 +4,7 @@
  *******************************************************************************/
 package support;
 
-
+import java.awt.Color;
 
 //Modified to use java's built-in Random class
 
@@ -59,16 +59,17 @@ public class GBRandomState {
 		return FinePoint.makePolar(InRange(0, maxLength), Angle());
 	}
 
-	public GBColor Color() {
-		return new GBColor(FloatInRange(0, 1), FloatInRange(0, 1),
+	public Color Color() {
+		return new Color(FloatInRange(0, 1), FloatInRange(0, 1),
 				FloatInRange(0, 1));
 	}
 
 	// TODO: This was marked as broken. Fixed syntax but was there more to it?
-	public GBColor ColorNear(GBColor old, float dist) {
-		return new GBColor(FloatInRange(old.r - dist, old.r + dist),
-				FloatInRange(old.g - dist, old.g + dist), FloatInRange(old.b
-						- dist, old.b + dist));
+	public Color ColorNear(Color color, float dist) {
+		float r = FloatInRange(color.getRed() / 255f - dist, color.getRed() / 255f + dist);
+		float g = FloatInRange(color.getGreen() / 255f - dist, color.getGreen() / 255f + dist);
+		float b = FloatInRange(color.getBlue() / 255f - dist, color.getBlue() / 255f + dist);
+		return new Color(r, g, b);
 	}
 
 	public boolean bool(double probability) {

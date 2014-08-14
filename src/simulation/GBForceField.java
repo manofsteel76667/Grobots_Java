@@ -8,6 +8,7 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import sides.Side;
 import support.FinePoint;
@@ -60,8 +61,8 @@ public class GBForceField extends GBShot {
 	}
 
 	@Override
-	public GBColor Color() {
-		return new GBColor(0, 0.8f, 1);
+	public Color Color() {
+		return new Color(0, 0.8f, 1);
 	}
 
 	@Override
@@ -73,7 +74,7 @@ public class GBForceField extends GBShot {
 				Velocity().unit().multiply(Radius()));
 		// From robot to target
 		g2d.setStroke(new BasicStroke(weight));
-		g2d.setColor(new GBColor(Color()).multiply(0.5f));
+		g2d.setColor(GBColor.multiply(Color(), 0.5f));
 		g2d.drawLine(proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
 				proj.ToScreenX(Position().x - Velocity().x),
 				proj.ToScreenY(Position().y - Velocity().y));

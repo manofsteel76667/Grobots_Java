@@ -7,10 +7,10 @@ package simulation;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import sides.Side;
 import support.FinePoint;
-import support.GBColor;
 import support.GBObjectClass;
 
 public class GBExplosion extends GBTimedShot {
@@ -70,8 +70,8 @@ public class GBExplosion extends GBTimedShot {
 	}
 
 	@Override
-	public GBColor Color() {
-		return new GBColor(1, 0.9f, 0.2f);
+	public Color Color() {
+		return new Color(1, 0.9f, 0.2f);
 	}
 
 	@Override

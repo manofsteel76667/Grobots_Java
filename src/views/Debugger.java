@@ -85,7 +85,7 @@ public class Debugger extends JPanel {
 							10,
 							brain.status == BrainStatus.bsOK ? GBColor.darkGreen
 									: brain.status == BrainStatus.bsError ? GBColor.darkRed
-											: GBColor.black, false);
+											: Color.black, false);
 		if (sbrain != null)
 			StringUtilities.drawStringPair(g, "Remaining:",
 					Integer.toString(sbrain.Remaining()), (box.x + box.x
@@ -99,21 +99,21 @@ public class Debugger extends JPanel {
 		StringUtilities.drawStringPair(g, "PC:", brain.AddressLastLabel(pc)
 				+ " (line " + Integer.toString(brain.PCLine()) + ')',
 				box.x + 3, box.x + box.width - 3, box.y + 11, 10,
-				GBColor.black, true);
+				Color.black, true);
 		for (int i = -4; i <= 3; i++)
 			if (brain.ValidAddress(pc + i))
 				StringUtilities.drawStringPair(g,
 						brain.AddressName(pc + i) + ':',
 						brain.DisassembleAddress(pc + i), box.x + 3, box.x
 								+ box.width - 3, box.y + box.height - 34 + 10
-								* i, 10, i == 0 ? GBColor.blue : GBColor.black,
+								* i, 10, i == 0 ? Color.blue : Color.black,
 						false);
 	}
 
 	void DrawStackBox(Graphics2D g, Rectangle box, GBStackBrain brain) {
 		DrawBox(g, box);
 		StringUtilities.drawStringLeft(g, "Stack:", box.x + 3, box.y + 11, 10,
-				GBColor.black, true);
+				Color.black, true);
 		int height = brain.StackHeight();
 		if (height != 0) {
 			for (int i = 1; i < 5 && i <= height; i++)
@@ -130,7 +130,7 @@ public class Debugger extends JPanel {
 	void DrawReturnStackBox(Graphics2D g, Rectangle box, GBStackBrain brain) {
 		DrawBox(g, box);
 		StringUtilities.drawStringLeft(g, "Return stack:", box.x + 3,
-				box.y + 11, 10, GBColor.black, true);
+				box.y + 11, 10, Color.black, true);
 		int height = brain.ReturnStackHeight();
 		if (height != 0) {
 			for (int i = 0; i < 5 && i < height; i++)				
@@ -153,7 +153,7 @@ public class Debugger extends JPanel {
 			DrawBox(g, box);
 			int y = box.y + 11;
 			StringUtilities.drawStringLeft(g, "Variables:", box.x + 3, y, 10,
-					GBColor.black, true);
+					Color.black, true);
 			int i;
 			for (i = 0; i < vars; i++) {
 				y += 10;
@@ -187,20 +187,20 @@ public class Debugger extends JPanel {
 		DrawBox(g, box);
 		StringUtilities.drawStringPair(g, "Mass:",
 				String.format("%.1f", target.Mass()), left, right, box.y + 11,
-				10, GBColor.black, false);
+				10, Color.black, false);
 		StringUtilities
 				.drawStringPair(g, "Position:", target.Position().toString(1),
-						left, right, box.y + 21, 10, GBColor.black, false);
+						left, right, box.y + 21, 10, Color.black, false);
 		StringUtilities
 				.drawStringPair(g, "Velocity:", target.Velocity().toString(2),
-						left, right, box.y + 31, 10, GBColor.black, false);
+						left, right, box.y + 31, 10, Color.black, false);
 		StringUtilities.drawStringPair(g, "Speed:",
 				String.format("%.2f", target.Speed()), left, right, box.y + 41,
-				10, GBColor.black, false);
+				10, Color.black, false);
 		if (hw.EnginePower() != 0)
 			StringUtilities.drawStringPair(g, "Engine vel:", hw
 					.EngineVelocity().toString(2), left, right, box.y + 51, 10,
-					GBColor.black, false);
+					Color.black, false);
 		StringUtilities.drawStringPair(g, "Energy:",
 				String.format("%.1f", hw.Energy()), left, right, box.y + 65,
 				10, GBColor.darkGreen, false);
@@ -212,7 +212,7 @@ public class Debugger extends JPanel {
 				"Armor:",
 				String.format("%.0f", hw.Armor()) + '/'
 						+ String.format("%.0f", hw.MaxArmor()), left, right,
-				box.y + 85, 10, GBColor.black, false);
+				box.y + 85, 10, Color.black, false);
 		if (hw.ActualShield() != 0)
 			StringUtilities.drawStringPair(
 					g,
@@ -221,14 +221,15 @@ public class Debugger extends JPanel {
 							+ " ("
 							+ StringUtilities.toPercentString(
 									target.ShieldFraction(), 0) + ')', left,
-					right, box.y + 95, 10, GBColor.blue, false);
+					right, box.y + 95, 10, Color.blue, false);
 		if (hw.constructor.Type() != null) {
 			StringUtilities.drawStringLeft(g, "Constructor", left, box.y + 121,
-					10, GBColor.black, true);
+					10, Color.black, true);
 			StringUtilities
 					.drawStringPair(g, "type:", hw.constructor.Type().name,
-							left, right, box.y + 131, 10, hw.constructor.Type()
-									.Color().ContrastingTextColor(), false);
+							left, right, box.y + 131, 10, 
+							GBColor.ContrastingTextColor(hw.constructor.Type().Color())
+							/*hw.constructor.Type().Color().ContrastingTextColor()*/, false);
 			StringUtilities.drawStringPair(
 					g,
 					"progress:",
@@ -236,51 +237,51 @@ public class Debugger extends JPanel {
 							+ '/'
 							+ String.format("%.0f", hw.constructor.Type()
 									.Cost()), left, right, box.y + 141, 10,
-					GBColor.black, false);
+					Color.black, false);
 		}
 		// sensor times? result details?
 		if (hw.sensor1.Radius() != 0)
 			StringUtilities.drawStringPair(g, "robot-found:",
 					Integer.toString(hw.sensor1.NumResults()), left, right,
-					box.y + 161, 10, GBColor.black, false);
+					box.y + 161, 10, Color.black, false);
 		if (hw.sensor2.Radius() != 0)
 			StringUtilities.drawStringPair(g, "food-found:",
 					Integer.toString(hw.sensor2.NumResults()), left, right,
-					box.y + 171, 10, GBColor.black, false);
+					box.y + 171, 10, Color.black, false);
 		if (hw.sensor3.Radius() != 0)
 			StringUtilities.drawStringPair(g, "shot-found:",
 					Integer.toString(hw.sensor3.NumResults()), left, right,
-					box.y + 181, 10, GBColor.black, false);
+					box.y + 181, 10, Color.black, false);
 		StringUtilities.drawStringLeft(g, "Weapons:", left, box.y + 191, 10,
-				GBColor.black, true);
+				Color.black, true);
 		if (hw.blaster.Damage() != 0)
 			StringUtilities.drawStringPair(g, "blaster-cooldown:",
 					Integer.toString(hw.blaster.Cooldown()), left, right,
-					box.y + 201, 10, GBColor.black, false);
+					box.y + 201, 10, Color.black, false);
 		if (hw.grenades.Damage() != 0)
 			StringUtilities.drawStringPair(g, "grenades-cooldown:",
 					Integer.toString(hw.grenades.Cooldown()), left, right,
-					box.y + 211, 10, GBColor.black, false);
+					box.y + 211, 10, Color.black, false);
 		if (hw.forceField.MaxPower() != 0)
 			StringUtilities.drawStringPair(g, "force-field-angle:",
 					String.format("%.2f", hw.forceField.Angle()), left, right,
-					box.y + 221, 10, GBColor.black, false);
+					box.y + 221, 10, Color.black, false);
 		if (hw.syphon.MaxRate() != 0)
 			StringUtilities.drawStringPair(
 					g,
 					"syphoned:",
 					String.format("%.2f", hw.syphon.Syphoned()) + '/'
 							+ String.format("%.2f", hw.syphon.Rate()), left,
-					right, box.y + 241, 10, GBColor.black, false);
+					right, box.y + 241, 10, Color.black, false);
 		if (hw.enemySyphon.MaxRate() != 0)
 			StringUtilities.drawStringPair(g, "enemy-syphoned:",
 					String.format("%.2f", hw.enemySyphon.Syphoned()) + '/'
 							+ String.format("%.2f", hw.enemySyphon.Rate()),
-					left, right, box.y + 251, 10, GBColor.black, false);
+					left, right, box.y + 251, 10, Color.black, false);
 		if (target.flag != 0)
 			StringUtilities.drawStringPair(g, "flag:",
 					String.format("%.2f", target.flag), left, right,
-					box.y + 271, 10, GBColor.black, false);
+					box.y + 271, 10, Color.black, false);
 	}
 
 	void DrawProfileBox(Graphics2D g, Rectangle box) {

@@ -10,7 +10,6 @@ package sides;
 
 import java.awt.Color;
 
-import support.GBColor;
 import brains.Brain;
 import brains.BrainSpec;
 
@@ -20,9 +19,9 @@ public class RobotType extends support.Model {
 	public Side side;
 	public String name;
 	public int id;
-	public GBColor color;
+	public Color color;
 	public GBRobotDecoration decoration = GBRobotDecoration.none;
-	public GBColor decorationColor;
+	public Color decorationColor;
 	public HardwareSpec hardware;
 	public BrainSpec brain;
 	public int population;
@@ -35,8 +34,8 @@ public class RobotType extends support.Model {
 		side = owner;
 		debug = owner.debug;
 		decoration = GBRobotDecoration.none;
-		decorationColor = new GBColor(Color.black);
-		color = new GBColor();
+		decorationColor = Color.black;
+		color = Color.black;
 		hardware = new HardwareSpec(debug);
 	}
 
@@ -121,11 +120,11 @@ public class RobotType extends support.Model {
 		id = newid;
 	}
 
-	public GBColor Color() {
+	public Color Color() {
 		return color;
 	}
 
-	void SetColor(GBColor newcolor) {
+	void SetColor(Color newcolor) {
 		color = newcolor;
 		Changed();
 	}
@@ -134,11 +133,11 @@ public class RobotType extends support.Model {
 		return decoration;
 	}
 
-	public GBColor DecorationColor() {
+	public Color DecorationColor() {
 		return decorationColor;
 	}
 
-	void SetDecoration(GBRobotDecoration dec, GBColor col) {
+	void SetDecoration(GBRobotDecoration dec, Color col) {
 		decoration = dec;
 		decorationColor = col;
 	}

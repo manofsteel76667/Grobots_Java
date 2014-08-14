@@ -7,9 +7,9 @@ package simulation;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import support.FinePoint;
-import support.GBColor;
 
 public class GBSmoke extends GBTimedDecoration {
 	public static final double kSmokeRadius = 0.4;
@@ -26,10 +26,10 @@ public class GBSmoke extends GBTimedDecoration {
 	}
 
 	@Override
-	public GBColor Color() {
+	public Color Color() {
 		float intensity = 0.8f * lifetime
 				/ (lifetime + kSmokeHalfBrightnessTime);
-		return new GBColor(intensity);
+		return new Color(intensity, intensity, intensity);
 	}
 
 	@Override

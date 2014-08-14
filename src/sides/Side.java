@@ -11,11 +11,11 @@ package sides;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.awt.Color;
 
 import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
-import support.GBColor;
 import support.GBRandomState;
 import support.Model;
 
@@ -29,7 +29,7 @@ public class Side extends Model implements Comparable<Side> {
 	public List<RobotType> types;
 	String name, author;
 	int id;
-	GBColor color;
+	java.awt.Color color;
 	// scores
 	GBSideScores scores;
 	GBScores cScores;
@@ -46,7 +46,7 @@ public class Side extends Model implements Comparable<Side> {
 	public Side() {
 		id = 0;
 		seedIDs = new LinkedList<Integer>();
-		color = new GBColor();
+		color = Color.white;
 		scores = new GBSideScores();
 		cScores = new GBScores();
 		center = new FinePoint();
@@ -129,11 +129,11 @@ public class Side extends Model implements Comparable<Side> {
 		Changed();
 	}
 
-	public GBColor Color() {
+	public Color Color() {
 		return color;
 	}
 
-	public void SetColor(GBColor newcolor) {
+	public void SetColor(Color newcolor) {
 		color = newcolor;
 		Changed();
 	}

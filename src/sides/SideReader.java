@@ -11,6 +11,7 @@ package sides;
 
 //Note that #author, #date, #description, and #color can appear in multiple places.
 //These are conveniently distinguished by whether type is non-null.
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,7 +21,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import support.FinePoint;
-import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
 import brains.GBStackBrainSpec;
@@ -165,22 +165,22 @@ public class SideReader {
 		}
 	}
 
-	GBColor ParseColor(String token) throws GBElementArgumentError {
+	Color ParseColor(String token) throws GBElementArgumentError {
 		// could do named colors, but not urgent
 		// check length
 		float r, g, b;
-		GBColor color = new GBColor();
+		Color color = Color.white;
 		try {
 			if (token.length() == 3) {
 				r = (float) Integer.parseInt(token.substring(0, 1), 16) / 16.0f;
 				g = (float) Integer.parseInt(token.substring(1, 2), 16) / 16.0f;
 				b = (float) Integer.parseInt(token.substring(2, 3), 16) / 16.0f;
-				color = new GBColor(r, g, b);
+				color = new Color(r, g, b);
 			} else if (token.length() == 6) {
 				r = (float) Integer.parseInt(token.substring(0, 2), 16) / 255.0f;
 				g = (float) Integer.parseInt(token.substring(2, 4), 16) / 255.0f;
 				b = (float) Integer.parseInt(token.substring(4, 6), 16) / 255.0f;
-				color = new GBColor(r, g, b);
+				color = new Color(r, g, b);
 			}
 			return color;
 		} catch (NumberFormatException e) {
@@ -267,7 +267,7 @@ public class SideReader {
 			String token = tokens.removeFirst();
 			if (token == null)
 				throw new GBMissingElementArgumentError();
-			GBColor color = ParseColor(token);
+			Color color = ParseColor(token);
 			if (type != null)
 				type.SetColor(color);
 			else
@@ -301,7 +301,7 @@ public class SideReader {
 					throw new GBMissingElementArgumentError();
 				String token = tokens.removeFirst();
 
-				GBColor color = ParseColor(token);
+				Color color = ParseColor(token);
 				if (tokens.size() == 0)
 					throw new GBMissingElementArgumentError();
 				token = tokens.removeFirst();

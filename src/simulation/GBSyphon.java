@@ -8,6 +8,7 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import support.FinePoint;
 import support.GBColor;
@@ -114,8 +115,8 @@ public class GBSyphon extends GBTimedShot {
 	}
 
 	@Override
-	public GBColor Color() {
-		return (hitsEnemies ? new GBColor(0.6f, 1, 0) : new GBColor(0.5f, 0.8f,
+	public Color Color() {
+		return (hitsEnemies ? new Color(0.6f, 1, 0) : new Color(0.5f, 0.8f,
 				1));
 	}
 
@@ -128,7 +129,7 @@ public class GBSyphon extends GBTimedShot {
 		// Dashed line whose dashes move in the direction of energy
 		// transfer over time
 		if (detailed) {
-			GBColor tailcolor = Owner().Color().multiply(
+			Color tailcolor = GBColor.multiply(Owner().Color(),
 					creator.Syphoned() != 0 ? 0.8f : 0.4f);
 			FinePoint unit = Velocity().unit().multiply(-1);
 			double phase = System.currentTimeMillis() / 1000.0 * creator.Rate();

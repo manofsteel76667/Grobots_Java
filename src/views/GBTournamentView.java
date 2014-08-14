@@ -120,8 +120,7 @@ public class GBTournamentView extends ListView {
 		GBScores scores = side.TournamentScores();
 		// draw ID and name
 		StringUtilities.drawStringRight(g, Integer.toString(index + 1) + '.', box.x
-				+ kNameLeft - 5, box.y + box.height, 10, side.Color()
-				.ContrastingTextColor());
+				+ kNameLeft - 5, box.y + box.height, 10, GBColor.ContrastingTextColor(side.Color()));
 		StringUtilities.drawStringLeft(g, side.Name(), box.x + kNameLeft, box.y
 				+ box.height, 10, Color.black);
 		// draw various numbers

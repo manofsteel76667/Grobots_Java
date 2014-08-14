@@ -328,23 +328,28 @@ public class GBRobot extends GBObject {
 	// This color is only used for the minimap, so it has built-in contrast
 	// handling.
 	@Override
-	public GBColor Color() {
-		return Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
-				.Mix(0.9f, type.Color());
+	public Color Color() {
+		return GBColor.Mix(
+				GBColor.EnsureContrastWithBlack(Owner().Color(), kMinMinimapBotContrast), 0.9f, type.Color());
+		//return Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
+		//		.Mix(0.9f, type.Color());
 	}
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make
 	// the meter flash.
 	static void DrawMeter(Graphics g, double fraction, Rectangle where,
-			int zeroAngle, int oneAngle, int width, GBColor color1,
-			GBColor color2, GBColor bgcolor, boolean pulse) {
+			int zeroAngle, int oneAngle, int width, Color color1,
+			Color color2, Color bgcolor, boolean pulse) {
 		Graphics2D g2d = (Graphics2D) g;
-		GBColor color = bgcolor.ChooseContrasting(color1, color2,
-				kMinMeterContrast);
+		Color color = GBColor.ChooseContrasting(bgcolor, color1, color2, kMinMeterContrast);
+		//GBColor color = bgcolor.ChooseContrasting(color1, color2,
+		//		kMinMeterContrast);
 		int angle = (int) Math.ceil(fraction * (oneAngle - zeroAngle));
 		float phase = System.currentTimeMillis() * 6.28f / 500;
-		g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
+		g2d.setColor(GBColor.multiply(color, pulse ? 0.85f + 0.15f * (float) Math
 				.sin(phase) : 1.0f));
+		//g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
+		//		.sin(phase) : 1.0f));
 		g2d.drawArc(where.x, where.y, where.width, where.height, zeroAngle,
 				angle);
 
@@ -430,8 +435,10 @@ public class GBRobot extends GBObject {
 		}
 		int meterWidth = (int) Math.max(1, (where.getWidth() + 10) / 10);
 		// background and rim
-		GBColor robotColor = (new GBColor(Color.red).Mix(0.8f * recentDamage
-				/ kRecentDamageTime, Owner().Color()));
+		Color robotColor = GBColor.Mix(Color.red, 0.8f * recentDamage
+				/ kRecentDamageTime, Owner().Color());
+		//GBColor robotColor = (new GBColor(Color.red).Mix(0.8f * recentDamage
+		//		/ kRecentDamageTime, Owner().Color()));
 		g2d.setPaint(robotColor);
 		g2d.fillOval(where.x, where.y, where.width, where.height);
 		g2d.setPaint(type.Color());
@@ -441,24 +448,24 @@ public class GBRobot extends GBObject {
 			// energy meter
 			if (hardware.MaxEnergy() != 0)
 				DrawMeter(g, hardware.Energy() / hardware.MaxEnergy(), where,
-						180, 0, meterWidth, new GBColor(Color.GREEN),
-						new GBColor(0, 0.5f, 1), Owner().Color(),
+						180, 0, meterWidth, Color.GREEN,
+						new Color(0, 0.5f, 1), Owner().Color(),
 						hardware.Eaten() != 0
 								|| hardware.syphon.Syphoned() != 0
 								|| hardware.enemySyphon.Syphoned() != 0);
 			// damage meter
 			if (hardware.Armor() < hardware.MaxArmor())
 				DrawMeter(g, 1.0 - hardware.Armor() / hardware.MaxArmor(),
-						where, 360, 180, meterWidth, new GBColor(Color.red),
-						new GBColor(Color.lightGray), Owner().Color(),
+						where, 360, 180, meterWidth, Color.red,
+						Color.lightGray, Owner().Color(),
 						hardware.RepairRate() != 0);
 			// gestation meter
 			if (hardware.constructor.Progress() != 0) {
 				Rectangle meterRect = new Rectangle(where);
 				meterRect.grow(-meterWidth, -meterWidth);
 				DrawMeter(g, hardware.constructor.Fraction(), meterRect, 0,
-						360, 1, new GBColor(Color.yellow), new GBColor(
-								Color.GREEN), Owner().Color(),
+						360, 1, Color.yellow,
+								Color.GREEN, Owner().Color(),
 						hardware.constructor.Rate() != 0);
 			}
 		}
@@ -476,17 +483,21 @@ public class GBRobot extends GBObject {
 		Rectangle bigDec = new Rectangle(where.x + dx, where.y + dy,
 				where.width - dx * 2, where.height - dy * 2);
 		// flash decoration when reloading or sensing
-		GBColor basecolor = type.Decoration() == GBRobotDecoration.none ? Owner()
+		Color basecolor = type.Decoration() == GBRobotDecoration.none ? Owner()
 				.Color() : type.DecorationColor();
-		GBColor color = basecolor;
+		Color color = basecolor;
 		if (hardware.grenades.Cooldown() != 0)
-			color = new GBColor(Color.yellow).Mix(
-					(float) hardware.grenades.Cooldown()
-							/ hardware.grenades.ReloadTime(), basecolor);
+			color = GBColor.Mix(Color.yellow, (float) hardware.grenades.Cooldown()
+					/ hardware.grenades.ReloadTime(), basecolor);
+			//color = new GBColor(Color.yellow).Mix(
+			//		(float) hardware.grenades.Cooldown()
+			//				/ hardware.grenades.ReloadTime(), basecolor);
 		else if (hardware.blaster.Cooldown() != 0)
-			color = new GBColor(Color.magenta).Mix(
-					(float) hardware.blaster.Cooldown()
+			color = GBColor.Mix(Color.magenta, (float) hardware.blaster.Cooldown()
 							/ hardware.blaster.ReloadTime(), basecolor);
+			//color = new GBColor(Color.magenta).Mix(
+			//		(float) hardware.blaster.Cooldown()
+			//				/ hardware.blaster.ReloadTime(), basecolor);
 		g2d.setColor(color);
 		g2d.setPaint(color);
 		switch (type.Decoration()) {

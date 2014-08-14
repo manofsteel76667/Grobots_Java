@@ -9,10 +9,10 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Color;
 
 import sides.Side;
 import support.FinePoint;
-import support.GBColor;
 import support.GBObjectClass;
 
 class GBSensorShot extends GBObject {
@@ -82,19 +82,22 @@ class GBSensorShot extends GBObject {
 	}
 
 	@Override
-	public GBColor Color() {
+	public Color Color() {
 		float fraction = 1.0f - age / Lifetime();
 		switch (seen) {
 		case ocRobot:
-			return new GBColor(0.4f, 0.8f, 1).multiply(fraction);
+			return new Color(0.4f * fraction, 0.8f * fraction, fraction);
+			//return new GBColor(0.4f, 0.8f, 1).multiply(fraction);
 		case ocFood:
-			return new GBColor(0.5f, 1, 0.5f).multiply(fraction);
+			return new Color(0.5f * fraction, fraction, 0.5f * fraction);
+			//return new GBColor(0.5f, 1, 0.5f).multiply(fraction);
 		case ocShot:
-			return new GBColor(1, 1, 0.5f).multiply(fraction);
+			return new Color(fraction, fraction, 0.5f * fraction);
+			//return new GBColor(1, 1, 0.5f).multiply(fraction);
 		default:
 			break;
 		}
-		return new GBColor(fraction);
+		return new Color(fraction, fraction, fraction);
 	}
 
 	public GBRobot Firer() {

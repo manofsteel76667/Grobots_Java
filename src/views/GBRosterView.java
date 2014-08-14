@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 
 import sides.Side;
 import simulation.GBWorld;
+import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
 
@@ -81,7 +82,7 @@ public class GBRosterView extends ListView {
 		textRect.grow(-padding * 2, -padding * 2);
 		// Side ID
 		StringUtilities.drawStringLeft(g, String.format("%d.", side.ID()),
-				textRect, 12, side.Color().ContrastingTextColor());
+				textRect, 12, GBColor.ContrastingTextColor(side.Color()));
 		// Side Name
 		StringUtilities.drawStringLeft(g, side.Name(), new Rectangle(
 				textRect.x + 25, textRect.y, textRect.width - 25,

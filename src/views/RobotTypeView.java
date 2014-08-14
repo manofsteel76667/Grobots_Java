@@ -121,7 +121,7 @@ public class RobotTypeView extends ListView {
 			drawBox(g, box);
 			box.grow(-padding, -padding);
 			StringUtilities.drawStringLeft(g, side.Name(), box.x,
-					box.y + box.height, 12, side.Color().ContrastingTextColor());
+					box.y + box.height, 12, GBColor.ContrastingTextColor(side.Color()));
 			StringUtilities.drawStringRight(g, side.Author(), box.x + box.width, 
 					box.y + box.height, 12, Color.black);
 		} else

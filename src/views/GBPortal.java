@@ -99,25 +99,27 @@ public class GBPortal extends JPanel implements GBProjection {
 	public boolean showSideNames;
 
 	public static final int kScale = 6; // default number of pixels per unit.
-	public static final int kMinDetailsScale = 10;
-	public static final double kAutoScrollSpeed = 0.4;
-	public static final double kFollowSpeed = 0.5;
-	public static final double kFastFollowSpeed = 1.5;
-	public static final double kFastFollowDistance = 10;
-	public static final double kFollowJumpDistance = 30;
-	public static final double kAutofollowNearRange = 20;
-	public static final long kAutofollowPeriod = 3000L;
-	public static final double kFollowViewOffEdge = 3; // how much wall to show
-														// when following near
-														// edge
+	static final int kMinDetailsScale = 10;
+	static final double kAutoScrollSpeed = 0.4;
+	static final double kFollowSpeed = 0.5;
+	static final double kFastFollowSpeed = 1.5;
+	static final double kFastFollowDistance = 10;
+	static final double kFollowJumpDistance = 30;
+	static final double kAutofollowNearRange = 20;
+	static final long kAutofollowPeriod = 3000L;
+	static final double kFollowViewOffEdge = 3; // how much wall to show
+												// when following near
+												// edge
 
-	public static final double kMoveForce = 1;
-	public static final double kSmiteDamage = 200;
-	public static final int kNumBlasts = 10;
-	public static final double kBlastRange = 10;
-	public static final double kBlastSpeed = 0.2;
-	public static final double kBlastDamage = 5;
-	public static final double kEraseBigRadius = 2;
+	static final double kMoveForce = 1;
+	static final double kSmiteDamage = 200;
+	static final int kNumBlasts = 10;
+	static final double kBlastRange = 10;
+	static final double kBlastSpeed = 0.2;
+	static final double kBlastDamage = 5;
+	static final double kEraseBigRadius = 2;
+	static final int minZoom = 3;
+	static final int maxZoom = 64;
 
 	public GBPortal(GBApplication _app) {
 		super(true);
@@ -271,12 +273,18 @@ public class GBPortal extends JPanel implements GBProjection {
 		RestrictScrolling();
 	}
 
+	static Color tileColor = Color.black;
+	static Color coarseGridBaseColor = Color.white;
+
 	void drawBackground(Graphics2D g2d) {
 		// Set colors for grid lines
-		GBColor fineColor = new GBColor(Math.min(0.4f + 0.04f * scale / kScale,
-				0.15f + 0.25f * scale / kScale));
 		int coarseThickness = 1 + scale / 20;
-		GBColor coarseColor = new GBColor(0.4f + 0.4f * scale / kScale);
+		Color coarseColor = GBColor.Mix(coarseGridBaseColor, (float)scale * 6f
+				/ (float)maxZoom, tileColor);
+		// Fine grid should be close to the coarse grid color when zoomed in and
+		// disappear into the background when zoomed out
+		Color fineColor = GBColor.Mix(coarseColor,
+				GBMath.clamp((float)scale / (float)maxZoom, 0, .8f), tileColor);
 
 		// Draw visible tiles
 		int minTileX = (int) Math.max(
@@ -297,15 +305,15 @@ public class GBPortal extends JPanel implements GBProjection {
 						GBObjectWorld.kBackgroundTileSize * scale,
 						GBObjectWorld.kBackgroundTileSize * scale);
 				// Tile
-				g2d.setColor(Color.black);
+				g2d.setColor(tileColor);
 				g2d.fill(tile);
 				// Fine Grid
 				g2d.setColor(fineColor);
 				g2d.setStroke(new BasicStroke(1));
-				for (int yf = tile.y; yf < tile.y
-						+ GBObjectWorld.kForegroundTileSize * scale; yf += scale)
-					for (int xf = tile.x; xf < tile.x
-							+ GBObjectWorld.kForegroundTileSize * scale; xf += scale) {
+				for (int yf = tile.y+1; yf < tile.y
+						+ GBObjectWorld.kForegroundTileSize * scale-1; yf += scale)
+					for (int xf = tile.x+1; xf < tile.x
+							+ GBObjectWorld.kForegroundTileSize * scale-1; xf += scale) {
 						g2d.drawLine(tile.x, yf, tile.x + tile.width, yf);
 						g2d.drawLine(xf, tile.y, xf, tile.y + tile.height);
 					}
@@ -378,8 +386,8 @@ public class GBPortal extends JPanel implements GBProjection {
 					int tx = ToScreenX(side.center.x)
 							- fm.stringWidth(side.Name()) / 2;
 					int ty = ToScreenY(side.center.y);
-					g2d.setColor(side.Scores().sterile != 0 ? GBColor.gray
-							: GBColor.white);
+					g2d.setColor(side.Scores().sterile != 0 ? Color.gray
+							: Color.white);
 					g2d.drawString(side.Name(), tx, ty);
 				}
 		}
@@ -503,7 +511,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	public void doZoom(int direction) {
-		if (direction < 0 ? scale <= 4 : scale >= 64)
+		if (direction < 0 ? scale <= minZoom : scale >= maxZoom)
 			return;
 		scale += direction * Math.max(1, scale / 9);
 	}

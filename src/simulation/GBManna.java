@@ -7,7 +7,6 @@ package simulation;
 import java.awt.Color;
 
 import support.FinePoint;
-import support.GBColor;
 
 public class GBManna extends GBFood {
 	// public:
@@ -25,7 +24,7 @@ public class GBManna extends GBFood {
 		return String.format("Manna (%.0f)", value);
 	}
 
-	public GBColor Color() {
-		return new GBColor(Color.green);
+	public Color Color() {
+		return Color.green;
 	}
 }

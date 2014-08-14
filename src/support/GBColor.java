@@ -10,7 +10,7 @@ package support;
 
 import java.awt.Color;
 
-public class GBColor extends java.awt.Color {
+public class GBColor {
 	/**
 	 * 
 	 */
@@ -18,21 +18,21 @@ public class GBColor extends java.awt.Color {
 	public static final Color darkRed = new Color(139, 0, 0);
 	public static final Color darkGreen = new Color(0, 100, 0);
 	public static final Color purple = new Color(1, 0, 1);
-	public static final Color gold = new GBColor(0.4f, 0.6f, 0);
+	public static final Color gold = new Color(0.4f, 0.6f, 0);
 	
-	private static final long serialVersionUID = 5956330979660343356L;
-	float r, g, b;
+	//private static final long serialVersionUID = 5956330979660343356L;
+	//float r, g, b;
 
 	// //public:
 
 	// implementation //
 
-	public GBColor() {
+	/*public GBColor() {
 		super(1.0f, 1.0f, 1.0f);
-		r = 1.0f;
-		g = 1.0f;
-		b = 1.0f;
-	}
+		//r = 1.0f;
+		//g = 1.0f;
+		//b = 1.0f;
+	}*/
 
 	public static final float kRedWeight = 0.35f;
 	public static final float kGreenWeight = 0.45f;
@@ -40,39 +40,40 @@ public class GBColor extends java.awt.Color {
 
 	public static final float kMaxTextLightness = 0.7f;
 
-	public GBColor(float grey) {
-		super(Limit(grey), Limit(grey), Limit(grey));
-		r = Limit(grey);
-		g = Limit(grey);
-		b = Limit(grey);
+	public static Color getGreyColor(float grey) {
+		return new Color(Limit(grey), Limit(grey), Limit(grey));
 	}
 
-	public GBColor(float red, float green, float blue) {
-		super(Limit(red), Limit(green), Limit(blue));
-		r = Limit(red);
-		g = Limit(green);
-		b = Limit(blue);
+	public static Color getRGBColor(float red, float green, float blue) {
+		return new Color(Limit(red), Limit(green), Limit(blue));
 	}
 
-	public GBColor(Color root) {
-		super(root.getRed(), root.getGreen(), root.getBlue());
-		r = (float) root.getRed() / 256.0f;
-		g = (float) root.getGreen() / 256.0f;
-		b = (float) root.getBlue() / 256.0f;
+	/*public static Color getCopyOf(Color root) {
+		return new Color(root.getRed(), root.getGreen(), root.getBlue());
+		//r = (float) root.getRed() / 256.0f;
+		//g = (float) root.getGreen() / 256.0f;
+		//b = (float) root.getBlue() / 256.0f;
+	}*/
+
+	/* Not used outside of this class; make private? */
+	public static float Lightness(Color c) {
+		return c.getRed() * kRedWeight + c.getGreen() * kGreenWeight + c.getBlue() * kBlueWeight / 255;
 	}
 
-	public float Lightness() {
-		return r * kRedWeight + g * kGreenWeight + b * kBlueWeight;
+	public static Color Mix(Color base, float fraction, Color other) {
+		//return this.multiply(fraction).add(other.multiply(1.0f - fraction));
+		return add(multiply(base, fraction), multiply(other, 1.0f - fraction));
 	}
 
-	public GBColor Mix(float fraction, GBColor other) {
-		return this.multiply(fraction).add(other.multiply(1.0f - fraction));
-	}
-
-	public float Contrast(GBColor other) {
-		return (float) Math.sqrt((r - other.r) * (r - other.r) * kRedWeight
+	/* Not used outside of this class; make private? */
+	public static float Contrast(Color base, Color other) {
+		double r = Math.pow((base.getRed() - other.getRed()) / 255f, 2) * kRedWeight; 
+		double g = Math.pow((base.getGreen() - other.getGreen()) / 255f, 2) * kGreenWeight; 
+		double b = Math.pow((base.getBlue() - other.getBlue()) / 255f, 2) * kBlueWeight; 
+		return (float)Math.sqrt(r + g + b);
+		/*return (float) Math.sqrt((r - other.r) * (r - other.r) * kRedWeight
 				+ (g - other.g) * (g - other.g) * kGreenWeight + (b - other.b)
-				* (b - other.b) * kBlueWeight);
+				* (b - other.b) * kBlueWeight);*/
 		// alternate, maybe better
 		/*
 		 * return (float)(Math.abs(r - other.r) * kRedWeight + Math.abs(g -
@@ -90,48 +91,55 @@ public class GBColor extends java.awt.Color {
 
 	// this function may not return a color with Lightness>minimum if minimum is
 	// > 1/3!
-	public GBColor EnsureContrastWithBlack(float minimum) {
-		float contrast = Contrast(new GBColor(Color.BLACK));
+	public static Color EnsureContrastWithBlack(Color base, float minimum) {
+		float contrast = Contrast(base, Color.BLACK);
 		if (contrast >= minimum)
-			return this;
+			return base;
 		if (contrast == 0.0f)
-			return new GBColor(minimum);
-		return this.multiply(minimum / contrast);
+			return getGreyColor(minimum);
+		return multiply(base, minimum / contrast);
 	}
 
 	// Returns one of two colors which best contrasts with *this. If the primary
 	// color
 	// is at least cutoff contrast, secondary is not considered.
-	public GBColor ChooseContrasting(GBColor primary, GBColor secondary,
+	public static Color ChooseContrasting(Color base, Color primary, Color secondary,
 			float cutoff) {
 		float cp, cs;
-		cp = Contrast(primary);
-		cs = Contrast(secondary);
+		cp = Contrast(base, primary);
+		cs = Contrast(base, secondary);
 		if (cp >= cutoff)
 			return primary;
 		else
 			return cp >= cs ? primary : secondary;
 	}
 
-	public GBColor ContrastingTextColor() {
-		if (Lightness() < kMaxTextLightness)
-			return this;
+	public static Color ContrastingTextColor(Color base) {
+		if (Lightness(base) < kMaxTextLightness)
+			return base;
 		else
-			return this.multiply(kMaxTextLightness);
+			return multiply(base, kMaxTextLightness);
 	}
 
-	public GBColor multiply(float multiplier) {
-		return new GBColor(r * multiplier, g * multiplier, b * multiplier);
+	public static Color multiply(Color base, float multiplier) {
+		float r = GBMath.clamp(base.getRed() / 255f * multiplier, 0, 1);
+		float g = GBMath.clamp(base.getGreen() / 255f * multiplier, 0, 1);
+		float b = GBMath.clamp(base.getBlue() / 255f * multiplier, 0, 1);
+		return new Color(r, g, b);
 	}
 
-	public GBColor divide(float divisor) {
+	/* Not used.  Remove? 
+	public static Color divide(Color base, float divisor) {
 		if (divisor == 0)
 			throw new ArithmeticException("dividing a color by zero");
 		return new GBColor(r / divisor, g / divisor, b / divisor);
-	}
+	}*/
 
-	public GBColor add(GBColor other) {
-		return new GBColor(r + other.r, g + other.g, b + other.b);
+	public static Color add(Color base, Color other) {
+		int r = GBMath.clamp(base.getRed() + other.getRed(), 0, 255);
+		int g = GBMath.clamp(base.getGreen() + other.getGreen(), 0, 255);
+		int b = GBMath.clamp(base.getBlue() + other.getBlue(), 0, 255);
+		return new Color(r, g, b);
 	}
 
 }

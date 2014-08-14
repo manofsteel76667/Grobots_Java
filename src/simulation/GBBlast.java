@@ -58,15 +58,18 @@ public class GBBlast extends GBTimedShot {
 	// Big blasts are saturated, smaller ones are pink or white.
 	// Long-range blasts are orangish; short-range ones are magenta.
 	@Override
-	public GBColor Color() {
+	public Color Color() {
 		float fadeout = hit ? 1.0f : Math.min(
 				lifetime / Math.min(originallifetime, 10.0f), 1.0f);
 		float whiteness = (float) Math.pow(0.95, power);
 		float blueness = (float) Math.pow(0.9995, originallifetime
 				* originallifetime);
-		return new GBColor(Color.white).Mix(whiteness,
-				new GBColor(1, 0.5f - blueness * 1.5f, blueness * 1.5f))
-				.multiply(fadeout);
+		return GBColor.multiply(GBColor.Mix(Color.white, whiteness, new Color(
+				1, 0.5f - blueness * 1.5f, blueness * 1.5f)), fadeout);
+		/*
+		 * return new GBColor(Color.white).Mix(whiteness, new GBColor(1, 0.5f -
+		 * blueness * 1.5f, blueness * 1.5f)) .multiply(fadeout);
+		 */
 	}
 
 	@Override
@@ -78,12 +81,12 @@ public class GBBlast extends GBTimedShot {
 			g2d.fill(where);
 		} else if (hit) {
 			g2d.setPaint(Color());
-			g2d.fillOval((int) where.x, (int) where.y,
-					where.width, where.height);
+			g2d.fillOval((int) where.x, (int) where.y, where.width,
+					where.height);
 		} else {
 			g2d.setPaint(Color.gray);
-			g2d.drawOval((int) where.x, (int) where.y,
-					where.width, where.height);
+			g2d.drawOval((int) where.x, (int) where.y, where.width,
+					where.height);
 		}
 		int cx = (int) where.x;
 		int cy = (int) where.y;
@@ -95,10 +98,10 @@ public class GBBlast extends GBTimedShot {
 				radius * 2);
 		int tx = (int) Math.round(tail.x);
 		int ty = (int) (-1 * Math.round(tail.y));
-		g2d.setPaint(Color().multiply(0.7f));
+		g2d.setPaint(GBColor.multiply(Color(), 0.7f));
 		g2d.setStroke(new BasicStroke(thickness + 2));
 		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
-		g2d.setPaint(Color().add(new GBColor(0.2f)));
+		g2d.setPaint(GBColor.add(Color(), GBColor.getGreyColor(0.2f)));
 		g2d.setStroke(new BasicStroke(Math.max(thickness, 2)));
 		g2d.drawLine(cx + hx, cy + hy, cx - hx, cy - hy);
 		g2d.setPaint(Color());
