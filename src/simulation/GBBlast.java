@@ -13,6 +13,7 @@ import java.awt.Rectangle;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
+import support.GBMath;
 import support.GBObjectClass;
 
 public class GBBlast extends GBTimedShot {
@@ -64,8 +65,11 @@ public class GBBlast extends GBTimedShot {
 		float whiteness = (float) Math.pow(0.95, power);
 		float blueness = (float) Math.pow(0.9995, originallifetime
 				* originallifetime);
-		return GBColor.multiply(GBColor.Mix(Color.white, whiteness, new Color(
-				1, 0.5f - blueness * 1.5f, blueness * 1.5f)), fadeout);
+		return GBColor.multiply(GBColor.Mix(
+				Color.white,
+				whiteness,
+				new Color(1, GBMath.clamp(0.5f - blueness * 1.5f, 0, 1), GBMath
+						.clamp(blueness * 1.5f, 0, 1))), fadeout);
 		/*
 		 * return new GBColor(Color.white).Mix(whiteness, new GBColor(1, 0.5f -
 		 * blueness * 1.5f, blueness * 1.5f)) .multiply(fadeout);
