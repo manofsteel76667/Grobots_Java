@@ -10,6 +10,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -36,6 +37,7 @@ import sides.SideReader;
 import simulation.GBObject;
 import simulation.GBRobot;
 import simulation.GBWorld;
+import support.FinePoint;
 import support.GBObjectClass;
 import views.AboutBox;
 import views.Debugger;
@@ -66,6 +68,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	// Views
 	GBPortal portal;
+	GBPortal minimap;
 	GBRosterView roster;
 	GBTournamentView tournament;
 	GBScoresView statistics;
@@ -113,7 +116,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 		// Arrange the screen
 		this.getContentPane().setLayout(new GridBagLayout());
-		setLayouts();
 		List<BufferedImage> icons = new ArrayList<BufferedImage>();
 		String[] resources = new String[] { "grobots16.png", "grobots32.png",
 				"grobots48.png", "grobots64.png", "grobots128.png" };
@@ -128,11 +130,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setIconImages(icons);
 		this.setTitle("Grobots");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.pack();
 		setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
-		setVisible(true);
 		statistics.setVisible(false);
-
+		setLayouts();
+		this.pack();
+		setVisible(true);
 		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
 				new ActionListener() {
 					@Override
@@ -147,6 +149,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						rendering++;
 						if (portal.isVisible())
 							portal.repaint();
+						if (minimap.isVisible())
+							minimap.repaint();
 						if (debug.isVisible())
 							debug.repaint();
 						rendering--;
@@ -196,7 +200,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridy = 0;
 		c.weighty = 1;
 		c.weightx = 0;
-		c.gridheight = 2;
+		c.gridheight = minimap.isVisible() ? 3 : 4;
 		this.getContentPane().add(roster, c);
 
 		// Portal and toolbar
@@ -206,7 +210,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridx = 1;
 		c.gridy = 0;
 		c.weightx = 1;
-		c.gridheight = 1;
+		c.gridheight = statistics.isVisible() ? 2 : 4;
 		this.getContentPane().add(center, c);
 
 		// Statistics
@@ -216,7 +220,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridy = 2;
 		c.weightx = 0;
 		c.weighty = 0;
-		c.gridheight = 1;
+		c.gridheight = 2;
 		c.gridwidth = 1;
 		this.getContentPane().add(statistics, c);
 
@@ -225,26 +229,27 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.anchor = GridBagConstraints.ABOVE_BASELINE;
 		c.gridx = 2;
 		c.gridy = 0;
-		c.weighty = 0;
+		c.weighty = 1;
 		c.gridwidth = 1;
-		c.gridheight = 3;
+		c.gridheight = 4;
 		this.getContentPane().add(type, c);
-
-		// Debugger
-		c.fill = GridBagConstraints.VERTICAL;
-		c.anchor = GridBagConstraints.ABOVE_BASELINE;
-		c.gridx = 2;
-		c.gridy = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 3;
-		// this.getContentPane().add(debug, c);
+		
+		//Minimap
+		c.fill = GridBagConstraints.NONE;
+		c.anchor = GridBagConstraints.SOUTHWEST;
+		c.gridx = 0;
+		c.gridy = 3;
+		//c.weighty = .5;
+		c.gridheight = 1;
+		minimap.setPreferredSize(new Dimension(200,200));
+		this.getContentPane().add(minimap, c);
 	}
 
 	void createChildViews() {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
-		portal = new GBPortal(this);
+		portal = new GBPortal(this, false);
+		minimap = new GBPortal(this, true);
 		roster = new GBRosterView(this);
 		tournament = new GBTournamentView(this);
 		type = new RobotTypeView(this);
@@ -273,8 +278,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 		// Unimplemented items
-		// setMenuItem(MenuItems.showDebugger, false);
-		setMenuItem(MenuItems.showMinimap, false);
 		setMenuItem(MenuItems.showSharedMemory, false);
 	}
 
@@ -617,6 +620,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showMiniMapTrails:
 					break;
 				case showMinimap:
+					minimap.setVisible(!minimap.isVisible());
+					setLayouts();
 					break;
 				case showPrints:
 					world.reportPrints = mainMenu.viewOptions.get(
@@ -751,5 +756,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	public GBObject Followed() {
 		return portal.followedObject;
+	}
+	
+	public void setViewWindow(FinePoint p){
+		portal.setViewWindow(p);
+	}
+	
+	public void setVisibleWorld(Rectangle r){
+		minimap.setVisibleWorld(r);
 	}
 }

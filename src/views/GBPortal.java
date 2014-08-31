@@ -49,7 +49,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	public enum toolTypes {
 		ptScroll(0, 0), ptAddManna(1, 20), ptAddRobot(2, 10), ptAddSeed(10, 50), ptMove(
 				0, 1), ptPull(0, 1), ptSmite(3, 10), ptBlasts(0, 3), ptErase(0,
-				1), ptEraseBig(0, 1);
+				1), ptEraseBig(0, 1), ptSetViewWindow(0, 0);
 		public final double spacing;
 		public final int interval;
 		public final int value;
@@ -84,8 +84,6 @@ public class GBPortal extends JPanel implements GBProjection {
 	public GBObject followedObject;
 
 	GBObject moving;
-	long worldChanges;
-	long selfChanges;
 	// tool use
 	int lastx, lasty; // where mouse was last if we're dragging
 	FinePoint lastClick;
@@ -98,13 +96,11 @@ public class GBPortal extends JPanel implements GBProjection {
 	public boolean showDetails;
 	public boolean showSideNames;
 
+	boolean isMiniMap;
+
 	public static final int kScale = 6; // default number of pixels per unit.
 	static final int kMinDetailsScale = 10;
 	static final double kAutoScrollSpeed = 0.4;
-	static final double kFollowSpeed = 0.5;
-	static final double kFastFollowSpeed = 1.5;
-	static final double kFastFollowDistance = 10;
-	static final double kFollowJumpDistance = 30;
 	static final double kAutofollowNearRange = 20;
 	static final long kAutofollowPeriod = 3000L;
 	static final double kFollowViewOffEdge = 3; // how much wall to show
@@ -118,24 +114,31 @@ public class GBPortal extends JPanel implements GBProjection {
 	static final double kBlastSpeed = 0.2;
 	static final double kBlastDamage = 5;
 	static final double kEraseBigRadius = 2;
-	static final int minZoom = 3;
-	static final int maxZoom = 64;
+	int minZoom = 4;
+	int maxZoom = 64;
 
-	public GBPortal(GBApplication _app) {
+	public GBPortal(GBApplication _app, boolean mini) {
 		super(true);
+		isMiniMap = mini;
 		app = _app;
 		world = _app.world;
-		viewpoint = new FinePoint(app.world.Size().divide(2));
-		scale = kScale;
-		followPosition = new FinePoint(viewpoint);
-		currentTool = toolTypes.ptScroll;
-		showDecorations = true;
-		showDetails = true;
 		showSideNames = true;
-		worldChanges = -1;
-		selfChanges = -1;
 		lastClick = new FinePoint();
 		lastFrame = app.world.CurrentFrame();
+		viewpoint = new FinePoint(app.world.Size().divide(2));
+		followPosition = new FinePoint(viewpoint);
+		if (isMiniMap) {
+			minZoom = 2;
+			scale = minZoom;
+			currentTool = toolTypes.ptSetViewWindow;
+			showDetails = false;
+			showDecorations = false;
+		} else {
+			currentTool = toolTypes.ptScroll;
+			scale = kScale;
+			showDetails = true;
+			showDecorations = true;
+		}
 		MouseAdapter ma = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent arg0) {
@@ -152,6 +155,8 @@ public class GBPortal extends JPanel implements GBProjection {
 
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
+				if (isMiniMap)
+					return;
 				// Follow object on click
 				if (!dragged)
 					if (arg0.getClickCount() > 0
@@ -163,6 +168,8 @@ public class GBPortal extends JPanel implements GBProjection {
 
 			@Override
 			public void mouseDragged(MouseEvent arg0) {
+				if (isMiniMap)
+					return;
 				int x = arg0.getX();
 				int y = arg0.getY();
 				FinePoint spot = FromScreen(x, y);
@@ -201,6 +208,8 @@ public class GBPortal extends JPanel implements GBProjection {
 				// Zoom with mouse wheel
 				// Zoom on the spot the mouse is on so it stays in the same
 				// screen position. Not perfect but pretty good.
+				if (isMiniMap)
+					return;
 				int notches = arg0.getWheelRotation();
 				if (notches == 0)
 					return;
@@ -258,6 +267,7 @@ public class GBPortal extends JPanel implements GBProjection {
 			}
 			if (followedObject != null) {
 				if (panning())
+					//TODO at full zoom the panning rate is slower than some objects
 					if (!viewpoint.inRange(followedObject.Position(),
 							16.0d / scale)) {
 						FinePoint distance = followedObject.Position()
@@ -271,6 +281,8 @@ public class GBPortal extends JPanel implements GBProjection {
 			}
 		}
 		RestrictScrolling();
+		if (!isMiniMap)
+			app.setVisibleWorld(getVisibleWorld());
 	}
 
 	static Color tileColor = Color.black;
@@ -279,12 +291,13 @@ public class GBPortal extends JPanel implements GBProjection {
 	void drawBackground(Graphics2D g2d) {
 		// Set colors for grid lines
 		int coarseThickness = 1 + scale / 20;
-		Color coarseColor = GBColor.Mix(coarseGridBaseColor, (float)scale * 6f
-				/ (float)maxZoom, tileColor);
+		Color coarseColor = GBColor.Mix(coarseGridBaseColor, (float) scale * 6f
+				/ (float) maxZoom, tileColor);
 		// Fine grid should be close to the coarse grid color when zoomed in and
 		// disappear into the background when zoomed out
 		Color fineColor = GBColor.Mix(coarseColor,
-				GBMath.clamp((float)scale / (float)maxZoom, 0, .8f), tileColor);
+				GBMath.clamp((float) scale / (float) maxZoom, 0, .8f),
+				tileColor);
 
 		// Draw visible tiles
 		int minTileX = (int) Math.max(
@@ -310,13 +323,14 @@ public class GBPortal extends JPanel implements GBProjection {
 				// Fine Grid
 				g2d.setColor(fineColor);
 				g2d.setStroke(new BasicStroke(1));
-				for (int yf = tile.y+1; yf < tile.y
-						+ GBObjectWorld.kForegroundTileSize * scale-1; yf += scale)
-					for (int xf = tile.x+1; xf < tile.x
-							+ GBObjectWorld.kForegroundTileSize * scale-1; xf += scale) {
-						g2d.drawLine(tile.x, yf, tile.x + tile.width, yf);
-						g2d.drawLine(xf, tile.y, xf, tile.y + tile.height);
-					}
+				if (scale > minZoom && !isMiniMap)
+					for (int yf = tile.y + 1; yf < tile.y
+							+ GBObjectWorld.kForegroundTileSize * scale - 1; yf += scale)
+						for (int xf = tile.x + 1; xf < tile.x
+								+ GBObjectWorld.kForegroundTileSize * scale - 1; xf += scale) {
+							g2d.drawLine(tile.x, yf, tile.x + tile.width, yf);
+							g2d.drawLine(xf, tile.y, xf, tile.y + tile.height);
+						}
 				// Coarse grid
 				g2d.setStroke(new BasicStroke(coarseThickness));
 				g2d.setColor(coarseColor);
@@ -349,6 +363,14 @@ public class GBPortal extends JPanel implements GBProjection {
 			for (GBObject spot : world.getObjects(GBObjectClass.ocSensorShot))
 				for (GBObject ob = spot; ob != null; ob = ob.next)
 					ob.Draw(g2d, this, detailed);
+		//On the minimap, draw a rectangle indicating the portion of the
+		//world that is visible on the portal
+		if (isMiniMap && visibleWorld != null){
+			g2d.setColor(Color.white);
+			g2d.setStroke(new BasicStroke(1));
+			g2d.draw(new Rectangle(ToScreenX(visibleWorld.x), ToScreenY(visibleWorld.y),
+					visibleWorld.width * scale, visibleWorld.height * scale));			
+		}
 	}
 
 	void drawText(Graphics2D g2d) {
@@ -478,11 +500,6 @@ public class GBPortal extends JPanel implements GBProjection {
 		return viewpoint.y - getHeight() / (scale * 2);
 	}
 
-	public void ScrollTo(FinePoint p) {
-		viewpoint = p;
-		RestrictScrolling();
-	}
-
 	public void ScrollToward(FinePoint p, double speed) {
 		if (viewpoint.inRange(p, speed))
 			viewpoint = p;
@@ -492,14 +509,13 @@ public class GBPortal extends JPanel implements GBProjection {
 		RestrictScrolling();
 	}
 
-	public void ScrollBy(FinePoint delta) {
-		viewpoint = viewpoint.add(delta);
-		RestrictScrolling();
-	}
-
 	public void Follow(GBObject ob) {
 		if (ob != null) {
-			// TODO select side and type if it's a robot
+			//Set selected side and type if following a robot
+			if (ob.Class() == GBObjectClass.ocRobot){
+				app.setSelectedSide(((GBRobot)ob).Owner());
+				app.setSelectedType(((GBRobot)ob).Type());
+			}
 			followedObject = ob;
 			followPosition = ob.Position().subtract(viewpoint);
 			following = true;
@@ -516,7 +532,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		scale += direction * Math.max(1, scale / 9);
 	}
 
-	public boolean panning() {
+	boolean panning() {
 		boolean ret = following && !followedObject.Position().equals(viewpoint);
 		return ret;
 	}
@@ -575,10 +591,33 @@ public class GBPortal extends JPanel implements GBProjection {
 				world.EraseAt(where, kEraseBigRadius);
 				world.CollectStatistics();
 				break;
+			case ptSetViewWindow:
+				if (isMiniMap)
+					app.setViewWindow(where);
+				break;
 			default:
 				break;
 			}
 		} catch (Exception e) {
+		}
+	}
+	
+	Rectangle visibleWorld;
+	
+	public void setVisibleWorld(Rectangle rect){
+		visibleWorld = rect;
+	}
+	
+	public Rectangle getVisibleWorld(){		
+		return new Rectangle((int)viewLeft(), (int)viewTop(), getWidth()/scale, getHeight()/scale);
+	}
+	
+	public void setViewWindow(FinePoint newViewPoint){
+		if (!isMiniMap){
+			following = false;
+			autofollow = false;
+			viewpoint = newViewPoint;
+			repaint();
 		}
 	}
 
