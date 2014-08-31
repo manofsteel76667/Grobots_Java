@@ -456,10 +456,16 @@ class GBMenu extends JMenuBar {
 		btn = makeButton("play", MenuItems.play.description, "Run Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("advance", MenuItems.singleFrame.description, "Advance 1 Frame", "");
+		btn = makeButton("forward", MenuItems.speedup.description, "Speed Up Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("forward", MenuItems.speedup.description, "Speed Up Simulation", "");
+		return ret;
+	}
+	
+	public JToolBar debugToolbar(ActionListener l) {
+		JToolBar ret = new JToolBar();
+		JButton btn;
+		btn = makeButton("advance", MenuItems.singleFrame.description, "Advance 1 Frame", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("step", MenuItems.stepBrain.description, "Step Brain", "");

@@ -78,6 +78,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	JDialog aboutDialog;
 	JDialog debugDialog;
 	JToolBar portalControls;
+	JToolBar debugControls;
 	JPanel center;
 	Debugger debug;
 
@@ -89,6 +90,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	long prevFrameTime;
 	Side selectedSide;
 	RobotType selectedType;
+	GBObject selectedObject;
 
 	int rendering; // Rendering, don't run a turn
 	boolean running; // Running a turn, don't render
@@ -233,15 +235,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		c.gridwidth = 1;
 		c.gridheight = 4;
 		this.getContentPane().add(type, c);
-		
-		//Minimap
+
+		// Minimap
 		c.fill = GridBagConstraints.NONE;
 		c.anchor = GridBagConstraints.SOUTHWEST;
 		c.gridx = 0;
 		c.gridy = 3;
-		//c.weighty = .5;
+		// c.weighty = .5;
 		c.gridheight = 1;
-		minimap.setPreferredSize(new Dimension(200,200));
+		minimap.setPreferredSize(new Dimension(200, 200));
 		this.getContentPane().add(minimap, c);
 	}
 
@@ -249,6 +251,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
 		portal = new GBPortal(this, false);
+		portal.setPreferredSize(new Dimension(600,600));
 		minimap = new GBPortal(this, true);
 		roster = new GBRosterView(this);
 		tournament = new GBTournamentView(this);
@@ -261,7 +264,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		portalControls.setOrientation(JToolBar.VERTICAL);
 		center.add(portal);
 		center.add(portalControls, BorderLayout.LINE_START);
-		debug = new Debugger(this);
+		debugControls = mainMenu.debugToolbar(this);
+		debugControls.setFloatable(false);
+		debug = new Debugger(this, debugControls);
 		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
 				.getPreferredHeight()));
 	}
@@ -353,6 +358,27 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 			repaint();
 		}
 		updateMenu();
+	}
+
+	public GBObject getSelectedObject() {
+		return selectedObject;
+	}
+
+	public void setSelectedObject(GBObject _obj) {
+		if (debug.isVisible()) {
+			debug.setTarget(_obj);
+			debug.setPreferredSize(new Dimension(debug.getWidth(), debug
+					.getPreferredHeight()));
+		}
+		if (_obj == null || selectedObject == null) {
+			selectedObject = _obj;
+			repaint();
+			return;
+		}
+		if (!selectedType.equals(_obj)) {
+			selectedObject = _obj;
+			repaint();
+		}
 	}
 
 	public RobotType getSelectedType() {
@@ -595,8 +621,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case showDebugger:
 					if (debugDialog == null) {
 						debugDialog = new JDialog(this, "Debug");
-						//TODO: do the setsize step when Followed() changes, then make debug 
-						//not resizable again
+						// TODO: do the setsize step when Followed() changes,
+						// then make debug
+						// not resizable again
 						// debugDialog.setResizable(false);
 						debug.repaint();
 						debugDialog.getContentPane().add(debug);
@@ -691,7 +718,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					}
 					break;
 				case stepBrain:
-					GBObject obj = Followed();
+					GBObject obj = getSelectedObject();
 					if (obj == null)
 						return;
 					if (obj instanceof GBRobot
@@ -710,11 +737,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					}
 					break;
 				case stopStartBrain:
-					if (Followed() == null)
+					if (getSelectedObject() == null)
 						return;
-					if (Followed() instanceof GBRobot
-							&& Followed().Class() != GBObjectClass.ocDead) {
-						Brain brain = ((GBRobot) Followed()).Brain();
+					if (getSelectedObject() instanceof GBRobot
+							&& getSelectedObject().Class() != GBObjectClass.ocDead) {
+						Brain brain = ((GBRobot) getSelectedObject()).Brain();
 						if (brain == null)
 							return;
 						brain.status = brain.status == BrainStatus.bsOK ? BrainStatus.bsStopped
@@ -754,15 +781,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		}
 	}
 
-	public GBObject Followed() {
-		return portal.followedObject;
-	}
-	
-	public void setViewWindow(FinePoint p){
+	public void setViewWindow(FinePoint p) {
 		portal.setViewWindow(p);
 	}
-	
-	public void setVisibleWorld(Rectangle r){
+
+	public void setVisibleWorld(Rectangle r) {
 		minimap.setVisibleWorld(r);
 	}
 }

@@ -6,6 +6,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+import java.awt.image.BufferedImage;
+
 /*******************************************************************************
  * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
@@ -16,12 +18,15 @@ import brains.Brain;
 import brains.BrainStatus;
 import brains.GBStackBrain;
 import simulation.GBHardwareState;
+import simulation.GBObject;
 import simulation.GBRobot;
 import simulation.GBWorld;
 import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
 import ui.GBApplication;
+
+import javax.swing.JToolBar;
 
 public class Debugger extends JPanel {
 
@@ -43,16 +48,24 @@ public class Debugger extends JPanel {
 	GBWorld world;
 	GBRobot target;
 
+	JToolBar toolbar;
+
+	public Debugger(GBApplication _app, JToolBar bar) {
+		app = _app;
+		world = app.world;
+		toolbar = bar;
+		add(toolbar);
+	}
+
 	@Override
 	public void paintComponent(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;
+		Graphics2D g2d = (Graphics2D)g;
 		super.paintComponent(g);
 		Draw(g2d);
 	}
 
 	@Override
 	public Dimension getPreferredSize() {
-		UpdateTarget();
 		return new Dimension(getPreferredWidth(), getPreferredHeight());
 	}
 
@@ -98,8 +111,8 @@ public class Debugger extends JPanel {
 		int pc = brain.PC();
 		StringUtilities.drawStringPair(g, "PC:", brain.AddressLastLabel(pc)
 				+ " (line " + Integer.toString(brain.PCLine()) + ')',
-				box.x + 3, box.x + box.width - 3, box.y + 11, 10,
-				Color.black, true);
+				box.x + 3, box.x + box.width - 3, box.y + 11, 10, Color.black,
+				true);
 		for (int i = -4; i <= 3; i++)
 			if (brain.ValidAddress(pc + i))
 				StringUtilities.drawStringPair(g,
@@ -119,7 +132,7 @@ public class Debugger extends JPanel {
 			for (int i = 1; i < 5 && i <= height; i++)
 				StringUtilities.drawStringPair(g,
 						Integer.toString(height - i) + ':',
-						String.format("%.6f",brain.StackAt(height - i)),
+						String.format("%.6f", brain.StackAt(height - i)),
 						box.x + 3, box.x + box.width - 3, box.y + box.height
 								- 44 + 10 * i, 10, Color.black, false);
 		} else
@@ -133,7 +146,7 @@ public class Debugger extends JPanel {
 				box.y + 11, 10, Color.black, true);
 		int height = brain.ReturnStackHeight();
 		if (height != 0) {
-			for (int i = 0; i < 5 && i < height; i++)				
+			for (int i = 0; i < 5 && i < height; i++)
 				StringUtilities.drawStringPair(
 						g,
 						Integer.toString(height - i) + ':',
@@ -188,12 +201,10 @@ public class Debugger extends JPanel {
 		StringUtilities.drawStringPair(g, "Mass:",
 				String.format("%.1f", target.Mass()), left, right, box.y + 11,
 				10, Color.black, false);
-		StringUtilities
-				.drawStringPair(g, "Position:", target.Position().toString(1),
-						left, right, box.y + 21, 10, Color.black, false);
-		StringUtilities
-				.drawStringPair(g, "Velocity:", target.Velocity().toString(2),
-						left, right, box.y + 31, 10, Color.black, false);
+		StringUtilities.drawStringPair(g, "Position:", target.Position()
+				.toString(1), left, right, box.y + 21, 10, Color.black, false);
+		StringUtilities.drawStringPair(g, "Velocity:", target.Velocity()
+				.toString(2), left, right, box.y + 31, 10, Color.black, false);
 		StringUtilities.drawStringPair(g, "Speed:",
 				String.format("%.2f", target.Speed()), left, right, box.y + 41,
 				10, Color.black, false);
@@ -225,11 +236,11 @@ public class Debugger extends JPanel {
 		if (hw.constructor.Type() != null) {
 			StringUtilities.drawStringLeft(g, "Constructor", left, box.y + 121,
 					10, Color.black, true);
-			StringUtilities
-					.drawStringPair(g, "type:", hw.constructor.Type().name,
-							left, right, box.y + 131, 10, 
-							GBColor.ContrastingTextColor(hw.constructor.Type().Color())
-							/*hw.constructor.Type().Color().ContrastingTextColor()*/, false);
+			StringUtilities.drawStringPair(g, "type:",
+					hw.constructor.Type().name, left, right, box.y + 131, 10,
+					GBColor.ContrastingTextColor(hw.constructor.Type().Color())
+					/* hw.constructor.Type().Color().ContrastingTextColor() */,
+					false);
 			StringUtilities.drawStringPair(
 					g,
 					"progress:",
@@ -307,34 +318,18 @@ public class Debugger extends JPanel {
 		 */
 	}
 
-	void UpdateTarget() {
-		if (target == app.Followed())
+	public void setTarget(GBObject obj) {
+		if (obj == target)
 			return;
-		if (app.Followed() instanceof GBRobot) {
-			target = (GBRobot) app.Followed();
+		if (obj instanceof GBRobot) {
+			target = (GBRobot) obj;
 			if (target.Class() == GBObjectClass.ocDead)
 				target = null;
-		}
-		// if ( target ) target.AddDeletionListener(this);
-	}
-
-	public Debugger(GBApplication _app) {
-		app = _app;
-		world = app.world;
-	}
-
-	boolean Active() {
-		UpdateTarget();
-		return target != null && target.Brain() != null;
-	}
-
-	long RedrawInterval() {
-		return target != null ? 300 : 1000;
+		} else
+			target = null;
 	}
 
 	void Draw(Graphics2D g) {
-		UpdateTarget();
-		// DrawBackground();
 		Rectangle box = new Rectangle();
 		if (target == null) {
 			StringUtilities.drawStringLeft(g, "No robot selected", 4, 20, 12,
@@ -384,6 +379,9 @@ public class Debugger extends JPanel {
 			box.x = kColumnWidth + kEdgeSpace * 2;
 			box.height = kPCBoxHeight + kStackBoxHeight + kEdgeSpace;
 			DrawHardwareBox(g, box);
+			// place toolbar
+			toolbar.setBounds(box.x, box.y + box.height + kEdgeSpace,
+					toolbar.getWidth(), toolbar.getHeight());
 		}
 	}
 
@@ -392,8 +390,6 @@ public class Debugger extends JPanel {
 	}
 
 	public int getPreferredHeight() {
-		// return 500;
-		// *
 		int kHardwareBoxHeight = kPCBoxHeight + kStackBoxHeight + kEdgeSpace;
 		if (target != null) {
 			GBStackBrain sbrain = (GBStackBrain) target.Brain();
@@ -406,11 +402,6 @@ public class Debugger extends JPanel {
 							: brainheight) + 3 * kEdgeSpace;
 		} else
 			return kProfileBoxHeight + kEdgeSpace * 2;
-		// */
-	}
-
-	public static final String Name() {
-		return "Debugger";
 	}
 
 }

@@ -81,7 +81,6 @@ public class GBPortal extends JPanel implements GBProjection {
 	 */
 	FinePoint followPosition;
 	long lastFollow;
-	public GBObject followedObject;
 
 	GBObject moving;
 	// tool use
@@ -250,34 +249,34 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	void adjustViewpoint() {
 		// If the object you're following dies, handle it
-		if (followedObject != null)
-			if (followedObject.Class() == GBObjectClass.ocDead) {
-				followedObject = null;
+		if (app.getSelectedObject() != null)
+			if (app.getSelectedObject().Class() == GBObjectClass.ocDead) {
+				app.setSelectedObject(null);
 				following = autofollow;
 			}
 		// Set viewpoint to followed object, if following
 		if (following) {
 			if (autofollow
 					&& (System.currentTimeMillis() > lastFollow
-							+ kAutofollowPeriod) || followedObject == null) {
+							+ kAutofollowPeriod) || app.getSelectedObject() == null) {
 				FollowRandom();
-				if (followedObject != null)
-					viewpoint.set(followedObject.Position());
+				if (app.getSelectedObject() != null)
+					viewpoint.set(app.getSelectedObject().Position());
 				lastFollow = System.currentTimeMillis();
 			}
-			if (followedObject != null) {
+			if (app.getSelectedObject() != null) {
 				if (panning())
 					//TODO at full zoom the panning rate is slower than some objects
-					if (!viewpoint.inRange(followedObject.Position(),
+					if (!viewpoint.inRange(app.getSelectedObject().Position(),
 							16.0d / scale)) {
-						FinePoint distance = followedObject.Position()
+						FinePoint distance = app.getSelectedObject().Position()
 								.subtract(viewpoint);
 						distance.setNorm(16.0d / scale);
 						viewpoint = viewpoint.add(distance);
 					} else
-						viewpoint.set(followedObject.Position());
+						viewpoint.set(app.getSelectedObject().Position());
 				else
-					viewpoint.set(followedObject.Position());
+					viewpoint.set(app.getSelectedObject().Position());
 			}
 		}
 		RestrictScrolling();
@@ -375,28 +374,28 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	void drawText(Graphics2D g2d) {
 		// Details about the followed object
-		if (followedObject != null) {
-			FinePoint targetPos = followedObject.Position();
+		if (app.getSelectedObject() != null) {
+			FinePoint targetPos = app.getSelectedObject().Position();
 			Font textFont = new Font("Serif", Font.PLAIN, 10);
 			g2d.setFont(textFont);
 			g2d.setColor(Color.white);
 			FontMetrics fm = g2d.getFontMetrics();
-			String s = followedObject.toString();
+			String s = app.getSelectedObject().toString();
 			// Center the name below the object
 			int x = ToScreenX(targetPos.x) - fm.stringWidth(s) / 2;
 			int texty = ToScreenY(targetPos.y
-					- (followedObject.Radius() > 2 ? 0 : followedObject
+					- (app.getSelectedObject().Radius() > 2 ? 0 : app.getSelectedObject()
 							.Radius())) + 13;
 			g2d.drawString(s, x, texty);
-			String details = followedObject.Details();
+			String details = app.getSelectedObject().Details();
 			// Details go below that
 			if (details.length() > 0) {
 				x = ToScreenX(targetPos.x) - fm.stringWidth(details) / 2;
 				g2d.drawString(details, x, texty + 10);
 			}
 			// Draw range circles if following a robot
-			if (followedObject.Class() == GBObjectClass.ocRobot)
-				((GBRobot) followedObject).drawRangeCircles(g2d, this);
+			if (app.getSelectedObject().Class() == GBObjectClass.ocRobot)
+				((GBRobot) app.getSelectedObject()).drawRangeCircles(g2d, this);
 		}
 		// Side names
 		if (showSideNames) {
@@ -516,7 +515,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				app.setSelectedSide(((GBRobot)ob).Owner());
 				app.setSelectedType(((GBRobot)ob).Type());
 			}
-			followedObject = ob;
+			app.setSelectedObject(ob);
 			followPosition = ob.Position().subtract(viewpoint);
 			following = true;
 		}
@@ -533,7 +532,7 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	boolean panning() {
-		boolean ret = following && !followedObject.Position().equals(viewpoint);
+		boolean ret = following && !app.getSelectedObject().Position().equals(viewpoint);
 		return ret;
 	}
 
