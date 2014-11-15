@@ -41,11 +41,11 @@ public class RobotType extends support.Model {
 
 	public RobotType (RobotType type) {
 		this(type.side);
-		type.name = name;
-		type.SetColor(color);
-		type.SetDecoration(decoration, decorationColor);
-		type.hardware = hardware;
-		type.brain = brain.clone();
+		name = type.name;
+		SetColor(type.color);
+		SetDecoration(type.decoration, type.decorationColor);
+		hardware = type.hardware;
+		brain = type.brain.clone();
 	}
 
 	@Override
