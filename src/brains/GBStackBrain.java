@@ -15,7 +15,6 @@ import support.GBMath;
 import exception.GBAbort;
 import exception.GBBrainError;
 import exception.GBError;
-import exception.GBSimulationError;
 
 //Clumsily trying to get around java's lack of custom opeators...
 enum VectortoVectorOperator {
@@ -147,8 +146,7 @@ public class GBStackBrain extends Brain {
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		--stackHeight;
-		double x = stack[stackHeight - 1];// TODO: check that this is in the
-											// right order
+		double x = stack[stackHeight - 1];
 		double divisor = stack[stackHeight];
 		switch (op) {
 		/*
@@ -320,7 +318,11 @@ public class GBStackBrain extends Brain {
 	void BrainError(Exception err, GBRobot robot, GBWorld world) {
 		status = BrainStatus.bsError;
 		if (world.reportErrors)
-			throw new GBSimulationError(robot.toString()
+			//Handle brain errors at this level before they bubble up to the
+			//rest of the world.
+			//Choosing Abort will still throw an exception, but continue
+			//will not.
+			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
 					+ AddressAndLine(pc - 1) + ": " + err.getMessage());
 	}

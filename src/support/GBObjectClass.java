@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum GBObjectClass {
-	ocRobot(0), // = 0, // a robot or other large mobile object
+	ocRobot(0), // a robot or other large mobile object
 	ocFood(1), // small and immobile
 	ocShot(2), // small and mobile
-	ocArea(3), // large; collides with food and robots
+	ocArea(3), // large; collides with food and robots (forcefields and explosions)
 	ocSensorShot(4), // collides with robots, shots, and food
-	ocDecoration(5), // noncolliding
+	ocDecoration(5), // noncolliding (shot explosions and smoke)
 	ocDead(6); // to delete (was 7)
 
 	public final int value;

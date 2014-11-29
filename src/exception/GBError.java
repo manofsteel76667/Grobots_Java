@@ -23,7 +23,17 @@ public final class GBError {
 		javax.swing.JOptionPane.showMessageDialog(null, message);
 		System.exit(1);
 	}
+	/*
+	 * Error handling strategy:  
+	 * All exceptions are unchecked custom exceptions derived from
+	 * RuntimeException (SimulationException and its descendants)
+	 * Exceptions thrown at their source
+	 * NonfatalError is called at the appropriate level; Brain level for Brain exceptions,
+	 * World level for simulation problems and brain errors that have been aborted, and
+	 * UI level for system-level errors and simulation errors that have been aborted.
+	 * 
 
+	 */
 	public static void NonfatalError(final String message) throws GBAbort {
 		/*
 		 * Invoke an option pane to inform the user of the error andask him what

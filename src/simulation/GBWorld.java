@@ -106,7 +106,7 @@ public class GBWorld extends GBObjectWorld {
 				for (GBObject ob = objects.get(GBObjectClass.ocRobot)[i]; ob != null; ob = ob.next)
 					ob.Think(this);
 		} catch (Exception err) {
-			GBError.NonfatalError("Error thinking object: "
+			GBError.NonfatalError("Error thinking objects: "
 					+ err.getMessage());
 		}
 	}
@@ -118,7 +118,7 @@ public class GBWorld extends GBObjectWorld {
 					for (GBObject ob = objects.get(cur)[i]; ob != null; ob = ob.next)
 						ob.Act(this);
 		} catch (Exception e) {
-			GBError.NonfatalError("Error acting object: " + e.getMessage());
+			GBError.NonfatalError("Error acting objects: " + e.getMessage());
 		}
 	}
 
