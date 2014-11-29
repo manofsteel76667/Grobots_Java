@@ -6,17 +6,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-import java.awt.image.BufferedImage;
-
 /*******************************************************************************
  * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
  *******************************************************************************/
 import javax.swing.JPanel;
+import javax.swing.JToolBar;
 
-import brains.Brain;
-import brains.BrainStatus;
-import brains.GBStackBrain;
 import simulation.GBHardwareState;
 import simulation.GBObject;
 import simulation.GBRobot;
@@ -25,8 +21,9 @@ import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
 import ui.GBApplication;
-
-import javax.swing.JToolBar;
+import brains.Brain;
+import brains.BrainStatus;
+import brains.GBStackBrain;
 
 public class Debugger extends JPanel {
 

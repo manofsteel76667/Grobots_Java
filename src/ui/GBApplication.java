@@ -84,7 +84,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	public StepRates stepRate;
 	public long lastTime;
-	int redrawInterval = 40;// Repaint at 25Hz
+	int fastInterval = 40;// Repaint at 25Hz
+	javax.swing.Timer fastTimer;
+	ActionListener fastUpdate;
+	int slowInterval = 1500;
+	javax.swing.Timer slowTimer;
+	ActionListener slowUpdate;
+
 	GBMenu mainMenu;
 
 	long prevFrameTime;
@@ -137,60 +143,56 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		setLayouts();
 		this.pack();
 		setVisible(true);
-		javax.swing.Timer portalTimer = new javax.swing.Timer(redrawInterval,
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						/*while (running)
-							try {
-								Thread.sleep(1);
-							} catch (InterruptedException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}*/
-						if (!running) {
-						rendering++;
-						if (portal.isVisible())
-							portal.repaint();
-						if (minimap.isVisible())
-							minimap.repaint();
-						if (debug.isVisible())
-							debug.repaint();
-						rendering--;
-						}
-					}
-				});
-		portalTimer.setRepeats(true);
-		portalTimer.setCoalesce(true);
-		portalTimer.start();
-		javax.swing.Timer otherTimer = new javax.swing.Timer(1500,
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						/*while (running) {
-							try {
-								Thread.sleep(1);
-							} catch (InterruptedException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-						}*/
-						if (!running) {
-						rendering++;
-						if (roster.isVisible())
-							roster.repaint();
-						if (tournament.isVisible())
-							tournament.repaint();
-						if (type.isVisible())
-							type.repaint();
-						if (statistics.isVisible())
-							statistics.repaint();
-						rendering--;
-					}}
-				});
-		otherTimer.setRepeats(true);
-		otherTimer.setCoalesce(true);
-		otherTimer.start();
+		createTimers();
+
+	}
+
+	void createTimers() {
+		fastUpdate = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!running) {
+					rendering++;
+					if (portal.isVisible())
+						portal.repaint();
+					if (minimap.isVisible())
+						minimap.repaint();
+					if (debug.isVisible())
+						debug.repaint();
+					rendering--;
+					fastTimer.setDelay(fastInterval);
+				} else
+					fastTimer.setDelay(1);
+				;
+			};
+		};
+		fastTimer = new javax.swing.Timer(fastInterval, fastUpdate);
+		fastTimer.setRepeats(true);
+		fastTimer.setCoalesce(true);
+		fastTimer.start();
+		slowUpdate = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!running) {
+					rendering++;
+					if (roster.isVisible())
+						roster.repaint();
+					if (tournament.isVisible())
+						tournament.repaint();
+					if (type.isVisible())
+						type.repaint();
+					if (statistics.isVisible())
+						statistics.repaint();
+					rendering--;
+					slowTimer.setDelay(slowInterval);
+				} else
+					slowTimer.setDelay(1);
+			}
+		};
+		slowTimer = new javax.swing.Timer(slowInterval, slowUpdate);
+		slowTimer.setRepeats(true);
+		slowTimer.setCoalesce(true);
+		slowTimer.start();
 	}
 
 	void setLayouts() {
@@ -254,7 +256,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
 		portal = new GBPortal(this, false);
-		portal.setPreferredSize(new Dimension(600,600));
+		portal.setPreferredSize(new Dimension(600, 600));
 		minimap = new GBPortal(this, true);
 		roster = new GBRosterView(this);
 		tournament = new GBTournamentView(this);
@@ -324,7 +326,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						try {
 							// Sleep until next time
 							long snooze = prevFrameTime + frameRate
-									- System.nanoTime();
+									- System.nanoTime() - 1000;
 							if (snooze > 0)
 								Thread.sleep(snooze / 1000000);
 						} catch (InterruptedException e) {
@@ -536,6 +538,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					repaint();
 					break;
 				case play:
+					if (running)
+						break;
 					if (world.sidesSeeded > 0) {
 						world.running = true;
 						simulate();
@@ -593,8 +597,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case rules:
 					break;
 				case run:
-					world.running = true;
-					simulate();
+					if (!world.running) {
+						world.running = true;
+						simulate();
+					}
 					break;
 				case saveScores:
 					world.DumpTournamentScores(true);
