@@ -4,6 +4,8 @@
  *******************************************************************************/
 package simulation;
 
+import exception.GBBrainError;
+
 public class GBMessageQueue {
 	public static final int kMaxMessageNumber = 2000000;
 	public static final int kMaxMessages = 50;
@@ -30,7 +32,7 @@ public class GBMessageQueue {
 		buffer[nextNumber % kMaxMessages] = newMess;
 		buffer[nextNumber % kMaxMessages].SetMessageNumber(nextNumber);
 		if (++nextNumber >= kMaxMessageNumber)
-			throw new RuntimeException("Message number got too high.");
+			throw new GBBrainError("Message number got too high.");
 	}
 
 	public GBMessage GetMessage(int num) {
@@ -45,7 +47,7 @@ public class GBMessageQueue {
 										// hasn't appeared yet?
 			return null;
 		else
-			throw new RuntimeException("Unexpected condition in GetMessage()");
+			throw new GBBrainError("Unexpected condition in GetMessage()");
 	}
 
 	public int NextMessageNumber() {

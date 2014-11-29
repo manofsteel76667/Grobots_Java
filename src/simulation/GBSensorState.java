@@ -4,6 +4,7 @@
  *******************************************************************************/
 package simulation;
 
+import exception.GBBrainError;
 import sides.SensorSpec;
 import sides.Side;
 import support.FinePoint;
@@ -108,7 +109,7 @@ public class GBSensorState {
 
 	public void SetCurrentResult(int newCurrent) {
 		if (newCurrent < 0 || newCurrent >= NumResults())
-			throw new IllegalArgumentException();
+			throw new GBBrainError("sensor result out of bounds");
 		currentResult = newCurrent;
 	}
 

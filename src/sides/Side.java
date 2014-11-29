@@ -13,6 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.awt.Color;
 
+import exception.GBBrainError;
+import exception.GBSimulationError;
 import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
@@ -179,7 +181,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public RobotType GetSeedType(int index) {
 		if (index < 0)
-			throw new IllegalArgumentException("type index must be positive: "
+			throw new GBSimulationError("type index must be positive: "
 					+ index);
 		if (seedIDs.isEmpty())
 			return null;
@@ -278,14 +280,14 @@ public class Side extends Model implements Comparable<Side> {
 
 	public double ReadSharedMemory(int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new IndexOutOfBoundsException(
+			throw new GBBrainError(
 					"tried to read from shared memory at " + addr);
 		return sharedMemory[addr - 1];
 	}
 
 	public void WriteSharedMemory(double value, int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new IndexOutOfBoundsException(
+			throw new GBBrainError(
 					"tried to write to shared memory at " + addr);
 		sharedMemory[addr - 1] = value;
 	}
@@ -294,7 +296,7 @@ public class Side extends Model implements Comparable<Side> {
 	// must be used and discarded before any robot calls SendMessage again!
 	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel "
+			throw new GBBrainError("tried to receive on channel "
 					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return null;
@@ -303,7 +305,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SendMessage(GBMessage msg, int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to send on channel "
+			throw new GBBrainError("tried to send on channel "
 					+ channel);
 		if (msgQueues[channel - 1] == null) {
 			msgQueues[channel - 1] = new GBMessageQueue();
@@ -313,7 +315,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int NextMessageNumber(int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel "
+			throw new GBBrainError("tried to receive on channel "
 					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
@@ -322,7 +324,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int MessagesWaiting(int channel, int next) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel "
+			throw new GBBrainError("tried to receive on channel "
 					+ channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;

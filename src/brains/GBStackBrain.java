@@ -13,7 +13,9 @@ import simulation.GBWorld;
 import support.FinePoint;
 import support.GBMath;
 import exception.GBAbort;
+import exception.GBBrainError;
 import exception.GBError;
+import exception.GBSimulationError;
 
 //Clumsily trying to get around java's lack of custom opeators...
 enum VectortoVectorOperator {
@@ -227,7 +229,7 @@ public class GBStackBrain extends Brain {
 
 	double Peek(int delta) throws GBStackUnderflowError, GBStackOverflowError {
 		if (delta < 1)
-			throw new IndexOutOfBoundsException("peeking stack element "
+			throw new GBBrainError("peeking stack element "
 					+ delta);
 		int where = stackHeight - delta;
 		if (where < 0)
@@ -275,7 +277,7 @@ public class GBStackBrain extends Brain {
 
 	double ReadLocalMemory(int addr, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new IndexOutOfBoundsException("tried to read at address "
+			throw new GBBrainError("tried to read at address "
 					+ addr);
 		if (memory == null)
 			return 0;
@@ -284,7 +286,7 @@ public class GBStackBrain extends Brain {
 
 	void WriteLocalMemory(int addr, double val, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new IndexOutOfBoundsException("tried to write at address "
+			throw new GBBrainError("tried to write at address "
 					+ addr);
 		if (memory == null) {
 			if (robot.hardware.Memory() == 0)
@@ -318,9 +320,9 @@ public class GBStackBrain extends Brain {
 	void BrainError(Exception err, GBRobot robot, GBWorld world) {
 		status = BrainStatus.bsError;
 		if (world.reportErrors)
-			GBError.NonfatalError(robot.toString()
+			throw new GBSimulationError(robot.toString()
 					+ " had error in brain, probably at "
-					+ AddressAndLine(pc - 1) + ": " + err.toString());
+					+ AddressAndLine(pc - 1) + ": " + err.getMessage());
 	}
 
 	public GBStackBrain(GBStackBrainSpec spc) {
@@ -401,14 +403,14 @@ public class GBStackBrain extends Brain {
 
 	public double StackAt(int index) {
 		if (index < 0 || index >= stackHeight)
-			throw new IndexOutOfBoundsException("tried to read stack element "
+			throw new GBBrainError("tried to read stack element "
 					+ index);
 		return stack[index];
 	}
 
 	public int ReturnStackAt(int index) {
 		if (index < 0 || index >= returnStackHeight)
-			throw new IndexOutOfBoundsException(
+			throw new GBBrainError(
 					"tried to read return stack element " + index);
 		return returnStack[index];
 	}
@@ -1104,7 +1106,7 @@ public class GBStackBrain extends Brain {
 		case opDropN: {
 			int n = PopInteger();
 			if (n > stackHeight)
-				throw new IllegalArgumentException("dropped " + n + " of "
+				throw new GBBrainError("dropped " + n + " of "
 						+ stackHeight);
 			stackHeight -= n;
 		}
@@ -1572,7 +1574,7 @@ public class GBStackBrain extends Brain {
 										// with earlier numbers in stack. :(
 			}
 			if (numArgs <= 0)
-				throw new RuntimeException(
+				throw new GBBrainError(
 						"Cannot send message of non-positive length");
 			robot.hardware.radio.Send(sendee, tempInt, robot.Owner());
 		}
@@ -1585,7 +1587,7 @@ public class GBStackBrain extends Brain {
 				Push(0);
 			} else {
 				if (received.length <= 0) {
-					throw new RuntimeException(
+					throw new GBBrainError(
 							"non-positive length message received");
 				}
 				for (int i = received.length - 1; i >= 0; i--)

@@ -5,15 +5,15 @@
 package simulation;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Color;
 
+import exception.GBSimulationError;
 import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
-import exception.GBError;
 
 public class GBSyphon extends GBTimedShot {
 	GBRobot sink;
@@ -68,13 +68,13 @@ public class GBSyphon extends GBTimedShot {
 									.ReportStolen(taken);
 						}
 						if (taken != given || taken != actual) {
-							throw new RuntimeException(
+							throw new GBSimulationError(
 									"Given != taken in CollideWith");
 						}
 					}
 				} catch (Exception e) {
-					GBError.NonfatalError("Error in CollideWith: "
-							+ e.toString());
+					throw new GBSimulationError("Error in CollideWith: "
+							+ e.getMessage());
 				}
 			} else { // giving energy: like taking, but target energy isn't a
 						// factor
@@ -98,7 +98,7 @@ public class GBSyphon extends GBTimedShot {
 					owner.Scores().expenditure.ReportStolen(given);
 				}
 				if (taken != given || taken != actual) {
-					throw new RuntimeException("Given != taken in CollideWith");
+					throw new GBSimulationError("Given != taken in CollideWith");
 				}
 			}
 		}

@@ -232,7 +232,7 @@ GBStackDatum GBStackBrain::FromBoolean(const bool value) {
 void GBStackBrain::BrainError(GBError & err, GBRobot * robot, GBWorld * world) {
 	if ( world->reportErrors )
 		NonfatalError(robot->Description() + " had error in brain, probably at line "
-			+ ToString(spec->LineNumber(pc - 1)) + ": " + err.ToString());
+			+ ToString(spec->LineNumber(pc - 1)) + ": " + err.getMessage());
 	SetStatus(bsError);
 }
 

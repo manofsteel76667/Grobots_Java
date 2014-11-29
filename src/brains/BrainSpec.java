@@ -6,8 +6,8 @@
 
 package brains;
 
+import exception.GBBrainError;
 import sides.HardwareItem;
-import exception.GBSimulationError;
 
 public class BrainSpec extends HardwareItem {
 	public Brain MakeBrain() {
@@ -44,21 +44,6 @@ public class BrainSpec extends HardwareItem {
 }
 
 // errors //
-
-class GBBrainError extends GBSimulationError {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2788018746426283330L;
-
-	public GBBrainError() {
-	}
-
-	@Override
-	public String toString() {
-		return "unspecified brain error";
-	}
-};
 
 class GBUnknownInstructionError extends GBBrainError {
 	/**

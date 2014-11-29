@@ -4,6 +4,7 @@
  *******************************************************************************/
 package simulation;
 
+import exception.GBBrainError;
 import sides.Side;
 
 public class GBRadioState {
@@ -44,13 +45,13 @@ public class GBRadioState {
 
 	public int MessagesWaiting(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
+			throw new GBBrainError("tried to receive on channel " + channel);
 		return side.MessagesWaiting(channel, nextMessage[channel - 1]);
 	}
 
 	public GBMessage Receive(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to receive on channel " + channel);
+			throw new GBBrainError("tried to receive on channel " + channel);
 		GBMessage msg = side.ReceiveMessage(channel, nextMessage[channel - 1]);
 		if (msg != null)
 			nextMessage[channel - 1] = msg.sequenceNum + 1;
@@ -64,13 +65,13 @@ public class GBRadioState {
 
 	public void ClearChannel(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to clear channel " + channel);
+			throw new GBBrainError("tried to clear channel " + channel);
 		nextMessage[channel - 1] = side.NextMessageNumber(channel);
 	}
 
 	public void SkipMessages(int channel, int skip, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new IndexOutOfBoundsException("tried to skip on channel " + channel);
+			throw new GBBrainError("tried to skip on channel " + channel);
 		if (skip <= 0)
 			return;
 		nextMessage[channel - 1] += skip;

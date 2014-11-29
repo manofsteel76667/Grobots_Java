@@ -4,6 +4,8 @@
  *******************************************************************************/
 package sides;
 
+import exception.GBSimulationError;
+
 public class HardwareSpec {
 	public static final double kStandardMassPerCost = 0.02;
 	public static final double kStandardCost = 1000;
@@ -364,7 +366,7 @@ public class HardwareSpec {
 		if (debug)
 			buildHardwareList();
 		if (hardwareCost < kBaseCost || mass < kBaseMass)
-			throw new RuntimeException("impossibly low cost or mass");
+			throw new GBSimulationError("impossibly low cost or mass");
 	}
 
 	void buildHardwareList() {

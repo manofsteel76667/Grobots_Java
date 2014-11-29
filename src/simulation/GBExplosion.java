@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Color;
 
+import exception.GBSimulationError;
 import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
@@ -18,7 +19,7 @@ public class GBExplosion extends GBTimedShot {
 	public GBExplosion(FinePoint where, Side who, double howMuch) {
 		super(where, PowerRadius(howMuch), who, howMuch, kExplosionLifetime);
 		if (howMuch < 0)
-			throw new IllegalArgumentException("negative explosion");
+			throw new GBSimulationError("negative explosion");
 		// TODO: when sound is done
 		/*
 		 * if ( howMuch > 100 ) StartSound(siLargeExplosion); else if ( howMuch

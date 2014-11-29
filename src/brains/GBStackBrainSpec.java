@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import exception.GBBrainError;
 import support.FinePoint;
 
 //typedef GBNumber GBStackDatum; doublr

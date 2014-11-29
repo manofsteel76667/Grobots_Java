@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+import exception.GBSimulationError;
 import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
@@ -47,7 +48,7 @@ public class GBFood extends GBObject {
 		value = val;
 
 		if (val < 0)
-			throw new IllegalArgumentException("negative-value food");
+			throw new GBSimulationError("negative-value food");
 	}
 
 	@Override
@@ -58,7 +59,7 @@ public class GBFood extends GBObject {
 	@Override
 	public double TakeEnergy(double limit) {
 		if (limit < 0)
-			throw new IllegalArgumentException("can't take negative energy from food");
+			throw new GBSimulationError("can't take negative energy from food");
 		if (value <= limit) {
 			double amt = value;
 			value = 0;
@@ -67,7 +68,7 @@ public class GBFood extends GBObject {
 		} else {
 			value -= limit;
 			if (value < 0)
-				throw new RuntimeException("taking negative energy from food");
+				throw new GBSimulationError("taking negative energy from food");
 			Recalculate();
 			return limit;
 		}

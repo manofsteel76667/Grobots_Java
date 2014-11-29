@@ -6,6 +6,7 @@
 
 package simulation;
 
+import exception.GBSimulationError;
 import sides.HardwareSpec;
 import support.FinePoint;
 import support.GBMath;
@@ -186,7 +187,7 @@ public class GBHardwareState {
 
 	public double GiveEnergy(double amount) {
 		if (amount < 0)
-			throw new IllegalArgumentException("can't give negative energy'");
+			throw new GBSimulationError("can't give negative energy'");
 		double actual = Math.min(amount, MaxEnergy() - energy);
 		energy += actual;
 		return actual;

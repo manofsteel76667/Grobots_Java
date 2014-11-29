@@ -4,6 +4,8 @@
  *******************************************************************************/
 package brains;
 
+import exception.GBBrainError;
+
 public class GBBadSymbolIndexError extends GBBrainError {
 	/**
 	 * 

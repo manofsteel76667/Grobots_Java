@@ -10,11 +10,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import exception.GBSimulationError;
 import support.FinePoint;
 import support.GBObjectClass;
 import support.GBRandomState;
 import support.Model;
-import exception.GBError;
 
 public class GBObjectWorld extends Model {
 	/**
@@ -50,8 +50,8 @@ public class GBObjectWorld extends Model {
 	 */
 	Map<GBObjectClass, GBObject[]> objects;
 	// protected GBObject[][] objects;
-	protected List<GBObject> news; 
-	
+	protected List<GBObject> news;
+
 	/*
 	 * Calls from GBWorld go in the order: 1) Think All 2) Move All 3) Act All
 	 * 4) Resort All 5) Collide All 6) Start next turn 7) Collect statistics
@@ -87,15 +87,13 @@ public class GBObjectWorld extends Model {
 	 * Puts objects in the appropriate class and tile, and deletes dead ones.
 	 */
 	protected void ResortObjects() {
-		GBObject[] template = new GBObject[tilesX * tilesY + 1];
-		for (GBObjectClass cl : GBObjectClass.values())
-			objects.put(cl, template.clone());
+		MakeTiles();
 		Iterator<GBObject> it = allObjects.iterator();
 		while (it.hasNext()) {
 			GBObject obj = it.next();
 			obj.next = null;
 			if (obj.Class() != GBObjectClass.ocDead) {
-				AddObjectDirectly(obj);
+				addObject(obj);
 			} else
 				// TODO: check that allObjects is the only place the dead
 				// object is referenced;
@@ -121,7 +119,7 @@ public class GBObjectWorld extends Model {
 		while (it.hasNext()) {
 			GBObject ob = it.next();
 			allObjects.add(ob);
-			AddObjectDirectly(ob);
+			addObject(ob);
 		}
 		news.clear();
 	}
@@ -136,13 +134,17 @@ public class GBObjectWorld extends Model {
 		if (newOb != null)
 			news.add(newOb);
 	}
-	
+
+	/**
+	 * Add an object to the map from the UI
+	 * @param newOb
+	 */
 	public void addObjectManual(GBObject newOb) {
 		allObjects.add(newOb);
-		AddObjectDirectly(newOb);
+		addObject(newOb);
 	}
 
-	protected void AddObjectDirectly(GBObject ob) {
+	protected void addObject(GBObject ob) {
 		if (ob != null)
 			if (ob.Class() != GBObjectClass.ocDead) {
 				// If object is dead, leave it alone.
@@ -219,52 +221,35 @@ public class GBObjectWorld extends Model {
 	}
 
 	protected void CollideSameTile(int t) {
-		for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t]; bot != null; bot = bot.next) {
-			try {
+		String stage = "";
+		try {
+			for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t]; bot != null; bot = bot.next) {
+				stage = "colliding robots";
 				for (GBObject bot2 = bot.next; bot2 != null; bot2 = bot2.next) {
 					bot.SolidCollide(bot2, kRobotRestitution);
-				}// )
-			} catch (Exception err) {
-				GBError.NonfatalError("Error colliding robots: "
-						+ err.toString());
-			}
-			if (((GBRobot) bot).hardware.EaterLimit() != 0)
-				try {
+				}
+				if (((GBRobot) bot).hardware.EaterLimit() != 0) {
+					stage = "colliding robot and food";
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next) {
 						bot.BasicCollide(food);
 					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding robot and food: "
-							+ err.toString());
 				}
-			try {
-				for (GBObject shot = objects.get(GBObjectClass.ocShot)[t]; shot != null; shot = shot.next) {
+				stage = "colliding robot and shot";
+				for (GBObject shot = objects.get(GBObjectClass.ocShot)[t]; shot != null; shot = shot.next)
 					bot.BasicCollide(shot);
-				}
-			} catch (Exception err) {
-				GBError.NonfatalError("Error colliding robot and shot: "
-						+ err.toString());
-			}
-			try {
-				for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next) {
+				stage = "colliding robot and area";
+				for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next)
 					bot.BasicCollide(area);
-				}
-			} catch (Exception err) {
-				GBError.NonfatalError("Error colliding robot and area: "
-						+ err.toString());
 			}
-		}
-		try {
-			for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next) {
-				for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next) {
+			stage = "colliding area and food";
+			for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next)
+				for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next)
 					area.BasicCollide(food);
-				}
-			}
-			} catch (Exception err) {
-			GBError.NonfatalError("Error colliding area and food: "
-					+ err.toString());
+			stage = "colliding sensors";
+			CollideSensors(t, t);
+		} catch (Exception e) {
+			throw new GBSimulationError("Error " + stage + ": " + e.getMessage());
 		}
-		CollideSensors(t, t);
 	}
 
 	/**
@@ -296,126 +281,92 @@ public class GBObjectWorld extends Model {
 		double t2edge = (t2 / tilesX) * kForegroundTileSize - 2;
 		if (t2 == tilesX * tilesY || t2 == t1 + 1)
 			t2edge = -1000; // always do these tiles
-		for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t1]; bot != null; bot = bot.next) {
-			if (bot.Top() > t2edge) {
-				try {
+		String stage = "";
+		try {
+			for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t1]; bot != null; bot = bot.next) {
+				if (bot.Top() > t2edge) {
+					stage = "colliding robots";
 					for (GBObject bot2 = objects.get(GBObjectClass.ocRobot)[t2]; bot2 != null; bot2 = bot2.next) {
 						bot.SolidCollide(bot2, kRobotRestitution);
 					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding robots: "
-							+ err.toString());
-				}
-				if (((GBRobot) bot).hardware.EaterLimit() != 0)
-					try {
+					if (((GBRobot) bot).hardware.EaterLimit() != 0) {
+						stage = "colliding robot and food";
 						for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
-							bot.BasicCollide(food); 
+							bot.BasicCollide(food);
 						}
-					} catch (Exception err) {
-						GBError.NonfatalError("Error colliding robot and food: "
-								+ err.toString());
 					}
-				try {
+					stage = "colliding robot and shot";
 					for (GBObject shot = objects.get(GBObjectClass.ocShot)[t2]; shot != null; shot = shot.next) {
-						bot.BasicCollide(shot); 
+						bot.BasicCollide(shot);
 					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding robot and shot: "
-							+ err.toString());
 				}
-			}
-			try {
+				stage = "colliding robot and area";
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
 					bot.BasicCollide(area);
 				}
-			} catch (Exception err) {
-				GBError.NonfatalError("Error colliding robot and area: "
-						+ err.toString());
 			}
-		}
-		for (GBObject food = objects.get(GBObjectClass.ocFood)[t1]; food != null; food = food.next) {
-			if (food.Top() > t2edge)
-				try {
-					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
-						food.BasicCollide(bot); 
-					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding food and robot: "
-							+ err.toString());
+			for (GBObject food = objects.get(GBObjectClass.ocFood)[t1]; food != null; food = food.next) {
+				if (food.Top() > t2edge)
+					stage = "colliding food and robot";
+				for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
+					food.BasicCollide(bot);
 				}
-			try {
+				stage = "colliding food and area";
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
-					food.BasicCollide(area); 
+					food.BasicCollide(area);
 				}
-			} catch (Exception err) {
-				GBError.NonfatalError("Error colliding food and area: "
-						+ err.toString());
 			}
-		}
-		try {
+			stage = "colliding shot and robot";
 			for (GBObject shot = objects.get(GBObjectClass.ocShot)[t1]; shot != null; shot = shot.next) {
 				if (shot.Top() > t2edge)
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
 						shot.BasicCollide(bot);
 					}
 			}
-		} catch (Exception err) {
-			GBError.NonfatalError("Error colliding shot and robot: "
-					+ err.toString());
-		}
-		for (GBObject area = objects.get(GBObjectClass.ocArea)[t1]; area != null; area = area.next) {
-			if (area.Top() > t2edge) {
-				try {
+			for (GBObject area = objects.get(GBObjectClass.ocArea)[t1]; area != null; area = area.next) {
+				if (area.Top() > t2edge) {
+					stage = "colliding area and robot";
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
-						area.BasicCollide(bot); 
+						area.BasicCollide(bot);
 					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding area and robot: "
-							+ err.toString());
-				}
-				try {
+					stage = "colliding area and food";
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
-						area.BasicCollide(food); 
+						area.BasicCollide(food);
 					}
-				} catch (Exception err) {
-					GBError.NonfatalError("Error colliding area and food: "
-							+ err.toString());
 				}
 			}
+			stage = "colliding sensors";
+			CollideSensors(t1, t2);
+			CollideSensors(t2, t1);
+		} catch (Exception e) {
+			throw new GBSimulationError("Error " + stage + ": " + e.getMessage());
 		}
-		CollideSensors(t1, t2);
-		CollideSensors(t2, t1);
 	}
 
 	protected void CollideSensors(int sensorTile, int otherTile) {
-		try {
-			double tileBottom = (otherTile / tilesX) * kForegroundTileSize - 2;
-			double tileTop = (otherTile / tilesX + 1) * kForegroundTileSize - 2;
-			if (otherTile == tilesX * tilesY) {
-				tileBottom = -1000;
-				tileTop = size.y + 1000;
+		double tileBottom = (otherTile / tilesX) * kForegroundTileSize - 2;
+		double tileTop = (otherTile / tilesX + 1) * kForegroundTileSize - 2;
+		if (otherTile == tilesX * tilesY) {
+			tileBottom = -1000;
+			tileTop = size.y + 1000;
+		}
+		for (GBObject sensor = objects.get(GBObjectClass.ocSensorShot)[sensorTile]; sensor != null; sensor = sensor.next) {
+			GBObjectClass seen = ((GBSensorShot) sensor).Seen();
+			if (seen != GBObjectClass.ocDead) {
+				if (sensor.Top() > tileBottom && sensor.Bottom() < tileTop)
+					for (GBObject ob = objects.get(seen)[otherTile]; ob != null; ob = ob.next) {
+						if (sensor.Intersects(ob))
+							sensor.CollideWith(ob);
+						// note one-directional collision, since ob mustn't
+						// care it's been sensed
+					}
+				if (seen == GBObjectClass.ocShot) // shot sensors see area
+													// shots too
+					for (GBObject ob = objects.get(GBObjectClass.ocArea)[otherTile]; ob != null; ob = ob.next) {
+						if (sensor.Intersects(ob))
+							sensor.CollideWith(ob);
+					}
 			}
-			for (GBObject sensor = objects.get(GBObjectClass.ocSensorShot)[sensorTile]; sensor != null; sensor = sensor.next) {
-				GBObjectClass seen = ((GBSensorShot) sensor).Seen();
-				if (seen != GBObjectClass.ocDead) {
-					if (sensor.Top() > tileBottom && sensor.Bottom() < tileTop)
-						for (GBObject ob = objects.get(seen)[otherTile]; ob != null; ob = ob.next) {
-							if (sensor.Intersects(ob))
-								sensor.CollideWith(ob);
-							// note one-directional collision, since ob mustn't
-							// care it's been sensed
-						}
-					if (seen == GBObjectClass.ocShot) // shot sensors see area
-														// shots too
-						for (GBObject ob = objects.get(GBObjectClass.ocArea)[otherTile]; ob != null; ob = ob.next) {
-							if (sensor.Intersects(ob))
-								sensor.CollideWith(ob);
-						}
-				}
-			}
-		} catch (Exception err) {
-			GBError.NonfatalError("Error colliding sensor-shot with other object: "
-					+ err.toString());
 		}
 	}
 
@@ -449,7 +400,7 @@ public class GBObjectWorld extends Model {
 				} else
 					it.remove();
 			else
-				AddObjectDirectly(obj);
+				addObject(obj);
 		}
 	}
 
@@ -516,25 +467,6 @@ public class GBObjectWorld extends Model {
 			}
 		}
 		return best;
-	}
-
-	public GBObject GetObjects(int tilex, int tiley, GBObjectClass which)
-			 {
-		if (tilex < 0 || tilex >= tilesX || tiley < 0 || tiley >= tilesY)
-			throw new IndexOutOfBoundsException();
-		return objects.get(which)[tilex + tiley * tilesX];
-	}
-
-	public GBObject GetLargeObjects(GBObjectClass which) {
-		return objects.get(which)[tilesX * tilesY];
-	}
-
-	public int CountObjects(GBObjectClass cl) {
-		int i = 0;
-		for (GBObject obj : allObjects)
-			if (obj.Class() == cl)
-				i++;
-		return i;
 	}
 
 	public GBObject RandomInterestingObject() {

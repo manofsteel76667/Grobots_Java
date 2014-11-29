@@ -6,12 +6,27 @@ package exception;
 
 public class GBSimulationError extends RuntimeException {
 	/**
-	 * 
+	 * Base class for several nonfatal simulation errors
 	 */
 	private static final long serialVersionUID = -5522339576919262515L;
 
+	public GBSimulationError() {}
+	public GBSimulationError(String string) {
+		message = string;
+	}
+	
+	String message;
+
 	@Override
 	public String toString() {
-		return "unspecified simulation error";
+		if (message != null)
+			return message;
+		else
+			return "unspecified simulation error";
+	}
+	
+	@Override 
+	public String getMessage(){
+		return this.getClass().getName() + ": " + toString();
 	}
 };

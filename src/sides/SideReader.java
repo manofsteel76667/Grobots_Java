@@ -578,7 +578,7 @@ public class SideReader {
 						ProcessLine();
 					} catch (Exception e) {
 						GBError.NonfatalError("Error loading side from "
-								+ fileName + ": " + e.toString()
+								+ fileName + ": " + e.getMessage()
 								+ " at line " + lineno);
 					}
 			}
@@ -610,7 +610,7 @@ public class SideReader {
 			side.filename = filename;
 			return side;
 		} catch (Exception e) {
-			GBError.NonfatalError("Error loading side: " + e.toString());
+			GBError.NonfatalError("Error loading side: " + e.getMessage());
 			return null;
 		}
 	}

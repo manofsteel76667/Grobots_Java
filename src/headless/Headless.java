@@ -108,7 +108,7 @@ public class Headless {
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
-			GBError.FatalError("Uncaught exception: " + e.toString()
+			GBError.FatalError("Uncaught exception: " + e.getMessage()
 					+ "\nTrace:\n" + e.getStackTrace());
 		}
 		System.exit(1);

@@ -141,13 +141,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						while (running)
+						/*while (running)
 							try {
 								Thread.sleep(1);
 							} catch (InterruptedException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
-							}
+							}*/
+						if (!running) {
 						rendering++;
 						if (portal.isVisible())
 							portal.repaint();
@@ -156,6 +157,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						if (debug.isVisible())
 							debug.repaint();
 						rendering--;
+						}
 					}
 				});
 		portalTimer.setRepeats(true);
@@ -165,14 +167,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						while (running) {
+						/*while (running) {
 							try {
 								Thread.sleep(1);
 							} catch (InterruptedException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 							}
-						}
+						}*/
+						if (!running) {
 						rendering++;
 						if (roster.isVisible())
 							roster.repaint();
@@ -183,7 +186,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						if (statistics.isVisible())
 							statistics.repaint();
 						rendering--;
-					}
+					}}
 				});
 		otherTimer.setRepeats(true);
 		otherTimer.setCoalesce(true);
@@ -312,7 +315,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						} catch (Exception e) {
 							try {
 								GBError.NonfatalError("Error simulating: "
-										+ e.toString());
+										+ e.getMessage());
 							} catch (GBAbort a) {
 								// Retry
 							}

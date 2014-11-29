@@ -4,6 +4,8 @@
  *******************************************************************************/
 package simulation;
 
+import exception.GBBrainError;
+
 
 public class GBMessage {
 
@@ -20,20 +22,20 @@ public class GBMessage {
 
 	public void SetMessageNumber(int num) {
 		if (num < 0)
-			throw new IllegalArgumentException("message number must be positive: " + num);
+			throw new GBBrainError("message number must be positive: " + num);
 		sequenceNum = num;
 	}
 
 	public void AddDatum(double elt) {
 		if (length >= kMaxMessageLength)
-			throw new RuntimeException(
+			throw new GBBrainError(
 					"Attempting to make a message that's too long");
 		data[length++] = elt;
 	}
 
 	public double Datum(int n) {
 		if (n < 0 || n >= kMaxMessageLength)
-			throw new IndexOutOfBoundsException("invalid message data index: " + n);
+			throw new GBBrainError("invalid message data index: " + n);
 		return data[n];
 	}
 

@@ -32,7 +32,6 @@ import support.GBRandomState;
 import support.StringUtilities;
 import exception.GBError;
 import exception.GBSimulationError;
-import exception.GBTooManyIterationsError;
 
 public class GBWorld extends GBObjectWorld {
 	public static final double kRandomMinWallDistance = 2;
@@ -87,7 +86,9 @@ public class GBWorld extends GBObjectWorld {
 	public static final int kDefaultTimeLimit = 18000;
 
 	public static final double kSeedRadius = 2;
-	public static final double kDefaultSeedValue = 5035; //Was 5000 but some giants won't seed without redesign
+	public static final double kDefaultSeedValue = 5035; // Was 5000 but some
+															// giants won't seed
+															// without redesign
 	public static final double kDefaultSeedTypePenalty = 100;
 
 	/*
@@ -100,13 +101,14 @@ public class GBWorld extends GBObjectWorld {
 
 	void ThinkAllObjects() {
 		// only bothers with robots
-		// try {
-		for (int i = 0; i <= tilesX * tilesY; i++)
-			for (GBObject ob = objects.get(GBObjectClass.ocRobot)[i]; ob != null; ob = ob.next)
-				ob.Think(this);
-		// } catch ( Exception err ) {
-		// GBError.NonfatalError("Error thinking object: " + err.toString());
-		// }
+		try {
+			for (int i = 0; i <= tilesX * tilesY; i++)
+				for (GBObject ob = objects.get(GBObjectClass.ocRobot)[i]; ob != null; ob = ob.next)
+					ob.Think(this);
+		} catch (Exception err) {
+			GBError.NonfatalError("Error thinking object: "
+					+ err.getMessage());
+		}
 	}
 
 	void ActAllObjects() {
@@ -116,7 +118,7 @@ public class GBWorld extends GBObjectWorld {
 					for (GBObject ob = objects.get(cur)[i]; ob != null; ob = ob.next)
 						ob.Act(this);
 		} catch (Exception e) {
-			GBError.NonfatalError("Error acting object: " + e.toString());
+			GBError.NonfatalError("Error acting object: " + e.getMessage());
 		}
 	}
 
@@ -154,11 +156,11 @@ public class GBWorld extends GBObjectWorld {
 								break;
 							}
 					if (++iterations > iterLimit)
-						throw new GBTooManyIterationsError();
+						throw new GBSimulationError("Too many iterations picking seed positions");
 				} while (inRange);
 			}
 			if (reportErrors && iterations > iterLimit / 2)
-				GBError.NonfatalError("Warning: seed placement took "
+				throw new GBSimulationError("Warning: seed placement took "
 						+ iterations + " iterations");
 			// shuffle positions
 			// the above algorithm is not uniform, in that the first element may
@@ -171,7 +173,7 @@ public class GBWorld extends GBObjectWorld {
 				positions[i] = positions[j];
 				positions[j] = temp;
 			}
-		} catch (GBTooManyIterationsError err) {
+		} catch (GBSimulationError err) {
 			if (reportErrors)
 				GBError.NonfatalError("Warning: PickSeedPositions failsafe used.");
 			for (int i = 0; i < numSeeds; ++i)
@@ -240,15 +242,13 @@ public class GBWorld extends GBObjectWorld {
 		Changed();
 	}
 
-	public void AdvanceFrame() throws
-						       GBTooManyIterationsError,
-						       GBSimulationError {
+	public void AdvanceFrame() throws GBSimulationError {
 		SimulateOneFrame();
 		if (RoundOver())
 			EndRound();
 	}
 
-	public void EndRound() throws GBTooManyIterationsError, GBSimulationError {
+	public void EndRound() throws GBSimulationError {
 		// TODO: Replace when sound is implemented
 		// StartSound(siEndRound);
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
@@ -302,8 +302,8 @@ public class GBWorld extends GBObjectWorld {
 						ob.CollectStatistics(this);
 			}
 		} catch (Exception err) {
-			GBError.NonfatalError("Error collecting statistics: "
-					+ err.toString());
+			throw new GBSimulationError("Error collecting statistics: "
+					+ err.getMessage());
 		}
 		// report
 		roundScores.Reset();
@@ -330,7 +330,7 @@ public class GBWorld extends GBObjectWorld {
 			for (int i = 0;; i++) {
 				type = side.GetSeedType(i);
 				if (type == null)
-					throw new RuntimeException(
+					throw new GBSimulationError(
 							"must have at least one type to seed");
 				if (type.Cost() <= cost) {
 					bot = new GBRobot(type, where.add(random
@@ -362,7 +362,7 @@ public class GBWorld extends GBObjectWorld {
 					side.Scores().ReportSeeded(amt);
 					cost -= amt;
 					if (cost > 0)
-						throw new RuntimeException(
+						throw new GBSimulationError(
 								"When seeding, energy left-over after bonus fetus");
 				}
 			}
@@ -384,12 +384,11 @@ public class GBWorld extends GBObjectWorld {
 			// worthless
 			addNewObjects();
 		} catch (Exception e) {
-			GBError.NonfatalError("Error adding seed:" + e.toString());
+			throw new GBSimulationError("Error adding seed:" + e.getMessage());
 		}
 	}
 
-	public void AddSeeds() throws
-			GBTooManyIterationsError, GBSimulationError {
+	public void AddSeeds() throws GBSimulationError {
 		int numSides = CountSides();
 		int numSeeds = seedLimit != 0 ? (seedLimit > numSides ? numSides
 				: seedLimit) : numSides;
@@ -403,7 +402,7 @@ public class GBWorld extends GBObjectWorld {
 			if (seedsLeft >= sidesLeft
 					|| random.bool((double) (seedsLeft) / sidesLeft)) {
 				if (seedsLeft == 0)
-					throw new GBTooManyIterationsError();
+					throw new GBSimulationError("Too many iterations in AddSeeds");
 				sides.get(i).center = positions[numSeeds - seedsLeft];
 				AddSeed(sides.get(i), positions[numSeeds - seedsLeft]);
 				--seedsLeft;
@@ -502,12 +501,12 @@ public class GBWorld extends GBObjectWorld {
 		ResetTournamentScores();
 		Changed();
 	}
-	
-	void clearSideObjects(Side side){
+
+	void clearSideObjects(Side side) {
 		if (side == null)
 			throw new NullPointerException("can't clear objects for null side");
 		Iterator<GBObject> it = allObjects.iterator();
-		while (it.hasNext()) 
+		while (it.hasNext())
 			if (side.equals(it.next().Owner()))
 				it.remove();
 	}
