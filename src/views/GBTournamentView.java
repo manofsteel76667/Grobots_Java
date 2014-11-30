@@ -13,7 +13,7 @@ import java.util.List;
 
 import sides.GBScores;
 import sides.Side;
-import simulation.GBWorld;
+import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
@@ -25,8 +25,7 @@ public class GBTournamentView extends ListView {
 	 */
 	private static final long serialVersionUID = -4253425791054675659L;
 
-	GBApplication app;
-	GBWorld world;
+	GBGame game;
 	int headerHeight = 24;
 	int itemHeight = 15;
 	int footerHeight = 15;
@@ -36,8 +35,7 @@ public class GBTournamentView extends ListView {
 	List<Side> sideList;
 
 	public GBTournamentView(GBApplication _app) {
-		app = _app;
-		world = _app.world;
+		game = _app.game;
 		preferredWidth = 570;
 	}
 
@@ -72,7 +70,7 @@ public class GBTournamentView extends ListView {
 	@Override
 	Rectangle drawHeader(Graphics2D g) {
 		sideList = new ArrayList<Side>();
-		sideList.addAll(world.Sides());
+		sideList.addAll(game.sides);
 		Collections.sort(sideList);
 		headerHeight = g.getFontMetrics().getHeight() * 2 + padding * 2;
 		Rectangle box = getStartingHeaderRect(10, false);
@@ -215,10 +213,10 @@ public class GBTournamentView extends ListView {
 		StringUtilities.drawStringLeft(g, "Overall:", box.x + kNameLeft, box.y
 				+ box.height, 10, Color.black);
 		// draw various numbers
-		int rounds = world.TournamentScores().rounds;
-		int notearly = world.TournamentScores().survived;// .SurvivedEarly();
+		int rounds = game.TournamentScores().rounds;
+		int notearly = game.TournamentScores().survived;// .SurvivedEarly();
 		if (rounds > 0) {
-			double survival = world.TournamentScores().SurvivalNotSterile();
+			double survival = game.TournamentScores().SurvivalNotSterile();
 			StringUtilities.drawStringRight(
 					g,
 					StringUtilities.toPercentString(survival, 0),
@@ -227,21 +225,21 @@ public class GBTournamentView extends ListView {
 					10,
 					rangeColor(survival, 0.25, 0.5, GBColor.darkRed, GBColor.darkGreen, rounds,
 							0));
-			double early = world.TournamentScores().EarlyDeathRate();
+			double early = game.TournamentScores().EarlyDeathRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(early, 0), box.x
 							+ kEarlyDeathRight, box.y + box.height, 10,
 					rangeColor(early, 0.2, 0.4, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
 		}
 		if (notearly > 0) {
-			double late = world.TournamentScores().LateDeathRate();
+			double late = game.TournamentScores().LateDeathRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(late, 0), box.x
 							+ kLateDeathRight, box.y + box.height, 10,
 					rangeColor(late, 0.45, 0.6, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
 		}
 		if (rounds > 0) {
-			double kills = world.TournamentScores().KillRate();
+			double kills = game.TournamentScores().KillRate();
 			StringUtilities.drawStringRight(g,
 					StringUtilities.toPercentString(kills, 0), box.x
 							+ kKillsRight, box.y + box.height, 10,
@@ -256,6 +254,6 @@ public class GBTournamentView extends ListView {
 
 	@Override
 	int setLength() {
-		return world.Sides().size();
+		return game.sides.size();
 	}
 }

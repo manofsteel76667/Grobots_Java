@@ -82,7 +82,7 @@ public class GBConstructorState {
 			if (Remaining() <= 0 && robot.hardware.ActualShield() == 0) {
 				// TODO: put back in when sound is implemented
 				// StartSound(siBirth);
-				double dir = world.Randoms().Angle();
+				double dir = world.random.Angle();
 				GBRobot child = new GBRobot(type, robot.Position().addPolar(
 						GBHardwareState.kBabyDisplacementFraction
 								* robot.Radius(), dir), robot.Velocity()

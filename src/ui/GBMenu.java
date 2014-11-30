@@ -23,7 +23,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
-import simulation.GBWorld;
+import simulation.GBGame;
 
 /* @formatter:off */
 enum MenuItems {
@@ -195,7 +195,7 @@ class GBMenu extends JMenuBar {
 	JMenu simulationMenu;
 	JMenu toolMenu;
 	JMenu helpMenu;
-	GBWorld world;
+	GBGame game;
 	public ButtonGroup speedControls;
 	public ButtonGroup toolSelectors;
 	public JCheckBoxMenuItem cbTournament;
@@ -204,7 +204,7 @@ class GBMenu extends JMenuBar {
 
 	public GBMenu(GBApplication _app) {
 		app = _app;
-		world = app.world;
+		game = app.game;
 		menuButtons = new HashMap<MenuItems, AbstractButton>();
 		buildFileMenu();
 		buildWindowMenu();
@@ -338,7 +338,7 @@ class GBMenu extends JMenuBar {
 				.put(MenuItems.rules, ret.add(MenuItems.rules.asJMenuItem()));
 		cbTournament = MenuItems.tournament.asJCheckBoxMenuItem();
 		cbTournament.setSelected(true);
-		world.tournament = true;
+		game.tournament = true;
 		menuButtons.put(MenuItems.tournament, ret.add(cbTournament));
 		menuButtons.put(MenuItems.saveScores,
 				ret.add(MenuItems.saveScores.asJMenuItem()));

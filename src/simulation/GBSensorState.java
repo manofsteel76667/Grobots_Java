@@ -260,7 +260,7 @@ public class GBSensorState {
 			found = 0;
 			currentResult = 0;
 			whereOverall.set(0, 0);
-			time = world.CurrentFrame();
+			time = world.currentFrame;
 			owner = robot.Owner();
 		}
 		firing = false;

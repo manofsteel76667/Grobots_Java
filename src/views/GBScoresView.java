@@ -19,7 +19,7 @@ import sides.GBExpenditureStatistics;
 import sides.GBIncomeStatistics;
 import sides.GBScores;
 import sides.Side;
-import simulation.GBWorld;
+import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
@@ -74,7 +74,7 @@ public class GBScoresView extends JPanel {
 	static final int kTotalsHeight = 66;
 	static final int kTableHeight = 113;
 	GBApplication app;
-	GBWorld world;
+	GBGame game;
 	Side lastSideDrawn = null;
 	int kEdgeSpace;
 	Color boxfillcolor = Color.white;
@@ -87,7 +87,7 @@ public class GBScoresView extends JPanel {
 
 	public GBScoresView(GBApplication _app) {
 		app = _app;
-		world = app.world;
+		game = app.game;
 		lastSideDrawn = null;
 		kEdgeSpace = 4;
 	}
@@ -220,16 +220,16 @@ public class GBScoresView extends JPanel {
 					.toString(in.population), Color.blue, 3, 1));
 			ret.add(new StatisticsLine("Ever", Integer.toString(in
 					.PopulationEver()), Color.blue, 3, 2));
-			ret.add(new StatisticsLine("Manna", Integer.toString(world
+			ret.add(new StatisticsLine("Manna", Integer.toString(game
 					.MannaValue()), GBColor.darkGreen, 3, 3));
-			ret.add(new StatisticsLine("Corpses", Integer.toString(world
+			ret.add(new StatisticsLine("Corpses", Integer.toString(game
 					.CorpseValue()), Color.red, 3, 4));
 			ret.add(new StatisticsLine("Seeded", Integer
 					.toString((int) in.seeded), Color.black, 3, 5));
 			ret.add(new StatisticsLine("Efficiency", StringUtilities
 					.toPercentString(in.Efficiency(), 0), Color.black, 3, 6));
 		}
-		int doubletime = in.Doubletime(world.CurrentFrame());
+		int doubletime = in.Doubletime(game.CurrentFrame());
 		if (tournament && doubletime != 0 && doubletime < 100000)
 			ret.add(new StatisticsLine("DoubleTime", Integer
 					.toString(doubletime), Color.black, 3, 7));// Blank line
@@ -246,10 +246,10 @@ public class GBScoresView extends JPanel {
 
 	void Draw(Graphics2D g) {
 		roundStatsList = buildStatsList(
-				app.getSelectedSide() == null ? world.RoundScores() : app
+				app.getSelectedSide() == null ? game.RoundScores() : app
 						.getSelectedSide().Scores(), false);
 		tournStatsList = buildStatsList(
-				app.getSelectedSide() == null ? world.TournamentScores() : app
+				app.getSelectedSide() == null ? game.TournamentScores() : app
 						.getSelectedSide().TournamentScores(), true);
 		List<Rectangle> boxes = new ArrayList<Rectangle>();
 		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace,
@@ -273,7 +273,7 @@ public class GBScoresView extends JPanel {
 				kGraphHeight);
 		DrawGraph(g, graphbox, false);
 		graphbox.x += graphbox.width + kEdgeSpace + 1;
-		if (world.TournamentScores().rounds != 0)
+		if (game.TournamentScores().rounds != 0)
 			DrawGraph(g, graphbox, true);
 		// record
 		lastSideDrawn = app.getSelectedSide();
@@ -309,7 +309,7 @@ public class GBScoresView extends JPanel {
 	}
 
 	void DrawGraph(Graphics2D g, Rectangle box, boolean allRounds) {
-		if (world.CountSides() == 0)
+		if (game.CountSides() == 0)
 			return;
 		drawBox(g, box);
 		Rectangle graph = new Rectangle(box.x + 1, box.y + 1, box.width - 2,
@@ -318,7 +318,7 @@ public class GBScoresView extends JPanel {
 		// find scale
 		int scale = 1;
 		int hscale = 1;
-		List<Side> sides = world.Sides();
+		List<Side> sides = game.sides;
 		for (int i = 0; i < sides.size(); ++i) {
 			Side s = sides.get(i);
 			if ((allRounds ? s.TournamentScores().rounds : s.Scores().rounds) == 0)
@@ -361,7 +361,7 @@ public class GBScoresView extends JPanel {
 		StringUtilities.drawStringRight(g, Integer.toString(hscale * 100),
 				box.x + box.width - 3, box.y + box.height - 3, 9, Color.gray);
 		g.setColor(Color.black);
-		GBScores scores = world.TournamentScores();
+		GBScores scores = game.TournamentScores();
 		String title = allRounds ? "Average over "
 				+ Integer.toString(scores.rounds)
 				+ (scores.rounds == 1 ? " round" : " rounds")

@@ -10,8 +10,8 @@ import java.util.List;
 import sides.RobotType;
 import sides.Side;
 import sides.SideReader;
+import simulation.GBGame;
 import simulation.GBObjectWorld;
-import simulation.GBWorld;
 import support.FinePoint;
 import support.StringUtilities;
 import exception.GBError;
@@ -28,35 +28,35 @@ public class Headless {
 		if (argv.length < 2)
 			DieWithUsage("Not enough arguments");
 		try {
-			GBWorld world = new GBWorld();
-			world.timeLimit = 18000;
+			GBGame game = new GBGame();
+			game.timeLimit = 18000;
 			int statsPeriod = 500;
 			// get args
 			for (int i = 0; i < argv.length; ++i)
-				ProcessArg(argv[i], world, statsPeriod, argv[0]);
+				ProcessArg(argv[i], game, statsPeriod, argv[0]);
 			// run
 			Date start = new Date();
 			int totalFrames = 0;
 			int round = 1;
 			System.out.println("\n#round " + round);
-			world.AddSeeds();
-			world.running = true;
+			game.addSeeds();
+			game.running = true;
 			do {
-				if (statsPeriod != 0 && world.CurrentFrame() % statsPeriod == 0)
-					PrintStatistics(world);
-				world.SimulateOneFrame();
-				if (world.RoundOver()) {
-					PrintStatistics(world);
-					totalFrames += world.CurrentFrame();
-					world.EndRound();
-					if (world.tournament)
+				if (statsPeriod != 0 && game.CurrentFrame() % statsPeriod == 0)
+					PrintStatistics(game);
+				game.advanceFrame();
+				if (game.RoundOver()) {
+					PrintStatistics(game);
+					totalFrames += game.CurrentFrame();
+					game.EndRound();
+					if (game.tournament)
 						System.out.println("#round " + ++round);
 				}
-			} while (world.running);
+			} while (game.running);
 			// print final statistics
 			System.out
 					.println("#results: \nscore\terror\tsurvival\tearly-death\tlate-death\tearly-score\tfraction\tkills\trounds\tname");
-			List<Side> sides = world.Sides();
+			List<Side> sides = game.sides;
 			for (int i = 0; i < sides.size(); ++i) {
 				Side s = sides.get(i);
 				System.out.println(StringUtilities.toPercentString(s
@@ -86,15 +86,15 @@ public class Headless {
 						+ s.TournamentScores().rounds + "\t" + s.Name() + "\n");
 			}
 			System.out.println("#total\t\t"
-					+ StringUtilities.toPercentString(world.TournamentScores()
+					+ StringUtilities.toPercentString(game.TournamentScores()
 							.SurvivalNotSterile(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(world.TournamentScores()
+					+ StringUtilities.toPercentString(game.TournamentScores()
 							.EarlyDeathRate(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(world.TournamentScores()
+					+ StringUtilities.toPercentString(game.TournamentScores()
 							.LateDeathRate(), 0) + "\t\t\t\t\t\t\t"
-					+ world.TournamentScores().rounds + "\n#end");
+					+ game.TournamentScores().rounds + "\n#end");
 			Date end = new Date();
 			long dt = (end.getTime() - start.getTime()) / 1000;
 			System.out.println(totalFrames + " frames");
@@ -102,7 +102,7 @@ public class Headless {
 				System.out.println(" in " + dt + " s (" + (totalFrames / dt)
 						+ " fps)");
 			if (dumpHtml)
-				world.DumpTournamentScores(dumpHtml);
+				game.DumpTournamentScores(dumpHtml);
 			// clean up
 			// if ( SoundActive() ) CleanupSound();
 			System.exit(0);
@@ -114,24 +114,24 @@ public class Headless {
 		System.exit(1);
 	}
 
-	static void ProcessArg(String arg, GBWorld world, int statsPeriod,
+	static void ProcessArg(String arg, GBGame game, int statsPeriod,
 			String name) {
 		try {
 			if ('-' == arg.charAt(0)) {
 				int dimension;
 				switch (arg.charAt(1)) {
 				case 't':
-					world.tournament = true;
-					world.tournamentLength = StringUtilities.parseInt(arg
+					game.tournament = true;
+					game.tournamentLength = StringUtilities.parseInt(arg
 							.substring(2));
-					System.out.println("#tournament " + world.tournamentLength);
+					System.out.println("#tournament " + game.tournamentLength);
 					break;
 				case 'S':
 					// SetupSound();
 					// SetSoundActive(true);
 					break;
 				case 'l':
-					world.timeLimit = StringUtilities
+					game.timeLimit = StringUtilities
 							.parseInt(arg.substring(2));
 					break;
 				case 'b':
@@ -139,17 +139,17 @@ public class Headless {
 					break;
 				case 'w':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					world.Resize(new FinePoint(
+					game.Resize(new FinePoint(
 							GBObjectWorld.kBackgroundTileSize * dimension,
-							world.Top()));
+							game.getWorld().Top()));
 					break;
 				case 'h':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					world.Resize(new FinePoint(world.Right(),
+					game.Resize(new FinePoint(game.getWorld().Right(),
 							GBObjectWorld.kBackgroundTileSize * dimension));
 					break;
 				case 's':
-					world.seedLimit = StringUtilities
+					game.seedLimit = StringUtilities
 							.parseInt(arg.substring(2));
 					break;
 				case 'H':
@@ -161,7 +161,7 @@ public class Headless {
 			} else {
 				Side side = SideReader.Load(arg);
 				if (side != null) {
-					world.AddSide(side);
+					game.AddSide(side);
 					System.out.print("#side " + side.Name());
 					for (int i = 1; i <= side.CountTypes(); ++i) {
 						RobotType type = side.GetType(i);
@@ -195,9 +195,9 @@ public class Headless {
 		System.exit(1);
 	}
 
-	public static void PrintStatistics(GBWorld world) {
+	public static void PrintStatistics(GBGame world) {
 		System.out.print(world.CurrentFrame());
-		List<Side> sides = world.Sides();
+		List<Side> sides = world.sides;
 		for (int i = 0; i < sides.size(); ++i)
 			System.out.print("\t" + sides.get(i).Scores().Biomass());
 		System.out.print("\ttotal " + world.RobotValue() + "\n");

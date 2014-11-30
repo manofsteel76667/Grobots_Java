@@ -31,8 +31,8 @@ public class GBCorpse extends GBFood {
 	}
 
 	@Override
-	public void CollectStatistics(GBWorld world) {
-		world.ReportCorpse(value);
+	public void CollectStatistics(ScoreKeeper keeper) {
+		keeper.ReportCorpse(value);
 	}
 
 	@Override

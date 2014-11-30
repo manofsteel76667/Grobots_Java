@@ -13,7 +13,7 @@ import java.awt.Rectangle;
 import sides.HardwareSpec;
 import sides.RobotType;
 import sides.Side;
-import simulation.GBWorld;
+import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
@@ -25,11 +25,11 @@ public class RobotTypeView extends ListView {
 	 */
 	private static final long serialVersionUID = 3759451228873831301L;
 	GBApplication app;
-	GBWorld world;
+	GBGame game;
 
 	public RobotTypeView(GBApplication _app) {
 		app = _app;
-		world = app.world;
+		game = _app.game;
 		preferredWidth = 250;
 		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));		
 	}

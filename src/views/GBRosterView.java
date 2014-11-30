@@ -9,7 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import sides.Side;
-import simulation.GBWorld;
+import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
@@ -24,7 +24,7 @@ public class GBRosterView extends ListView {
 
 	private static final long serialVersionUID = 6135247814368773456L;
 
-	GBWorld world;
+	GBGame game;
 	GBApplication app;
 	int margin = 6;
 	int padding = 2;
@@ -35,7 +35,7 @@ public class GBRosterView extends ListView {
 
 	public GBRosterView(GBApplication _app) {
 		app = _app;
-		world = app.world;
+		game = app.game;
 		lastTime = System.currentTimeMillis();
 		preferredWidth = 250;
 		setVisible(true);
@@ -43,10 +43,10 @@ public class GBRosterView extends ListView {
 
 	@Override
 	protected void itemClicked(int index) {
-		if (index == -1 || index > world.Sides().size())
+		if (index == -1 || index > game.sides.size())
 			app.setSelectedSide(null);
 		else
-			app.setSelectedSide(world.Sides().get(index));
+			app.setSelectedSide(game.sides.get(index));
 	}
 
 	@Override
@@ -55,25 +55,25 @@ public class GBRosterView extends ListView {
 		drawBox(g, hdr);
 		Rectangle textRect = new Rectangle(hdr);
 		textRect.grow(-padding * 2, -padding * 2);
-		String text = String.format("Frame %d", world.CurrentFrame());
+		String text = String.format("Frame %d", game.CurrentFrame());
 		StringUtilities.drawStringLeft(g, text, textRect, 10, Color.black);
-		String status = world.tournament ? "tournament " : ""
-				+ (world.running ? "running" : "paused");
-		if (world.running && lastTime >= 0 && world.CurrentFrame() > lastFrame) {
-			int frames = world.CurrentFrame() - lastFrame;
+		String status = game.tournament ? "tournament " : ""
+				+ (game.running ? "running" : "paused");
+		if (game.running && lastTime >= 0 && game.CurrentFrame() > lastFrame) {
+			int frames = game.CurrentFrame() - lastFrame;
 			int ms = (int) (System.currentTimeMillis() - lastTime);
 			if (ms > 0)
 				status += " at " + frames * 1000 / ms + " fps";
 		}
 		StringUtilities.drawStringRight(g, status, textRect, 10, Color.black);
-		lastFrame = world.CurrentFrame();
+		lastFrame = game.CurrentFrame();
 		lastTime = System.currentTimeMillis();
 		return hdr;
 	}
 
 	@Override
 	Rectangle drawOneItem(Graphics2D g, int index) {
-		Side side = world.Sides().get(index);
+		Side side = game.sides.get(index);
 		if (side == null)
 			return null;
 		Rectangle slot = getStartingItemRect(index, 12, false);
@@ -125,7 +125,7 @@ public class GBRosterView extends ListView {
 
 	@Override
 	Rectangle drawFooter(Graphics2D g) {
-		if (world.Sides().size() == 0) {
+		if (game.sides.size() == 0) {
 			Rectangle slot = getStartingFooterRect(20, false);
 			drawBox(g, slot);
 			slot.grow(-padding, -padding);
@@ -147,6 +147,6 @@ public class GBRosterView extends ListView {
 
 	@Override
 	int setLength() {
-		return world.Sides().size();
+		return game.sides.size();
 	}
 }

@@ -62,9 +62,9 @@ public class GBExplosion extends GBTimedShot {
 			for (int i = (int) Math.round(Math.max(power
 					* kExplosionSmokesPerPower, kExplosionMinSmokes)); i > 0; i--)
 				world.AddObjectNew(new GBSmoke(Position().add(
-						world.Randoms().Vector(Radius())), world.Randoms()
+						world.random.Vector(Radius())), world.random
 						.Vector(GBTimedDecoration.kSmokeMaxSpeed), world
-						.Randoms().intInRange(
+						.random.intInRange(
 								GBTimedDecoration.kSmokeMinLifetime,
 								maxLifetime)));
 		}

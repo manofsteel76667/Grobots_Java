@@ -58,7 +58,7 @@ public abstract class GBObject {
 	protected void CollideWith(GBObject other) {
 	}
 
-	protected void CollectStatistics(GBWorld world) {
+	protected void CollectStatistics(ScoreKeeper keeper) {
 	}
 
 	// high-level queries

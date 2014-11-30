@@ -276,11 +276,11 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void CollectStatistics(GBWorld world) {
+	public void CollectStatistics(ScoreKeeper keeper) {
 		double bm = Biomass();
 		Owner().ReportRobot(bm, type, Position());
 		type.ReportRobot(bm);
-		world.ReportRobot(bm);
+		keeper.ReportRobot(bm);
 	}
 
 	@Override

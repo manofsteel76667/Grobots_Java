@@ -16,11 +16,9 @@ import javax.swing.JToolBar;
 import simulation.GBHardwareState;
 import simulation.GBObject;
 import simulation.GBRobot;
-import simulation.GBWorld;
 import support.GBColor;
 import support.GBObjectClass;
 import support.StringUtilities;
-import ui.GBApplication;
 import brains.Brain;
 import brains.BrainStatus;
 import brains.GBStackBrain;
@@ -41,15 +39,11 @@ public class Debugger extends JPanel {
 	public static final int kProfileBoxHeight = 25;// GBWORLD_PROFILING ? 87 :
 													// 25;
 	public static final int kEdgeSpace = 4;
-	GBApplication app;
-	GBWorld world;
 	GBRobot target;
 
 	JToolBar toolbar;
 
-	public Debugger(GBApplication _app, JToolBar bar) {
-		app = _app;
-		world = app.world;
+	public Debugger(JToolBar bar) {
 		toolbar = bar;
 		add(toolbar);
 	}

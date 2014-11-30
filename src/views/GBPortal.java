@@ -120,11 +120,11 @@ public class GBPortal extends JPanel implements GBProjection {
 		super(true);
 		isMiniMap = mini;
 		app = _app;
-		world = _app.world;
+		world = _app.game.getWorld();
 		showSideNames = true;
 		lastClick = new FinePoint();
-		lastFrame = app.world.CurrentFrame();
-		viewpoint = new FinePoint(app.world.Size().divide(2));
+		lastFrame = world.currentFrame;
+		viewpoint = new FinePoint(world.Size().divide(2));
 		followPosition = new FinePoint(viewpoint);
 		if (isMiniMap) {
 			minZoom = 2;
@@ -148,7 +148,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				lastClick = FromScreen(x, y);
 				moving = null;
 				DoTool(lastClick);
-				lastFrame = world.CurrentFrame();
+				lastFrame = world.currentFrame;
 				autofollow = false;
 			}
 
@@ -179,7 +179,7 @@ public class GBPortal extends JPanel implements GBProjection {
 					lastx = x;
 					lasty = y;
 					lastClick = spot;
-					lastFrame = world.CurrentFrame();
+					lastFrame = world.currentFrame;
 					// Changed();
 				} else {
 					if (x < 0 || x > getWidth() || y < 0 || y > getHeight()) {
@@ -187,7 +187,7 @@ public class GBPortal extends JPanel implements GBProjection {
 						following = false;
 					}
 					double dist = spot.subtract(lastClick).norm();
-					int frames = world.CurrentFrame() - lastFrame;
+					int frames = world.currentFrame - lastFrame;
 					if (dist >= currentTool.spacing && currentTool.spacing != 0
 							|| frames >= currentTool.interval
 							&& currentTool.interval != 0) {
@@ -195,7 +195,7 @@ public class GBPortal extends JPanel implements GBProjection {
 						lastx = x;
 						lasty = y;
 						lastClick = spot;
-						lastFrame = world.CurrentFrame();
+						lastFrame = world.currentFrame;
 					}
 				}
 				moving = null;
@@ -399,7 +399,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		}
 		// Side names
 		if (showSideNames) {
-			for (Side side : world.Sides())
+			for (Side side : app.game.sides)
 				if (side.Scores().Seeded() != 0) {
 					Font textFont = new Font("Serif", Font.PLAIN, 10);
 					g2d.setFont(textFont);
@@ -584,11 +584,11 @@ public class GBPortal extends JPanel implements GBProjection {
 				break;
 			case ptErase:
 				world.EraseAt(where, 0);
-				world.CollectStatistics();
+				app.game.CollectStatistics();
 				break;
 			case ptEraseBig:
 				world.EraseAt(where, kEraseBigRadius);
-				world.CollectStatistics();
+				app.game.CollectStatistics();
 				break;
 			case ptSetViewWindow:
 				if (isMiniMap)
@@ -630,7 +630,7 @@ public class GBPortal extends JPanel implements GBProjection {
 			if (type != null) {
 				world.addObjectManual(new GBRobot(type, where));
 				side.Scores().ReportSeeded(type.Cost());
-				world.CollectStatistics();
+				app.game.CollectStatistics();
 			}
 		}
 	}
@@ -639,7 +639,7 @@ public class GBPortal extends JPanel implements GBProjection {
 		Side side = app.getSelectedSide();
 		if (side != null) {
 			world.AddSeed(side, where);
-			world.CollectStatistics();
+			app.game.CollectStatistics();
 		}
 	}
 

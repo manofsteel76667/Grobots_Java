@@ -15,8 +15,8 @@ public class GBManna extends GBFood {
 	}
 
 	@Override
-	public void CollectStatistics(GBWorld world) {
-		world.ReportManna(value);
+	public void CollectStatistics(ScoreKeeper keeper) {
+		keeper.ReportManna(value);
 	}
 
 	@Override

@@ -474,9 +474,9 @@ public class GBStackBrain extends Brain {
 		switch (StackBrainOpcode.byID(index)) {
 		// world
 		case hvTime:
-			return world.CurrentFrame();
+			return world.currentFrame;
 		case hvTimeLimit:
-			return world.timeLimit;
+			return world.getTimeLimit();
 		case hvWorldWidth:
 			return world.Size().x;
 		case hvWorldHeight:
@@ -1325,18 +1325,18 @@ public class GBStackBrain extends Brain {
 			break;
 		case opRandom:
 			temp = Pop();
-			Push(world.Randoms().InRange(Pop(), temp));
+			Push(world.random.InRange(Pop(), temp));
 			break;
 		case opRandomAngle:
-			Push(world.Randoms().Angle());
+			Push(world.random.Angle());
 			break;
 		case opRandomInt:
 			temp = Pop();
-			Push(world.Randoms().intInRange((int) Math.ceil(Pop()),
+			Push(world.random.intInRange((int) Math.ceil(Pop()),
 					(int) Math.floor(temp)));
 			break;
 		case opRandomBoolean:
-			Pushboolean(world.Randoms().bool(Pop()));
+			Pushboolean(world.random.bool(Pop()));
 			break;
 		// constants
 		case opPi:
@@ -1510,7 +1510,7 @@ public class GBStackBrain extends Brain {
 			break;
 		case opPause:
 			if (world.reportErrors)
-				world.running = false;
+				world.pause();
 			break;
 		case opSync:
 			remaining = 0;
@@ -1743,7 +1743,7 @@ public class GBStackBrain extends Brain {
 			throws GBStackUnderflowError, GBStackOverflowError,
 			GBNotIntegerError {
 		int period = PopInteger();
-		if (world.CurrentFrame() >= sensor.Time() + period
+		if (world.currentFrame >= sensor.Time() + period
 				|| sensor.Time() <= 0) {
 			sensor.Fire();
 			remaining = 0;

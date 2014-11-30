@@ -34,9 +34,9 @@ import brains.BrainStatus;
 import sides.RobotType;
 import sides.Side;
 import sides.SideReader;
+import simulation.GBGame;
 import simulation.GBObject;
 import simulation.GBRobot;
-import simulation.GBWorld;
 import support.FinePoint;
 import support.GBObjectClass;
 import views.AboutBox;
@@ -64,7 +64,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	 * 
 	 */
 	private static final long serialVersionUID = -955217075865755516L;
-	public GBWorld world;
+	public GBGame game;
 
 	// Views
 	GBPortal portal;
@@ -113,7 +113,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	@Override
 	public void run() {
 		// Create world and initial conditions
-		world = new GBWorld();
+		game = new GBGame();
+		//world = new GBWorld();
 		stepRate = StepRates.fast;
 
 		// Create supporting views and menu.
@@ -271,20 +272,20 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		center.add(portalControls, BorderLayout.LINE_START);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
-		debug = new Debugger(this, debugControls);
+		debug = new Debugger(debugControls);
 		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
 				.getPreferredHeight()));
 	}
 
 	void updateMenu() {
-		setMenuItem(MenuItems.removeAllSides, world.Sides().size() > 0
-				&& !world.running);
+		setMenuItem(MenuItems.removeAllSides, game.sides.size() > 0
+				&& !game.running);
 		setMenuItem(MenuItems.reloadSide, selectedSide != null
-				&& !world.running);
+				&& !game.running);
 		setMenuItem(MenuItems.duplicateSide, selectedSide != null
-				&& !world.running);
+				&& !game.running);
 		setMenuItem(MenuItems.removeSide, selectedSide != null
-				&& !world.running);
+				&& !game.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 		// Unimplemented items
@@ -300,7 +301,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				// Removing an active side causes a crash
 				// setMenuItem(MenuItems.removeSide, false);
 				// setMenuItem(MenuItems.removeAllSides, false);
-				while (world.running) {
+				while (game.running) {
 					long frameRate = 1000000000L / stepRate.value; // nanoseconds
 																	// per
 																	// frame
@@ -311,7 +312,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 								Thread.sleep(1);
 							}
 							running = true;
-							world.AdvanceFrame();
+							game.advanceFrame();
 							running = false;
 							prevFrameTime = System.nanoTime();
 						} catch (Exception e) {
@@ -428,7 +429,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case addSeeds:
-					world.AddSeeds();
+					game.addSeeds();
 					break;
 				case autoFollow:
 					portal.autofollow = true;
@@ -440,13 +441,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case clearMap:
-					world.Reset();
+					game.Reset();
 					break;
 				case duplicateSide:
 					if (selectedSide == null)
 						return;
 					Side newside = SideReader.Load(selectedSide.filename);
-					world.AddSide(newside);
+					game.AddSide(newside);
 					repaint();
 					break;
 				case erase:
@@ -506,7 +507,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						for (File f : fc.getSelectedFiles()) {
 							Side _newside;
 							_newside = SideReader.Load(f.getPath());
-							world.AddSide(_newside);
+							game.AddSide(_newside);
 						}
 					}
 					updateMenu();
@@ -518,13 +519,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case newRound:
-					if (world.running) {
-						world.running = false;
+					if (game.running) {
+						game.running = false;
 						Thread.sleep(100); // Let simulate thread end
 					}
-					world.Reset();
-					world.AddSeeds();
-					world.running = true;
+					game.Reset();
+					game.addSeeds();
+					game.running = true;
 					repaint();
 					simulate();
 					break;
@@ -534,19 +535,19 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					stepRate = StepRates.normal;
 					break;
 				case pause:
-					world.running = false;
+					game.running = false;
 					repaint();
 					break;
 				case play:
 					if (running)
 						break;
-					if (world.sidesSeeded > 0) {
-						world.running = true;
+					if (game.getSidesSeeded() > 0) {
+						game.running = true;
 						simulate();
 					} else {
-						world.Reset();
-						world.AddSeeds();
-						world.running = true;
+						game.Reset();
+						game.addSeeds();
+						game.running = true;
 						repaint();
 						simulate();
 					}
@@ -568,14 +569,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					if (getSelectedSide() == null)
 						break;
 					Side reload = SideReader.Load(selectedSide.filename);
-					world.ReplaceSide(selectedSide, reload);
+					game.ReplaceSide(selectedSide, reload);
 					roster.repaint();
 					setSelectedSide(reload);
 					break;
 				case removeAllSides:
-					world.Reset();
-					world.RemoveAllSides();
-					world.running = false;
+					game.Reset();
+					game.RemoveAllSides();
+					game.running = false;
 					setSelectedSide(null);
 					updateMenu();
 					repaint();
@@ -583,27 +584,27 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 				case removeSide:
 					if (getSelectedSide() == null)
 						break;
-					world.RemoveSide(selectedSide);
+					game.RemoveSide(selectedSide);
 					setSelectedSide(null);
 					updateMenu();
 					repaint();
 					break;
 				case reseedDeadSides:
-					world.ReseedDeadSides();
+					game.ReseedDeadSides();
 					break;
 				case resetScores:
-					world.ResetTournamentScores();
+					game.ResetTournamentScores();
 					break;
 				case rules:
 					break;
 				case run:
-					if (!world.running) {
-						world.running = true;
+					if (!game.running) {
+						game.running = true;
 						simulate();
 					}
 					break;
 				case saveScores:
-					world.DumpTournamentScores(true);
+					game.DumpTournamentScores(true);
 					break;
 				case scrollDown:
 					break;
@@ -660,11 +661,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					setLayouts();
 					break;
 				case showPrints:
-					world.reportPrints = mainMenu.viewOptions.get(
+					game.reportPrints = mainMenu.viewOptions.get(
 							ui.MenuItems.showPrints).isSelected();
 					break;
 				case showRobotErrors:
-					world.reportErrors = mainMenu.viewOptions.get(
+					game.reportErrors = mainMenu.viewOptions.get(
 							ui.MenuItems.showRobotErrors).isSelected();
 					break;
 				case showRoster:
@@ -702,8 +703,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					setLayouts();
 					break;
 				case singleFrame:
-					world.AdvanceFrame();
-					world.running = false;
+					game.advanceFrame();
+					game.running = false;
 					repaint();
 					break;
 				case slow:
@@ -732,7 +733,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						return;
 					if (obj instanceof GBRobot
 							&& obj.Class() != GBObjectClass.ocDead) {
-						world.running = false;
+						game.running = false;
 						Thread.sleep(100);
 						GBRobot target = (GBRobot) obj;
 						Brain brain = target.Brain();
@@ -740,7 +741,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 							return;
 						if (!brain.Ready())
 							return;
-						brain.Step(target, world);
+						brain.Step(target, game.getWorld());
 						if (debug.isVisible())
 							debug.repaint();
 					}
@@ -760,8 +761,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					}
 					break;
 				case tournament:
-					world.tournament = mainMenu.cbTournament.isSelected();
-					world.tournamentLength = -1;
+					game.tournament = mainMenu.cbTournament.isSelected();
+					game.tournamentLength = -1;
 					break;
 				case unlimited:
 					stepRate = StepRates.unlimited;
