@@ -82,7 +82,7 @@ public class GBForceFieldState {
 							/ (distance
 									* GBHardwareState.kForceFieldRangeAttenuation + 1),
 					angle);
-			world.AddObjectNew(shot);
+			world.addObjectLater(shot);
 			// robot.PushBy(- effective * kForceFieldRecoilPerPower, angle); //
 			// recoil
 		}

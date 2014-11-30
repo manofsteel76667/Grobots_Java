@@ -46,7 +46,7 @@ public class GBBlast extends GBTimedShot {
 	public void Act(GBWorld world) {
 		super.Act(world);
 		if (hit) {
-			world.AddObjectNew(new GBBlasterSpark(Position()));
+			world.addObjectLater(new GBBlasterSpark(Position()));
 		}
 	}
 

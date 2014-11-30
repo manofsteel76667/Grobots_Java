@@ -7,11 +7,10 @@
 // Distributed under the GNU General Public License.
 package sides;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GBScores {
-	// //protected:
 	// rounds
 	public int sides; // = number of seeds
 	public int rounds;
@@ -42,7 +41,7 @@ public class GBScores {
 	// GBScores //
 
 	public GBScores() {
-		biomassHistory = new LinkedList<Integer>();
+		biomassHistory = new ArrayList<Integer>();
 		biomassHistory.add(0);
 		income = new GBIncomeStatistics();
 		expenditure = new GBExpenditureStatistics();

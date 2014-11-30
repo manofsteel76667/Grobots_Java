@@ -254,7 +254,7 @@ public class GBSensorState {
 																 */) {
 			if (!robot.dead && robot.hardware.UseEnergy(FiringCost())) {
 				robot.Owner().Scores().expenditure.ReportSensors(FiringCost());
-				world.AddObjectNew(new GBSensorShot(robot.Position().addPolar(
+				world.addObjectLater(new GBSensorShot(robot.Position().addPolar(
 						distance, direction), robot, this));
 			}
 			found = 0;

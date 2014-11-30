@@ -87,7 +87,7 @@ public class GBBlasterState {
 																		// avoid
 																		// hitting
 																		// self
-				world.AddObjectNew(shot);
+				world.addObjectLater(shot);
 				cooldown = ReloadTime();
 			}
 			firing = false;

@@ -71,7 +71,7 @@ public class GBSyphonState {
 					robot.Position().addPolar(
 							Math.min(distance, robot.Radius() + MaxRange()),
 							direction), actual, robot, this, spec.HitsEnemies());
-			world.AddObjectNew(shot);
+			world.addObjectLater(shot);
 		}
 		syphoned = 0;
 	}

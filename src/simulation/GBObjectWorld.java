@@ -50,7 +50,7 @@ public class GBObjectWorld extends Model {
 	 */
 	Map<GBObjectClass, GBObject[]> objects;
 	// protected GBObject[][] objects;
-	protected List<GBObject> news;
+	protected List<GBObject> newObjects;
 
 	/*
 	 * Calls from GBWorld go in the order: 1) Think All 2) Move All 3) Act All
@@ -62,7 +62,7 @@ public class GBObjectWorld extends Model {
 		tilesY = (int) (Math.ceil(kWorldHeight / kForegroundTileSize));
 		allObjects = new ArrayList<GBObject>(100000);
 		objects = new HashMap<GBObjectClass, GBObject[]>();
-		news = new ArrayList<GBObject>(2000);
+		newObjects = new ArrayList<GBObject>(2000);
 		MakeTiles();
 	}
 
@@ -80,7 +80,7 @@ public class GBObjectWorld extends Model {
 		for (GBObject obj : allObjects)
 			obj.next = null;
 		allObjects.clear();
-		news.clear();
+		newObjects.clear();
 	}
 
 	/**
@@ -114,14 +114,14 @@ public class GBObjectWorld extends Model {
 		return objects.get(type);
 	}
 
-	protected void addNewObjects() {
-		Iterator<GBObject> it = news.iterator();
+	private void addNewObjects() {
+		Iterator<GBObject> it = newObjects.iterator();
 		while (it.hasNext()) {
 			GBObject ob = it.next();
 			allObjects.add(ob);
 			addObject(ob);
 		}
-		news.clear();
+		newObjects.clear();
 	}
 
 	/**
@@ -130,21 +130,23 @@ public class GBObjectWorld extends Model {
 	 * 
 	 * @param newOb
 	 */
-	public void AddObjectNew(GBObject newOb) {
+	public void addObjectLater(GBObject newOb) {
 		if (newOb != null)
-			news.add(newOb);
+			newObjects.add(newOb);
 	}
 
 	/**
 	 * Add an object to the map from the UI
 	 * @param newOb
 	 */
-	public void addObjectManual(GBObject newOb) {
+	public void addObjectImmediate(GBObject newOb) {
 		allObjects.add(newOb);
 		addObject(newOb);
 	}
+	
+	
 
-	protected void addObject(GBObject ob) {
+	private void addObject(GBObject ob) {
 		if (ob != null)
 			if (ob.Class() != GBObjectClass.ocDead) {
 				// If object is dead, leave it alone.
@@ -395,7 +397,7 @@ public class GBObjectWorld extends Model {
 															// frame for
 															// sensors
 					((GBRobot) obj).Die(null);
-					AddObjectNew(obj); // new so it'll be deleted next
+					addObjectLater(obj); // new so it'll be deleted next
 										// resort
 				} else
 					it.remove();

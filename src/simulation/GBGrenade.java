@@ -35,7 +35,7 @@ public class GBGrenade extends GBTimedShot {
 	public void Act(GBWorld world) {
 		super.Act(world);
 		if (lifetime <= 0) {
-			world.AddObjectNew(new GBExplosion(Position(), owner, power));
+			world.addObjectLater(new GBExplosion(Position(), owner, power));
 		}
 	}
 

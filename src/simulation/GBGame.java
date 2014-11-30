@@ -24,11 +24,16 @@ public class GBGame implements ScoreKeeper {
 	public List<Side> sides;
 	int previousSidesAlive; // num of non-extinct sides last frame
 	GBWorld world;
-	// GBRandomState random;
 	// stats
 	int mannas, corpses;
 	int mannaValue, corpseValue, robotValue;
+	/**
+	 * Sum of all side scores for this round
+	 */
 	GBScores roundScores;
+	/**
+	 * Sum of all side scores over all rounds 
+	 */
 	GBScores tournamentScores;
 
 	// operation and tournament
@@ -57,18 +62,20 @@ public class GBGame implements ScoreKeeper {
 	}
 
 	public void StartRound() {
-		world.Reset();
+		Reset();
 		roundScores.Reset();
 		pickSeededSides();
 		world.AddSeeds();
+		world.currentFrame = 0;
 		CollectStatistics();
 	}
 
 	public void advanceFrame() {
 		previousSidesAlive = world.SidesAlive();
 		world.SimulateOneFrame();
+		CollectStatistics();
 		if (previousSidesAlive > world.SidesAlive()) {
-			//someone went extinct; do something
+			//TODO: play extinction sound
 		}
 		if (RoundOver())
 			EndRound();
@@ -94,15 +101,19 @@ public class GBGame implements ScoreKeeper {
 	}
 	
 	void pickSeededSides() {
+		//Randomly pick up to <seedLimit> sides from the sides list
 		int seedsLeft = Math.min(seedLimit, sides.size());
-		int sidesLeft = sides.size();
-		while (world.sides.size() < Math.min(seedLimit, sides.size()))
-			for (int i = 0; i < sides.size() && seedsLeft != 0; ++i, --sidesLeft)
+		while (world.sides.size() < Math.min(seedLimit, sides.size())) {
+			int sidesLeft = sides.size();
+			for (int i = 0; i < sides.size() && seedsLeft > 0; ++i, --sidesLeft)
 				if (seedsLeft >= sidesLeft
 						|| world.random.bool((double) (seedsLeft) / sidesLeft)) {
-					if (!world.sides.contains(sides.get(i)))
+					if (!world.sides.contains(sides.get(i))){
 						world.AddSide(sides.get(i));
+						seedsLeft--;
+					}
 				}
+		}
 	}
 
 	public void Reset() {

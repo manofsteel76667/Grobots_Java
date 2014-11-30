@@ -88,7 +88,7 @@ public class GBConstructorState {
 								* robot.Radius(), dir), robot.Velocity()
 						.addPolar(GBHardwareState.kBabyInitialSpeed, dir),
 						robot.ID());
-				world.AddObjectNew(child);
+				world.addObjectLater(child);
 				progress = 0;
 				type = null;
 				lastChild = child.ID();
@@ -96,7 +96,7 @@ public class GBConstructorState {
 			robot.Recalculate();
 		}
 		if (abortion > 0) {
-			world.AddObjectNew(new GBCorpse(robot.Position(), robot.Velocity(),
+			world.addObjectLater(new GBCorpse(robot.Position(), robot.Velocity(),
 					abortion * GBHardwareState.kAbortionCorpseFactor, robot
 							.Type(), null)); // should really be child type, but
 												// we don't know that any more

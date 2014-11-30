@@ -95,7 +95,7 @@ public class GBWorld extends GBObjectWorld {
 	void AddManna() {
 		for (mannaLeft += size.x * size.y * mannaRate
 				/ (kForegroundTileSize * kForegroundTileSize); mannaLeft > mannaSize; mannaLeft -= mannaSize)
-			AddObjectNew(new GBManna(RandomLocation(0), mannaSize));
+			addObjectLater(new GBManna(RandomLocation(0), mannaSize));
 	}
 
 	void AddInitialManna() {
@@ -105,9 +105,9 @@ public class GBWorld extends GBObjectWorld {
 		for (; amount > 0; amount -= placed) {
 			placed = amount > mannaSize ? random.InRange(mannaSize / 10,
 					mannaSize) : amount;
-			AddObjectNew(new GBManna(RandomLocation(0), placed));
+			addObjectImmediate(new GBManna(RandomLocation(0), placed));
 		}
-		addNewObjects();
+		//addNewObjects();
 	}
 
 	public void SimulateOneFrame() {
@@ -139,7 +139,7 @@ public class GBWorld extends GBObjectWorld {
 				if (type.Cost() <= cost) {
 					bot = new GBRobot(type, where.add(random
 							.Vector(kSeedRadius)));
-					AddObjectNew(bot);
+					addObjectImmediate(bot);
 					side.Scores().ReportSeeded(type.Cost());
 					cost -= type.Cost();
 					lastPlaced = i;
@@ -176,8 +176,8 @@ public class GBWorld extends GBObjectWorld {
 			}
 			// all else fails, make a manna.
 			if (cost > 0)
-				AddObjectNew(new GBManna(where, cost));
-			addNewObjects();
+				addObjectImmediate(new GBManna(where, cost));
+			//addNewObjects();
 		} catch (Exception e) {
 			throw new GBSimulationError("Error adding seed:" + e.getMessage());
 		}

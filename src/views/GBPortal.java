@@ -561,7 +561,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				following = false;
 				break;
 			case ptAddManna:
-				world.addObjectManual(new GBManna(where, world.mannaSize));
+				world.addObjectImmediate(new GBManna(where, world.mannaSize));
 				break;
 			case ptAddRobot:
 				DoAddRobot(where);
@@ -576,7 +576,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				DoPull(where);
 				break;
 			case ptSmite:
-				world.AddObjectNew(new GBExplosion(where, null /* nobody */,
+				world.addObjectLater(new GBExplosion(where, null /* nobody */,
 						kSmiteDamage));
 				break;
 			case ptBlasts:
@@ -628,7 +628,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				if (side.types.size() > 0)
 					type = side.types.get(0);
 			if (type != null) {
-				world.addObjectManual(new GBRobot(type, where));
+				world.addObjectImmediate(new GBRobot(type, where));
 				side.Scores().ReportSeeded(type.Cost());
 				app.game.CollectStatistics();
 			}
@@ -657,13 +657,13 @@ public class GBPortal extends JPanel implements GBProjection {
 			return;
 		GBForceField ff = new GBForceField(where, where.subtract(lastClick),
 				null, kMoveForce, where.subtract(lastClick).angle());
-		world.AddObjectNew(ff);
+		world.addObjectLater(ff);
 	}
 
 	public void DoBlasts(FinePoint where) {
 		double base = GBRandomState.gRandoms.Angle();
 		for (int i = kNumBlasts; i > 0; i--)
-			world.AddObjectNew(new GBBlast(where, FinePoint.makePolar(
+			world.addObjectLater(new GBBlast(where, FinePoint.makePolar(
 					kBlastSpeed, base + GBMath.kPi * 2 * i / kNumBlasts), null,
 					kBlastDamage, (int) Math.ceil(kBlastRange / kBlastSpeed)));
 	}

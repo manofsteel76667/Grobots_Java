@@ -223,10 +223,10 @@ public class GBHardwareState {
 		// death check
 		if (armor <= 0 || robot.dead) {
 			robot.dead = true;
-			world.AddObjectNew(new GBCorpse(robot.Position(), robot.Velocity(),
+			world.addObjectLater(new GBCorpse(robot.Position(), robot.Velocity(),
 					robot.Biomass() * kCorpsePerBiomass, robot.Type(), robot
 							.LastHit()));
-			world.AddObjectNew(new GBExplosion(robot.Position(), robot.Owner(),
+			world.addObjectLater(new GBExplosion(robot.Position(), robot.Owner(),
 					(robot.Biomass() * kDeathExplosionDamagePerBiomass + spec
 							.Bomb()) * robot.ShieldFraction()));
 			return;
