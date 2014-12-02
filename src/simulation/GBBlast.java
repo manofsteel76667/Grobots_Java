@@ -88,28 +88,31 @@ public class GBBlast extends GBTimedShot {
 			g2d.fillOval((int) where.x, (int) where.y, where.width,
 					where.height);
 		} else {
-			g2d.setPaint(Color.gray);
-			g2d.drawOval((int) where.x, (int) where.y, where.width,
-					where.height);
+			// Looks like you're firing dicks at people :)			
+			// g2d.setPaint(Color.gray);
+			// g2d.drawOval((int) where.x, (int) where.y, where.width,
+			// where.height);
+
+			int cx = (int) where.x;
+			int cy = (int) where.y;
+			int thickness = (int) (2 + Math.floor(power / 20));
+			FinePoint head = Velocity().unit().multiply(where.getWidth())
+					.divide(2);
+			int hx = (int) Math.round(head.x);
+			int hy = (int) (-1 * Math.round(head.y));
+			FinePoint tail = Velocity().multiply(where.getWidth()).divide(
+					radius * 2);
+			int tx = (int) Math.round(tail.x);
+			int ty = (int) (-1 * Math.round(tail.y));
+			g2d.setPaint(GBColor.multiply(Color(), 0.7f));
+			g2d.setStroke(new BasicStroke(thickness + 2));
+			g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
+			g2d.setPaint(GBColor.add(Color(), GBColor.getGreyColor(0.2f)));
+			g2d.setStroke(new BasicStroke(Math.max(thickness, 2)));
+			g2d.drawLine(cx + hx, cy + hy, cx - hx, cy - hy);
+			g2d.setPaint(Color());
+			g2d.setStroke(new BasicStroke(thickness));
+			g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
 		}
-		int cx = (int) where.x;
-		int cy = (int) where.y;
-		int thickness = (int) (2 + Math.floor(power / 20));
-		FinePoint head = Velocity().unit().multiply(where.getWidth()).divide(2);
-		int hx = (int) Math.round(head.x);
-		int hy = (int) (-1 * Math.round(head.y));
-		FinePoint tail = Velocity().multiply(where.getWidth()).divide(
-				radius * 2);
-		int tx = (int) Math.round(tail.x);
-		int ty = (int) (-1 * Math.round(tail.y));
-		g2d.setPaint(GBColor.multiply(Color(), 0.7f));
-		g2d.setStroke(new BasicStroke(thickness + 2));
-		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
-		g2d.setPaint(GBColor.add(Color(), GBColor.getGreyColor(0.2f)));
-		g2d.setStroke(new BasicStroke(Math.max(thickness, 2)));
-		g2d.drawLine(cx + hx, cy + hy, cx - hx, cy - hy);
-		g2d.setPaint(Color());
-		g2d.setStroke(new BasicStroke(thickness));
-		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
 	}
 }

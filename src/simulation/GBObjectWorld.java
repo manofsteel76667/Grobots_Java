@@ -5,16 +5,17 @@
 package simulation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import exception.GBSimulationError;
 import support.FinePoint;
 import support.GBObjectClass;
 import support.GBRandomState;
 import support.Model;
+import exception.GBSimulationError;
 
 public class GBObjectWorld extends Model {
 	/**
@@ -60,7 +61,8 @@ public class GBObjectWorld extends Model {
 		size = new FinePoint(kWorldWidth, kWorldHeight);
 		tilesX = (int) (Math.ceil(kWorldWidth / kForegroundTileSize));
 		tilesY = (int) (Math.ceil(kWorldHeight / kForegroundTileSize));
-		allObjects = new ArrayList<GBObject>(100000);
+		allObjects = Collections
+				.synchronizedList(new ArrayList<GBObject>(10000));
 		objects = new HashMap<GBObjectClass, GBObject[]>();
 		newObjects = new ArrayList<GBObject>(2000);
 		MakeTiles();
@@ -77,9 +79,11 @@ public class GBObjectWorld extends Model {
 	 */
 	protected void ClearLists() {
 		MakeTiles();
-		for (GBObject obj : allObjects)
-			obj.next = null;
-		allObjects.clear();
+		synchronized (allObjects) {
+			for (GBObject obj : allObjects)
+				obj.next = null;
+			allObjects.clear();
+		}
 		newObjects.clear();
 	}
 
@@ -88,17 +92,19 @@ public class GBObjectWorld extends Model {
 	 */
 	protected void ResortObjects() {
 		MakeTiles();
-		Iterator<GBObject> it = allObjects.iterator();
-		while (it.hasNext()) {
-			GBObject obj = it.next();
-			obj.next = null;
-			if (obj.Class() != GBObjectClass.ocDead) {
-				addObject(obj);
-			} else
-				// TODO: check that allObjects is the only place the dead
-				// object is referenced;
-				// otherwise GC won't happen
-				it.remove();
+		synchronized (allObjects) {
+			Iterator<GBObject> it = allObjects.iterator();
+			while (it.hasNext()) {
+				GBObject obj = it.next();
+				obj.next = null;
+				if (obj.Class() != GBObjectClass.ocDead) {
+					addObject(obj);
+				} else
+					// TODO: check that allObjects is the only place the dead
+					// object is referenced;
+					// otherwise GC won't happen
+					it.remove();
+			}
 		}
 		addNewObjects();
 	}
@@ -118,7 +124,9 @@ public class GBObjectWorld extends Model {
 		Iterator<GBObject> it = newObjects.iterator();
 		while (it.hasNext()) {
 			GBObject ob = it.next();
-			allObjects.add(ob);
+			synchronized (allObjects) {
+				allObjects.add(ob);
+			}
 			addObject(ob);
 		}
 		newObjects.clear();
@@ -137,14 +145,15 @@ public class GBObjectWorld extends Model {
 
 	/**
 	 * Add an object to the map from the UI
+	 * 
 	 * @param newOb
 	 */
 	public void addObjectImmediate(GBObject newOb) {
-		allObjects.add(newOb);
+		synchronized (allObjects) {
+			allObjects.add(newOb);
+		}
 		addObject(newOb);
 	}
-	
-	
 
 	private void addObject(GBObject ob) {
 		if (ob != null)
@@ -250,7 +259,8 @@ public class GBObjectWorld extends Model {
 			stage = "colliding sensors";
 			CollideSensors(t, t);
 		} catch (Exception e) {
-			throw new GBSimulationError("Error " + stage + ": " + e.getMessage());
+			throw new GBSimulationError("Error " + stage + ": "
+					+ e.getMessage());
 		}
 	}
 
@@ -341,7 +351,8 @@ public class GBObjectWorld extends Model {
 			CollideSensors(t1, t2);
 			CollideSensors(t2, t1);
 		} catch (Exception e) {
-			throw new GBSimulationError("Error " + stage + ": " + e.getMessage());
+			throw new GBSimulationError("Error " + stage + ": "
+					+ e.getMessage());
 		}
 	}
 
@@ -388,21 +399,23 @@ public class GBObjectWorld extends Model {
 
 	public void EraseAt(FinePoint where, double radius) {
 		MakeTiles();
-		Iterator<GBObject> it = allObjects.iterator();
-		while (it.hasNext()) {
-			GBObject obj = it.next();
-			if (obj.Position().inRange(where, obj.Radius() + radius))
-				if (obj.Class() == GBObjectClass.ocRobot) { // must stick
-															// around a
-															// frame for
-															// sensors
-					((GBRobot) obj).Die(null);
-					addObjectLater(obj); // new so it'll be deleted next
-										// resort
-				} else
-					it.remove();
-			else
-				addObject(obj);
+		synchronized (allObjects) {
+			Iterator<GBObject> it = allObjects.iterator();
+			while (it.hasNext()) {
+				GBObject obj = it.next();
+				if (obj.Position().inRange(where, obj.Radius() + radius))
+					if (obj.Class() == GBObjectClass.ocRobot) { // must stick
+																// around a
+																// frame for
+																// sensors
+						((GBRobot) obj).Die(null);
+						addObjectLater(obj); // new so it'll be deleted next
+												// resort
+					} else
+						it.remove();
+				else
+					addObject(obj);
+			}
 		}
 	}
 
@@ -454,52 +467,58 @@ public class GBObjectWorld extends Model {
 		return tilesY;
 	}
 
+	// Object selectors triggered from the UI. Synchronization required
 	public GBObject ObjectNear(FinePoint where, boolean hitSensors) {
 		GBObject best = null;
 		double dist = 5; // never see objects farther than this
-		for (GBObject ob : allObjects) {
-			if ((ob.Class() != GBObjectClass.ocSensorShot || hitSensors)
-					&& ob.Class() != GBObjectClass.ocDecoration
-					&& (ob.Class() == GBObjectClass.ocRobot || best == null
-							|| best.Class() != GBObjectClass.ocRobot || where
-								.inRange(ob.Position(), ob.Radius()))
-					&& ob.Position().inRange(where, dist)) {
-				best = ob;
-				dist = (best.Position().subtract(where)).norm();
-			}
+		synchronized (allObjects) {
+			for (GBObject ob : allObjects)
+				if ((ob.Class() != GBObjectClass.ocSensorShot || hitSensors)
+						&& ob.Class() != GBObjectClass.ocDecoration
+						&& (ob.Class() == GBObjectClass.ocRobot || best == null
+								|| best.Class() != GBObjectClass.ocRobot || where
+									.inRange(ob.Position(), ob.Radius()))
+						&& ob.Position().inRange(where, dist)) {
+					best = ob;
+					dist = (best.Position().subtract(where)).norm();
+				}
 		}
 		return best;
 	}
 
 	public GBObject RandomInterestingObject() {
 		double totalInterest = 0;
-		for (GBObject ob : allObjects)
-			totalInterest += ob.Interest();
-		if (totalInterest == 0)
-			return null;
-		for (GBObject ob : allObjects) {
-			double interest = ob.Interest();
-			if (GBRandomState.gRandoms.bool(interest / totalInterest))
-				return ob;
-			totalInterest -= interest;
+		synchronized (allObjects) {
+			for (GBObject ob : allObjects)
+				totalInterest += ob.Interest();
+			if (totalInterest == 0)
+				return null;
+			for (GBObject ob : allObjects) {
+				double interest = ob.Interest();
+				if (GBRandomState.gRandoms.bool(interest / totalInterest))
+					return ob;
+				totalInterest -= interest;
+			}
 		}
 		return null;
 	}
 
 	public GBObject RandomInterestingObjectNear(FinePoint where, double radius) {
 		double totalInterest = 0;
-		for (GBObject ob : allObjects)
-			if (ob.Position().inRange(where, radius))
-				totalInterest += ob.Interest();
-		if (totalInterest == 0)
-			return null;
-		for (GBObject ob : allObjects)
-			if (ob.Position().inRange(where, radius)) {
-				double interest = ob.Interest();
-				if (GBRandomState.gRandoms.bool(interest / totalInterest))
-					return ob;
-				totalInterest -= interest;
-			}
+		synchronized (allObjects) {
+			for (GBObject ob : allObjects)
+				if (ob.Position().inRange(where, radius))
+					totalInterest += ob.Interest();
+			if (totalInterest == 0)
+				return null;
+			for (GBObject ob : allObjects)
+				if (ob.Position().inRange(where, radius)) {
+					double interest = ob.Interest();
+					if (GBRandomState.gRandoms.bool(interest / totalInterest))
+						return ob;
+					totalInterest -= interest;
+				}
+		}
 		return null;
 	}
 }

@@ -4,10 +4,9 @@
  *******************************************************************************/
 package simulation;
 
-
-
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import sides.Side;
@@ -86,6 +85,7 @@ public abstract class GBObject {
 	/**
 	 * Returns a rectangle (approximately) representing the position of the
 	 * rendered object on the screen.
+	 * 
 	 * @param proj
 	 * @return
 	 */
@@ -97,12 +97,10 @@ public abstract class GBObject {
 
 	public abstract void Draw(Graphics g, GBProjection proj, boolean detailed);
 
-	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void DrawUnderlay(Graphics g, GBProjection proj, boolean detailed) {
 	}
 
-	protected void DrawOverlay(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void DrawOverlay(Graphics g, GBProjection proj, boolean detailed) {
 	}
 
 	// protected:
@@ -320,9 +318,18 @@ public abstract class GBObject {
 
 	public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
 			Color color) {
-		/*Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
-				proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right()
-						+ offset.x), proj.ToScreenY(Bottom() + offset.y));*/
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle where = getScreenRect(proj);
+		int scale = proj.getScale();
+		where.x += (int)(offset.x * scale);
+		where.y -= (int)(offset.y * scale);
+		g2d.setPaint(color);
+		g2d.fillOval(where.x, where.y, where.width, where.height);
+		/*
+		 * Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
+		 * proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right() + offset.x),
+		 * proj.ToScreenY(Bottom() + offset.y));
+		 */
 		// GBGraphics.fillOval(g, shadow, color);
 	}
 

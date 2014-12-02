@@ -18,10 +18,12 @@ import sides.Side;
 import support.FinePoint;
 import support.GBObjectClass;
 import support.StringUtilities;
+import ui.GBApplication;
 import exception.GBSimulationError;
 
 public class GBGame implements ScoreKeeper {
 	public List<Side> sides;
+	GBApplication app;
 	int previousSidesAlive; // num of non-extinct sides last frame
 	GBWorld world;
 	// stats
@@ -49,7 +51,7 @@ public class GBGame implements ScoreKeeper {
 
 	public static final int kDefaultTimeLimit = 18000;
 
-	public GBGame() {
+	public GBGame(GBApplication _app) {
 		sides = new ArrayList<Side>();
 		roundScores = new GBScores();
 		tournamentScores = new GBScores();
@@ -59,6 +61,7 @@ public class GBGame implements ScoreKeeper {
 		tournamentLength = -1;
 		reportErrors = true;
 		seedLimit = 10;
+		app = _app;
 	}
 
 	public void StartRound() {
@@ -87,6 +90,8 @@ public class GBGame implements ScoreKeeper {
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
 		// graph)
 		ReportRound();
+		if (app != null)
+			app.setSelectedObject(null);
 		if (tournament) {
 			if (tournamentLength > 0)
 				--tournamentLength;

@@ -258,7 +258,8 @@ public class GBPortal extends JPanel implements GBProjection {
 		if (following) {
 			if (autofollow
 					&& (System.currentTimeMillis() > lastFollow
-							+ kAutofollowPeriod) || app.getSelectedObject() == null) {
+							+ kAutofollowPeriod)
+					|| app.getSelectedObject() == null) {
 				FollowRandom();
 				if (app.getSelectedObject() != null)
 					viewpoint.set(app.getSelectedObject().Position());
@@ -266,7 +267,8 @@ public class GBPortal extends JPanel implements GBProjection {
 			}
 			if (app.getSelectedObject() != null) {
 				if (panning())
-					//TODO at full zoom the panning rate is slower than some objects
+					// TODO at full zoom the panning rate is slower than some
+					// objects
 					if (!viewpoint.inRange(app.getSelectedObject().Position(),
 							16.0d / scale)) {
 						FinePoint distance = app.getSelectedObject().Position()
@@ -345,9 +347,16 @@ public class GBPortal extends JPanel implements GBProjection {
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
+		if (!isMiniMap)
+			for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
+				for (GBObject ob = spot; ob != null; ob = ob.next)
+					ob.DrawUnderlay(g2d, this, detailed);
 		for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
+		for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
+			for (GBObject ob = spot; ob != null; ob = ob.next)
+				ob.DrawOverlay(g2d, this, detailed);
 		for (GBObject spot : world.getObjects(GBObjectClass.ocArea))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
@@ -362,13 +371,14 @@ public class GBPortal extends JPanel implements GBProjection {
 			for (GBObject spot : world.getObjects(GBObjectClass.ocSensorShot))
 				for (GBObject ob = spot; ob != null; ob = ob.next)
 					ob.Draw(g2d, this, detailed);
-		//On the minimap, draw a rectangle indicating the portion of the
-		//world that is visible on the portal
-		if (isMiniMap && visibleWorld != null){
+		// On the minimap, draw a rectangle indicating the portion of the
+		// world that is visible on the portal
+		if (isMiniMap && visibleWorld != null) {
 			g2d.setColor(Color.white);
 			g2d.setStroke(new BasicStroke(1));
-			g2d.draw(new Rectangle(ToScreenX(visibleWorld.x), ToScreenY(visibleWorld.y),
-					visibleWorld.width * scale, visibleWorld.height * scale));			
+			g2d.draw(new Rectangle(ToScreenX(visibleWorld.x),
+					ToScreenY(visibleWorld.y), visibleWorld.width * scale,
+					visibleWorld.height * scale));
 		}
 	}
 
@@ -384,8 +394,8 @@ public class GBPortal extends JPanel implements GBProjection {
 			// Center the name below the object
 			int x = ToScreenX(targetPos.x) - fm.stringWidth(s) / 2;
 			int texty = ToScreenY(targetPos.y
-					- (app.getSelectedObject().Radius() > 2 ? 0 : app.getSelectedObject()
-							.Radius())) + 13;
+					- (app.getSelectedObject().Radius() > 2 ? 0 : app
+							.getSelectedObject().Radius())) + 13;
 			g2d.drawString(s, x, texty);
 			String details = app.getSelectedObject().Details();
 			// Details go below that
@@ -416,24 +426,26 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	@Override
 	public int ToScreenX(double x) {
-		return (int) (Math.floor((x - viewpoint.x) * scale) + this
+		return (int) (Math.round((x - viewpoint.x) * (double) scale) + this
 				.getVisibleRect().getCenterX());
 	}
 
 	@Override
 	public int ToScreenY(double y) {
-		return (int) (Math.floor((viewpoint.y - y) * scale) + this
+		return (int) (Math.round((viewpoint.y - y) * (double) scale) + this
 				.getVisibleRect().getCenterY());
 	}
 
 	@Override
 	public double FromScreenX(int h) {
-		return (h - this.getVisibleRect().getCenterX()) / scale + viewpoint.x;
+		return ((double)h - this.getVisibleRect().getCenterX()) / (double) scale
+				+ viewpoint.x;
 	}
 
 	@Override
 	public double FromScreenY(int v) {
-		return (this.getVisibleRect().getCenterY() - v) / scale + viewpoint.y;
+		return (this.getVisibleRect().getCenterY() - (double)v) / (double) scale
+				+ viewpoint.y;
 	}
 
 	@Override
@@ -510,10 +522,10 @@ public class GBPortal extends JPanel implements GBProjection {
 
 	public void Follow(GBObject ob) {
 		if (ob != null) {
-			//Set selected side and type if following a robot
-			if (ob.Class() == GBObjectClass.ocRobot){
-				app.setSelectedSide(((GBRobot)ob).Owner());
-				app.setSelectedType(((GBRobot)ob).Type());
+			// Set selected side and type if following a robot
+			if (ob.Class() == GBObjectClass.ocRobot) {
+				app.setSelectedSide(((GBRobot) ob).Owner());
+				app.setSelectedType(((GBRobot) ob).Type());
 			}
 			app.setSelectedObject(ob);
 			followPosition = ob.Position().subtract(viewpoint);
@@ -532,7 +544,8 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	boolean panning() {
-		boolean ret = following && !app.getSelectedObject().Position().equals(viewpoint);
+		boolean ret = following
+				&& !app.getSelectedObject().Position().equals(viewpoint);
 		return ret;
 	}
 
@@ -600,19 +613,20 @@ public class GBPortal extends JPanel implements GBProjection {
 		} catch (Exception e) {
 		}
 	}
-	
+
 	Rectangle visibleWorld;
-	
-	public void setVisibleWorld(Rectangle rect){
+
+	public void setVisibleWorld(Rectangle rect) {
 		visibleWorld = rect;
 	}
-	
-	public Rectangle getVisibleWorld(){		
-		return new Rectangle((int)viewLeft(), (int)viewTop(), getWidth()/scale, getHeight()/scale);
+
+	public Rectangle getVisibleWorld() {
+		return new Rectangle((int) viewLeft(), (int) viewTop(), getWidth()
+				/ scale, getHeight() / scale);
 	}
-	
-	public void setViewWindow(FinePoint newViewPoint){
-		if (!isMiniMap){
+
+	public void setViewWindow(FinePoint newViewPoint) {
+		if (!isMiniMap) {
 			following = false;
 			autofollow = false;
 			viewpoint = newViewPoint;

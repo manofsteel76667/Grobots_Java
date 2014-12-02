@@ -20,6 +20,7 @@ import support.FinePoint;
 import support.GBColor;
 import support.GBObjectClass;
 import brains.Brain;
+import brains.BrainStatus;
 
 public class GBRobot extends GBObject {
 	RobotType type;
@@ -29,7 +30,21 @@ public class GBRobot extends GBObject {
 	int recentDamage;
 	int friendlyCollisions, enemyCollisions, shotCollisions, foodCollisions,
 			wallCollisions;
-	// public:
+
+	// Precalculated colors
+	Color minimapColor;
+	Color blasterRangeCircleColor;
+	Color syphonRangeCircleColor;
+	Color grenadesRangeCircleColor;
+	Color enemySyphonRangeCircleColor;
+	Color forcefieldRangeCircleColor;
+	Color energyMeterColor;
+	Color energyMeterBackgroundColor;
+	Color damageMeterColor;
+	Color damageMeterBackgroundColor;
+	Color gestationMeterColor;
+	Color gestationMeterBackgroundColor;
+
 	// hardware state
 	public GBHardwareState hardware;
 	public boolean dead;
@@ -67,6 +82,7 @@ public class GBRobot extends GBObject {
 		id = rtype.side.GetNewRobotNumber();
 		hardware = new GBHardwareState(rtype.Hardware());
 		hardware.radio.Reset(Owner());
+		calcColors();
 		Recalculate();
 	}
 
@@ -78,6 +94,7 @@ public class GBRobot extends GBObject {
 		parent = parentID;
 		hardware = new GBHardwareState(rtype.Hardware());
 		hardware.radio.Reset(Owner());
+		calcColors();
 		Recalculate();
 	}
 
@@ -329,43 +346,71 @@ public class GBRobot extends GBObject {
 	// handling.
 	@Override
 	public Color Color() {
-		return GBColor.Mix(
-				GBColor.EnsureContrastWithBlack(Owner().Color(), kMinMinimapBotContrast), 0.9f, type.Color());
-		//return Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
-		//		.Mix(0.9f, type.Color());
+		return GBColor.Mix(GBColor.EnsureContrastWithBlack(Owner().Color(),
+				kMinMinimapBotContrast), 0.9f, type.Color());
+		// return
+		// Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
+		// .Mix(0.9f, type.Color());
+	}
+
+	// Precalculation of colors that won't change over the robot's life
+	void calcColors() {
+		minimapColor = GBColor.Mix(Color(), 0.5f, type.color);
+		blasterRangeCircleColor = new Color(1f, 0f, 1f, .5f);
+		grenadesRangeCircleColor = new Color(1f, 1f, 0f, .5f);
+		syphonRangeCircleColor = new Color(1f, 1f, 0f, .5f);
+		enemySyphonRangeCircleColor = new Color(.6f, 1f, 0f, .5f);
+		forcefieldRangeCircleColor = new Color(0f, .8f, 1f, .5f);
+		energyMeterColor = Color.GREEN;
+		energyMeterBackgroundColor = new Color(0, 0.5f, 1);
+		damageMeterColor = Color.red;
+		damageMeterBackgroundColor = Color.lightGray;
+		gestationMeterColor = Color.yellow;
+		gestationMeterBackgroundColor = Color.GREEN;
 	}
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make
 	// the meter flash.
 	static void DrawMeter(Graphics g, double fraction, Rectangle where,
-			int zeroAngle, int oneAngle, int width, Color color1,
-			Color color2, Color bgcolor, boolean pulse) {
+			int zeroAngle, int oneAngle, int width, Color color1, Color color2,
+			Color bgcolor, boolean pulse) {
 		Graphics2D g2d = (Graphics2D) g;
-		Color color = GBColor.ChooseContrasting(bgcolor, color1, color2, kMinMeterContrast);
-		//GBColor color = bgcolor.ChooseContrasting(color1, color2,
-		//		kMinMeterContrast);
+		Color color = GBColor.ChooseContrasting(bgcolor, color1, color2,
+				kMinMeterContrast);
+		// GBColor color = bgcolor.ChooseContrasting(color1, color2,
+		// kMinMeterContrast);
 		int angle = (int) Math.ceil(fraction * (oneAngle - zeroAngle));
 		float phase = System.currentTimeMillis() * 6.28f / 500;
-		g2d.setColor(GBColor.multiply(color, pulse ? 0.85f + 0.15f * (float) Math
-				.sin(phase) : 1.0f));
-		//g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
-		//		.sin(phase) : 1.0f));
+		g2d.setColor(GBColor.multiply(color,
+				pulse ? 0.85f + 0.15f * (float) Math.sin(phase) : 1.0f));
+		// g2d.setColor(color.multiply(pulse ? 0.85f + 0.15f * (float) Math
+		// .sin(phase) : 1.0f));
 		g2d.drawArc(where.x, where.y, where.width, where.height, zeroAngle,
 				angle);
 
 	}
 
 	@Override
-	protected void DrawUnderlay(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
-		// halo: crashes, prints
-		Rectangle halo = new Rectangle(where);
+	public void DrawUnderlay(Graphics g, GBProjection proj, boolean detailed) {
+		// Get the basics
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle halo = getScreenRect(proj);
+		if (halo.width <= 5) {
+			return;
+		}
 		halo.grow(3, 3);
 		/*
 		 * if (brain != null) if (brain.status != BrainStatus.bsOK)
 		 * GBGraphics.fillOval(g, halo, brain.status == BrainStatus.bsStopped ?
 		 * Color.yellow : Color.red);
 		 */
+		// halo: crashes, prints
+		if (brain != null)
+			if (brain.status != BrainStatus.bsOK) {
+				g2d.setPaint(brain.status == BrainStatus.bsStopped ? Color.yellow
+						: Color.red);
+				g2d.fillOval(halo.x, halo.y, halo.width, halo.height);
+			}
 		// velocity and engine-velocity
 		if (Velocity().isNonzero())
 			DrawShadow(g, proj, Velocity().multiply(-2.5),
@@ -374,17 +419,25 @@ public class GBRobot extends GBObject {
 				&& hardware.EngineVelocity().isNonzero()) {
 			FinePoint dv = hardware.EngineVelocity().subtract(Velocity());
 			if (dv.norm() > 0.01) {
+				FinePoint head = Position().add(
+						dv.unit().multiply(
+								Radius() + hardware.EnginePower()
+										/ Math.sqrt(Mass()) * 30));
+				g2d.setStroke(new BasicStroke(2));
+				g2d.setColor(Color.green);
+				g2d.drawLine(proj.ToScreenX(position.x),
+						proj.ToScreenY(position.y), proj.ToScreenX(head.x),
+						proj.ToScreenY(head.y));
+
 				/*
-				 * FinePoint head = Position().add( dv.unit().multiply( Radius()
-				 * + hardware.EnginePower() / Math.sqrt(Mass()) * 30));
-				 * ((Graphics2D) g).setStroke(new BasicStroke(2));
-				 * 
 				 * GBGraphics.drawLine(g, proj.ToScreenX(Position().x),
 				 * proj.ToScreenY(Position().y), proj.ToScreenX(head.x),
 				 * proj.ToScreenY(head.y), Color.GREEN);
 				 */
-				DrawShadow(g, proj, dv.unit().multiply(hardware.EnginePower())
-						.divide(Mass()).multiply(-30), Color.GREEN);
+				// What's the point of this?
+				// DrawShadow(g, proj,
+				// dv.unit().multiply(hardware.EnginePower())
+				// .divide(Mass()).multiply(-30), Color.GREEN);
 			}
 		}
 		// weapon ranges? //sensor results?
@@ -401,8 +454,6 @@ public class GBRobot extends GBObject {
 				(int) (r * 2 * proj.getScale()));
 	}
 
-	/** Draw circles showing the range of each weapon. */
-	// Moved from GBPortal
 	/**
 	 * Moved from GBPortal Shows weapon ranges if this robot is selected
 	 * 
@@ -411,18 +462,18 @@ public class GBRobot extends GBObject {
 	 */
 	public void drawRangeCircles(Graphics g, GBProjection proj) {
 		((Graphics2D) g).setStroke(new BasicStroke(1));
-		drawRangeCircle(g, proj, hardware.blaster.MaxRange(), new Color(1f, 0f,
-				1f, .5f));
-		drawRangeCircle(g, proj, hardware.grenades.MaxRange(), new Color(1f,
-				1f, 0f, .5f));
+		drawRangeCircle(g, proj, hardware.blaster.MaxRange(),
+				blasterRangeCircleColor);
+		drawRangeCircle(g, proj, hardware.grenades.MaxRange(),
+				grenadesRangeCircleColor);
 		if (hardware.syphon.MaxRate() > 0)
-			drawRangeCircle(g, proj, hardware.syphon.MaxRange(), new Color(.5f,
-					.8f, 1f, .5f));
+			drawRangeCircle(g, proj, hardware.syphon.MaxRange(),
+					syphonRangeCircleColor);
 		if (hardware.enemySyphon.MaxRate() > 0)
 			drawRangeCircle(g, proj, hardware.enemySyphon.MaxRange(),
-					new Color(.6f, 1f, 0f, .5f));
-		drawRangeCircle(g, proj, hardware.forceField.MaxRange(), new Color(0f,
-				.8f, 1f, .5f));
+					enemySyphonRangeCircleColor);
+		drawRangeCircle(g, proj, hardware.forceField.MaxRange(),
+				forcefieldRangeCircleColor);
 	}
 
 	@Override
@@ -433,39 +484,37 @@ public class GBRobot extends GBObject {
 			DrawMini(g, where);
 			return;
 		}
-		int meterWidth = (int) Math.max(1, (where.getWidth() + 10) / 10);
+		int meterWidth = Math.max(1, (where.width + 10) / 10);
 		// background and rim
 		Color robotColor = GBColor.Mix(Color.red, 0.8f * recentDamage
 				/ kRecentDamageTime, Owner().Color());
-		//GBColor robotColor = (new GBColor(Color.red).Mix(0.8f * recentDamage
-		//		/ kRecentDamageTime, Owner().Color()));
 		g2d.setPaint(robotColor);
 		g2d.fillOval(where.x, where.y, where.width, where.height);
-		g2d.setPaint(type.Color());
+		g2d.setColor(type.Color());
 		g2d.drawOval(where.x, where.y, where.width, where.height);
 		// meters
 		if (detailed) {
 			// energy meter
 			if (hardware.MaxEnergy() != 0)
 				DrawMeter(g, hardware.Energy() / hardware.MaxEnergy(), where,
-						180, 0, meterWidth, Color.GREEN,
-						new Color(0, 0.5f, 1), Owner().Color(),
+						180, 0, meterWidth, energyMeterColor,
+						energyMeterBackgroundColor, Owner().Color(),
 						hardware.Eaten() != 0
 								|| hardware.syphon.Syphoned() != 0
 								|| hardware.enemySyphon.Syphoned() != 0);
 			// damage meter
 			if (hardware.Armor() < hardware.MaxArmor())
 				DrawMeter(g, 1.0 - hardware.Armor() / hardware.MaxArmor(),
-						where, 360, 180, meterWidth, Color.red,
-						Color.lightGray, Owner().Color(),
+						where, 360, 180, meterWidth, damageMeterColor,
+						damageMeterBackgroundColor, Owner().Color(),
 						hardware.RepairRate() != 0);
 			// gestation meter
 			if (hardware.constructor.Progress() != 0) {
 				Rectangle meterRect = new Rectangle(where);
 				meterRect.grow(-meterWidth, -meterWidth);
 				DrawMeter(g, hardware.constructor.Fraction(), meterRect, 0,
-						360, 1, Color.yellow,
-								Color.GREEN, Owner().Color(),
+						360, 1, gestationMeterColor,
+						gestationMeterBackgroundColor, Owner().Color(),
 						hardware.constructor.Rate() != 0);
 			}
 		}
@@ -473,31 +522,30 @@ public class GBRobot extends GBObject {
 		int thickness = (int) (15 + where.width) / 15; // was 2 for >15
 														// else 1
 		g2d.setStroke(new BasicStroke(thickness));
-		Rectangle dec = new Rectangle(
-				(int) (where.getCenterX() - where.getWidth() / 4),
-				(int) (where.getCenterY() - where.getHeight() / 4),
+		int dx = where.width / 4;
+		int dy = where.height / 4;
+		Rectangle dec = new Rectangle(where.x + dx, where.y + dy,
 				where.width / 2, where.height / 2);
-		int dx = (where.width / 4);
-		int dy = (where.height / 4);
-		// cross, hline, and vline draw in bigDec instead of dec
-		Rectangle bigDec = new Rectangle(where.x + dx, where.y + dy,
-				where.width - dx * 2, where.height - dy * 2);
 		// flash decoration when reloading or sensing
 		Color basecolor = type.Decoration() == GBRobotDecoration.none ? Owner()
 				.Color() : type.DecorationColor();
 		Color color = basecolor;
 		if (hardware.grenades.Cooldown() != 0)
-			color = GBColor.Mix(Color.yellow, (float) hardware.grenades.Cooldown()
-					/ hardware.grenades.ReloadTime(), basecolor);
-			//color = new GBColor(Color.yellow).Mix(
-			//		(float) hardware.grenades.Cooldown()
-			//				/ hardware.grenades.ReloadTime(), basecolor);
+			color = GBColor.Mix(
+					Color.yellow,
+					(float) hardware.grenades.Cooldown()
+							/ hardware.grenades.ReloadTime(), basecolor);
+		// color = new GBColor(Color.yellow).Mix(
+		// (float) hardware.grenades.Cooldown()
+		// / hardware.grenades.ReloadTime(), basecolor);
 		else if (hardware.blaster.Cooldown() != 0)
-			color = GBColor.Mix(Color.magenta, (float) hardware.blaster.Cooldown()
+			color = GBColor.Mix(
+					Color.magenta,
+					(float) hardware.blaster.Cooldown()
 							/ hardware.blaster.ReloadTime(), basecolor);
-			//color = new GBColor(Color.magenta).Mix(
-			//		(float) hardware.blaster.Cooldown()
-			//				/ hardware.blaster.ReloadTime(), basecolor);
+		// color = new GBColor(Color.magenta).Mix(
+		// (float) hardware.blaster.Cooldown()
+		// / hardware.blaster.ReloadTime(), basecolor);
 		g2d.setColor(color);
 		g2d.setPaint(color);
 		switch (type.Decoration()) {
@@ -508,42 +556,41 @@ public class GBRobot extends GBObject {
 				break;
 			// if we're flashing, fall through and draw a dot
 		case dot:
-			g2d.fillOval(dec.x - thickness,
-					dec.y - thickness, thickness * 2,
-					thickness * 2);
+			g2d.fillOval(dec.x, dec.y, dec.width, dec.height);
 			break;
 		case circle:
-			g2d.drawOval(dec.x, dec.y,
-					dec.width, dec.height);
+			g2d.drawOval(dec.x, dec.y, dec.width, dec.height);
 			break;
 		case square:
 			g2d.draw(dec);
 			break;
 		case triangle:
-			g2d.drawLine(dec.x, dec.y + dec.height, (int) dec.getCenterX(),
+			g2d.drawLine(dec.x, dec.y + dec.height, proj.ToScreenX(position.x),
 					dec.y);
-			g2d.drawLine((int) dec.getCenterX(), dec.y, dec.x + dec.width,
+			g2d.drawLine(proj.ToScreenX(position.x), dec.y, dec.x + dec.width,
 					dec.y + dec.height);
 			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y
 					+ dec.height);
 			break;
 		case cross:
-			g2d.drawLine(dec.x, (int) dec.getCenterY(), dec.x + dec.width,
-					(int) dec.getCenterY());
-			g2d.drawLine((int) dec.getCenterX(), dec.y, (int) dec.getCenterX(),
-					dec.y + dec.height);
+			g2d.drawLine(dec.x, proj.ToScreenY(position.y), dec.x + dec.width,
+					proj.ToScreenY(position.y));
+			g2d.drawLine(proj.ToScreenX(position.x), dec.y,
+					proj.ToScreenX(position.x), dec.y + dec.height);
 			break;
 		case x:
 			g2d.drawLine(dec.x, dec.y, dec.x + dec.width, dec.y + dec.height);
 			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
 			break;
 		case hline:
-			g2d.drawLine(bigDec.x, (int) dec.getCenterY(), bigDec.x
-					+ bigDec.width, (int) dec.getCenterY());
+			dec.grow(dx, dy);
+			g2d.drawLine(dec.x, proj.ToScreenY(position.y), dec.x + dec.width,
+					proj.ToScreenY(position.y));
 			break;
 		case vline:
-			g2d.drawLine((int) dec.getCenterX(), bigDec.y,
-					(int) dec.getCenterX(), bigDec.y + bigDec.height);
+			dec.grow(dx, dy);
+			g2d.drawLine(proj.ToScreenX(position.x), dec.y,
+					proj.ToScreenX(position.x), dec.y + dec.height);
 			break;
 		case slash:
 			g2d.drawLine(dec.x, dec.y + dec.height, dec.x + dec.width, dec.y);
@@ -555,12 +602,18 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	protected void DrawOverlay(Graphics g, GBProjection proj, Rectangle where,
-			boolean detailed) {
+	public void DrawOverlay(Graphics g, GBProjection proj, boolean detailed) {
+		Graphics2D g2d = (Graphics2D) g;
+		Rectangle halo = getScreenRect(proj);
+		int scale = proj.getScale();
 		// shield
 		if (hardware.ActualShield() > 0) {
-			Rectangle halo = new Rectangle(where);
 			halo.grow(2, 2);
+			g2d.setColor(GBColor.multiply(
+					new Color(0.3f, 0.5f, 1),
+					(float) (hardware.ActualShield() / (mass * kStandardShieldPerMass))));
+			g2d.setStroke(new BasicStroke(1));
+			g2d.drawOval(halo.x, halo.y, halo.width, halo.height);
 			/*
 			 * GBGraphics .drawOval( g, halo, new GBColor(0.3f, 0.5f, 1)
 			 * .multiply((float) (hardware.ActualShield() / (mass *
@@ -572,15 +625,21 @@ public class GBRobot extends GBObject {
 			if (hardware.radio.sent[age] == 0
 					&& hardware.radio.writes[age] == 0)
 				continue;
+			double r = kRingGrowthRate * (age + 1);
+			Rectangle ring = new Rectangle(proj.ToScreenX(position.x - r),
+					proj.ToScreenY(position.y + r), (int) (r * 2 * scale),
+					(int) (r * 2 * scale));
+			float intensity = Math.min(2.0f
+					* (GBRadioState.kRadioHistory - age)
+					/ GBRadioState.kRadioHistory, 1.0f);
+			g2d.setColor(hardware.radio.sent[age] != 0 ? new Color(0.6f, 0.5f,
+					1) : GBColor.multiply(new Color(1, 0.8f, 0.5f), intensity));
+			g2d.setStroke(new BasicStroke(1));
+			g2d.drawOval(ring.x, ring.y, ring.width, ring.height);
 			/*
-			 * double r = kRingGrowthRate * (age + 1); /*Rectangle ring = new
-			 * Rectangle(proj.ToScreenX(Position().x - r),
-			 * proj.ToScreenY(Position().y + r), proj.ToScreenX(Position().x +
-			 * r), proj.ToScreenY(Position().y - r)); float intensity =
-			 * Math.min(2.0f (GBRadioState.kRadioHistory - age) /
-			 * GBRadioState.kRadioHistory, 1.0f); /* GBGraphics.drawOval(g,
-			 * ring, (hardware.radio.sent[age] != 0 ? new GBColor(0.6f, 0.5f, 1)
-			 * : new GBColor(1, 0.8f, 0.5f)).multiply(intensity));
+			 * GBGraphics.drawOval(g, ring, (hardware.radio.sent[age] != 0 ? new
+			 * GBColor(0.6f, 0.5f, 1) : new GBColor(1, 0.8f,
+			 * 0.5f)).multiply(intensity));
 			 */
 		}
 	}
@@ -588,14 +647,12 @@ public class GBRobot extends GBObject {
 	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
 		Graphics2D g2d = (Graphics2D) g;
-		g2d.setPaint(Color());
+		g2d.setPaint(minimapColor);
 		if (where.getWidth() <= 4)
 			g2d.fill(where);
 		else {
 			g2d.fillOval(where.x + where.width / 2, where.y + where.height / 2,
 					where.height, where.width);
-			// g2d.fillOval(where,
-			// Owner().Color().Mix(0.5f, type.Color()));
 		}
 	}
 

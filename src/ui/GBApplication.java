@@ -84,7 +84,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	public StepRates stepRate;
 	public long lastTime;
-	int fastInterval = 40;// Repaint at 25Hz
+	int fastInterval = 20;// Repaint at 25Hz
 	javax.swing.Timer fastTimer;
 	ActionListener fastUpdate;
 	int slowInterval = 1500;
@@ -113,7 +113,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	@Override
 	public void run() {
 		// Create world and initial conditions
-		game = new GBGame();
+		game = new GBGame(this);
 		//world = new GBWorld();
 		stepRate = StepRates.fast;
 
