@@ -18,6 +18,9 @@ import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -29,6 +32,7 @@ import simulation.GBExplosion;
 import simulation.GBForceField;
 import simulation.GBManna;
 import simulation.GBObject;
+import simulation.GBObjectClass;
 import simulation.GBObjectWorld;
 import simulation.GBProjection;
 import simulation.GBRobot;
@@ -36,11 +40,10 @@ import simulation.GBWorld;
 import support.FinePoint;
 import support.GBColor;
 import support.GBMath;
-import support.GBObjectClass;
 import support.GBRandomState;
 import ui.GBApplication;
 
-public class GBPortal extends JPanel implements GBProjection {
+public class GBPortal extends JPanel implements GBProjection<GBObject> {
 	/**
 	 * 
 	 */
@@ -145,7 +148,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				int y = arg0.getY();
 				lastx = x;
 				lasty = y;
-				lastClick = FromScreen(x, y);
+				lastClick = fromScreen(x, y);
 				moving = null;
 				DoTool(lastClick);
 				lastFrame = world.currentFrame;
@@ -161,7 +164,7 @@ public class GBPortal extends JPanel implements GBProjection {
 					if (arg0.getClickCount() > 0
 							&& currentTool == toolTypes.ptScroll)
 						Follow(world.ObjectNear(
-								FromScreen(arg0.getX(), arg0.getY()), false));
+								fromScreen(arg0.getX(), arg0.getY()), false));
 				dragged = false;
 			}
 
@@ -171,9 +174,9 @@ public class GBPortal extends JPanel implements GBProjection {
 					return;
 				int x = arg0.getX();
 				int y = arg0.getY();
-				FinePoint spot = FromScreen(x, y);
+				FinePoint spot = fromScreen(x, y);
 				if (currentTool == toolTypes.ptScroll) {
-					viewpoint = viewpoint.add(FromScreen(lastx, lasty)
+					viewpoint = viewpoint.add(fromScreen(lastx, lasty)
 							.subtract(spot));
 					followPosition = viewpoint;
 					lastx = x;
@@ -213,7 +216,7 @@ public class GBPortal extends JPanel implements GBProjection {
 				if (notches == 0)
 					return;
 				int originalScale = scale;
-				FinePoint zoomPosition = FromScreen(arg0.getPoint().x,
+				FinePoint zoomPosition = fromScreen(arg0.getPoint().x,
 						arg0.getPoint().y);
 				FinePoint dp = zoomPosition.subtract(viewpoint);
 				int dir = (int) (notches / Math.abs(notches));
@@ -314,8 +317,8 @@ public class GBPortal extends JPanel implements GBProjection {
 		for (int yi = minTileY; yi < maxTileY; yi++)
 			for (int xi = minTileX; xi < maxTileX; xi++) {
 				Rectangle tile = new Rectangle(
-						ToScreenX(GBObjectWorld.kBackgroundTileSize * xi),
-						ToScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
+						toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
+						toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
 						GBObjectWorld.kBackgroundTileSize * scale,
 						GBObjectWorld.kBackgroundTileSize * scale);
 				// Tile
@@ -376,8 +379,8 @@ public class GBPortal extends JPanel implements GBProjection {
 		if (isMiniMap && visibleWorld != null) {
 			g2d.setColor(Color.white);
 			g2d.setStroke(new BasicStroke(1));
-			g2d.draw(new Rectangle(ToScreenX(visibleWorld.x),
-					ToScreenY(visibleWorld.y), visibleWorld.width * scale,
+			g2d.draw(new Rectangle(toScreenX(visibleWorld.x),
+					toScreenY(visibleWorld.y), visibleWorld.width * scale,
 					visibleWorld.height * scale));
 		}
 	}
@@ -392,15 +395,15 @@ public class GBPortal extends JPanel implements GBProjection {
 			FontMetrics fm = g2d.getFontMetrics();
 			String s = app.getSelectedObject().toString();
 			// Center the name below the object
-			int x = ToScreenX(targetPos.x) - fm.stringWidth(s) / 2;
-			int texty = ToScreenY(targetPos.y
+			int x = toScreenX(targetPos.x) - fm.stringWidth(s) / 2;
+			int texty = toScreenY(targetPos.y
 					- (app.getSelectedObject().Radius() > 2 ? 0 : app
 							.getSelectedObject().Radius())) + 13;
 			g2d.drawString(s, x, texty);
 			String details = app.getSelectedObject().Details();
 			// Details go below that
 			if (details.length() > 0) {
-				x = ToScreenX(targetPos.x) - fm.stringWidth(details) / 2;
+				x = toScreenX(targetPos.x) - fm.stringWidth(details) / 2;
 				g2d.drawString(details, x, texty + 10);
 			}
 			// Draw range circles if following a robot
@@ -414,9 +417,9 @@ public class GBPortal extends JPanel implements GBProjection {
 					Font textFont = new Font("Serif", Font.PLAIN, 10);
 					g2d.setFont(textFont);
 					FontMetrics fm = g2d.getFontMetrics();
-					int tx = ToScreenX(side.center.x)
+					int tx = toScreenX(side.center.x)
 							- fm.stringWidth(side.Name()) / 2;
-					int ty = ToScreenY(side.center.y);
+					int ty = toScreenY(side.center.y);
 					g2d.setColor(side.Scores().sterile != 0 ? Color.gray
 							: Color.white);
 					g2d.drawString(side.Name(), tx, ty);
@@ -425,32 +428,55 @@ public class GBPortal extends JPanel implements GBProjection {
 	}
 
 	@Override
-	public int ToScreenX(double x) {
+	public int toScreenX(double x) {
 		return (int) (Math.round((x - viewpoint.x) * (double) scale) + this
 				.getVisibleRect().getCenterX());
 	}
 
 	@Override
-	public int ToScreenY(double y) {
+	public int toScreenY(double y) {
 		return (int) (Math.round((viewpoint.y - y) * (double) scale) + this
 				.getVisibleRect().getCenterY());
 	}
 
 	@Override
-	public double FromScreenX(int h) {
-		return ((double)h - this.getVisibleRect().getCenterX()) / (double) scale
+	public double fromScreenX(int x) {
+		return ((double)x - this.getVisibleRect().getCenterX()) / (double) scale
 				+ viewpoint.x;
 	}
 
 	@Override
-	public double FromScreenY(int v) {
-		return (this.getVisibleRect().getCenterY() - (double)v) / (double) scale
+	public double fromScreenY(int y) {
+		return (this.getVisibleRect().getCenterY() - (double)y) / (double) scale
 				+ viewpoint.y;
 	}
 
 	@Override
-	public FinePoint FromScreen(int x, int y) {
-		return new FinePoint(FromScreenX(x), FromScreenY(y));
+	public FinePoint fromScreen(int x, int y) {
+		return new FinePoint(fromScreenX(x), fromScreenY(y));
+	}
+	
+	@Override
+	public FinePoint toScreen(Point2D.Double point) {
+		return new FinePoint(toScreenX(point.x), toScreenY(point.y));
+	}
+	
+	@Override
+	public Rectangle2D.Double toScreenRect(GBObject gameObject){
+		return new Rectangle2D.Double(toScreenX(gameObject.Position().x - gameObject.Radius()),
+				toScreenY(gameObject.Position().y + gameObject.Radius()),
+				gameObject.Radius() * scale * 2,
+				gameObject.Radius() * scale * 2				
+				);
+	}
+
+	@Override
+	public Ellipse2D.Double toScreenEllipse(GBObject gameObject){
+		return new Ellipse2D.Double(toScreenX(gameObject.Position().x - gameObject.Radius()),
+				toScreenY(gameObject.Position().y + gameObject.Radius()),
+				gameObject.Radius() * scale * 2,
+				gameObject.Radius() * scale * 2				
+				);
 	}
 
 	@Override

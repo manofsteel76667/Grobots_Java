@@ -34,7 +34,7 @@ public class GBBlasterSpark extends GBTimedDecoration {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		g2d.setColor(Color());

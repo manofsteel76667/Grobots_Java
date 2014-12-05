@@ -7,7 +7,6 @@ package simulation;
 import java.awt.Color;
 
 import support.FinePoint;
-import support.GBObjectClass;
 
 
 

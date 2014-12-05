@@ -13,7 +13,6 @@ import java.awt.Color;
 
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 
 class GBSensorShot extends GBObject {
 	GBRobot owner;
@@ -114,7 +113,7 @@ class GBSensorShot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		// show focus, owner, and side?
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
@@ -122,10 +121,4 @@ class GBSensorShot extends GBObject {
 		g2d.setStroke(new BasicStroke(1));
 		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
-
-	@Override
-	public void DrawMini(Graphics g, Rectangle where) {
-		// GBGraphics.drawOval(g, where, Color());
-	}
-
-};
+}

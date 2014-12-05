@@ -8,11 +8,12 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
-import support.GBObjectClass;
 
 public abstract class GBObject {
 	FinePoint position;
@@ -82,25 +83,12 @@ public abstract class GBObject {
 	// evil antimodular drawing code
 	public abstract Color Color();
 
-	/**
-	 * Returns a rectangle (approximately) representing the position of the
-	 * rendered object on the screen.
-	 * 
-	 * @param proj
-	 * @return
-	 */
-	protected Rectangle getScreenRect(GBProjection proj) {
-		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
-		return new Rectangle(proj.ToScreenX(position.x) - oWidth / 2,
-				proj.ToScreenY(position.y) - oWidth / 2, oWidth, oWidth);
+	public abstract void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed);
+
+	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 	}
 
-	public abstract void Draw(Graphics g, GBProjection proj, boolean detailed);
-
-	public void DrawUnderlay(Graphics g, GBProjection proj, boolean detailed) {
-	}
-
-	public void DrawOverlay(Graphics g, GBProjection proj, boolean detailed) {
+	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 	}
 
 	// protected:
@@ -258,7 +246,7 @@ public abstract class GBObject {
 
 	public void Push(GBObject other, double impulse) {
 		FinePoint cc = other.position.subtract(position); // center-to-center
-		if (cc.norm() == 0)
+		if (cc.normSquare() == 0)
 			return; // don't push if in same location
 		other.PushBy(cc.divide(cc.norm()).multiply(impulse));
 	}
@@ -316,28 +304,27 @@ public abstract class GBObject {
 		position = position.add(velocity);
 	}
 
-	public void DrawShadow(Graphics g, GBProjection proj, FinePoint offset,
+	/**
+	 * Returns a rectangle (approximately) representing the position of the
+	 * rendered object on the screen.
+	 * 
+	 * @param proj
+	 * @return
+	 */
+	protected Rectangle getScreenRect(GBProjection<GBObject> proj) {
+		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
+		return new Rectangle(proj.toScreenX(position.x) - oWidth / 2,
+				proj.toScreenY(position.y) - oWidth / 2, oWidth, oWidth);
+	}
+
+	public void DrawShadow(Graphics g, GBProjection<GBObject> proj, FinePoint offset,
 			Color color) {
 		Graphics2D g2d = (Graphics2D) g;
-		Rectangle where = getScreenRect(proj);
+		Ellipse2D.Double where = proj.toScreenEllipse(this);
 		int scale = proj.getScale();
-		where.x += (int)(offset.x * scale);
-		where.y -= (int)(offset.y * scale);
+		where.x += offset.x * scale;
+		where.y -= offset.y * scale;
 		g2d.setPaint(color);
-		g2d.fillOval(where.x, where.y, where.width, where.height);
-		/*
-		 * Rectangle shadow = new Rectangle(proj.ToScreenX(Left() + offset.x),
-		 * proj.ToScreenY(Top() + offset.y), proj.ToScreenX(Right() + offset.x),
-		 * proj.ToScreenY(Bottom() + offset.y));
-		 */
-		// GBGraphics.fillOval(g, shadow, color);
+		g2d.fill(where);
 	}
-
-	public void DrawMini(Graphics g, Rectangle where) {
-		/*
-		 * if (where.getWidth() < kMaxSquareMiniSize) GBGraphics.fillRect(g,
-		 * where, Color()); else GBGraphics.fillOval(g, where, Color());
-		 */
-	}
-
 };

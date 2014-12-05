@@ -12,14 +12,13 @@ import java.awt.Graphics;
 
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 
 public abstract class GBShot extends GBObject {
 	// protected:
 	protected Side owner;
 	protected double power;
 
-	protected void DrawTail(Graphics g, GBProjection proj, double movement,
+	protected void DrawTail(Graphics g, GBProjection<GBObject> proj, double movement,
 			Color color) {
 	}
 

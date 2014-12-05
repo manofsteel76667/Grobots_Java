@@ -4,6 +4,10 @@
  *******************************************************************************/
 package simulation;
 
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
 import support.FinePoint;
 
 /**
@@ -13,17 +17,23 @@ import support.FinePoint;
  * @author mike
  * 
  */
-public interface GBProjection {
-	public int ToScreenX(double x);
+public interface GBProjection<T> {
+	public int toScreenX(double x);
 
-	public int ToScreenY(double y);
+	public int toScreenY(double y);
 
-	public double FromScreenX(int h);
+	public double fromScreenX(int h);
 
-	public double FromScreenY(int v);
+	public double fromScreenY(int v);
 
-	public FinePoint FromScreen(int x, int y);
+	public FinePoint fromScreen(int x, int y);
+	
+	public FinePoint toScreen(Point2D.Double point);
 
 	public int getScale();
+	
+	public Rectangle2D.Double toScreenRect(T gameObject);
+	
+	public Ellipse2D.Double toScreenEllipse(T gameObject);
 
 }

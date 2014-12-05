@@ -13,7 +13,6 @@ import java.awt.Color;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
-import support.GBObjectClass;
 
 public class GBForceField extends GBShot {
 	boolean dead;
@@ -66,18 +65,22 @@ public class GBForceField extends GBShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
+		if (where.width <= kMaxSquareMiniSize) {
+			DrawMini(g, where);
+			return;
+		}
 		int weight = where.getWidth() >= 20 ? 2 : 1;
 		FinePoint edge = Position().subtract(
 				Velocity().unit().multiply(Radius()));
 		// From robot to target
 		g2d.setStroke(new BasicStroke(weight));
 		g2d.setColor(GBColor.multiply(Color(), 0.5f));
-		g2d.drawLine(proj.ToScreenX(edge.x), proj.ToScreenY(edge.y),
-				proj.ToScreenX(Position().x - Velocity().x),
-				proj.ToScreenY(Position().y - Velocity().y));
+		g2d.drawLine(proj.toScreenX(edge.x), proj.toScreenY(edge.y),
+				proj.toScreenX(Position().x - Velocity().x),
+				proj.toScreenY(Position().y - Velocity().y));
 		int cx = where.x + where.width / 2;
 		int cy = where.y + where.height / 2;
 		// From destination into the direction being pushed
@@ -95,9 +98,10 @@ public class GBForceField extends GBShot {
 		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
-	@Override
 	public void DrawMini(Graphics g, Rectangle where) {
-		// GBGraphics.drawOval(g, where, Color());
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setColor(Color());
+		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
 	public static final double PowerRadius(double pwr) {

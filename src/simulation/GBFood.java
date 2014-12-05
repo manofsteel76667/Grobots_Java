@@ -12,7 +12,6 @@ import java.awt.Rectangle;
 import exception.GBSimulationError;
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 
 // GBFood.cpp
 // Grobots (c) 2002-2007 Devon and Warren Schudy
@@ -110,7 +109,7 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		g2d.setColor(Color());

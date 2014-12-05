@@ -13,7 +13,6 @@ import java.awt.Rectangle;
 import exception.GBSimulationError;
 import support.FinePoint;
 import support.GBColor;
-import support.GBObjectClass;
 
 public class GBSyphon extends GBTimedShot {
 	GBRobot sink;
@@ -121,7 +120,7 @@ public class GBSyphon extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		g2d.setPaint(Color());
@@ -135,8 +134,8 @@ public class GBSyphon extends GBTimedShot {
 			double phase = System.currentTimeMillis() / 1000.0 * creator.Rate();
 			for (double d = Speed() + (phase - Math.floor(phase)) - 1
 					- sink.Radius(); d >= Radius(); d -= 1) {
-				int x = proj.ToScreenX(Position().x + unit.x * d);
-				int y = proj.ToScreenY(Position().y + unit.y * d);
+				int x = proj.toScreenX(Position().x + unit.x * d);
+				int y = proj.toScreenY(Position().y + unit.y * d);
 				g2d.setPaint(tailcolor);
 				g2d.fillRect(x - 1, y - 1, 2, 2);
 			}
