@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import support.FinePoint;
-import support.GBObjectClass;
 import support.GBRandomState;
 import support.Model;
 import exception.GBSimulationError;
@@ -470,7 +469,7 @@ public class GBObjectWorld extends Model {
 	// Object selectors triggered from the UI. Synchronization required
 	public GBObject ObjectNear(FinePoint where, boolean hitSensors) {
 		GBObject best = null;
-		double dist = 5; // never see objects farther than this
+		double dist = 25; // never see objects farther than this
 		synchronized (allObjects) {
 			for (GBObject ob : allObjects)
 				if ((ob.Class() != GBObjectClass.ocSensorShot || hitSensors)
@@ -478,9 +477,9 @@ public class GBObjectWorld extends Model {
 						&& (ob.Class() == GBObjectClass.ocRobot || best == null
 								|| best.Class() != GBObjectClass.ocRobot || where
 									.inRange(ob.Position(), ob.Radius()))
-						&& ob.Position().inRange(where, dist)) {
+						&& ob.Position().inRangeSquared(where, dist)) {
 					best = ob;
-					dist = (best.Position().subtract(where)).norm();
+					dist = (best.Position().subtract(where)).normSquare();
 				}
 		}
 		return best;

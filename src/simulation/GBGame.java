@@ -16,7 +16,6 @@ import java.util.List;
 import sides.GBScores;
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 import support.StringUtilities;
 import ui.GBApplication;
 import exception.GBSimulationError;
@@ -48,6 +47,7 @@ public class GBGame implements ScoreKeeper {
 	// simulation parameters
 	public int seedLimit;
 	public boolean autoReseed;
+	public long totalFrames;
 
 	public static final int kDefaultTimeLimit = 18000;
 
@@ -80,6 +80,10 @@ public class GBGame implements ScoreKeeper {
 		if (previousSidesAlive > world.SidesAlive()) {
 			//TODO: play extinction sound
 		}
+		if (totalFrames < Long.MAX_VALUE)//yeah, right...
+			totalFrames++;
+		else
+			totalFrames = 0;			
 		if (RoundOver())
 			EndRound();
 	}

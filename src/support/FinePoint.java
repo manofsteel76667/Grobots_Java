@@ -4,36 +4,31 @@
  *******************************************************************************/
 package support;
 
-public class FinePoint {
-	// FinePoint.cpp
-	// Grobots (c) 2002-2004 Devon and Warren Schudy
-	// Distributed under the GNU General Public License.
+import java.awt.geom.Point2D;
 
-	/*
-	 * 2 paired doubles with associated math functions Used for coordinates and
-	 * vectors throughout the program
+/*
+ * 2 paired doubles with associated math functions Used for coordinates and
+ * vectors throughout the program
+ */
+public class FinePoint extends Point2D.Double {
+	/**
+	 * 
 	 */
-
-	// implementation //
-	public double x;
-	public double y;
+	private static final long serialVersionUID = 4947339690552890027L;
 
 	public FinePoint() {
-		x = 0;
-		y = 0;
+		super();
 	}
 
 	public FinePoint(double nx, double ny) {
-		x = nx;
-		y = ny;
+		super(nx, ny);
 	}
 
-	public FinePoint(FinePoint src) {
-		x = src.x;
-		y = src.y;
+	public FinePoint(Point2D.Double src) {
+		super(src.x, src.y);
 	}
 
-	public FinePoint set(FinePoint newvalue) {
+	public FinePoint set(Point2D.Double newvalue) {
 		x = newvalue.x;
 		y = newvalue.y;
 		return this;
@@ -44,11 +39,11 @@ public class FinePoint {
 		y = ny;
 	}
 
-	public FinePoint add(FinePoint addend) {
+	public FinePoint add(Point2D.Double addend) {
 		return new FinePoint(x + addend.x, y + addend.y);
 	}
 
-	public FinePoint subtract(FinePoint subtrahend) {
+	public FinePoint subtract(Point2D.Double subtrahend) {
 		return new FinePoint(x - subtrahend.x, y - subtrahend.y);
 	}
 
@@ -72,11 +67,18 @@ public class FinePoint {
 		return new FinePoint(x / divisor, y / divisor);
 	}
 
-	public boolean inRange(FinePoint other, double range) {
+	public boolean inRange(Point2D.Double other, double range) {
 		double r = range;
 		double dx = x - other.x;
 		double dy = y - other.y;
 		return (dx * dx + dy * dy) <= r * r;
+	}
+	
+	public boolean inRangeSquared(Point2D.Double other, double rangeSquared) {
+		double r = rangeSquared;
+		double dx = x - other.x;
+		double dy = y - other.y;
+		return (dx * dx + dy * dy) <= r;
 	}
 
 	@Override
@@ -84,9 +86,9 @@ public class FinePoint {
 		final int prime = 31;
 		int result = 1;
 		long temp;
-		temp = Double.doubleToLongBits(x);
+		temp = java.lang.Double.doubleToLongBits(x);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(y);
+		temp = java.lang.Double.doubleToLongBits(y);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		return result;
 	}
@@ -100,9 +102,9 @@ public class FinePoint {
 		if (!(obj instanceof FinePoint))
 			return false;
 		FinePoint other = (FinePoint) obj;
-		if (Double.doubleToLongBits(x) != Double.doubleToLongBits(other.x))
+		if (java.lang.Double.doubleToLongBits(x) != java.lang.Double.doubleToLongBits(other.x))
 			return false;
-		if (Double.doubleToLongBits(y) != Double.doubleToLongBits(other.y))
+		if (java.lang.Double.doubleToLongBits(y) != java.lang.Double.doubleToLongBits(other.y))
 			return false;
 		return true;
 	}
@@ -158,8 +160,6 @@ public class FinePoint {
 	}
 
 	public FinePoint projection(FinePoint base) {
-		// TODO: C++ version was return base * DotProduct(base) /
-		// base.NormSquare(); need to verify conversion
 		return base.multiply(base.dotProduct(base)).divide(base.normSquare());
 	}
 

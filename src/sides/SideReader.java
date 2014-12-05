@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import simulation.GBObjectClass;
 import support.FinePoint;
-import support.GBObjectClass;
 import support.StringUtilities;
 import brains.GBStackBrainSpec;
 import exception.GBError;

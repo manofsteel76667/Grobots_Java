@@ -128,13 +128,6 @@ public class GBColor {
 		return new Color(r, g, b);
 	}
 
-	/* Not used.  Remove? 
-	public static Color divide(Color base, float divisor) {
-		if (divisor == 0)
-			throw new ArithmeticException("dividing a color by zero");
-		return new GBColor(r / divisor, g / divisor, b / divisor);
-	}*/
-
 	public static Color add(Color base, Color other) {
 		int r = GBMath.clamp(base.getRed() + other.getRed(), 0, 255);
 		int g = GBMath.clamp(base.getGreen() + other.getGreen(), 0, 255);

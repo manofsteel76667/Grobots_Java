@@ -20,7 +20,6 @@ import java.util.List;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 import support.GBRandomState;
 import exception.GBError;
 import exception.GBSimulationError;

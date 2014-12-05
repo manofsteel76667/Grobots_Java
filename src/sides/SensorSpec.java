@@ -4,7 +4,7 @@
  *******************************************************************************/
 package sides;
 
-import support.GBObjectClass;
+import simulation.GBObjectClass;
 
 public class SensorSpec extends HardwareItem {
 

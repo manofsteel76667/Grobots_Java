@@ -30,7 +30,7 @@ public class GBRosterView extends ListView {
 	int padding = 2;
 	int slotMargin = 3;
 	int fps;
-	int lastFrame;
+	long lastFrame;
 	long lastTime;
 
 	public GBRosterView(GBApplication _app) {
@@ -59,14 +59,14 @@ public class GBRosterView extends ListView {
 		StringUtilities.drawStringLeft(g, text, textRect, 10, Color.black);
 		String status = game.tournament ? "tournament " : ""
 				+ (game.running ? "running" : "paused");
-		if (game.running && lastTime >= 0 && game.CurrentFrame() > lastFrame) {
-			int frames = game.CurrentFrame() - lastFrame;
+		if (game.running && lastTime >= 0 && game.totalFrames > lastFrame) {
+			long frames = game.totalFrames - lastFrame;
 			int ms = (int) (System.currentTimeMillis() - lastTime);
 			if (ms > 0)
 				status += " at " + frames * 1000 / ms + " fps";
 		}
 		StringUtilities.drawStringRight(g, status, textRect, 10, Color.black);
-		lastFrame = game.CurrentFrame();
+		lastFrame = game.totalFrames;
 		lastTime = System.currentTimeMillis();
 		return hdr;
 	}

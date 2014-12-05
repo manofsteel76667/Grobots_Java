@@ -2,7 +2,7 @@
  * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
  *******************************************************************************/
-package support;
+package simulation;
 
 import java.util.HashMap;
 import java.util.Map;

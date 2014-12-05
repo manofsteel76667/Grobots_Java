@@ -8,7 +8,6 @@ import exception.GBBrainError;
 import sides.SensorSpec;
 import sides.Side;
 import support.FinePoint;
-import support.GBObjectClass;
 
 /**
  * GBSensorState is public since it gets used directly by GBBrain in
