@@ -6,10 +6,10 @@
 
 package simulation;
 
-import exception.GBSimulationError;
 import sides.HardwareSpec;
 import support.FinePoint;
 import support.GBMath;
+import exception.GBSimulationError;
 
 public class GBHardwareState {
 	HardwareSpec spec;

@@ -4,10 +4,10 @@
  *******************************************************************************/
 package simulation;
 
-import exception.GBBrainError;
 import sides.SensorSpec;
 import sides.Side;
 import support.FinePoint;
+import exception.GBBrainError;
 
 /**
  * GBSensorState is public since it gets used directly by GBBrain in

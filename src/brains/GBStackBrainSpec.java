@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import exception.GBBrainError;
 import support.FinePoint;
+import exception.GBBrainError;
 
 //typedef GBNumber GBStackDatum; doublr
 //typedef unsigned short GBStackInstruction; int

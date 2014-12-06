@@ -42,4 +42,6 @@ public class GBMath {
 	public static final double kInfinity = (float) 0x7FFFFFFF / 4096;
 	public static final double kPi = 3.14159265358979;
 	public static final double kE = 2.71828182846;
+	public static final double sqrt2 = 1.41421356;
+	public static final double sqrt3 = 1.73205081;
 }

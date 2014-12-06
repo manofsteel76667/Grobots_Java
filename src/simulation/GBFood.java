@@ -9,9 +9,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-import exception.GBSimulationError;
 import sides.Side;
 import support.FinePoint;
+import exception.GBSimulationError;
 
 // GBFood.cpp
 // Grobots (c) 2002-2007 Devon and Warren Schudy

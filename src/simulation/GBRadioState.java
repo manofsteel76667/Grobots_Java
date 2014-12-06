@@ -4,8 +4,8 @@
  *******************************************************************************/
 package simulation;
 
-import exception.GBBrainError;
 import sides.Side;
+import exception.GBBrainError;
 
 public class GBRadioState {
 	// state

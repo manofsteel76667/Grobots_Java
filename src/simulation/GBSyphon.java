@@ -10,9 +10,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-import exception.GBSimulationError;
 import support.FinePoint;
 import support.GBColor;
+import exception.GBSimulationError;
 
 public class GBSyphon extends GBTimedShot {
 	GBRobot sink;

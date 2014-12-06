@@ -6,7 +6,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-
 /*******************************************************************************
  * Copyright (c) 2002-2013 (c) Devon and Warren Schudy
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson

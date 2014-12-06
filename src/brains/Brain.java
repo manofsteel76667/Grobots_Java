@@ -5,9 +5,9 @@
 
 package brains;
 
-import exception.GBBrainError;
 import simulation.GBRobot;
 import simulation.GBWorld;
+import exception.GBBrainError;
 
 public class Brain {
 	public BrainStatus status;

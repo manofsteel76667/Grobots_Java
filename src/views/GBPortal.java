@@ -346,11 +346,12 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 		// Draw all living objects in the game
 		// Draws everything even if it isn't on the screen. This
 		// could probably be improved
-		boolean detailed = showDetails && scale >= kMinDetailsScale;
+		//Hide details when zoomed out or when going really fast
+		boolean detailed = showDetails && scale >= kMinDetailsScale && app.stepRate.value < 200;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
-		if (!isMiniMap)
+		if (!isMiniMap && detailed)
 			for (GBObject spot : world.getObjects(GBObjectClass.ocRobot))
 				for (GBObject ob = spot; ob != null; ob = ob.next)
 					ob.DrawUnderlay(g2d, this, detailed);

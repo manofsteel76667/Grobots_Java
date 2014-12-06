@@ -11,17 +11,17 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
-import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 
 import sides.GBRobotDecoration;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
+import support.GBMath;
 import brains.Brain;
 import brains.BrainStatus;
 
@@ -79,7 +79,7 @@ public class GBRobot extends GBObject {
 	public static final int kRecentDamageTime = 10;
 
 	public static final double kRingGrowthRate = 0.1;
-	public static final double kRadialPaintOffsetFactor = 3.3;
+	public static final double kRadialPaintOffsetFactor = 6;
 
 	public void Recalculate() {
 		mass = type.Mass() + hardware.constructor.FetusMass();
@@ -577,8 +577,13 @@ public class GBRobot extends GBObject {
 			g2d.draw(decorationOval.getBounds());
 			break;
 		case triangle:
-			int[] x = new int[]{};
-			int[] y = new int[]{};
+			double bottom = decorationOval.y + .75 * decorationOval.height;
+			double bottomHalfX = decorationOval.width / 4 * GBMath.sqrt3; 
+			double topMiddleX = decorationOval.x + decorationOval.width / 2;
+			int[] x = new int[]{
+					(int)(topMiddleX), (int)(topMiddleX + bottomHalfX), (int)(topMiddleX - bottomHalfX)
+			};
+			int[] y = new int[]{(int)decorationOval.y, (int)bottom, (int)bottom};
 			g2d.drawPolygon(x, y, 3);
 			break;
 		case cross:
@@ -592,12 +597,15 @@ public class GBRobot extends GBObject {
 					+ decorationOval.height + thickness / 2));
 			break;
 		case x:
-			g2d.drawLine((int)decorationOval.x, (int)decorationOval.y, (int)(decorationOval.x
-					+ decorationOval.width), (int)(decorationOval.y
-					+ decorationOval.height));
-			g2d.drawLine((int)decorationOval.x, (int)(decorationOval.y
-					+ decorationOval.height), (int)(decorationOval.x
-					+ decorationOval.width), (int)decorationOval.y);
+			double cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
+			g2d.drawLine((int)(decorationOval.x + cornerDist+ thickness / 2) , 
+					(int)(decorationOval.y + cornerDist+ thickness / 2), 
+					(int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
+			g2d.drawLine((int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + cornerDist+ thickness / 2), 
+					(int)(decorationOval.x + cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
 			break;
 		case hline:
 			g2d.drawLine((int)decorationOval.x, (int)(decorationOval.y
@@ -611,14 +619,18 @@ public class GBRobot extends GBObject {
 							/ 2), (int)(decorationOval.y + decorationOval.height));
 			break;
 		case slash:
-			g2d.drawLine((int)decorationOval.x, (int)(decorationOval.y
-					+ decorationOval.height), (int)(decorationOval.x
-					+ decorationOval.width), (int)(decorationOval.y));
+			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
+			g2d.drawLine((int)(decorationOval.x + cornerDist+ thickness / 2) , 
+					(int)(decorationOval.y + cornerDist+ thickness / 2), 
+					(int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
 			break;
 		case backslash:
-			g2d.drawLine((int)decorationOval.x, (int)decorationOval.y, (int)(decorationOval.x
-					+ decorationOval.width), (int)(decorationOval.y
-					+ decorationOval.height));
+			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
+			g2d.drawLine((int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + cornerDist+ thickness / 2), 
+					(int)(decorationOval.x + cornerDist+ thickness / 2), 
+					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
 			break;
 		}
 	}

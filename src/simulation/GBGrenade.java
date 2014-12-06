@@ -7,13 +7,14 @@ package simulation;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.geom.Ellipse2D;
 
 import sides.Side;
 import support.FinePoint;
 
 public class GBGrenade extends GBTimedShot {
-	// public:
+	static final double kGrenadeArcFactor = 3;
+
 	public GBGrenade(FinePoint where, FinePoint vel, Side who, double howMuch,
 			int howLong) {
 		super(where, howMuch >= kGrenadeRadiusThreshold ? kGrenadeLargeRadius
@@ -52,14 +53,24 @@ public class GBGrenade extends GBTimedShot {
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
-		Rectangle where = getScreenRect(proj);
-		g2d.setPaint(Color());
-		if (where.getWidth() <= 3)
-			g2d.fillRect(where.x, where.y, where.width, where.height);
-		else {
-			if (detailed)
-				DrawShadow(g, proj, Velocity().multiply(-1.0f), Color.gray);
-			g2d.fillOval(where.x, where.y, where.width, where.height);
+		Ellipse2D.Double where = proj.toScreenEllipse(this);
+		if (where.getWidth() <= 3) {
+			g2d.setPaint(Color());
+			g2d.fill(where.getBounds());
+		} else {
+			g2d.setPaint(detailed ? Color.gray : Color());
+			g2d.fill(where);// The shadow moves straight
+			if (detailed) {
+				// The grenade arcs
+				int x = lifetime;
+				double a = originallifetime / 2;
+				DrawShadow(
+						g,
+						proj,
+						velocity.add(new FinePoint(.1, .1).multiply((2 * x - x
+								* x / a)
+								* kGrenadeArcFactor)), Color());
+			}
 		}
 	}
 

@@ -8,18 +8,18 @@
 
 package sides;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.awt.Color;
 
-import exception.GBBrainError;
-import exception.GBSimulationError;
 import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
 import support.GBRandomState;
 import support.Model;
+import exception.GBBrainError;
+import exception.GBSimulationError;
 
 public class Side extends Model implements Comparable<Side> {
 

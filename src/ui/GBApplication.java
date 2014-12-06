@@ -29,8 +29,6 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import brains.Brain;
-import brains.BrainStatus;
 import sides.RobotType;
 import sides.Side;
 import sides.SideReader;
@@ -47,17 +45,10 @@ import views.GBRosterView;
 import views.GBScoresView;
 import views.GBTournamentView;
 import views.RobotTypeView;
+import brains.Brain;
+import brains.BrainStatus;
 import exception.GBAbort;
 import exception.GBError;
-
-enum StepRates {
-	slow(10), normal(30), fast(60), unlimited(10000);
-	public final int value;
-
-	StepRates(int val) {
-		value = val;
-	}
-}
 
 public class GBApplication extends JFrame implements Runnable, ActionListener {
 	/**
@@ -81,6 +72,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	JToolBar debugControls;
 	JPanel center;
 	Debugger debug;
+	
+	public enum StepRates {
+		slow(10), normal(30), fast(60), unlimited(10000);
+		public final int value;
+
+		StepRates(int val) {
+			value = val;
+		}
+	}
 
 	public StepRates stepRate;
 	public long lastTime;

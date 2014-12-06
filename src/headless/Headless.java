@@ -28,7 +28,7 @@ public class Headless {
 		if (argv.length < 2)
 			DieWithUsage("Not enough arguments");
 		try {
-			GBGame game = new GBGame();
+			GBGame game = new GBGame(null);
 			game.timeLimit = 18000;
 			int statsPeriod = 500;
 			// get args

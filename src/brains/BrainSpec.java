@@ -6,8 +6,8 @@
 
 package brains;
 
-import exception.GBBrainError;
 import sides.HardwareItem;
+import exception.GBBrainError;
 
 public class BrainSpec extends HardwareItem {
 	public Brain MakeBrain() {
