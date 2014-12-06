@@ -72,7 +72,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	JToolBar debugControls;
 	JPanel center;
 	Debugger debug;
-	
+
 	public enum StepRates {
 		slow(10), normal(30), fast(60), unlimited(10000);
 		public final int value;
@@ -114,7 +114,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	public void run() {
 		// Create world and initial conditions
 		game = new GBGame(this);
-		//world = new GBWorld();
+		// world = new GBWorld();
 		stepRate = StepRates.fast;
 
 		// Create supporting views and menu.
@@ -280,12 +280,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	void updateMenu() {
 		setMenuItem(MenuItems.removeAllSides, game.sides.size() > 0
 				&& !game.running);
-		setMenuItem(MenuItems.reloadSide, selectedSide != null
-				&& !game.running);
+		setMenuItem(MenuItems.reloadSide, selectedSide != null && !game.running);
 		setMenuItem(MenuItems.duplicateSide, selectedSide != null
 				&& !game.running);
-		setMenuItem(MenuItems.removeSide, selectedSide != null
-				&& !game.running);
+		setMenuItem(MenuItems.removeSide, selectedSide != null && !game.running);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 		// Unimplemented items

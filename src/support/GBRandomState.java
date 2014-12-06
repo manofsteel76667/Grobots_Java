@@ -60,15 +60,18 @@ public class GBRandomState {
 	}
 
 	public Color Color() {
-		return new Color(FloatInRange(0, 1), FloatInRange(0, 1),
-				FloatInRange(0, 1));
+		return new Color(FloatInRange(0, 1), FloatInRange(0, 1), FloatInRange(
+				0, 1));
 	}
 
 	// TODO: This was marked as broken. Fixed syntax but was there more to it?
 	public Color ColorNear(Color color, float dist) {
-		float r = FloatInRange(color.getRed() / 255f - dist, color.getRed() / 255f + dist);
-		float g = FloatInRange(color.getGreen() / 255f - dist, color.getGreen() / 255f + dist);
-		float b = FloatInRange(color.getBlue() / 255f - dist, color.getBlue() / 255f + dist);
+		float r = FloatInRange(color.getRed() / 255f - dist, color.getRed()
+				/ 255f + dist);
+		float g = FloatInRange(color.getGreen() / 255f - dist, color.getGreen()
+				/ 255f + dist);
+		float b = FloatInRange(color.getBlue() / 255f - dist, color.getBlue()
+				/ 255f + dist);
 		return new Color(r, g, b);
 	}
 

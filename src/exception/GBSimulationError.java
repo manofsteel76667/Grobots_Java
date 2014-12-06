@@ -10,11 +10,13 @@ public class GBSimulationError extends RuntimeException {
 	 */
 	private static final long serialVersionUID = -5522339576919262515L;
 
-	public GBSimulationError() {}
+	public GBSimulationError() {
+	}
+
 	public GBSimulationError(String string) {
 		message = string;
 	}
-	
+
 	String message;
 
 	@Override
@@ -24,9 +26,9 @@ public class GBSimulationError extends RuntimeException {
 		else
 			return "unspecified simulation error";
 	}
-	
-	@Override 
-	public String getMessage(){
+
+	@Override
+	public String getMessage() {
 		return this.getClass().getName() + ": " + toString();
 	}
 };

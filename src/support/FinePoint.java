@@ -73,7 +73,7 @@ public class FinePoint extends Point2D.Double {
 		double dy = y - other.y;
 		return (dx * dx + dy * dy) <= r * r;
 	}
-	
+
 	public boolean inRangeSquared(Point2D.Double other, double rangeSquared) {
 		double r = rangeSquared;
 		double dx = x - other.x;
@@ -102,9 +102,11 @@ public class FinePoint extends Point2D.Double {
 		if (!(obj instanceof FinePoint))
 			return false;
 		FinePoint other = (FinePoint) obj;
-		if (java.lang.Double.doubleToLongBits(x) != java.lang.Double.doubleToLongBits(other.x))
+		if (java.lang.Double.doubleToLongBits(x) != java.lang.Double
+				.doubleToLongBits(other.x))
 			return false;
-		if (java.lang.Double.doubleToLongBits(y) != java.lang.Double.doubleToLongBits(other.y))
+		if (java.lang.Double.doubleToLongBits(y) != java.lang.Double
+				.doubleToLongBits(other.y))
 			return false;
 		return true;
 	}

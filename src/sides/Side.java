@@ -17,11 +17,10 @@ import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
 import support.GBRandomState;
-import support.Model;
 import exception.GBBrainError;
 import exception.GBSimulationError;
 
-public class Side extends Model implements Comparable<Side> {
+public class Side implements Comparable<Side> {
 
 	public static final int kSharedMemorySize = 1000;
 	public static final int kMaxSeedIDs = 20;
@@ -107,7 +106,6 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SetName(String newname) {
 		name = newname;
-		Changed();
 	}
 
 	public String Author() {
@@ -119,7 +117,6 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SetAuthor(String newauthor) {
 		author = newauthor;
-		Changed();
 	}
 
 	public int ID() {
@@ -128,7 +125,6 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SetID(int newid) {
 		id = newid;
-		Changed();
 	}
 
 	public Color Color() {
@@ -137,7 +133,6 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SetColor(Color newcolor) {
 		color = newcolor;
-		Changed();
 	}
 
 	public RobotType GetType(int index) {
@@ -167,12 +162,10 @@ public class Side extends Model implements Comparable<Side> {
 		type.Recalculate();
 		types.add(type);
 		type.SetID(types.size());
-		Changed();
 	}
 
 	public void RemoveAllTypes() {
 		types.clear();
-		Changed();
 	}
 
 	public void AddSeedID(int id) {
@@ -181,8 +174,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public RobotType GetSeedType(int index) {
 		if (index < 0)
-			throw new GBSimulationError("type index must be positive: "
-					+ index);
+			throw new GBSimulationError("type index must be positive: " + index);
 		if (seedIDs.isEmpty())
 			return null;
 		return GetType(seedIDs.get(index % seedIDs.size()));
@@ -203,7 +195,6 @@ public class Side extends Model implements Comparable<Side> {
 		for (i = 0; i < GBMessageQueue.kNumMessageChannels; i++) {
 			msgQueues[i] = null;
 		}
-		Changed();
 	}
 
 	public void ResetSampledStatistics() {
@@ -214,7 +205,6 @@ public class Side extends Model implements Comparable<Side> {
 		scores.ResetSampledStatistics();
 		for (int i = 0; i < types.size(); ++i)
 			types.get(i).ResetSampledStatistics();
-		Changed();
 	}
 
 	public void ReportRobot(double biomass, RobotType type,
@@ -223,47 +213,38 @@ public class Side extends Model implements Comparable<Side> {
 		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(),
 				hw.CombatCost(), hw.BaseCost());
 		groupPosition = groupPosition.add(where);
-		Changed();
 	}
 
 	public void ReportDead(double en) {
 		scores.ReportDead(en);
-		Changed();
 	}
 
 	public void ReportKilled(double en) {
 		scores.ReportKilled(en);
-		Changed();
 	}
 
 	public void ReportSuicide(double en) {
 		scores.ReportSuicide(en);
-		Changed();
 	}
 
 	public void ReportAutotrophy(double en) {
 		scores.income.ReportAutotrophy(en);
-		Changed();
 	}
 
 	public void ReportTheotrophy(double en) {
 		scores.income.ReportTheotrophy(en);
-		Changed();
 	}
 
 	public void ReportHeterotrophy(double en) {
 		scores.income.ReportHeterotrophy(en);
-		Changed();
 	}
 
 	public void ReportCannibalism(double en) {
 		scores.income.ReportCannibalism(en);
-		Changed();
 	}
 
 	public void ReportKleptotrophy(double en) {
 		scores.income.ReportKleptotrophy(en);
-		Changed();
 	}
 
 	public GBSideScores Scores() {
@@ -280,15 +261,14 @@ public class Side extends Model implements Comparable<Side> {
 
 	public double ReadSharedMemory(int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new GBBrainError(
-					"tried to read from shared memory at " + addr);
+			throw new GBBrainError("tried to read from shared memory at "
+					+ addr);
 		return sharedMemory[addr - 1];
 	}
 
 	public void WriteSharedMemory(double value, int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
-			throw new GBBrainError(
-					"tried to write to shared memory at " + addr);
+			throw new GBBrainError("tried to write to shared memory at " + addr);
 		sharedMemory[addr - 1] = value;
 	}
 
@@ -296,8 +276,7 @@ public class Side extends Model implements Comparable<Side> {
 	// must be used and discarded before any robot calls SendMessage again!
 	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBBrainError("tried to receive on channel "
-					+ channel);
+			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return null;
 		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
@@ -305,8 +284,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public void SendMessage(GBMessage msg, int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBBrainError("tried to send on channel "
-					+ channel);
+			throw new GBBrainError("tried to send on channel " + channel);
 		if (msgQueues[channel - 1] == null) {
 			msgQueues[channel - 1] = new GBMessageQueue();
 		}
@@ -315,8 +293,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int NextMessageNumber(int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBBrainError("tried to receive on channel "
-					+ channel);
+			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].NextMessageNumber();
@@ -324,8 +301,7 @@ public class Side extends Model implements Comparable<Side> {
 
 	public int MessagesWaiting(int channel, int next) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
-			throw new GBBrainError("tried to receive on channel "
-					+ channel);
+			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
 		return msgQueues[channel - 1].MessagesWaiting(next);

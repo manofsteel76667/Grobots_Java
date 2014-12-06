@@ -115,8 +115,7 @@ public class GBSyphon extends GBTimedShot {
 
 	@Override
 	public Color Color() {
-		return (hitsEnemies ? new Color(0.6f, 1, 0) : new Color(0.5f, 0.8f,
-				1));
+		return (hitsEnemies ? new Color(0.6f, 1, 0) : new Color(0.5f, 0.8f, 1));
 	}
 
 	@Override

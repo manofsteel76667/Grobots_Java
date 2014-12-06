@@ -46,7 +46,7 @@ public class Brain {
 	}
 
 	protected class GBStackOverflowError extends GBBrainError {
-	/**
+		/**
 	 * 
 	 */
 		private static final long serialVersionUID = 1L;
@@ -59,7 +59,7 @@ public class Brain {
 
 	protected class GBStackUnderflowError extends GBBrainError {
 
-	/**
+		/**
 	 * 
 	 */
 		private static final long serialVersionUID = 1L;

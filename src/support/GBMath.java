@@ -12,7 +12,7 @@ public class GBMath {
 			return max;
 		return value;
 	}
-	
+
 	public static int clamp(int value, int min, int max) {
 		if (value < min)
 			return min;
@@ -20,7 +20,7 @@ public class GBMath {
 			return max;
 		return value;
 	}
-	
+
 	public static float clamp(float value, float min, float max) {
 		if (value < min)
 			return min;
@@ -37,7 +37,8 @@ public class GBMath {
 			ret += Math.PI * 2;
 		return ret;
 	}
-//Included these constants to avoid behavior changes
+
+	// Included these constants to avoid behavior changes
 	public static final double kEpsilon = 1.0f / 4096;
 	public static final double kInfinity = (float) 0x7FFFFFFF / 4096;
 	public static final double kPi = 3.14159265358979;

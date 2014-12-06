@@ -13,10 +13,9 @@ import java.util.Map;
 
 import support.FinePoint;
 import support.GBRandomState;
-import support.Model;
 import exception.GBSimulationError;
 
-public class GBObjectWorld extends Model {
+public class GBObjectWorld {
 	/**
 	 * Background tiles are purely a display matter; they are here as a reminder
 	 * to use world sizes that are a multiple of kBackgroundTileSize.

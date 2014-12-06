@@ -96,10 +96,20 @@ public class GBConstructorState {
 			robot.Recalculate();
 		}
 		if (abortion > 0) {
-			world.addObjectLater(new GBCorpse(robot.Position(), robot.Velocity(),
-					abortion * GBHardwareState.kAbortionCorpseFactor, robot
-							.Type(), null)); // should really be child type, but
-												// we don't know that any more
+			world.addObjectLater(new GBCorpse(robot.Position(), robot
+					.Velocity(), abortion
+					* GBHardwareState.kAbortionCorpseFactor, robot.Type(), null)); // should
+																					// really
+																					// be
+																					// child
+																					// type,
+																					// but
+																					// we
+																					// don't
+																					// know
+																					// that
+																					// any
+																					// more
 			abortion = 0;
 		}
 	}

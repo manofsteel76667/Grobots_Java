@@ -31,7 +31,7 @@ public class RobotTypeView extends ListView {
 		app = _app;
 		game = _app.game;
 		preferredWidth = 250;
-		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));		
+		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));
 	}
 
 	public static final int kTypeStatsWidth = 80;
@@ -42,13 +42,14 @@ public class RobotTypeView extends ListView {
 	public static final int kHardwareCostRight = 60;
 	public static final int kHardwarePercentRight = 38;
 	public static final int kHardwareMassRight = 5;
-	
+
 	@Override
-	protected void itemClicked(int index){
+	protected void itemClicked(int index) {
 		if (index < 0)
 			return;
 		Side side = app.getSelectedSide();
-		if (side == null) return;
+		if (side == null)
+			return;
 		if (index < side.types.size())
 			app.setSelectedType(side.types.get(index));
 	}
@@ -82,24 +83,22 @@ public class RobotTypeView extends ListView {
 
 	void DrawNumericHardwareLine(Graphics2D g, Rectangle box, int base,
 			String name, Color color, double arg, double cost, double mass) {
-		DrawHardwareLine(g, box, base, name, color, Double.toString(arg),
-				"", "", "", cost, mass);
+		DrawHardwareLine(g, box, base, name, color, Double.toString(arg), "",
+				"", "", cost, mass);
 	}
 
 	void DrawNumericHardwareLine(Graphics2D g, Rectangle box, int base,
 			String name, Color color, double arg1, double arg2, double cost,
 			double mass) {
-		DrawHardwareLine(g, box, base, name, color,
-				Double.toString(arg1), Double.toString(arg2), "",
-				"", cost, mass);
+		DrawHardwareLine(g, box, base, name, color, Double.toString(arg1),
+				Double.toString(arg2), "", "", cost, mass);
 	}
 
 	void DrawNumericHardwareLine(Graphics2D g, Rectangle box, int base,
 			String name, Color color, double arg1, double arg2, double arg3,
 			double cost, double mass) {
-		DrawHardwareLine(g, box, base, name, color,
-				Double.toString(arg1), Double.toString(arg2),
-				Double.toString(arg3), "", cost, mass);
+		DrawHardwareLine(g, box, base, name, color, Double.toString(arg1),
+				Double.toString(arg2), Double.toString(arg3), "", cost, mass);
 	}
 
 	void DrawHardwareSummaryLine(Graphics2D g, Rectangle box, int base,
@@ -120,13 +119,14 @@ public class RobotTypeView extends ListView {
 		if (side != null) {
 			drawBox(g, box);
 			box.grow(-padding, -padding);
-			StringUtilities.drawStringLeft(g, side.Name(), box.x,
-					box.y + box.height, 12, GBColor.ContrastingTextColor(side.Color()));
-			StringUtilities.drawStringRight(g, side.Author(), box.x + box.width, 
-					box.y + box.height, 12, Color.black);
+			StringUtilities.drawStringLeft(g, side.Name(), box.x, box.y
+					+ box.height, 12,
+					GBColor.ContrastingTextColor(side.Color()));
+			StringUtilities.drawStringRight(g, side.Author(),
+					box.x + box.width, box.y + box.height, 12, Color.black);
 		} else
-			StringUtilities.drawStringLeft(g, "No side selected", box.x,
-					box.y + box.height, 12, Color.black);
+			StringUtilities.drawStringLeft(g, "No side selected", box.x, box.y
+					+ box.height, 12, Color.black);
 		box.grow(padding, padding);
 		return box;
 	}
@@ -134,28 +134,37 @@ public class RobotTypeView extends ListView {
 	@Override
 	protected Rectangle drawOneItem(Graphics2D g, int index) {
 		Rectangle box = getStartingItemRect(index, 12, false);
-		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height + 
-				g.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight()));
+		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height
+				+ g.getFontMetrics(new Font("Serif", Font.PLAIN, 9))
+						.getHeight()));
 		Side side = app.getSelectedSide();
 		if (side == null)
-			return new Rectangle(0,0,0,0);
-		RobotType type = side.GetType(index+1);
+			return new Rectangle(0, 0, 0, 0);
+		RobotType type = side.GetType(index + 1);
 		boolean selected = type == app.getSelectedType();
 		if (type == null)
-			return new Rectangle(0,0,0,0);
+			return new Rectangle(0, 0, 0, 0);
 		drawBox(g, box, selected);
 		box.grow(-padding, -padding);
 		// draw ID and name and color
 		StringUtilities.drawStringLeft(g, Integer.toString(type.ID()) + '.',
-				box.x, box.y + g.getFontMetrics().getHeight() + padding, 12, type.Color());
-		StringUtilities.drawStringLeft(g, type.name, box.x + 20, box.y + g.getFontMetrics().getHeight() + padding,
-				12, selected ? Color.white : Color.black);
+				box.x, box.y + g.getFontMetrics().getHeight() + padding, 12,
+				type.Color());
+		StringUtilities.drawStringLeft(g, type.name, box.x + 20, box.y
+				+ g.getFontMetrics().getHeight() + padding, 12,
+				selected ? Color.white : Color.black);
 		// stuff
-		StringUtilities.drawStringPair(g, "Cost:",
-				String.format("%.0f", type.Cost()), box.x + box.width
-						- kTypeStatsWidth, box.x + box.width,
-				box.y + padding + g.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight(), 9, selected ? Color.green : GBColor.darkGreen,
-				false);
+		StringUtilities.drawStringPair(
+				g,
+				"Cost:",
+				String.format("%.0f", type.Cost()),
+				box.x + box.width - kTypeStatsWidth,
+				box.x + box.width,
+				box.y
+						+ padding
+						+ g.getFontMetrics(new Font("Serif", Font.PLAIN, 9))
+								.getHeight(), 9, selected ? Color.green
+						: GBColor.darkGreen, false);
 		HardwareSpec hw = type.Hardware();
 		StringUtilities
 				.drawStringRight(
@@ -175,9 +184,9 @@ public class RobotTypeView extends ListView {
 		if (side.Scores().Seeded() != 0) {
 			StringUtilities.drawStringPair(g, "Population:",
 					Integer.toString(type.population), box.x
-							+ kTypePopulationLeft,
-					box.x + kTypeBiomassLeft, box.y + box.height, 9,
-					selected ? Color.white : Color.blue, false);
+							+ kTypePopulationLeft, box.x + kTypeBiomassLeft,
+					box.y + box.height, 9, selected ? Color.white : Color.blue,
+					false);
 			// StringUtilities.drawStringLongPair("Biomass:", type.Biomass(),
 			// box.x + kTypeBiomassLeft, box.x + box.width - kTypeStatsWidth -
 			// 4, box.y + box.height - 3,
@@ -189,16 +198,16 @@ public class RobotTypeView extends ListView {
 
 	@Override
 	Rectangle drawFooter(Graphics2D g) {
-		int textHeightNormal = g.getFontMetrics(new Font("Serif", Font.PLAIN, 10)).getHeight();
-		int textHeightSmall = g.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight();
+		int textHeightNormal = g.getFontMetrics(
+				new Font("Serif", Font.PLAIN, 10)).getHeight();
+		int textHeightSmall = g
+				.getFontMetrics(new Font("Serif", Font.PLAIN, 9)).getHeight();
 		Rectangle box = getStartingFooterRect(textHeightNormal, false);
-		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height + 
-				textHeightNormal * 3 + 
-				textHeightSmall * 22 +
-				padding * 6));
+		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height
+				+ textHeightNormal * 3 + textHeightSmall * 22 + padding * 6));
 		RobotType type = app.getSelectedType();
 		if (type == null)
-			return new Rectangle(0,0,0,0);
+			return new Rectangle(0, 0, 0, 0);
 		drawBox(g, box);
 		box.grow(-padding, -padding);
 		// hardware
@@ -315,14 +324,13 @@ public class RobotTypeView extends ListView {
 					brain.Cost(), brain.Mass());
 		else
 			StringUtilities.drawStringLeft(g, "No brain", box.x
-					+ kHardwareNameLeft, y, 10,
-					Color.lightGray);
+					+ kHardwareNameLeft, y, 10, Color.lightGray);
 		g.setColor(Color.black);
 		y += padding;
 		g.drawLine(box.x, box.y + y, box.x + box.width, box.y + y);
 		y += textHeightNormal;
-		DrawHardwareSummaryLine(g, box, y, "Total:", Color.black,
-				type.Cost(), type.Mass());
+		DrawHardwareSummaryLine(g, box, y, "Total:", Color.black, type.Cost(),
+				type.Mass());
 		double damageMult = type.MassiveDamageMultiplier(type.Mass());
 		double pregnantMult = type.MassiveDamageMultiplier(type.Mass() * 2);
 		y += textHeightSmall;
@@ -335,9 +343,10 @@ public class RobotTypeView extends ListView {
 								+ ((hw.constructor.Rate() != 0 && pregnantMult > 1) ? " to "
 										+ StringUtilities.toPercentString(
 												pregnantMult, 0)
-										: ""), box.x + kHardwareNameLeft, box.y + y, 9, damageMult > 1 ? Color.red
+										: ""), box.x + kHardwareNameLeft, box.y
+								+ y, 9, damageMult > 1 ? Color.red
 								: Color.lightGray);
-		box.grow(padding,  padding);
+		box.grow(padding, padding);
 		return box;
 	}
 

@@ -33,9 +33,9 @@ public class GBWorld extends GBObjectWorld {
 	double mannaLeft;
 
 	public boolean reportErrors, reportPrints;
-	
-	GBGame game; //For brain primitives like pause and timeLimit
-	
+
+	GBGame game; // For brain primitives like pause and timeLimit
+
 	// simulation parameters
 	public double mannaSize;
 	public double mannaDensity;
@@ -106,7 +106,7 @@ public class GBWorld extends GBObjectWorld {
 					mannaSize) : amount;
 			addObjectImmediate(new GBManna(RandomLocation(0), placed));
 		}
-		//addNewObjects();
+		// addNewObjects();
 	}
 
 	public void SimulateOneFrame() {
@@ -176,7 +176,7 @@ public class GBWorld extends GBObjectWorld {
 			// all else fails, make a manna.
 			if (cost > 0)
 				addObjectImmediate(new GBManna(where, cost));
-			//addNewObjects();
+			// addNewObjects();
 		} catch (Exception e) {
 			throw new GBSimulationError("Error adding seed:" + e.getMessage());
 		}
@@ -328,14 +328,14 @@ public class GBWorld extends GBObjectWorld {
 				sidesAlive++;
 		return sidesAlive;
 	}
-	
-	public void pause(){
-		//for the pause primitive
+
+	public void pause() {
+		// for the pause primitive
 		game.running = false;
 	}
-	
-	public int getTimeLimit(){
-		//for the time-limit primitive
+
+	public int getTimeLimit() {
+		// for the time-limit primitive
 		return game.timeLimit;
 	}
 }

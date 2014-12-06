@@ -3,7 +3,6 @@
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
  *******************************************************************************/
 
-
 package simulation;
 
 import sides.HardwareSpec;
@@ -223,12 +222,13 @@ public class GBHardwareState {
 		// death check
 		if (armor <= 0 || robot.dead) {
 			robot.dead = true;
-			world.addObjectLater(new GBCorpse(robot.Position(), robot.Velocity(),
-					robot.Biomass() * kCorpsePerBiomass, robot.Type(), robot
-							.LastHit()));
-			world.addObjectLater(new GBExplosion(robot.Position(), robot.Owner(),
-					(robot.Biomass() * kDeathExplosionDamagePerBiomass + spec
-							.Bomb()) * robot.ShieldFraction()));
+			world.addObjectLater(new GBCorpse(robot.Position(), robot
+					.Velocity(), robot.Biomass() * kCorpsePerBiomass, robot
+					.Type(), robot.LastHit()));
+			world.addObjectLater(new GBExplosion(robot.Position(), robot
+					.Owner(), (robot.Biomass()
+					* kDeathExplosionDamagePerBiomass + spec.Bomb())
+					* robot.ShieldFraction()));
 			return;
 		}
 		// energy intake

@@ -231,36 +231,19 @@ public class HardwareSpec {
 		mass = 0;
 	}
 
-	/*@Override
-	public HardwareSpec clone() {
-		HardwareSpec ret = new HardwareSpec();
-		ret.processor = processor;
-		ret.memory = memory;
-		ret.engine = engine;
-		ret.maxEnergy = maxEnergy;
-		ret.initialEnergy = initialEnergy;
-		ret.solarCells = solarCells;
-		ret.eater = eater;
-		ret.armor = armor;
-		ret.repairRate = repairRate;
-		ret.shield = shield;
-		ret.bomb = bomb;
-		ret.constructor = constructor;
-		ret.sensor1 = sensor1;
-		ret.sensor2 = sensor2;
-		ret.sensor3 = sensor3;
-		ret.blaster = blaster;
-		ret.grenades = grenades;
-		ret.forceField = forceField;
-		ret.syphon = syphon;
-		ret.enemySyphon = enemySyphon;
-		ret.coolingCost = coolingCost;
-		ret.growthCost = growthCost;
-		ret.combatCost = combatCost;
-		ret.hardwareCost = hardwareCost;
-		ret.mass = mass;
-		return ret;
-	}*/
+	/*
+	 * @Override public HardwareSpec clone() { HardwareSpec ret = new
+	 * HardwareSpec(); ret.processor = processor; ret.memory = memory;
+	 * ret.engine = engine; ret.maxEnergy = maxEnergy; ret.initialEnergy =
+	 * initialEnergy; ret.solarCells = solarCells; ret.eater = eater; ret.armor
+	 * = armor; ret.repairRate = repairRate; ret.shield = shield; ret.bomb =
+	 * bomb; ret.constructor = constructor; ret.sensor1 = sensor1; ret.sensor2 =
+	 * sensor2; ret.sensor3 = sensor3; ret.blaster = blaster; ret.grenades =
+	 * grenades; ret.forceField = forceField; ret.syphon = syphon;
+	 * ret.enemySyphon = enemySyphon; ret.coolingCost = coolingCost;
+	 * ret.growthCost = growthCost; ret.combatCost = combatCost;
+	 * ret.hardwareCost = hardwareCost; ret.mass = mass; return ret; }
+	 */
 
 	public int Processor() {
 		return processor;

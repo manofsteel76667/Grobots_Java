@@ -6,7 +6,6 @@ package simulation;
 
 import exception.GBBrainError;
 
-
 public class GBMessage {
 
 	public static final int kMaxMessageLength = 8;

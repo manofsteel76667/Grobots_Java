@@ -13,7 +13,7 @@ import java.awt.Color;
 import brains.Brain;
 import brains.BrainSpec;
 
-public class RobotType extends support.Model {
+public class RobotType {
 	public static final double kStandardMass = 20;
 	public boolean debug = true;
 	public Side side;
@@ -39,7 +39,7 @@ public class RobotType extends support.Model {
 		hardware = new HardwareSpec(debug);
 	}
 
-	public RobotType (RobotType type) {
+	public RobotType(RobotType type) {
 		this(type.side);
 		name = type.name;
 		SetColor(type.color);
@@ -82,14 +82,14 @@ public class RobotType extends support.Model {
 		return true;
 	}
 
-	//@Override
+	// @Override
 	public boolean _equals(Object other) {
 		if (this == other)
 			return true;
 		if (other == null || !(other instanceof RobotType))
 			return false;
-		return this.side.name.equals(((RobotType)other).side.name) && 
-				this.name.equals(((RobotType)other).name);
+		return this.side.name.equals(((RobotType) other).side.name)
+				&& this.name.equals(((RobotType) other).name);
 	}
 
 	public void ResetSampledStatistics() {
@@ -104,8 +104,8 @@ public class RobotType extends support.Model {
 
 	public void SetName(String newname) {
 		name = newname;
-		Changed();
 	}
+
 	@Override
 	public String toString() {
 		return side.Name() + (side.Name().endsWith("s") ? "'" : "'s") + " "
@@ -126,7 +126,6 @@ public class RobotType extends support.Model {
 
 	void SetColor(Color newcolor) {
 		color = newcolor;
-		Changed();
 	}
 
 	public GBRobotDecoration Decoration() {
@@ -153,7 +152,6 @@ public class RobotType extends support.Model {
 	public void SetBrain(BrainSpec spec) {
 		spec.Check();
 		brain = spec;
-		Changed();
 	}
 
 	public Brain MakeBrain() {
@@ -167,7 +165,6 @@ public class RobotType extends support.Model {
 		hardware.Recalculate();
 		cost = hardware.Cost() + (brain != null ? brain.Cost() : 0);
 		mass = hardware.Mass() + (brain != null ? brain.Mass() : 0);
-		Changed();
 	}
 
 	public double Cost() {

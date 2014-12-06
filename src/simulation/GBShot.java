@@ -18,8 +18,8 @@ public abstract class GBShot extends GBObject {
 	protected Side owner;
 	protected double power;
 
-	protected void DrawTail(Graphics g, GBProjection<GBObject> proj, double movement,
-			Color color) {
+	protected void DrawTail(Graphics g, GBProjection<GBObject> proj,
+			double movement, Color color) {
 	}
 
 	// public:

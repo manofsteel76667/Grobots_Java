@@ -32,65 +32,76 @@ public class StringUtilities {
 		String formatstring = "%." + digitsAfterDP + "f";
 		return String.format(formatstring, f * 100) + "%";
 	}
-	
-	public static void drawStringRight(Graphics2D g, String text, Rectangle rect,
-			int fontHeight, Color c){
+
+	public static void drawStringRight(Graphics2D g, String text,
+			Rectangle rect, int fontHeight, Color c) {
 		Font f = new Font("Serif", Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
-		g.drawString(text, rect.x + rect.width - fm.stringWidth(text), rect.y + rect.height);
+		g.drawString(text, rect.x + rect.width - fm.stringWidth(text), rect.y
+				+ rect.height);
 	}
-	public static void drawStringLeft(Graphics2D g, String text, Rectangle rect,
-			int fontHeight, Color c){
+
+	public static void drawStringLeft(Graphics2D g, String text,
+			Rectangle rect, int fontHeight, Color c) {
 		Font f = new Font("Serif", Font.PLAIN, fontHeight);
 		g.setFont(f);
 		g.setColor(c);
 		g.drawString(text, rect.x, rect.y + rect.height);
 	}
-	public static void drawStringCenter(Graphics2D g, String text, Rectangle rect,
-			int fontHeight, Color c){
+
+	public static void drawStringCenter(Graphics2D g, String text,
+			Rectangle rect, int fontHeight, Color c) {
 		Font f = new Font("Serif", Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
-		g.drawString(text, (int)rect.getCenterX() - fm.stringWidth(text)/2, rect.y + rect.height);
+		g.drawString(text, (int) rect.getCenterX() - fm.stringWidth(text) / 2,
+				rect.y + rect.height);
 	}
+
 	public static void drawStringRight(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c){
+			int fontHeight, Color c) {
 		drawStringRight(g, text, x, y, fontHeight, c, false);
 	}
+
 	public static void drawStringRight(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c, boolean bold){
+			int fontHeight, Color c, boolean bold) {
 		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
-		g.drawString(text, x- fm.stringWidth(text), y);
+		g.drawString(text, x - fm.stringWidth(text), y);
 	}
+
 	public static void drawStringLeft(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c){
+			int fontHeight, Color c) {
 		drawStringLeft(g, text, x, y, fontHeight, c, false);
 	}
+
 	public static void drawStringLeft(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c, boolean bold){
+			int fontHeight, Color c, boolean bold) {
 		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		g.setColor(c);
 		g.drawString(text, x, y);
 	}
-	public static void drawStringCentered(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c){
+
+	public static void drawStringCentered(Graphics2D g, String text, int x,
+			int y, int fontHeight, Color c) {
 		drawStringCentered(g, text, x, y, fontHeight, c, false);
 	}
-	public static void drawStringCentered(Graphics2D g, String text, int x, int y,
-			int fontHeight, Color c, boolean bold){
+
+	public static void drawStringCentered(Graphics2D g, String text, int x,
+			int y, int fontHeight, Color c, boolean bold) {
 		Font f = new Font("Serif", bold ? Font.BOLD : Font.PLAIN, fontHeight);
 		g.setFont(f);
 		FontMetrics fm = g.getFontMetrics();
 		g.setColor(c);
-		g.drawString(text, x - fm.stringWidth(text)/2, y);
+		g.drawString(text, x - fm.stringWidth(text) / 2, y);
 	}
+
 	public static void drawStringPair(Graphics2D g, String str1, String str2,
 			int left, int right, int y, int size, Color color, boolean bold) {
 		drawStringLeft(g, str1, left, y, size, color, bold);

@@ -74,7 +74,8 @@ enum HardwareComponents {
 			"syphon"), hcEnemySyphon("enemy-syphon");
 	public final String tagName;
 
-	public static HardwareComponents byTag(String _tagName) throws GBElementArgumentError {
+	public static HardwareComponents byTag(String _tagName)
+			throws GBElementArgumentError {
 		try {
 			return tagLookup.get(_tagName.toLowerCase());
 		} catch (Exception e) {
@@ -191,7 +192,7 @@ public class SideReader {
 	void ProcessTag(GBElementType element) throws GBReaderError {
 		// clean up type
 		if (type != null
-			&& (element == GBElementType.etType || element == GBElementType.etEnd)) {
+				&& (element == GBElementType.etType || element == GBElementType.etEnd)) {
 			if (brain != null) {
 				brain.Check();
 				type.SetBrain(brain);
@@ -204,7 +205,7 @@ public class SideReader {
 		if (state == GBElementType.etEnd)
 			throw new GBForbiddenContentError();
 		else if (state == GBElementType.etNone
-				 && element != GBElementType.etSide)
+				&& element != GBElementType.etSide)
 			throw new GBMisplacedElementError();
 		// process it
 		switch (element) {
@@ -217,7 +218,7 @@ public class SideReader {
 				side = new Side();
 				side.debug = true;
 				java.lang.StringBuilder sb = new java.lang.StringBuilder(
-																		 tokens.removeFirst());
+						tokens.removeFirst());
 				while (tokens.size() > 0) {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());
@@ -250,7 +251,7 @@ public class SideReader {
 				if (side == null)
 					throw new RuntimeException("SideReader missing side");
 				java.lang.StringBuilder sb = new java.lang.StringBuilder(
-																		 tokens.removeFirst());
+						tokens.removeFirst());
 				while (tokens.size() > 0) {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());
@@ -285,7 +286,7 @@ public class SideReader {
 				throw new RuntimeException("SideReader missing side");
 			type = new RobotType(side);
 			java.lang.StringBuilder sb = new java.lang.StringBuilder(
-																	 tokens.removeFirst());
+					tokens.removeFirst());
 			while (tokens.size() > 0) {
 				sb.append(" ");
 				sb.append(tokens.removeFirst());
@@ -338,7 +339,7 @@ public class SideReader {
 			if (state == GBElementType.etCode) {
 				if (tokens.size() > 0)
 					brain.SetStartingLabel(brain.LabelReferenced(tokens
-																 .removeFirst()));
+							.removeFirst()));
 				else {
 					int label = brain.AddGensym("start");
 					brain.ResolveGensym(label);
@@ -384,8 +385,7 @@ public class SideReader {
 					if (tokens.size() == 0)
 						throw new GBMissingElementArgumentError();
 					else
-						y = StringUtilities.parseDouble(tokens
-														.removeFirst());
+						y = StringUtilities.parseDouble(tokens.removeFirst());
 					if (x == null || y == null)
 						throw new GBElementArgumentError();
 					else {

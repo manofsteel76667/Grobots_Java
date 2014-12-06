@@ -82,12 +82,15 @@ public abstract class GBObject {
 	// evil antimodular drawing code
 	public abstract Color Color();
 
-	public abstract void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed);
+	public abstract void Draw(Graphics g, GBProjection<GBObject> proj,
+			boolean detailed);
 
-	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj,
+			boolean detailed) {
 	}
 
-	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj,
+			boolean detailed) {
 	}
 
 	// protected:
@@ -316,8 +319,8 @@ public abstract class GBObject {
 				proj.toScreenY(position.y) - oWidth / 2, oWidth, oWidth);
 	}
 
-	public void DrawShadow(Graphics g, GBProjection<GBObject> proj, FinePoint offset,
-			Color color) {
+	public void DrawShadow(Graphics g, GBProjection<GBObject> proj,
+			FinePoint offset, Color color) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double where = proj.toScreenEllipse(this);
 		int scale = proj.getScale();

@@ -227,8 +227,7 @@ public class GBStackBrain extends Brain {
 
 	double Peek(int delta) throws GBStackUnderflowError, GBStackOverflowError {
 		if (delta < 1)
-			throw new GBBrainError("peeking stack element "
-					+ delta);
+			throw new GBBrainError("peeking stack element " + delta);
 		int where = stackHeight - delta;
 		if (where < 0)
 			throw new GBStackUnderflowError();
@@ -275,8 +274,7 @@ public class GBStackBrain extends Brain {
 
 	double ReadLocalMemory(int addr, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new GBBrainError("tried to read at address "
-					+ addr);
+			throw new GBBrainError("tried to read at address " + addr);
 		if (memory == null)
 			return 0;
 		return memory[addr - 1];
@@ -284,8 +282,7 @@ public class GBStackBrain extends Brain {
 
 	void WriteLocalMemory(int addr, double val, GBRobot robot) {
 		if (addr < 1 || addr > robot.hardware.Memory())
-			throw new GBBrainError("tried to write at address "
-					+ addr);
+			throw new GBBrainError("tried to write at address " + addr);
 		if (memory == null) {
 			if (robot.hardware.Memory() == 0)
 				return; // fail silently
@@ -318,10 +315,10 @@ public class GBStackBrain extends Brain {
 	void BrainError(Exception err, GBRobot robot, GBWorld world) {
 		status = BrainStatus.bsError;
 		if (world.reportErrors)
-			//Handle brain errors at this level before they bubble up to the
-			//rest of the world.
-			//Choosing Abort will still throw an exception, but continue
-			//will not.
+			// Handle brain errors at this level before they bubble up to the
+			// rest of the world.
+			// Choosing Abort will still throw an exception, but continue
+			// will not.
 			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
 					+ AddressAndLine(pc - 1) + ": " + err.getMessage());
@@ -382,6 +379,7 @@ public class GBStackBrain extends Brain {
 			status = BrainStatus.bsStopped;
 		}
 	}
+
 	@Override
 	public boolean Ready() {
 		return remaining > 0;
@@ -405,15 +403,14 @@ public class GBStackBrain extends Brain {
 
 	public double StackAt(int index) {
 		if (index < 0 || index >= stackHeight)
-			throw new GBBrainError("tried to read stack element "
-					+ index);
+			throw new GBBrainError("tried to read stack element " + index);
 		return stack[index];
 	}
 
 	public int ReturnStackAt(int index) {
 		if (index < 0 || index >= returnStackHeight)
-			throw new GBBrainError(
-					"tried to read return stack element " + index);
+			throw new GBBrainError("tried to read return stack element "
+					+ index);
 		return returnStack[index];
 	}
 
@@ -428,9 +425,9 @@ public class GBStackBrain extends Brain {
 	public String AddressDescription(int addr) {
 		return spec.AddressDescription(addr);
 	}
-	
+
 	public String AddressLastLabel(int addr) {
-		GBLabel ret = spec.AddressLastLabel(addr-1);
+		GBLabel ret = spec.AddressLastLabel(addr - 1);
 		if (ret != null)
 			return ret.name;
 		else
@@ -440,8 +437,8 @@ public class GBStackBrain extends Brain {
 	public String AddressAndLine(int addr) {
 		return spec.AddressAndLine(addr);
 	}
-	
-	public int PCLine(){
+
+	public int PCLine() {
 		return spec.LineNumber(pc);
 	}
 
@@ -1108,8 +1105,7 @@ public class GBStackBrain extends Brain {
 		case opDropN: {
 			int n = PopInteger();
 			if (n > stackHeight)
-				throw new GBBrainError("dropped " + n + " of "
-						+ stackHeight);
+				throw new GBBrainError("dropped " + n + " of " + stackHeight);
 			stackHeight -= n;
 		}
 			break;
@@ -1743,8 +1739,7 @@ public class GBStackBrain extends Brain {
 			throws GBStackUnderflowError, GBStackOverflowError,
 			GBNotIntegerError {
 		int period = PopInteger();
-		if (world.currentFrame >= sensor.Time() + period
-				|| sensor.Time() <= 0) {
+		if (world.currentFrame >= sensor.Time() + period || sensor.Time() <= 0) {
 			sensor.Fire();
 			remaining = 0;
 			Pushboolean(true);

@@ -129,16 +129,12 @@ public class GBRosterView extends ListView {
 			Rectangle slot = getStartingFooterRect(20, false);
 			drawBox(g, slot);
 			slot.grow(-padding, -padding);
-			StringUtilities
-					.drawStringCenter(
-							g,
-							"No sides loaded.",
-							new Rectangle(slot.x, slot.y, slot.width, slot.height/2), 10, Color.blue);
-			StringUtilities
-			.drawStringCenter(
-					g,
-					"Why not download some from the help menu?",
-					slot, 10, Color.blue);
+			StringUtilities.drawStringCenter(g, "No sides loaded.",
+					new Rectangle(slot.x, slot.y, slot.width, slot.height / 2),
+					10, Color.blue);
+			StringUtilities.drawStringCenter(g,
+					"Why not download some from the help menu?", slot, 10,
+					Color.blue);
 			return slot;
 		} else
 			return null;

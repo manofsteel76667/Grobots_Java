@@ -23,16 +23,14 @@ public final class GBError {
 		javax.swing.JOptionPane.showMessageDialog(null, message);
 		System.exit(1);
 	}
-	/*
-	 * Error handling strategy:  
-	 * All exceptions are unchecked custom exceptions derived from
-	 * RuntimeException (SimulationException and its descendants)
-	 * Exceptions thrown at their source
-	 * NonfatalError is called at the appropriate level; Brain level for Brain exceptions,
-	 * World level for simulation problems and brain errors that have been aborted, and
-	 * UI level for system-level errors and simulation errors that have been aborted.
-	 * 
 
+	/*
+	 * Error handling strategy: All exceptions are unchecked custom exceptions
+	 * derived from RuntimeException (SimulationException and its descendants)
+	 * Exceptions thrown at their source NonfatalError is called at the
+	 * appropriate level; Brain level for Brain exceptions, World level for
+	 * simulation problems and brain errors that have been aborted, and UI level
+	 * for system-level errors and simulation errors that have been aborted.
 	 */
 	public static void NonfatalError(final String message) throws GBAbort {
 		/*
@@ -43,9 +41,9 @@ public final class GBError {
 		int response = 0;
 		if (SwingUtilities.isEventDispatchThread()) {
 			String[] buttons = { "Quit", "Abort", "Continue" };
-			response = JOptionPane.showOptionDialog(null, message, "Nonfatal error",
-					javax.swing.JOptionPane.WARNING_MESSAGE, 0, null, buttons,
-					buttons[2]);
+			response = JOptionPane.showOptionDialog(null, message,
+					"Nonfatal error", javax.swing.JOptionPane.WARNING_MESSAGE,
+					0, null, buttons, buttons[2]);
 		} else {
 			FutureTask<Integer> dialogTask = new FutureTask<Integer>(
 					new Callable<Integer>() {

@@ -87,7 +87,7 @@ public class GBBlast extends GBTimedShot {
 			g2d.fillOval((int) where.x, (int) where.y, where.width,
 					where.height);
 		} else {
-			// Looks like you're firing dicks at people :)			
+			// Looks like you're firing dicks at people :)
 			// g2d.setPaint(Color.gray);
 			// g2d.drawOval((int) where.x, (int) where.y, where.width,
 			// where.height);

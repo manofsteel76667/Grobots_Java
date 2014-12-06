@@ -14,9 +14,9 @@ public class GBAbort extends RuntimeException {
 	public String toString() {
 		return "Aborted";
 	}
-	
+
 	@Override
-	public String getMessage(){
+	public String getMessage() {
 		return toString();
 	}
 };

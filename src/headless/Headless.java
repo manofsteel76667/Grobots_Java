@@ -114,8 +114,7 @@ public class Headless {
 		System.exit(1);
 	}
 
-	static void ProcessArg(String arg, GBGame game, int statsPeriod,
-			String name) {
+	static void ProcessArg(String arg, GBGame game, int statsPeriod, String name) {
 		try {
 			if ('-' == arg.charAt(0)) {
 				int dimension;
@@ -131,17 +130,15 @@ public class Headless {
 					// SetSoundActive(true);
 					break;
 				case 'l':
-					game.timeLimit = StringUtilities
-							.parseInt(arg.substring(2));
+					game.timeLimit = StringUtilities.parseInt(arg.substring(2));
 					break;
 				case 'b':
 					statsPeriod = StringUtilities.parseInt(arg.substring(2));
 					break;
 				case 'w':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					game.Resize(new FinePoint(
-							GBObjectWorld.kBackgroundTileSize * dimension,
-							game.getWorld().Top()));
+					game.Resize(new FinePoint(GBObjectWorld.kBackgroundTileSize
+							* dimension, game.getWorld().Top()));
 					break;
 				case 'h':
 					dimension = StringUtilities.parseInt(arg.substring(2));
@@ -149,8 +146,7 @@ public class Headless {
 							GBObjectWorld.kBackgroundTileSize * dimension));
 					break;
 				case 's':
-					game.seedLimit = StringUtilities
-							.parseInt(arg.substring(2));
+					game.seedLimit = StringUtilities.parseInt(arg.substring(2));
 					break;
 				case 'H':
 					dumpHtml = true;

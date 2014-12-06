@@ -33,7 +33,7 @@ public class GBGame implements ScoreKeeper {
 	 */
 	GBScores roundScores;
 	/**
-	 * Sum of all side scores over all rounds 
+	 * Sum of all side scores over all rounds
 	 */
 	GBScores tournamentScores;
 
@@ -78,16 +78,16 @@ public class GBGame implements ScoreKeeper {
 		world.SimulateOneFrame();
 		CollectStatistics();
 		if (previousSidesAlive > world.SidesAlive()) {
-			//TODO: play extinction sound
+			// TODO: play extinction sound
 		}
-		if (totalFrames < Long.MAX_VALUE)//yeah, right...
+		if (totalFrames < Long.MAX_VALUE)// yeah, right...
 			totalFrames++;
 		else
-			totalFrames = 0;			
+			totalFrames = 0;
 		if (RoundOver())
 			EndRound();
 	}
-	
+
 	public void EndRound() throws GBSimulationError {
 		// TODO: Replace when sound is implemented
 		// StartSound(siEndRound);
@@ -108,16 +108,16 @@ public class GBGame implements ScoreKeeper {
 		} else
 			running = false;
 	}
-	
+
 	void pickSeededSides() {
-		//Randomly pick up to <seedLimit> sides from the sides list
+		// Randomly pick up to <seedLimit> sides from the sides list
 		int seedsLeft = Math.min(seedLimit, sides.size());
 		while (world.sides.size() < Math.min(seedLimit, sides.size())) {
 			int sidesLeft = sides.size();
 			for (int i = 0; i < sides.size() && seedsLeft > 0; ++i, --sidesLeft)
 				if (seedsLeft >= sidesLeft
 						|| world.random.bool((double) (seedsLeft) / sidesLeft)) {
-					if (!world.sides.contains(sides.get(i))){
+					if (!world.sides.contains(sides.get(i))) {
 						world.AddSide(sides.get(i));
 						seedsLeft--;
 					}
@@ -190,14 +190,14 @@ public class GBGame implements ScoreKeeper {
 			}
 		CollectStatistics();
 	}
-	
+
 	public void addSeeds() {
 		if (world.sides.size() == 0)
 			pickSeededSides();
-		world.AddSeeds();			
+		world.AddSeeds();
 	}
-	
-	public int getSidesSeeded(){
+
+	public int getSidesSeeded() {
 		return world.sidesSeeded;
 	}
 
@@ -214,8 +214,8 @@ public class GBGame implements ScoreKeeper {
 
 	public boolean RoundOver() {
 		return stopOnElimination && previousSidesAlive > SidesAlive()
-				&& SidesAlive() <= 1 || (timeLimit > 0
-				&& CurrentFrame() % timeLimit == 0);
+				&& SidesAlive() <= 1
+				|| (timeLimit > 0 && CurrentFrame() % timeLimit == 0);
 	}
 
 	public void AddSide(Side side) {
@@ -254,7 +254,7 @@ public class GBGame implements ScoreKeeper {
 		world.RemoveAllSides();
 	}
 
-	public GBWorld getWorld(){
+	public GBWorld getWorld() {
 		return world;
 	}
 
@@ -296,8 +296,7 @@ public class GBGame implements ScoreKeeper {
 		return robotValue;
 	}
 
-	public
-	void ReportManna(double amount) {
+	public void ReportManna(double amount) {
 		mannas++;
 		mannaValue += Math.round(amount);
 	}

@@ -202,11 +202,9 @@ public class GBScoresView extends JPanel {
 			ret.add(new StatisticsLine("Survival", StringUtilities
 					.toPercentString(in.Survival(), 1), Color.black, 3, 2));
 			ret.add(new StatisticsLine("Early Death", StringUtilities
-					.toPercentString(in.EarlyDeathRate(), 1), Color.black, 3,
-					3));
+					.toPercentString(in.EarlyDeathRate(), 1), Color.black, 3, 3));
 			ret.add(new StatisticsLine("Late Death", StringUtilities
-					.toPercentString(in.LateDeathRate(), 1), Color.black, 3,
-					4));
+					.toPercentString(in.LateDeathRate(), 1), Color.black, 3, 4));
 			ret.add(new StatisticsLine("Seeded", Integer.toString(in.Seeded()),
 					Color.black, 3, 5));
 			ret.add(new StatisticsLine("Efficiency", StringUtilities
@@ -254,7 +252,7 @@ public class GBScoresView extends JPanel {
 		List<Rectangle> boxes = new ArrayList<Rectangle>();
 		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace,
 				colwidth, kInfoBoxHeight)); // Income
-		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace *2 
+		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace * 2
 				+ kInfoBoxHeight, colwidth, kTotalsHeight)); // Deaths
 		boxes.add(new Rectangle(kEdgeSpace + colwidth, kEdgeSpace
 				+ kGraphHeight + kGraphTop, colwidth, kInfoBoxHeight
@@ -353,8 +351,8 @@ public class GBScoresView extends JPanel {
 				continue;
 			List<Integer> hist = (allRounds ? s.TournamentScores()
 					.BiomassHistory() : s.Scores().BiomassHistory());
-			DrawGraph(g, graph, scale, hscale, hist, GBColor.ContrastingTextColor(s.Color())
-					, s == side ? 2 : 1);
+			DrawGraph(g, graph, scale, hscale, hist,
+					GBColor.ContrastingTextColor(s.Color()), s == side ? 2 : 1);
 		}
 		StringUtilities.drawStringLeft(g, Integer.toString(scale), box.x + 3,
 				box.y + 10, 9, Color.gray);

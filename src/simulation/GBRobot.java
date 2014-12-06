@@ -407,13 +407,13 @@ public class GBRobot extends GBObject {
 		g2d.setColor(GBColor.multiply(color,
 				pulse ? 0.85f + 0.15f * (float) Math.sin(phase) : 1.0f));
 		Rectangle rect = where.getBounds();
-		g2d.drawArc(rect.x, rect.y, rect.width, rect.height, zeroAngle,
-				angle);
+		g2d.drawArc(rect.x, rect.y, rect.width, rect.height, zeroAngle, angle);
 
 	}
 
 	@Override
-	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj,
+			boolean detailed) {
 		// Get the basics
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double halo = proj.toScreenEllipse(this);
@@ -454,7 +454,8 @@ public class GBRobot extends GBObject {
 		// weapon ranges? //sensor results?
 	}
 
-	void drawRangeCircle(Graphics g, GBProjection<GBObject> proj, double r, Color color) {
+	void drawRangeCircle(Graphics g, GBProjection<GBObject> proj, double r,
+			Color color) {
 		if (r <= 0)
 			return;
 		r += radius;
@@ -490,7 +491,7 @@ public class GBRobot extends GBObject {
 			DrawMini(g, where);
 			return;
 		}
-		int meterWidth = (int)Math.max(1, (where.width + 10) / 10);
+		int meterWidth = (int) Math.max(1, (where.width + 10) / 10);
 		// background and rim
 		Color robotColor = GBColor.Mix(Color.red, 0.8f * recentDamage
 				/ kRecentDamageTime, Owner().Color());
@@ -528,19 +529,17 @@ public class GBRobot extends GBObject {
 				meter.y = where.y + meterWidth;
 				meter.width = where.width - meterWidth * 2;
 				meter.height = where.height - meterWidth * 2;
-				DrawMeter(g, hardware.constructor.Fraction(), meter, 0,
-						360, 1, gestationMeterColor,
-						gestationMeterBackgroundColor, Owner().Color(),
-						hardware.constructor.Rate() != 0);
+				DrawMeter(g, hardware.constructor.Fraction(), meter, 0, 360, 1,
+						gestationMeterColor, gestationMeterBackgroundColor,
+						Owner().Color(), hardware.constructor.Rate() != 0);
 			}
 		}
 		// decoration appears inside the focus circle or the radial painter
 		double decorationWidth = (double) where.width * radialSteps[0];
 		double decorationHeight = (double) where.height * radialSteps[0];
-		Ellipse2D.Double decorationOval = new Ellipse2D.Double(
-				focus.x - decorationWidth / 2,
-				focus.y - decorationHeight / 2, decorationWidth,
-				 decorationHeight);
+		Ellipse2D.Double decorationOval = new Ellipse2D.Double(focus.x
+				- decorationWidth / 2, focus.y - decorationHeight / 2,
+				decorationWidth, decorationHeight);
 		// flash decoration when reloading or sensing
 		Color color = baseDecorationColor;
 		if (hardware.grenades.Cooldown() != 0)
@@ -578,65 +577,79 @@ public class GBRobot extends GBObject {
 			break;
 		case triangle:
 			double bottom = decorationOval.y + .75 * decorationOval.height;
-			double bottomHalfX = decorationOval.width / 4 * GBMath.sqrt3; 
+			double bottomHalfX = decorationOval.width / 4 * GBMath.sqrt3;
 			double topMiddleX = decorationOval.x + decorationOval.width / 2;
-			int[] x = new int[]{
-					(int)(topMiddleX), (int)(topMiddleX + bottomHalfX), (int)(topMiddleX - bottomHalfX)
-			};
-			int[] y = new int[]{(int)decorationOval.y, (int)bottom, (int)bottom};
+			int[] x = new int[] { (int) (topMiddleX),
+					(int) (topMiddleX + bottomHalfX),
+					(int) (topMiddleX - bottomHalfX) };
+			int[] y = new int[] { (int) decorationOval.y, (int) bottom,
+					(int) bottom };
 			g2d.drawPolygon(x, y, 3);
 			break;
 		case cross:
-			g2d.drawLine((int)(decorationOval.x + thickness / 2), (int)(decorationOval.y
-					+ decorationOval.height / 2 + thickness / 2), (int)(decorationOval.x
-					+ decorationOval.width + thickness / 2), (int)(decorationOval.y
-					+ decorationOval.height / 2 + thickness / 2));
-			g2d.drawLine((int)(decorationOval.x + decorationOval.width / 2
-					+ thickness / 2), (int)(decorationOval.y + thickness / 2), (int)(decorationOval.x
-					+ decorationOval.width / 2 + thickness / 2), (int)(decorationOval.y
-					+ decorationOval.height + thickness / 2));
+			g2d.drawLine(
+					(int) (decorationOval.x + thickness / 2),
+					(int) (decorationOval.y + decorationOval.height / 2 + thickness / 2),
+					(int) (decorationOval.x + decorationOval.width + thickness / 2),
+					(int) (decorationOval.y + decorationOval.height / 2 + thickness / 2));
+			g2d.drawLine(
+					(int) (decorationOval.x + decorationOval.width / 2 + thickness / 2),
+					(int) (decorationOval.y + thickness / 2),
+					(int) (decorationOval.x + decorationOval.width / 2 + thickness / 2),
+					(int) (decorationOval.y + decorationOval.height + thickness / 2));
 			break;
 		case x:
-			double cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
-			g2d.drawLine((int)(decorationOval.x + cornerDist+ thickness / 2) , 
-					(int)(decorationOval.y + cornerDist+ thickness / 2), 
-					(int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
-			g2d.drawLine((int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + cornerDist+ thickness / 2), 
-					(int)(decorationOval.x + cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
+			double cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine(
+					(int) (decorationOval.x + cornerDist + thickness / 2),
+					(int) (decorationOval.y + cornerDist + thickness / 2),
+					(int) (decorationOval.x + decorationOval.width - cornerDist + thickness / 2),
+					(int) (decorationOval.y + decorationOval.height
+							- cornerDist + thickness / 2));
+			g2d.drawLine((int) (decorationOval.x + decorationOval.width
+					- cornerDist + thickness / 2), (int) (decorationOval.y
+					+ cornerDist + thickness / 2), (int) (decorationOval.x
+					+ cornerDist + thickness / 2), (int) (decorationOval.y
+					+ decorationOval.height - cornerDist + thickness / 2));
 			break;
 		case hline:
-			g2d.drawLine((int)decorationOval.x, (int)(decorationOval.y
-					+ decorationOval.height / 2), (int)(decorationOval.x
-					+ decorationOval.width), (int)(decorationOval.y
-					+ decorationOval.height / 2));
+			g2d.drawLine((int) decorationOval.x,
+					(int) (decorationOval.y + decorationOval.height / 2),
+					(int) (decorationOval.x + decorationOval.width),
+					(int) (decorationOval.y + decorationOval.height / 2));
 			break;
 		case vline:
-			g2d.drawLine((int)(decorationOval.x + decorationOval.height / 2),
-					(int)decorationOval.y, (int)(decorationOval.x + decorationOval.height
-							/ 2), (int)(decorationOval.y + decorationOval.height));
+			g2d.drawLine((int) (decorationOval.x + decorationOval.height / 2),
+					(int) decorationOval.y,
+					(int) (decorationOval.x + decorationOval.height / 2),
+					(int) (decorationOval.y + decorationOval.height));
 			break;
 		case slash:
-			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
-			g2d.drawLine((int)(decorationOval.x + cornerDist+ thickness / 2) , 
-					(int)(decorationOval.y + cornerDist+ thickness / 2), 
-					(int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
+			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine(
+					(int) (decorationOval.x + cornerDist + thickness / 2),
+					(int) (decorationOval.y + cornerDist + thickness / 2),
+					(int) (decorationOval.x + decorationOval.width - cornerDist + thickness / 2),
+					(int) (decorationOval.y + decorationOval.height
+							- cornerDist + thickness / 2));
 			break;
 		case backslash:
-			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1) / (2 * GBMath.sqrt2);
-			g2d.drawLine((int)(decorationOval.x + decorationOval.width - cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + cornerDist+ thickness / 2), 
-					(int)(decorationOval.x + cornerDist+ thickness / 2), 
-					(int)(decorationOval.y + decorationOval.height - cornerDist+ thickness / 2));
+			cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine((int) (decorationOval.x + decorationOval.width
+					- cornerDist + thickness / 2), (int) (decorationOval.y
+					+ cornerDist + thickness / 2), (int) (decorationOval.x
+					+ cornerDist + thickness / 2), (int) (decorationOval.y
+					+ decorationOval.height - cornerDist + thickness / 2));
 			break;
 		}
 	}
 
 	@Override
-	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj,
+			boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double halo = proj.toScreenEllipse(this);
 		int scale = proj.getScale();
@@ -658,9 +671,9 @@ public class GBRobot extends GBObject {
 					&& hardware.radio.writes[age] == 0)
 				continue;
 			double r = kRingGrowthRate * (age + 1);
-			Ellipse2D.Double ring = new Ellipse2D.Double(proj.toScreenX(Left()),
-					proj.toScreenY(Top()), r * 2 * scale,
-					r * 2 * scale);
+			Ellipse2D.Double ring = new Ellipse2D.Double(
+					proj.toScreenX(Left()), proj.toScreenY(Top()), r * 2
+							* scale, r * 2 * scale);
 			ring = proj.toScreenEllipse(this);
 			ring.x -= scale * r;
 			ring.y -= scale * r;

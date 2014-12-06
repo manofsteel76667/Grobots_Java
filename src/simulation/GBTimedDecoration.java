@@ -8,8 +8,6 @@ import java.awt.Color;
 
 import support.FinePoint;
 
-
-
 public abstract class GBTimedDecoration extends GBObject {
 	// convenience constants
 	public static final double kSmokeMaxSpeed = 0.03;

@@ -346,8 +346,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 		// Draw all living objects in the game
 		// Draws everything even if it isn't on the screen. This
 		// could probably be improved
-		//Hide details when zoomed out or when going really fast
-		boolean detailed = showDetails && scale >= kMinDetailsScale && app.stepRate.value < 200;
+		// Hide details when zoomed out or when going really fast
+		boolean detailed = showDetails && scale >= kMinDetailsScale
+				&& app.stepRate.value < 200;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
@@ -442,42 +443,40 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 
 	@Override
 	public double fromScreenX(int x) {
-		return ((double)x - this.getVisibleRect().getCenterX()) / (double) scale
-				+ viewpoint.x;
+		return ((double) x - this.getVisibleRect().getCenterX())
+				/ (double) scale + viewpoint.x;
 	}
 
 	@Override
 	public double fromScreenY(int y) {
-		return (this.getVisibleRect().getCenterY() - (double)y) / (double) scale
-				+ viewpoint.y;
+		return (this.getVisibleRect().getCenterY() - (double) y)
+				/ (double) scale + viewpoint.y;
 	}
 
 	@Override
 	public FinePoint fromScreen(int x, int y) {
 		return new FinePoint(fromScreenX(x), fromScreenY(y));
 	}
-	
+
 	@Override
 	public FinePoint toScreen(Point2D.Double point) {
 		return new FinePoint(toScreenX(point.x), toScreenY(point.y));
 	}
-	
+
 	@Override
-	public Rectangle2D.Double toScreenRect(GBObject gameObject){
-		return new Rectangle2D.Double(toScreenX(gameObject.Position().x - gameObject.Radius()),
-				toScreenY(gameObject.Position().y + gameObject.Radius()),
-				gameObject.Radius() * scale * 2,
-				gameObject.Radius() * scale * 2				
-				);
+	public Rectangle2D.Double toScreenRect(GBObject gameObject) {
+		return new Rectangle2D.Double(toScreenX(gameObject.Position().x
+				- gameObject.Radius()), toScreenY(gameObject.Position().y
+				+ gameObject.Radius()), gameObject.Radius() * scale * 2,
+				gameObject.Radius() * scale * 2);
 	}
 
 	@Override
-	public Ellipse2D.Double toScreenEllipse(GBObject gameObject){
-		return new Ellipse2D.Double(toScreenX(gameObject.Position().x - gameObject.Radius()),
-				toScreenY(gameObject.Position().y + gameObject.Radius()),
-				gameObject.Radius() * scale * 2,
-				gameObject.Radius() * scale * 2				
-				);
+	public Ellipse2D.Double toScreenEllipse(GBObject gameObject) {
+		return new Ellipse2D.Double(toScreenX(gameObject.Position().x
+				- gameObject.Radius()), toScreenY(gameObject.Position().y
+				+ gameObject.Radius()), gameObject.Radius() * scale * 2,
+				gameObject.Radius() * scale * 2);
 	}
 
 	@Override

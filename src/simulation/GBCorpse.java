@@ -47,7 +47,8 @@ public class GBCorpse extends GBFood {
 
 	@Override
 	public String Details() {
-		return String.format("%.0f energy, killed by %s ", value, killer != null ? killer.Name() : "unknown");
+		return String.format("%.0f energy, killed by %s ", value,
+				killer != null ? killer.Name() : "unknown");
 	}
 
 	@Override

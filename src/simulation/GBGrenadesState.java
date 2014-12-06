@@ -94,9 +94,11 @@ public class GBGrenadesState {
 				world.addObjectLater(shot);
 				for (double en = FiringCost() * effectiveness; en >= GBHardwareState.kGrenadesFiringCostPerSmoke; en -= GBHardwareState.kGrenadesFiringCostPerSmoke) {
 					GBObject smoke = new GBSmoke(robot.Position().addPolar(
-							robot.Radius(), direction), world.random.Vector(
-							GBTimedDecoration.kSmokeMaxSpeed), world.random
-							.intInRange(GBTimedDecoration.kSmokeMinLifetime,
+							robot.Radius(), direction),
+							world.random
+									.Vector(GBTimedDecoration.kSmokeMaxSpeed),
+							world.random.intInRange(
+									GBTimedDecoration.kSmokeMinLifetime,
 									GBTimedDecoration.kSmokeMaxLifetime));
 					world.addObjectLater(smoke);
 				}

@@ -163,10 +163,10 @@ enum MenuItems {
 			ret.setAccelerator(accelerator);
 		return ret;
 	}
-	
+
 	public JButton asJButton() {
 		JButton ret = new JButton(description);
-		//No accelerator key for a button
+		// No accelerator key for a button
 		return ret;
 	}
 
@@ -425,8 +425,8 @@ class GBMenu extends JMenuBar {
 				ret.add(MenuItems.erasearea.asJCheckBoxMenuItem()));
 		this.add(ret);
 	}
-	
-	void buildHelpMenu(){
+
+	void buildHelpMenu() {
 		JMenu ret = new JMenu("Help");
 		menuButtons.put(MenuItems.gotoDocs,
 				ret.add(MenuItems.gotoDocs.asJMenuItem()));
@@ -443,39 +443,45 @@ class GBMenu extends JMenuBar {
 				ret.add(MenuItems.showAbout.asJMenuItem()));
 		this.add(ret);
 	}
-	
+
 	public JToolBar simToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("back", MenuItems.slowdown.description, "Slow Down Simulation", "");
+		btn = makeButton("back", MenuItems.slowdown.description,
+				"Slow Down Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("pause", MenuItems.pause.description, "Pause Simulation", "");
+		btn = makeButton("pause", MenuItems.pause.description,
+				"Pause Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("play", MenuItems.play.description, "Run Simulation", "");
+		btn = makeButton("play", MenuItems.play.description, "Run Simulation",
+				"");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("forward", MenuItems.speedup.description, "Speed Up Simulation", "");
+		btn = makeButton("forward", MenuItems.speedup.description,
+				"Speed Up Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
 	}
-	
+
 	public JToolBar debugToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("advance", MenuItems.singleFrame.description, "Advance 1 Frame", "");
+		btn = makeButton("advance", MenuItems.singleFrame.description,
+				"Advance 1 Frame", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("step", MenuItems.stepBrain.description, "Step Brain", "");
+		btn = makeButton("step", MenuItems.stepBrain.description, "Step Brain",
+				"");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
 	}
-	
-	protected JButton makeButton(String imageName,
-			String actionCommand, String toolTipText, String altText) {
+
+	protected JButton makeButton(String imageName, String actionCommand,
+			String toolTipText, String altText) {
 		// Look for the image.
 		String imgLocation = imageName + ".png";
 		URL imageURL = getClass().getResource(imgLocation);

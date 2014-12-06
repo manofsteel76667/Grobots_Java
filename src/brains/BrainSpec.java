@@ -3,7 +3,6 @@
  * Copyright (c) 2014  Devon and Warren Schudy, Mike Anderson
  *******************************************************************************/
 
-
 package brains;
 
 import sides.HardwareItem;

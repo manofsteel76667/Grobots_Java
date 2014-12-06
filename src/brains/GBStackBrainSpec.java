@@ -4,7 +4,6 @@
  *******************************************************************************/
 package brains;
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -41,13 +40,14 @@ class GBSymbol {
 	public int hashCode() {
 		return name.hashCode();
 	}
+
 	@Override
 	public boolean equals(Object other) {
 		if (this == other)
 			return true;
 		if (!(other instanceof GBSymbol))
 			return false;
-		return name.toLowerCase().equals(((GBSymbol)other).name.toLowerCase());
+		return name.toLowerCase().equals(((GBSymbol) other).name.toLowerCase());
 	}
 };
 
@@ -110,12 +110,13 @@ class GBLabel extends GBSymbol {
 		address = arg.address;
 		gensym = arg.gensym;
 	}
+
 	@Override
 	public boolean equals(Object other) {
 		if (!(other instanceof GBLabel))
 			return false;
 		boolean ret = super.equals(other);
-		ret = ret && !gensym && !((GBLabel)other).gensym;
+		ret = ret && !gensym && !((GBLabel) other).gensym;
 		return ret;
 	}
 };
@@ -242,8 +243,8 @@ public class GBStackBrainSpec extends BrainSpec {
 		return i;
 	}
 
-	void ExecuteCWord(StackBrainOpcode _code, int line)
-			throws GBCStackError, GBUnknownInstructionError {
+	void ExecuteCWord(StackBrainOpcode _code, int line) throws GBCStackError,
+			GBUnknownInstructionError {
 		int temp, temp2;
 		switch (_code) {
 		case cwNop:
@@ -479,13 +480,12 @@ public class GBStackBrainSpec extends BrainSpec {
 					index = LookupVariable(stem);
 					if (index != -1) {
 						AddInstruction(OpType.otVariableWrite.ID, index,
-									   lineNum);
+								lineNum);
 						continue;
 					}
 					index = LookupVectorVariable(stem);
 					if (index != -1) {
-						AddInstruction(OpType.otVectorWrite.ID, index,
-									   lineNum);
+						AddInstruction(OpType.otVectorWrite.ID, index, lineNum);
 						continue;
 					}
 					// Must be a reserved word
@@ -493,12 +493,12 @@ public class GBStackBrainSpec extends BrainSpec {
 					if (code != null) {
 						switch (code.type) {
 						case ocHardwareVariable:
-							AddInstruction(OpType.otHardwareWrite.ID,
-										   code.ID, lineNum);
+							AddInstruction(OpType.otHardwareWrite.ID, code.ID,
+									lineNum);
 							continue;
 						case ocHardwareVector:
 							AddInstruction(OpType.otHardwareVectorWrite.ID,
-										   code.ID, lineNum);
+									code.ID, lineNum);
 							continue;
 						default:
 							break;
@@ -558,12 +558,11 @@ public class GBStackBrainSpec extends BrainSpec {
 					ExecuteCWord(code, lineNum);
 					continue;
 				case ocHardwareVariable:
-					AddInstruction(OpType.otHardwareRead.ID, code.ID,
-								   lineNum);
+					AddInstruction(OpType.otHardwareRead.ID, code.ID, lineNum);
 					continue;
 				case ocHardwareVector:
 					AddInstruction(OpType.otHardwareVectorRead.ID, code.ID,
-								   lineNum);
+							lineNum);
 					continue;
 				case ocPrimitive:
 					AddInstruction(OpType.otPrimitive.ID, code.ID, lineNum);
@@ -732,22 +731,22 @@ public class GBStackBrainSpec extends BrainSpec {
 			return labels.get(index).name + "^";
 		case otHardwareRead:
 			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVariable)
-			//if (index >= StackBrainOpcode.kNumHardwareVariables())
+				// if (index >= StackBrainOpcode.kNumHardwareVariables())
 				return "bad-hardware-variable-read";
 			return StackBrainOpcode.byID(index).name;
 		case otHardwareWrite:
 			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVariable)
-			//if (index >= StackBrainOpcode.kNumHardwareVariables())
+				// if (index >= StackBrainOpcode.kNumHardwareVariables())
 				return "bad-hardware-variable-write";
 			return StackBrainOpcode.byID(index).name + "!";
 		case otHardwareVectorRead:
 			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVector)
-			//if (index >= StackBrainOpcode.kNumHardwareVectors())
+				// if (index >= StackBrainOpcode.kNumHardwareVectors())
 				return "bad-hardware-vector-read";
 			return StackBrainOpcode.byID(index).name;
 		case otHardwareVectorWrite:
 			if (StackBrainOpcode.byID(index).type != OpCodeType.ocHardwareVector)
-			//if (index >= StackBrainOpcode.kNumHardwareVectors())
+				// if (index >= StackBrainOpcode.kNumHardwareVectors())
 				return "bad-hardware-vector-write";
 			return StackBrainOpcode.byID(index).name + "!";
 		default:

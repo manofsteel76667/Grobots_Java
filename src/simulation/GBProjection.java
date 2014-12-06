@@ -27,13 +27,13 @@ public interface GBProjection<T> {
 	public double fromScreenY(int v);
 
 	public FinePoint fromScreen(int x, int y);
-	
+
 	public FinePoint toScreen(Point2D.Double point);
 
 	public int getScale();
-	
+
 	public Rectangle2D.Double toScreenRect(T gameObject);
-	
+
 	public Ellipse2D.Double toScreenEllipse(T gameObject);
 
 }

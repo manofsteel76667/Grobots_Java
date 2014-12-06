@@ -31,7 +31,7 @@ public class GBTournamentView extends ListView {
 	int footerHeight = 15;
 	int fontSize = 10;
 	boolean drawn;
-	
+
 	List<Side> sideList;
 
 	public GBTournamentView(GBApplication _app) {
@@ -77,7 +77,8 @@ public class GBTournamentView extends ListView {
 		box.setSize(box.width, headerHeight);
 		drawBox(g, box);
 		box.grow(-padding * 2, -padding * 2);
-		StringUtilities.drawStringLeft(g, "Side", box.x, box.y+box.height, 10, Color.black);
+		StringUtilities.drawStringLeft(g, "Side", box.x, box.y + box.height,
+				10, Color.black);
 		// draw various column headers
 		StringUtilities.drawStringRight(g, "Score", box.x + kPercentRight,
 				box.y + box.height, 10, Color.black);
@@ -86,7 +87,8 @@ public class GBTournamentView extends ListView {
 		StringUtilities.drawStringRight(g, "Survival", box.x + kSurvivalRight,
 				box.y + box.height, 10, Color.black);
 		StringUtilities.drawStringRight(g, "Death rates:", box.x
-				+ kLateDeathRight, box.y + g.getFontMetrics().getHeight(), 10, Color.black);
+				+ kLateDeathRight, box.y + g.getFontMetrics().getHeight(), 10,
+				Color.black);
 		StringUtilities.drawStringRight(g, "Early", box.x + kEarlyDeathRight,
 				box.y + box.height, 10, Color.black);
 		StringUtilities.drawStringRight(g, "Late", box.x + kLateDeathRight,
@@ -101,10 +103,12 @@ public class GBTournamentView extends ListView {
 				+ box.height, 10, Color.black);
 		StringUtilities.drawStringRight(g, "Rounds", box.x + kRoundsRight,
 				box.y + box.height, 10, Color.black);
-		box.grow(padding * 2,  padding * 2);
-		drawn = true;//Hack so the tournDialog has a valid preferredsize to work with the first time
+		box.grow(padding * 2, padding * 2);
+		drawn = true;// Hack so the tournDialog has a valid preferredsize to
+						// work with the first time
 		return box;
 	}
+
 	@Override
 	Rectangle drawOneItem(Graphics2D g, int index) {
 		itemHeight = g.getFontMetrics().getHeight() + padding * 2;
@@ -117,8 +121,9 @@ public class GBTournamentView extends ListView {
 		box.grow(-padding * 2, -padding * 2);
 		GBScores scores = side.TournamentScores();
 		// draw ID and name
-		StringUtilities.drawStringRight(g, Integer.toString(index + 1) + '.', box.x
-				+ kNameLeft - 5, box.y + box.height, 10, GBColor.ContrastingTextColor(side.Color()));
+		StringUtilities.drawStringRight(g, Integer.toString(index + 1) + '.',
+				box.x + kNameLeft - 5, box.y + box.height, 10,
+				GBColor.ContrastingTextColor(side.Color()));
 		StringUtilities.drawStringLeft(g, side.Name(), box.x + kNameLeft, box.y
 				+ box.height, 10, Color.black);
 		// draw various numbers
@@ -146,25 +151,28 @@ public class GBTournamentView extends ListView {
 					box.x + kSurvivalRight,
 					box.y + box.height,
 					10,
-					rangeColor(survival, 0.2, 0.4, GBColor.darkRed, GBColor.darkGreen, rounds,
-							0));
+					rangeColor(survival, 0.2, 0.4, GBColor.darkRed,
+							GBColor.darkGreen, rounds, 0));
 			double early = scores.EarlyDeathRate();
-			StringUtilities.drawStringRight(g,
-					StringUtilities.toPercentString(early, 0), box.x
-							+ kEarlyDeathRight, box.y + box.height, 10,
-					rangeColor(early, 0.2, 0.4, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
+			StringUtilities.drawStringRight(
+					g,
+					StringUtilities.toPercentString(early, 0),
+					box.x + kEarlyDeathRight,
+					box.y + box.height,
+					10,
+					rangeColor(early, 0.2, 0.4, GBColor.darkGreen,
+							GBColor.darkRed, rounds, 0));
 		}
 		if (notearly > 0) {
 			double late = scores.LateDeathRate();
-			StringUtilities
-					.drawStringRight(
-							g,
-							StringUtilities.toPercentString(late, 0),
-							box.x + kLateDeathRight,
-							box.y + box.height,
-							10,
-							rangeColor(late, 0.4, 0.6, GBColor.darkGreen, GBColor.darkRed,
-									notearly, 0));
+			StringUtilities.drawStringRight(
+					g,
+					StringUtilities.toPercentString(late, 0),
+					box.x + kLateDeathRight,
+					box.y + box.height,
+					10,
+					rangeColor(late, 0.4, 0.6, GBColor.darkGreen,
+							GBColor.darkRed, notearly, 0));
 		}
 		if (rounds > 0) {
 			double early = scores.EarlyBiomassFraction();
@@ -174,8 +182,9 @@ public class GBTournamentView extends ListView {
 					box.x + kEarlyScoreRight,
 					box.y + box.height,
 					10,
-					rangeColor(early, 0.08f, 0.12f, GBColor.darkRed, GBColor.darkGreen, rounds
-							+ notearly, kMinColorRounds * 2));
+					rangeColor(early, 0.08f, 0.12f, GBColor.darkRed,
+							GBColor.darkGreen, rounds + notearly,
+							kMinColorRounds * 2));
 		}
 		if (survived > 0) {
 			double fraction = scores.SurvivalBiomassFraction();
@@ -196,15 +205,16 @@ public class GBTournamentView extends ListView {
 					box.x + kKillsRight,
 					box.y + box.height,
 					10,
-					rangeColor(kills, 0.05, 0.15, Color.blue, GBColor.purple, survived,
-							0));
+					rangeColor(kills, 0.05, 0.15, Color.blue, GBColor.purple,
+							survived, 0));
 		}
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.black);
-		box.grow(padding * 2,  padding * 2);
+		box.grow(padding * 2, padding * 2);
 		return box;
 	}
+
 	@Override
 	Rectangle drawFooter(Graphics2D g) {
 		Rectangle box = getStartingFooterRect(10, false);
@@ -223,32 +233,44 @@ public class GBTournamentView extends ListView {
 					box.x + kSurvivalRight,
 					box.y + box.height,
 					10,
-					rangeColor(survival, 0.25, 0.5, GBColor.darkRed, GBColor.darkGreen, rounds,
-							0));
+					rangeColor(survival, 0.25, 0.5, GBColor.darkRed,
+							GBColor.darkGreen, rounds, 0));
 			double early = game.TournamentScores().EarlyDeathRate();
-			StringUtilities.drawStringRight(g,
-					StringUtilities.toPercentString(early, 0), box.x
-							+ kEarlyDeathRight, box.y + box.height, 10,
-					rangeColor(early, 0.2, 0.4, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
+			StringUtilities.drawStringRight(
+					g,
+					StringUtilities.toPercentString(early, 0),
+					box.x + kEarlyDeathRight,
+					box.y + box.height,
+					10,
+					rangeColor(early, 0.2, 0.4, GBColor.darkGreen,
+							GBColor.darkRed, rounds, 0));
 		}
 		if (notearly > 0) {
 			double late = game.TournamentScores().LateDeathRate();
-			StringUtilities.drawStringRight(g,
-					StringUtilities.toPercentString(late, 0), box.x
-							+ kLateDeathRight, box.y + box.height, 10,
-					rangeColor(late, 0.45, 0.6, GBColor.darkGreen, GBColor.darkRed, rounds, 0));
+			StringUtilities.drawStringRight(
+					g,
+					StringUtilities.toPercentString(late, 0),
+					box.x + kLateDeathRight,
+					box.y + box.height,
+					10,
+					rangeColor(late, 0.45, 0.6, GBColor.darkGreen,
+							GBColor.darkRed, rounds, 0));
 		}
 		if (rounds > 0) {
 			double kills = game.TournamentScores().KillRate();
-			StringUtilities.drawStringRight(g,
-					StringUtilities.toPercentString(kills, 0), box.x
-							+ kKillsRight, box.y + box.height, 10,
-					rangeColor(kills, 1.2, 1.8, Color.blue, GBColor.purple, rounds, 0));
+			StringUtilities.drawStringRight(
+					g,
+					StringUtilities.toPercentString(kills, 0),
+					box.x + kKillsRight,
+					box.y + box.height,
+					10,
+					rangeColor(kills, 1.2, 1.8, Color.blue, GBColor.purple,
+							rounds, 0));
 		}
 		StringUtilities.drawStringRight(g, Integer.toString(rounds), box.x
 				+ kRoundsRight, box.y + box.height, 10,
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.blue);
-		box.grow(padding * 2,  padding * 2);
+		box.grow(padding * 2, padding * 2);
 		return box;
 	}
 
