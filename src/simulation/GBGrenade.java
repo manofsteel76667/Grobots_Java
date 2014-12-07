@@ -11,6 +11,7 @@ import java.awt.geom.Ellipse2D;
 
 import sides.Side;
 import support.FinePoint;
+import support.GBColor;
 
 public class GBGrenade extends GBTimedShot {
 	static final double kGrenadeArcFactor = 3;
@@ -58,7 +59,7 @@ public class GBGrenade extends GBTimedShot {
 			g2d.setPaint(Color());
 			g2d.fill(where.getBounds());
 		} else {
-			g2d.setPaint(detailed ? Color.gray : Color());
+			g2d.setPaint(detailed ? GBColor.shadow : Color());
 			g2d.fill(where);// The shadow moves straight
 			if (detailed) {
 				// The grenade arcs
@@ -67,7 +68,7 @@ public class GBGrenade extends GBTimedShot {
 				DrawShadow(
 						g,
 						proj,
-						velocity.add(new FinePoint(.1, .1).multiply((2 * x - x
+						velocity.add(new FinePoint(0, .1).multiply((2 * x - x
 								* x / a)
 								* kGrenadeArcFactor)), Color());
 			}

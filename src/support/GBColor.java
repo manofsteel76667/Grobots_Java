@@ -19,18 +19,7 @@ public class GBColor {
 	public static final Color darkGreen = new Color(0, 100, 0);
 	public static final Color purple = new Color(1, 0, 1);
 	public static final Color gold = new Color(0.4f, 0.6f, 0);
-
-	// private static final long serialVersionUID = 5956330979660343356L;
-	// float r, g, b;
-
-	// //public:
-
-	// implementation //
-
-	/*
-	 * public GBColor() { super(1.0f, 1.0f, 1.0f); //r = 1.0f; //g = 1.0f; //b =
-	 * 1.0f; }
-	 */
+	public static final Color shadow = new Color(.2f, .2f, .2f, .5f);
 
 	public static final float kRedWeight = 0.35f;
 	public static final float kGreenWeight = 0.45f;
@@ -46,13 +35,6 @@ public class GBColor {
 		return new Color(Limit(red), Limit(green), Limit(blue));
 	}
 
-	/*
-	 * public static Color getCopyOf(Color root) { return new
-	 * Color(root.getRed(), root.getGreen(), root.getBlue()); //r = (float)
-	 * root.getRed() / 256.0f; //g = (float) root.getGreen() / 256.0f; //b =
-	 * (float) root.getBlue() / 256.0f; }
-	 */
-
 	/* Not used outside of this class; make private? */
 	public static float Lightness(Color c) {
 		return c.getRed() * kRedWeight + c.getGreen() * kGreenWeight
@@ -60,11 +42,9 @@ public class GBColor {
 	}
 
 	public static Color Mix(Color base, float fraction, Color other) {
-		// return this.multiply(fraction).add(other.multiply(1.0f - fraction));
 		return add(multiply(base, fraction), multiply(other, 1.0f - fraction));
 	}
 
-	/* Not used outside of this class; make private? */
 	public static float Contrast(Color base, Color other) {
 		double r = Math.pow((base.getRed() - other.getRed()) / 255f, 2)
 				* kRedWeight;
@@ -73,16 +53,6 @@ public class GBColor {
 		double b = Math.pow((base.getBlue() - other.getBlue()) / 255f, 2)
 				* kBlueWeight;
 		return (float) Math.sqrt(r + g + b);
-		/*
-		 * return (float) Math.sqrt((r - other.r) * (r - other.r) * kRedWeight +
-		 * (g - other.g) * (g - other.g) * kGreenWeight + (b - other.b) (b -
-		 * other.b) * kBlueWeight);
-		 */
-		// alternate, maybe better
-		/*
-		 * return (float)(Math.abs(r - other.r) * kRedWeight + Math.abs(g -
-		 * other.g) * kGreenWeight + Math.abs(b - other.b) * kBlueWeight);
-		 */
 	}
 
 	static final float Limit(float val) {

@@ -390,7 +390,7 @@ public class GBRobot extends GBObject {
 		radialColors = new Color[] {
 				type.Decoration() == GBRobotDecoration.none ? type.color
 						: GBColor.ChooseContrasting(type.decorationColor,
-								type.color, Color.black, .1f), Color.white,
+								type.color, Color.black, .1f), new Color(1f, 1f, 1f, .8f),
 				Color.white, type.color };
 	}
 
@@ -429,9 +429,6 @@ public class GBRobot extends GBObject {
 				g2d.fill(halo);
 			}
 		// velocity and engine-velocity
-		// if (Velocity().isNonzero())
-		// DrawShadow(g, proj, Velocity().multiply(-2.5),
-		// hardware.EnginePower() != 0 ? Color.gray : Color.darkGray);
 		if (detailed && hardware.EnginePower() != 0
 				&& hardware.EngineVelocity().isNonzero()) {
 			FinePoint dv = hardware.EngineVelocity().subtract(Velocity());
@@ -445,12 +442,9 @@ public class GBRobot extends GBObject {
 				g2d.drawLine(proj.toScreenX(position.x),
 						proj.toScreenY(position.y), proj.toScreenX(head.x),
 						proj.toScreenY(head.y));
-				// What's the point of this?
-				// DrawShadow(g, proj,
-				// dv.unit().multiply(hardware.EnginePower())
-				// .divide(Mass()).multiply(-30), Color.GREEN);
 			}
 		}
+		DrawShadow(g2d, proj, new FinePoint(0, -.25), GBColor.shadow);
 		// weapon ranges? //sensor results?
 	}
 

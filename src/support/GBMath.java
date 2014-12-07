@@ -5,6 +5,7 @@
 package support;
 
 public class GBMath {
+
 	public static double clamp(double value, double min, double max) {
 		if (value < min)
 			return min;

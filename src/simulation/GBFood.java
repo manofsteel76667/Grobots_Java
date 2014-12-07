@@ -26,10 +26,8 @@ public class GBFood extends GBObject {
 	public static final double kFriction = 0.004;
 	public static final double kLinearDragFactor = 0.01;
 	public static final double kQuadraticDragFactor = 0.3;
-	// protected:
 	protected double value;
 
-	// public:
 	protected void Recalculate() {
 		radius = Math.sqrt(value) * kFoodRadiusFactor + kFoodMinRadius;
 		mass = value * kFoodMassPerValue;

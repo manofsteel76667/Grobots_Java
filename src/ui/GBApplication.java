@@ -321,15 +321,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 								// Retry
 							}
 						}
-					} else
-						try {
-							// Sleep until next time
-							long snooze = prevFrameTime + frameRate
-									- System.nanoTime() - 1000;
-							if (snooze > 0)
-								Thread.sleep(snooze / 1000000);
-						} catch (InterruptedException e) {
-						}
+					}
 				}
 				updateMenu();
 			}
@@ -374,15 +366,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 			debug.setPreferredSize(new Dimension(debug.getWidth(), debug
 					.getPreferredHeight()));
 		}
-		if (_obj == null || selectedObject == null) {
-			selectedObject = _obj;
-			repaint();
-			return;
-		}
-		if (!selectedType.equals(_obj)) {
-			selectedObject = _obj;
-			repaint();
-		}
+		selectedObject = _obj;
+		repaint();
 	}
 
 	public RobotType getSelectedType() {
@@ -503,9 +488,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					int retval = fc.showOpenDialog(this);
 					if (retval == JFileChooser.APPROVE_OPTION) {
 						for (File f : fc.getSelectedFiles()) {
-							Side _newside;
-							_newside = SideReader.Load(f.getPath());
-							game.AddSide(_newside);
+							try {
+								Side _newside;
+								_newside = SideReader.Load(f.getPath());
+								game.AddSide(_newside);
+							} catch (Exception fileEx) {
+								GBError.NonfatalError(String.format(
+										"%s could not be loaded.", f.getName()));
+							}
 						}
 					}
 					updateMenu();
