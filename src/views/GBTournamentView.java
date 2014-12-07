@@ -16,7 +16,6 @@ import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
-import ui.GBApplication;
 
 public class GBTournamentView extends ListView {
 
@@ -34,8 +33,8 @@ public class GBTournamentView extends ListView {
 
 	List<Side> sideList;
 
-	public GBTournamentView(GBApplication _app) {
-		game = _app.game;
+	public GBTournamentView(GBGame _game) {
+		game = _game;
 		preferredWidth = 570;
 	}
 

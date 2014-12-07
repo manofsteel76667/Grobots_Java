@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 import sides.HardwareSpec;
 import sides.RobotType;
@@ -16,20 +18,31 @@ import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
-import ui.GBApplication;
+import ui.SideSelectionListener;
+import ui.TypeSelectionListener;
+import ui.TypeSelector;
+import ui.UIEventSource;
 import brains.BrainSpec;
 
-public class RobotTypeView extends ListView {
+public class RobotTypeView extends ListView implements TypeSelector,
+		TypeSelectionListener, SideSelectionListener {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 3759451228873831301L;
-	GBApplication app;
+	// GBApplication app;
 	GBGame game;
+	RobotType selectedType;
+	Side selectedSide;
+	List<TypeSelectionListener> typeListeners;
 
-	public RobotTypeView(GBApplication _app) {
-		app = _app;
-		game = _app.game;
+	public RobotTypeView(GBGame _game, UIEventSource source) {
+		if (source != null) {
+			source.addTypeSelectionListener(this);
+			source.addSideSelectionListener(this);
+		}
+		typeListeners = new ArrayList<TypeSelectionListener>();
+		game = _game;
 		preferredWidth = 250;
 		setPreferredSize(new Dimension(preferredWidth, getPreferredHeight()));
 	}
@@ -47,17 +60,18 @@ public class RobotTypeView extends ListView {
 	protected void itemClicked(int index) {
 		if (index < 0)
 			return;
-		Side side = app.getSelectedSide();
-		if (side == null)
+		if (selectedSide == null)
 			return;
-		if (index < side.types.size())
-			app.setSelectedType(side.types.get(index));
+		if (index < selectedSide.types.size()) {
+			selectedType = selectedSide.types.get(index);
+			notifyListeners();
+		}
 	}
 
 	void DrawHardwareLine(Graphics2D g, Rectangle box, int base, String name,
 			Color color, String arg1, String arg2, String arg3, String arg4,
 			double cost, double mass) {
-		HardwareSpec hw = app.getSelectedType().Hardware();
+		HardwareSpec hw = selectedType.Hardware();
 		base += (base > 0 ? box.y : box.y + box.height);
 		// name and args
 		Color textcolor = cost != 0 ? color : Color.lightGray;
@@ -115,7 +129,7 @@ public class RobotTypeView extends ListView {
 	@Override
 	Rectangle drawHeader(Graphics2D g) {
 		Rectangle box = getStartingHeaderRect(12, false);
-		Side side = app.getSelectedSide();
+		Side side = selectedSide;
 		if (side != null) {
 			drawBox(g, box);
 			box.grow(-padding, -padding);
@@ -137,11 +151,11 @@ public class RobotTypeView extends ListView {
 		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height
 				+ g.getFontMetrics(new Font("Serif", Font.PLAIN, 9))
 						.getHeight()));
-		Side side = app.getSelectedSide();
+		Side side = selectedSide;
 		if (side == null)
 			return new Rectangle(0, 0, 0, 0);
 		RobotType type = side.GetType(index + 1);
-		boolean selected = type == app.getSelectedType();
+		boolean selected = type == selectedType;
 		if (type == null)
 			return new Rectangle(0, 0, 0, 0);
 		drawBox(g, box, selected);
@@ -205,7 +219,7 @@ public class RobotTypeView extends ListView {
 		Rectangle box = getStartingFooterRect(textHeightNormal, false);
 		box.setBounds(new Rectangle(box.x, box.y, box.width, box.height
 				+ textHeightNormal * 3 + textHeightSmall * 22 + padding * 6));
-		RobotType type = app.getSelectedType();
+		RobotType type = selectedType;
 		if (type == null)
 			return new Rectangle(0, 0, 0, 0);
 		drawBox(g, box);
@@ -352,10 +366,45 @@ public class RobotTypeView extends ListView {
 
 	@Override
 	int setLength() {
-		Side side = app.getSelectedSide();
-		if (side == null)
+		if (selectedSide == null)
 			return 0;
 		else
-			return side.types.size();
+			return selectedSide.types.size();
+	}
+
+	@Override
+	public void setSelectedSide(Object source, Side side) {
+		selectedSide = side;
+		repaint();
+	}
+
+	@Override
+	public void setSelectedType(Object source, RobotType type) {
+		if (source != this) {
+			selectedType = type;
+			repaint();
+		}
+	}
+
+	@Override
+	public RobotType getSelectedType() {
+		return selectedType;
+	}
+
+	@Override
+	public void addTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.add(listener);
+	}
+
+	@Override
+	public void removeTypeSelectionListener(TypeSelectionListener listener) {
+		typeListeners.remove(listener);
+
+	}
+
+	void notifyListeners() {
+		for (TypeSelectionListener l : typeListeners)
+			l.setSelectedType(this, selectedType);
 	}
 }

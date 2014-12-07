@@ -10,7 +10,6 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -36,7 +35,6 @@ import simulation.GBGame;
 import simulation.GBObject;
 import simulation.GBObjectClass;
 import simulation.GBRobot;
-import support.FinePoint;
 import views.AboutBox;
 import views.Debugger;
 import views.GBPortal;
@@ -50,7 +48,9 @@ import brains.BrainStatus;
 import exception.GBAbort;
 import exception.GBError;
 
-public class GBApplication extends JFrame implements Runnable, ActionListener {
+public class GBApplication extends JFrame implements Runnable, ActionListener,
+		UIEventSource, TypeSelectionListener, SideSelectionListener,
+		ObjectSelectionListener {
 	/**
 	 * 
 	 */
@@ -73,6 +73,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	JPanel center;
 	Debugger debug;
 
+	// Listeners
+	List<ObjectSelectionListener> objectListeners;
+	List<SideSelectionListener> sideListeners;
+	List<TypeSelectionListener> typeListeners;
+
 	public enum StepRates {
 		slow(10), normal(30), fast(60), unlimited(10000);
 		public final int value;
@@ -84,7 +89,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	public StepRates stepRate;
 	public long lastTime;
-	int fastInterval = 20;// Repaint at 25Hz
+	int fastInterval = 20;// Repaint at 50Hz
 	javax.swing.Timer fastTimer;
 	ActionListener fastUpdate;
 	int slowInterval = 1500;
@@ -116,6 +121,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		game = new GBGame(this);
 		// world = new GBWorld();
 		stepRate = StepRates.fast;
+
+		// Listener support
+		objectListeners = new ArrayList<ObjectSelectionListener>();
+		sideListeners = new ArrayList<SideSelectionListener>();
+		typeListeners = new ArrayList<TypeSelectionListener>();
 
 		// Create supporting views and menu.
 		mainMenu = new GBMenu(this);
@@ -256,13 +266,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 	void createChildViews() {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
-		portal = new GBPortal(this, false);
+		portal = new GBPortal(game, this, false);
 		portal.setPreferredSize(new Dimension(600, 600));
-		minimap = new GBPortal(this, true);
-		roster = new GBRosterView(this);
-		tournament = new GBTournamentView(this);
-		type = new RobotTypeView(this);
-		statistics = new GBScoresView(this);
+		portal.addObjectSelectionListener(this);
+		minimap = new GBPortal(game, this, true);
+		portal.addPortalListener(minimap);
+		minimap.addPortalListener(portal);
+		roster = new GBRosterView(game, this);
+		roster.addSideSelectionListener(this);
+		tournament = new GBTournamentView(game);
+		type = new RobotTypeView(game, this);
+		type.addTypeSelectionListener(this);
+		statistics = new GBScoresView(game, this);
 		center = new JPanel();
 		center.setLayout(new BorderLayout());
 		portalControls = mainMenu.simToolbar(this);
@@ -272,7 +287,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		center.add(portalControls, BorderLayout.LINE_START);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
-		debug = new Debugger(debugControls);
+		debug = new Debugger(debugControls, this);
 		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
 				.getPreferredHeight()));
 	}
@@ -338,53 +353,51 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 
 	}
 
+	@Override
 	public Side getSelectedSide() {
 		return selectedSide;
 	}
 
-	public void setSelectedType(RobotType _type) {
-		if (_type == null || selectedType == null) {
-			selectedType = _type;
-			repaint();
-			updateMenu();
-			return;
-		}
-		if (!selectedType.equals(_type)) {
-			selectedType = _type;
-			repaint();
-		}
-		updateMenu();
+	@Override
+	public void setSelectedType(Object source, RobotType _type) {
+		selectedType = _type;
+		notifyTypeListeners(source);
 	}
 
+	@Override
 	public GBObject getSelectedObject() {
 		return selectedObject;
 	}
 
-	public void setSelectedObject(GBObject _obj) {
-		if (debug.isVisible()) {
-			debug.setTarget(_obj);
-			debug.setPreferredSize(new Dimension(debug.getWidth(), debug
-					.getPreferredHeight()));
-		}
+	@Override
+	public void setSelectedObject(Object source, GBObject _obj) {
 		selectedObject = _obj;
-		repaint();
+		notifyObjectListeners(source);
+		setSelectedSide(this, _obj.Owner());
+		if (_obj instanceof GBRobot)
+			setSelectedType(source, ((GBRobot) _obj).Type());
+		else
+			setSelectedType(source, null);
 	}
 
+	@Override
 	public RobotType getSelectedType() {
 		return selectedType;
 	}
 
-	public void setSelectedSide(Side _side) {
+	@Override
+	public void setSelectedSide(Object source, Side _side) {
 		if (_side == null) {
 			selectedSide = _side;
-			repaint();
+			notifySideListeners(source);
 			updateMenu();
-			setSelectedType(null);
+			selectedType = null;
 			return;
 		} else if (!_side.equals(selectedSide)) {
 			selectedSide = _side;
-			setSelectedType(_side.types.size() > 0 ? _side.types.get(0) : null);
-			repaint();
+			notifySideListeners(source);
+			setSelectedType(source, _side.types.size() > 0 ? _side.types.get(0)
+					: null);
 		}
 		updateMenu();
 	}
@@ -558,14 +571,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 						break;
 					Side reload = SideReader.Load(selectedSide.filename);
 					game.ReplaceSide(selectedSide, reload);
-					roster.repaint();
-					setSelectedSide(reload);
+					setSelectedSide(this, reload);
 					break;
 				case removeAllSides:
 					game.Reset();
 					game.RemoveAllSides();
 					game.running = false;
-					setSelectedSide(null);
+					setSelectedSide(this, null);
 					updateMenu();
 					repaint();
 					break;
@@ -573,7 +585,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					if (getSelectedSide() == null)
 						break;
 					game.RemoveSide(selectedSide);
-					setSelectedSide(null);
+					setSelectedSide(this, null);
 					updateMenu();
 					repaint();
 					break;
@@ -716,7 +728,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 					}
 					break;
 				case stepBrain:
-					GBObject obj = getSelectedObject();
+					GBObject obj = selectedObject;
 					if (obj == null)
 						return;
 					if (obj instanceof GBRobot
@@ -779,11 +791,55 @@ public class GBApplication extends JFrame implements Runnable, ActionListener {
 		}
 	}
 
-	public void setViewWindow(FinePoint p) {
-		portal.setViewWindow(p);
+	@Override
+	public void addObjectSelectionListener(ObjectSelectionListener listener) {
+		if (listener != null)
+			objectListeners.add(listener);
+		listener.setSelectedObject(this, selectedObject);
 	}
 
-	public void setVisibleWorld(Rectangle r) {
-		minimap.setVisibleWorld(r);
+	void notifyObjectListeners(Object source) {
+		for (ObjectSelectionListener l : objectListeners)
+			l.setSelectedObject(source, selectedObject);
+	}
+
+	@Override
+	public void addSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.add(listener);
+		listener.setSelectedSide(this, selectedSide);
+	}
+
+	void notifySideListeners(Object source) {
+		for (SideSelectionListener l : sideListeners)
+			l.setSelectedSide(source, selectedSide);
+	}
+
+	@Override
+	public void addTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.add(listener);
+		listener.setSelectedType(this, selectedType);
+	}
+
+	void notifyTypeListeners(Object source) {
+		for (TypeSelectionListener l : typeListeners)
+			l.setSelectedType(source, selectedType);
+	}
+
+	@Override
+	public void removeObjectSelectionListener(ObjectSelectionListener listener) {
+		objectListeners.remove(listener);
+
+	}
+
+	@Override
+	public void removeSideSelectionListener(SideSelectionListener listener) {
+		sideListeners.remove(listener);
+	}
+
+	@Override
+	public void removeTypeSelectionListener(TypeSelectionListener listener) {
+		typeListeners.remove(listener);
 	}
 }

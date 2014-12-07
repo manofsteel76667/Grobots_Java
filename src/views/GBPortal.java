@@ -21,6 +21,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -30,6 +32,7 @@ import sides.Side;
 import simulation.GBBlast;
 import simulation.GBExplosion;
 import simulation.GBForceField;
+import simulation.GBGame;
 import simulation.GBManna;
 import simulation.GBObject;
 import simulation.GBObjectClass;
@@ -41,9 +44,16 @@ import support.FinePoint;
 import support.GBColor;
 import support.GBMath;
 import support.GBRandomState;
-import ui.GBApplication;
+import ui.ObjectSelectionListener;
+import ui.ObjectSelector;
+import ui.PortalListener;
+import ui.SideSelectionListener;
+import ui.TypeSelectionListener;
+import ui.UIEventSource;
 
-public class GBPortal extends JPanel implements GBProjection<GBObject> {
+public class GBPortal extends JPanel implements GBProjection<GBObject>,
+		ObjectSelectionListener, ObjectSelector, SideSelectionListener,
+		TypeSelectionListener, PortalListener {
 	/**
 	 * 
 	 */
@@ -64,9 +74,18 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 		}
 	};
 
-	GBApplication app;
+	// GBApplication app;
+	GBGame game;
 	GBWorld world;
 	FinePoint viewpoint;
+	GBObject selectedObject;
+	Side selectedSide;
+	RobotType selectedType;
+
+	// Listeners
+	List<ObjectSelectionListener> objectListeners;
+	List<PortalListener> portalListeners;
+
 	boolean dragged;
 	/**
 	 * Screen pixels per game map unit
@@ -119,11 +138,18 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 	int minZoom = 4;
 	int maxZoom = 64;
 
-	public GBPortal(GBApplication _app, boolean mini) {
+	public GBPortal(GBGame _game, UIEventSource source, boolean mini) {
 		super(true);
 		isMiniMap = mini;
-		app = _app;
-		world = _app.game.getWorld();
+		game = _game;
+		world = _game.getWorld();
+		if (source != null) {
+			source.addObjectSelectionListener(this);
+			source.addSideSelectionListener(this);
+			source.addTypeSelectionListener(this);
+		}
+		objectListeners = new ArrayList<ObjectSelectionListener>();
+		portalListeners = new ArrayList<PortalListener>();
 		showSideNames = true;
 		lastClick = new FinePoint();
 		lastFrame = world.currentFrame;
@@ -252,41 +278,41 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 
 	void adjustViewpoint() {
 		// If the object you're following dies, handle it
-		if (app.getSelectedObject() != null)
-			if (app.getSelectedObject().Class() == GBObjectClass.ocDead) {
-				app.setSelectedObject(null);
+		if (selectedObject != null)
+			if (selectedObject.Class() == GBObjectClass.ocDead) {
+				selectedObject = null;
+				notifyObjectListeners();
 				following = autofollow;
 			}
 		// Set viewpoint to followed object, if following
 		if (following) {
 			if (autofollow
 					&& (System.currentTimeMillis() > lastFollow
-							+ kAutofollowPeriod)
-					|| app.getSelectedObject() == null) {
+							+ kAutofollowPeriod) || selectedObject == null) {
 				FollowRandom();
-				if (app.getSelectedObject() != null)
-					viewpoint.set(app.getSelectedObject().Position());
+				if (selectedObject != null)
+					viewpoint.set(selectedObject.Position());
 				lastFollow = System.currentTimeMillis();
 			}
-			if (app.getSelectedObject() != null) {
+			if (selectedObject != null) {
 				if (panning())
 					// TODO at full zoom the panning rate is slower than some
 					// objects
-					if (!viewpoint.inRange(app.getSelectedObject().Position(),
+					if (!viewpoint.inRange(selectedObject.Position(),
 							16.0d / scale)) {
-						FinePoint distance = app.getSelectedObject().Position()
+						FinePoint distance = selectedObject.Position()
 								.subtract(viewpoint);
 						distance.setNorm(16.0d / scale);
 						viewpoint = viewpoint.add(distance);
 					} else
-						viewpoint.set(app.getSelectedObject().Position());
+						viewpoint.set(selectedObject.Position());
 				else
-					viewpoint.set(app.getSelectedObject().Position());
+					viewpoint.set(selectedObject.Position());
 			}
 		}
 		RestrictScrolling();
 		if (!isMiniMap)
-			app.setVisibleWorld(getVisibleWorld());
+			changeVisibleWorld(getVisibleWorld());
 	}
 
 	static Color tileColor = Color.black;
@@ -347,8 +373,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 		// Draws everything even if it isn't on the screen. This
 		// could probably be improved
 		// Hide details when zoomed out or when going really fast
-		boolean detailed = showDetails && scale >= kMinDetailsScale
-				&& app.stepRate.value < 200;
+		boolean detailed = showDetails && scale >= kMinDetailsScale;
+		// && app.stepRate.value < 200;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
@@ -389,32 +415,32 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 
 	void drawText(Graphics2D g2d) {
 		// Details about the followed object
-		if (app.getSelectedObject() != null) {
-			FinePoint targetPos = app.getSelectedObject().Position();
+		if (selectedObject != null) {
+			FinePoint targetPos = selectedObject.Position();
 			Font textFont = new Font("Serif", Font.PLAIN, 10);
 			g2d.setFont(textFont);
 			g2d.setColor(Color.white);
 			FontMetrics fm = g2d.getFontMetrics();
-			String s = app.getSelectedObject().toString();
+			String s = selectedObject.toString();
 			// Center the name below the object
 			int x = toScreenX(targetPos.x) - fm.stringWidth(s) / 2;
 			int texty = toScreenY(targetPos.y
-					- (app.getSelectedObject().Radius() > 2 ? 0 : app
-							.getSelectedObject().Radius())) + 13;
+					- (selectedObject.Radius() > 2 ? 0 : selectedObject
+							.Radius())) + 13;
 			g2d.drawString(s, x, texty);
-			String details = app.getSelectedObject().Details();
+			String details = selectedObject.Details();
 			// Details go below that
 			if (details.length() > 0) {
 				x = toScreenX(targetPos.x) - fm.stringWidth(details) / 2;
 				g2d.drawString(details, x, texty + 10);
 			}
 			// Draw range circles if following a robot
-			if (app.getSelectedObject().Class() == GBObjectClass.ocRobot)
-				((GBRobot) app.getSelectedObject()).drawRangeCircles(g2d, this);
+			if (selectedObject.Class() == GBObjectClass.ocRobot)
+				((GBRobot) selectedObject).drawRangeCircles(g2d, this);
 		}
 		// Side names
 		if (showSideNames) {
-			for (Side side : app.game.sides)
+			for (Side side : game.sides)
 				if (side.Scores().Seeded() != 0) {
 					Font textFont = new Font("Serif", Font.PLAIN, 10);
 					g2d.setFont(textFont);
@@ -547,16 +573,12 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 	}
 
 	public void Follow(GBObject ob) {
+		selectedObject = ob;
+		notifyObjectListeners();
 		if (ob != null) {
-			// Set selected side and type if following a robot
-			if (ob.Class() == GBObjectClass.ocRobot) {
-				app.setSelectedSide(((GBRobot) ob).Owner());
-				app.setSelectedType(((GBRobot) ob).Type());
-			}
-			app.setSelectedObject(ob);
 			followPosition = ob.Position().subtract(viewpoint);
-			following = true;
 		}
+		following = ob != null;
 	}
 
 	public void ResetZoom() {
@@ -570,8 +592,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 	}
 
 	boolean panning() {
-		boolean ret = following
-				&& !app.getSelectedObject().Position().equals(viewpoint);
+		boolean ret = following && !selectedObject.Position().equals(viewpoint);
 		return ret;
 	}
 
@@ -623,15 +644,15 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 				break;
 			case ptErase:
 				world.EraseAt(where, 0);
-				app.game.CollectStatistics();
+				game.CollectStatistics();
 				break;
 			case ptEraseBig:
 				world.EraseAt(where, kEraseBigRadius);
-				app.game.CollectStatistics();
+				game.CollectStatistics();
 				break;
 			case ptSetViewWindow:
 				if (isMiniMap)
-					app.setViewWindow(where);
+					changeViewPoint(where);
 				break;
 			default:
 				break;
@@ -642,8 +663,11 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 
 	Rectangle visibleWorld;
 
-	public void setVisibleWorld(Rectangle rect) {
-		visibleWorld = rect;
+	public void setVisibleWorld(Object source, Rectangle rect) {
+		if (source != this) {
+			visibleWorld = rect;
+			repaint();
+		}
 	}
 
 	public Rectangle getVisibleWorld() {
@@ -651,8 +675,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 				/ scale, getHeight() / scale);
 	}
 
-	public void setViewWindow(FinePoint newViewPoint) {
-		if (!isMiniMap) {
+	public void setViewWindow(Object source, FinePoint newViewPoint) {
+		if (!isMiniMap && source != this) {
 			following = false;
 			autofollow = false;
 			viewpoint = newViewPoint;
@@ -661,25 +685,24 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 	}
 
 	public void DoAddRobot(FinePoint where) {
-		Side side = app.getSelectedSide();
-		if (side != null) {
-			RobotType type = app.getSelectedType();
+		if (selectedSide != null) {
+			RobotType type = selectedType;
 			if (type == null)
-				if (side.types.size() > 0)
-					type = side.types.get(0);
+				if (selectedSide.types.size() > 0)
+					type = selectedSide.types.get(0);
 			if (type != null) {
 				world.addObjectImmediate(new GBRobot(type, where));
-				side.Scores().ReportSeeded(type.Cost());
-				app.game.CollectStatistics();
+				selectedSide.Scores().ReportSeeded(type.Cost());
+				game.CollectStatistics();
 			}
 		}
 	}
 
 	public void DoAddSeed(FinePoint where) {
-		Side side = app.getSelectedSide();
+		Side side = selectedSide;
 		if (side != null) {
 			world.AddSeed(side, where);
-			app.game.CollectStatistics();
+			game.CollectStatistics();
 		}
 	}
 
@@ -706,5 +729,60 @@ public class GBPortal extends JPanel implements GBProjection<GBObject> {
 			world.addObjectLater(new GBBlast(where, FinePoint.makePolar(
 					kBlastSpeed, base + GBMath.kPi * 2 * i / kNumBlasts), null,
 					kBlastDamage, (int) Math.ceil(kBlastRange / kBlastSpeed)));
+	}
+
+	@Override
+	public GBObject getSelectedObject() {
+		return selectedObject;
+	}
+
+	@Override
+	public void addObjectSelectionListener(ObjectSelectionListener listener) {
+		if (listener != null)
+			objectListeners.add(listener);
+	}
+
+	@Override
+	public void removeObjectSelectionListener(ObjectSelectionListener listener) {
+		objectListeners.remove(listener);
+	}
+
+	@Override
+	public void setSelectedObject(Object source, GBObject obj) {
+		if (source != this) {
+			selectedObject = obj;
+			repaint();
+		}
+	}
+
+	public void notifyObjectListeners() {
+		for (ObjectSelectionListener l : objectListeners)
+			l.setSelectedObject(this, selectedObject);
+	}
+
+	@Override
+	public void setSelectedType(Object source, RobotType type) {
+		selectedType = type;
+	}
+
+	@Override
+	public void setSelectedSide(Object source, Side side) {
+		selectedSide = side;
+	}
+
+	@Override
+	public void addPortalListener(PortalListener pl) {
+		if (pl != null)
+			portalListeners.add(pl);
+	}
+
+	void changeViewPoint(FinePoint pt) {
+		for (PortalListener l : portalListeners)
+			l.setViewWindow(this, pt);
+	}
+
+	void changeVisibleWorld(Rectangle rect) {
+		for (PortalListener l : portalListeners)
+			l.setVisibleWorld(this, getVisibleWorld());
 	}
 }

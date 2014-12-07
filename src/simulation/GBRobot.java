@@ -390,8 +390,8 @@ public class GBRobot extends GBObject {
 		radialColors = new Color[] {
 				type.Decoration() == GBRobotDecoration.none ? type.color
 						: GBColor.ChooseContrasting(type.decorationColor,
-								type.color, Color.black, .1f), new Color(1f, 1f, 1f, .8f),
-				Color.white, type.color };
+								type.color, Color.black, .1f),
+				new Color(1f, 1f, 1f, .8f), Color.white, type.color };
 	}
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make

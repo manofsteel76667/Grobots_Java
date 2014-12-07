@@ -19,11 +19,13 @@ import simulation.GBObjectClass;
 import simulation.GBRobot;
 import support.GBColor;
 import support.StringUtilities;
+import ui.ObjectSelectionListener;
+import ui.ObjectSelector;
 import brains.Brain;
 import brains.BrainStatus;
 import brains.GBStackBrain;
 
-public class Debugger extends JPanel {
+public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	/**
 	 * 
@@ -39,13 +41,15 @@ public class Debugger extends JPanel {
 	public static final int kProfileBoxHeight = 25;// GBWORLD_PROFILING ? 87 :
 													// 25;
 	public static final int kEdgeSpace = 4;
-	GBRobot target;
+	GBRobot selectedObject;
 
 	JToolBar toolbar;
 
-	public Debugger(JToolBar bar) {
+	public Debugger(JToolBar bar, ObjectSelector _selector) {
 		toolbar = bar;
 		add(toolbar);
+		if (_selector != null)
+			_selector.addObjectSelectionListener(this);
 	}
 
 	@Override
@@ -69,9 +73,9 @@ public class Debugger extends JPanel {
 
 	void DrawStatusBox(Graphics2D g, Rectangle box) {
 		DrawBox(g, box);
-		StringUtilities.drawStringLeft(g, target.toString(), box.x + 4,
+		StringUtilities.drawStringLeft(g, selectedObject.toString(), box.x + 4,
 				box.y + 13, 12, Color.black);
-		Brain brain = target.Brain();
+		Brain brain = selectedObject.Brain();
 		GBStackBrain sbrain = (GBStackBrain) brain;
 		StringUtilities.drawStringLeft(g,
 				brain != null ? (sbrain != null ? "Stack brain."
@@ -185,20 +189,22 @@ public class Debugger extends JPanel {
 	}
 
 	void DrawHardwareBox(Graphics2D g, Rectangle box) {
-		GBHardwareState hw = target.hardware;
+		GBHardwareState hw = selectedObject.hardware;
 		int right = box.x + box.width - 3;
 		int left = box.x + 3;
 		DrawBox(g, box);
 		StringUtilities.drawStringPair(g, "Mass:",
-				String.format("%.1f", target.Mass()), left, right, box.y + 11,
-				10, Color.black, false);
-		StringUtilities.drawStringPair(g, "Position:", target.Position()
-				.toString(1), left, right, box.y + 21, 10, Color.black, false);
-		StringUtilities.drawStringPair(g, "Velocity:", target.Velocity()
-				.toString(2), left, right, box.y + 31, 10, Color.black, false);
+				String.format("%.1f", selectedObject.Mass()), left, right,
+				box.y + 11, 10, Color.black, false);
+		StringUtilities.drawStringPair(g, "Position:", selectedObject
+				.Position().toString(1), left, right, box.y + 21, 10,
+				Color.black, false);
+		StringUtilities.drawStringPair(g, "Velocity:", selectedObject
+				.Velocity().toString(2), left, right, box.y + 31, 10,
+				Color.black, false);
 		StringUtilities.drawStringPair(g, "Speed:",
-				String.format("%.2f", target.Speed()), left, right, box.y + 41,
-				10, Color.black, false);
+				String.format("%.2f", selectedObject.Speed()), left, right,
+				box.y + 41, 10, Color.black, false);
 		if (hw.EnginePower() != 0)
 			StringUtilities.drawStringPair(g, "Engine vel:", hw
 					.EngineVelocity().toString(2), left, right, box.y + 51, 10,
@@ -222,8 +228,8 @@ public class Debugger extends JPanel {
 					String.format("%.0f", hw.ActualShield())
 							+ " ("
 							+ StringUtilities.toPercentString(
-									target.ShieldFraction(), 0) + ')', left,
-					right, box.y + 95, 10, Color.blue, false);
+									selectedObject.ShieldFraction(), 0) + ')',
+					left, right, box.y + 95, 10, Color.blue, false);
 		if (hw.constructor.Type() != null) {
 			StringUtilities.drawStringLeft(g, "Constructor", left, box.y + 121,
 					10, Color.black, true);
@@ -280,9 +286,9 @@ public class Debugger extends JPanel {
 					String.format("%.2f", hw.enemySyphon.Syphoned()) + '/'
 							+ String.format("%.2f", hw.enemySyphon.Rate()),
 					left, right, box.y + 251, 10, Color.black, false);
-		if (target.flag != 0)
+		if (selectedObject.flag != 0)
 			StringUtilities.drawStringPair(g, "flag:",
-					String.format("%.2f", target.flag), left, right,
+					String.format("%.2f", selectedObject.flag), left, right,
 					box.y + 271, 10, Color.black, false);
 	}
 
@@ -309,20 +315,9 @@ public class Debugger extends JPanel {
 		 */
 	}
 
-	public void setTarget(GBObject obj) {
-		if (obj == target)
-			return;
-		if (obj instanceof GBRobot) {
-			target = (GBRobot) obj;
-			if (target.Class() == GBObjectClass.ocDead)
-				target = null;
-		} else
-			target = null;
-	}
-
 	void Draw(Graphics2D g) {
 		Rectangle box = new Rectangle();
-		if (target == null) {
+		if (selectedObject == null) {
 			StringUtilities.drawStringLeft(g, "No robot selected", 4, 20, 12,
 					Color.black, false);
 			box.x = kEdgeSpace;
@@ -337,7 +332,7 @@ public class Debugger extends JPanel {
 			box.height = kStatusBoxHeight;
 			DrawStatusBox(g, box);
 			// get brain
-			GBStackBrain sbrain = (GBStackBrain) target.Brain();
+			GBStackBrain sbrain = (GBStackBrain) selectedObject.Brain();
 			if (sbrain != null) {
 				// draw pc
 				box.y = box.y + box.height + kEdgeSpace;
@@ -382,8 +377,8 @@ public class Debugger extends JPanel {
 
 	public int getPreferredHeight() {
 		int kHardwareBoxHeight = kPCBoxHeight + kStackBoxHeight + kEdgeSpace;
-		if (target != null) {
-			GBStackBrain sbrain = (GBStackBrain) target.Brain();
+		if (selectedObject != null) {
+			GBStackBrain sbrain = (GBStackBrain) selectedObject.Brain();
 			int brainheight = sbrain != null ? kPCBoxHeight + kStackBoxHeight
 					+ kPrintBoxHeight
 					+ (sbrain.NumVariables() + sbrain.NumVectorVariables())
@@ -393,6 +388,19 @@ public class Debugger extends JPanel {
 							: brainheight) + 3 * kEdgeSpace;
 		} else
 			return kProfileBoxHeight + kEdgeSpace * 2;
+	}
+
+	@Override
+	public void setSelectedObject(Object source, GBObject obj) {
+		if (obj == selectedObject)
+			return;
+		if (obj instanceof GBRobot) {
+			selectedObject = (GBRobot) obj;
+			if (selectedObject.Class() == GBObjectClass.ocDead)
+				selectedObject = null;
+		} else
+			selectedObject = null;
+		repaint();
 	}
 
 }

@@ -22,7 +22,8 @@ import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
-import ui.GBApplication;
+import ui.SideSelectionListener;
+import ui.SideSelector;
 
 class StatisticsLine implements Comparable<StatisticsLine> {
 	public String name;
@@ -62,7 +63,7 @@ class StatisticsLine implements Comparable<StatisticsLine> {
 	}
 }
 
-public class GBScoresView extends JPanel {
+public class GBScoresView extends JPanel implements SideSelectionListener {
 	/**
 	 * 
 	 */
@@ -73,8 +74,9 @@ public class GBScoresView extends JPanel {
 	static final int kInfoBoxHeight = 85;
 	static final int kTotalsHeight = 66;
 	static final int kTableHeight = 113;
-	GBApplication app;
+	// GBApplication app;
 	GBGame game;
+	Side selectedSide;
 	Side lastSideDrawn = null;
 	int kEdgeSpace;
 	Color boxfillcolor = Color.white;
@@ -85,9 +87,10 @@ public class GBScoresView extends JPanel {
 	List<StatisticsLine> roundStatsList;
 	List<StatisticsLine> tournStatsList;
 
-	public GBScoresView(GBApplication _app) {
-		app = _app;
-		game = app.game;
+	public GBScoresView(GBGame _game, SideSelector _selector) {
+		if (_selector != null)
+			_selector.addSideSelectionListener(this);
+		game = _game;
 		lastSideDrawn = null;
 		kEdgeSpace = 4;
 	}
@@ -244,11 +247,11 @@ public class GBScoresView extends JPanel {
 
 	void Draw(Graphics2D g) {
 		roundStatsList = buildStatsList(
-				app.getSelectedSide() == null ? game.RoundScores() : app
-						.getSelectedSide().Scores(), false);
+				selectedSide == null ? game.RoundScores()
+						: selectedSide.Scores(), false);
 		tournStatsList = buildStatsList(
-				app.getSelectedSide() == null ? game.TournamentScores() : app
-						.getSelectedSide().TournamentScores(), true);
+				selectedSide == null ? game.TournamentScores()
+						: selectedSide.TournamentScores(), true);
 		List<Rectangle> boxes = new ArrayList<Rectangle>();
 		boxes.add(new Rectangle(0, kGraphTop + kGraphHeight + kEdgeSpace,
 				colwidth, kInfoBoxHeight)); // Income
@@ -274,7 +277,7 @@ public class GBScoresView extends JPanel {
 		if (game.TournamentScores().rounds != 0)
 			DrawGraph(g, graphbox, true);
 		// record
-		lastSideDrawn = app.getSelectedSide();
+		lastSideDrawn = selectedSide;
 	}
 
 	void drawGroups(Graphics2D g, List<Rectangle> boxes,
@@ -312,7 +315,7 @@ public class GBScoresView extends JPanel {
 		drawBox(g, box);
 		Rectangle graph = new Rectangle(box.x + 1, box.y + 1, box.width - 2,
 				box.height - 2);
-		Side side = app.getSelectedSide();
+		Side side = selectedSide;
 		// find scale
 		int scale = 1;
 		int hscale = 1;
@@ -367,5 +370,11 @@ public class GBScoresView extends JPanel {
 		StringUtilities.drawStringLeft(g, title + ":", box.x + 3,
 				kGraphTop - 4, 10, Color.black);
 		g.draw(box); // clean up spills
+	}
+
+	@Override
+	public void setSelectedSide(Object source, Side side) {
+		selectedSide = side;
+		repaint();
 	}
 }

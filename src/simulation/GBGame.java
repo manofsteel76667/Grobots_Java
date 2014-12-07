@@ -95,7 +95,7 @@ public class GBGame implements ScoreKeeper {
 		// graph)
 		ReportRound();
 		if (app != null)
-			app.setSelectedObject(null);
+			app.setSelectedObject(this, null);
 		if (tournament) {
 			if (tournamentLength > 0)
 				--tournamentLength;

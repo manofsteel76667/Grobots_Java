@@ -7,14 +7,18 @@ package views;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
-import ui.GBApplication;
+import ui.SideSelectionListener;
+import ui.SideSelector;
 
-public class GBRosterView extends ListView {
+public class GBRosterView extends ListView implements SideSelectionListener,
+		SideSelector {
 	/**
 	 * 
 	 */
@@ -25,17 +29,23 @@ public class GBRosterView extends ListView {
 	private static final long serialVersionUID = 6135247814368773456L;
 
 	GBGame game;
-	GBApplication app;
+	SideSelector selector;
 	int margin = 6;
 	int padding = 2;
 	int slotMargin = 3;
 	int fps;
 	long lastFrame;
 	long lastTime;
+	Side selectedSide;
 
-	public GBRosterView(GBApplication _app) {
-		app = _app;
-		game = app.game;
+	List<SideSelectionListener> sideListeners;
+
+	public GBRosterView(GBGame _game, SideSelector _selector) {
+		selector = _selector;
+		game = _game;
+		sideListeners = new ArrayList<SideSelectionListener>();
+		if (_selector != null)
+			selector.addSideSelectionListener(this);
 		lastTime = System.currentTimeMillis();
 		preferredWidth = 250;
 		setVisible(true);
@@ -43,10 +53,11 @@ public class GBRosterView extends ListView {
 
 	@Override
 	protected void itemClicked(int index) {
-		if (index == -1 || index > game.sides.size())
-			app.setSelectedSide(null);
-		else
-			app.setSelectedSide(game.sides.get(index));
+		if (index == -1 || index > game.sides.size()) {
+			selectedSide = null;
+		} else
+			selectedSide = game.sides.get(index);
+		notifySideListeners();
 	}
 
 	@Override
@@ -77,7 +88,7 @@ public class GBRosterView extends ListView {
 		if (side == null)
 			return null;
 		Rectangle slot = getStartingItemRect(index, 12, false);
-		drawBox(g, slot, side.equals(app.getSelectedSide()));
+		drawBox(g, slot, side.equals(selectedSide));
 		Rectangle textRect = new Rectangle(slot);
 		textRect.grow(-padding * 2, -padding * 2);
 		// Side ID
@@ -86,8 +97,8 @@ public class GBRosterView extends ListView {
 		// Side Name
 		StringUtilities.drawStringLeft(g, side.Name(), new Rectangle(
 				textRect.x + 25, textRect.y, textRect.width - 25,
-				textRect.height), 12,
-				side.equals(app.getSelectedSide()) ? Color.white : Color.black);
+				textRect.height), 12, side.equals(selectedSide) ? Color.white
+				: Color.black);
 		String text = "";
 		if (side.Scores().Seeded() != 0) {
 			// Side status
@@ -144,5 +155,35 @@ public class GBRosterView extends ListView {
 	@Override
 	int setLength() {
 		return game.sides.size();
+	}
+
+	@Override
+	public void setSelectedSide(Object source, Side side) {
+		if (source != this) {
+			selectedSide = side;
+			repaint();
+		}
+	}
+
+	void notifySideListeners() {
+		for (SideSelectionListener l : sideListeners)
+			l.setSelectedSide(this, selectedSide);
+	}
+
+	@Override
+	public Side getSelectedSide() {
+		return selectedSide;
+	}
+
+	@Override
+	public void addSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.add(listener);
+
+	}
+
+	@Override
+	public void removeSideSelectionListener(SideSelectionListener listener) {
+		sideListeners.remove(listener);
 	}
 }

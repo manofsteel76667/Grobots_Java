@@ -63,7 +63,7 @@ public abstract class GBObject {
 	// high-level queries
 	public abstract GBObjectClass Class();
 
-	protected Side Owner() {
+	public Side Owner() {
 		return null;
 	} // food is not owned by anyone
 
