@@ -167,7 +167,8 @@ public class GBRosterView extends ListView implements SideSelectionListener,
 
 	void notifySideListeners() {
 		for (SideSelectionListener l : sideListeners)
-			l.setSelectedSide(this, selectedSide);
+			if (l != null)
+				l.setSelectedSide(this, selectedSide);
 	}
 
 	@Override

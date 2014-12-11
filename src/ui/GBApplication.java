@@ -800,7 +800,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	void notifyObjectListeners(Object source) {
 		for (ObjectSelectionListener l : objectListeners)
-			l.setSelectedObject(source, selectedObject);
+			if (l != null)
+				l.setSelectedObject(source, selectedObject);
 	}
 
 	@Override
@@ -812,7 +813,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	void notifySideListeners(Object source) {
 		for (SideSelectionListener l : sideListeners)
-			l.setSelectedSide(source, selectedSide);
+			if (l != null)
+				l.setSelectedSide(source, selectedSide);
 	}
 
 	@Override
@@ -824,7 +826,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	void notifyTypeListeners(Object source) {
 		for (TypeSelectionListener l : typeListeners)
-			l.setSelectedType(source, selectedType);
+			if (l != null)
+				l.setSelectedType(source, selectedType);
 	}
 
 	@Override

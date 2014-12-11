@@ -757,6 +757,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	public void notifyObjectListeners() {
 		for (ObjectSelectionListener l : objectListeners)
+			if (l != null)
 			l.setSelectedObject(this, selectedObject);
 	}
 

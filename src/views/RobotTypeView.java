@@ -405,6 +405,7 @@ public class RobotTypeView extends ListView implements TypeSelector,
 
 	void notifyListeners() {
 		for (TypeSelectionListener l : typeListeners)
-			l.setSelectedType(this, selectedType);
+			if (l != null)
+				l.setSelectedType(this, selectedType);
 	}
 }
