@@ -14,13 +14,18 @@ import java.util.Date;
 import java.util.List;
 
 import sides.GBScores;
+import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
 import support.StringUtilities;
 import ui.GBApplication;
+import ui.ObjectSelectionListener;
+import ui.ObjectSelector;
+import ui.SideSelectionListener;
+import ui.TypeSelectionListener;
 import exception.GBSimulationError;
 
-public class GBGame implements ScoreKeeper {
+public class GBGame implements ScoreKeeper, ObjectSelector {
 	public List<Side> sides;
 	GBApplication app;
 	int previousSidesAlive; // num of non-extinct sides last frame
@@ -36,6 +41,11 @@ public class GBGame implements ScoreKeeper {
 	 * Sum of all side scores over all rounds
 	 */
 	GBScores tournamentScores;
+
+	// Listeners
+	List<ObjectSelectionListener> objectListeners;
+	List<TypeSelectionListener> typeListeners;
+	List<SideSelectionListener> sideListeners;
 
 	// operation and tournament
 	public boolean running;
@@ -53,6 +63,9 @@ public class GBGame implements ScoreKeeper {
 
 	public GBGame(GBApplication _app) {
 		sides = new ArrayList<Side>();
+		objectListeners = new ArrayList<ObjectSelectionListener>();
+		typeListeners = new ArrayList<TypeSelectionListener>();
+		sideListeners = new ArrayList<SideSelectionListener>();
 		roundScores = new GBScores();
 		tournamentScores = new GBScores();
 		world = new GBWorld(this);
@@ -94,8 +107,12 @@ public class GBGame implements ScoreKeeper {
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
 		// graph)
 		ReportRound();
-		if (app != null)
-			app.setSelectedObject(this, null);
+		// Free references to the selected object so it can be GC'd
+		for (ObjectSelectionListener l : objectListeners)
+			if (l != null)
+				l.setSelectedObject(null);
+		// Don't set selected side or type to null since someone may want to add
+		// a robot or something
 		if (tournament) {
 			if (tournamentLength > 0)
 				--tournamentLength;
@@ -450,4 +467,54 @@ public class GBGame implements ScoreKeeper {
 		return tournamentScores;
 	}
 
+	@Override
+	public RobotType getSelectedType() {
+		return null;
+	}
+
+	@Override
+	public void addTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.add(listener);
+	}
+
+	@Override
+	public void removeTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.remove(listener);
+	}
+
+	@Override
+	public Side getSelectedSide() {
+		return null;
+	}
+
+	@Override
+	public void addSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.add(listener);
+	}
+
+	@Override
+	public void removeSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.remove(listener);
+	}
+
+	@Override
+	public GBObject getSelectedObject() {
+		return null;
+	}
+
+	@Override
+	public void addObjectSelectionListener(ObjectSelectionListener listener) {
+		if (listener != null)
+			objectListeners.add(listener);
+	}
+
+	@Override
+	public void removeObjectSelectionListener(ObjectSelectionListener listener) {
+		if (listener != null)
+			objectListeners.remove(listener);
+	}
 }

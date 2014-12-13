@@ -20,7 +20,6 @@ import simulation.GBRobot;
 import support.GBColor;
 import support.StringUtilities;
 import ui.ObjectSelectionListener;
-import ui.ObjectSelector;
 import brains.Brain;
 import brains.BrainStatus;
 import brains.GBStackBrain;
@@ -45,11 +44,9 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	JToolBar toolbar;
 
-	public Debugger(JToolBar bar, ObjectSelector _selector) {
+	public Debugger(JToolBar bar) {
 		toolbar = bar;
 		add(toolbar);
-		if (_selector != null)
-			_selector.addObjectSelectionListener(this);
 	}
 
 	@Override
@@ -391,7 +388,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	}
 
 	@Override
-	public void setSelectedObject(Object source, GBObject obj) {
+	public void setSelectedObject(GBObject obj) {
 		if (obj == selectedObject)
 			return;
 		if (obj instanceof GBRobot) {

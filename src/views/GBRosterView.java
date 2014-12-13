@@ -29,7 +29,6 @@ public class GBRosterView extends ListView implements SideSelectionListener,
 	private static final long serialVersionUID = 6135247814368773456L;
 
 	GBGame game;
-	SideSelector selector;
 	int margin = 6;
 	int padding = 2;
 	int slotMargin = 3;
@@ -40,12 +39,9 @@ public class GBRosterView extends ListView implements SideSelectionListener,
 
 	List<SideSelectionListener> sideListeners;
 
-	public GBRosterView(GBGame _game, SideSelector _selector) {
-		selector = _selector;
+	public GBRosterView(GBGame _game) {
 		game = _game;
 		sideListeners = new ArrayList<SideSelectionListener>();
-		if (_selector != null)
-			selector.addSideSelectionListener(this);
 		lastTime = System.currentTimeMillis();
 		preferredWidth = 250;
 		setVisible(true);
@@ -117,7 +113,8 @@ public class GBRosterView extends ListView implements SideSelectionListener,
 					StringUtilities.drawStringLeft(g, text, new Rectangle(
 							textRect.x + textRect.width - padding
 									- kPopulationWidth, textRect.y,
-							textRect.width, textRect.height), 12, Color.black);
+							textRect.width, textRect.height), 12, side
+							.equals(selectedSide) ? Color.white : Color.black);
 					// Population
 					text = Integer.toString(side.Scores().Population());
 					StringUtilities.drawStringRight(g, text, textRect, 10,
@@ -158,17 +155,15 @@ public class GBRosterView extends ListView implements SideSelectionListener,
 	}
 
 	@Override
-	public void setSelectedSide(Object source, Side side) {
-		if (source != this) {
-			selectedSide = side;
-			repaint();
-		}
+	public void setSelectedSide(Side side) {
+		selectedSide = side;
+		repaint();
 	}
 
 	void notifySideListeners() {
 		for (SideSelectionListener l : sideListeners)
 			if (l != null)
-				l.setSelectedSide(this, selectedSide);
+				l.setSelectedSide(selectedSide);
 	}
 
 	@Override

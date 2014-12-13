@@ -49,7 +49,6 @@ import ui.ObjectSelector;
 import ui.PortalListener;
 import ui.SideSelectionListener;
 import ui.TypeSelectionListener;
-import ui.UIEventSource;
 
 public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		ObjectSelectionListener, ObjectSelector, SideSelectionListener,
@@ -84,6 +83,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	// Listeners
 	List<ObjectSelectionListener> objectListeners;
+	List<TypeSelectionListener> typeListeners;
+	List<SideSelectionListener> sideListeners;
 	List<PortalListener> portalListeners;
 
 	boolean dragged;
@@ -138,17 +139,14 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	int minZoom = 4;
 	int maxZoom = 64;
 
-	public GBPortal(GBGame _game, UIEventSource source, boolean mini) {
+	public GBPortal(GBGame _game, boolean mini) {
 		super(true);
 		isMiniMap = mini;
 		game = _game;
 		world = _game.getWorld();
-		if (source != null) {
-			source.addObjectSelectionListener(this);
-			source.addSideSelectionListener(this);
-			source.addTypeSelectionListener(this);
-		}
 		objectListeners = new ArrayList<ObjectSelectionListener>();
+		typeListeners = new ArrayList<TypeSelectionListener>();
+		sideListeners = new ArrayList<SideSelectionListener>();
 		portalListeners = new ArrayList<PortalListener>();
 		showSideNames = true;
 		lastClick = new FinePoint();
@@ -574,6 +572,14 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	public void Follow(GBObject ob) {
 		selectedObject = ob;
+		if (ob != null) {
+			selectedSide = ob.Owner();
+			notifySideListeners();
+			if (ob instanceof GBRobot) {
+				selectedType = ((GBRobot) ob).Type();
+				notifyTypeListeners();
+			}
+		}
 		notifyObjectListeners();
 		if (ob != null) {
 			followPosition = ob.Position().subtract(viewpoint);
@@ -748,26 +754,36 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	}
 
 	@Override
-	public void setSelectedObject(Object source, GBObject obj) {
-		if (source != this) {
-			selectedObject = obj;
-			repaint();
-		}
+	public void setSelectedObject(GBObject obj) {
+		selectedObject = obj;
+		repaint();
 	}
 
 	public void notifyObjectListeners() {
 		for (ObjectSelectionListener l : objectListeners)
 			if (l != null)
-			l.setSelectedObject(this, selectedObject);
+				l.setSelectedObject(selectedObject);
+	}
+
+	public void notifyTypeListeners() {
+		for (TypeSelectionListener l : typeListeners)
+			if (l != null)
+				l.setSelectedType(selectedType);
+	}
+
+	public void notifySideListeners() {
+		for (SideSelectionListener l : sideListeners)
+			if (l != null)
+				l.setSelectedSide(selectedSide);
 	}
 
 	@Override
-	public void setSelectedType(Object source, RobotType type) {
+	public void setSelectedType(RobotType type) {
 		selectedType = type;
 	}
 
 	@Override
-	public void setSelectedSide(Object source, Side side) {
+	public void setSelectedSide(Side side) {
 		selectedSide = side;
 	}
 
@@ -785,5 +801,39 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	void changeVisibleWorld(Rectangle rect) {
 		for (PortalListener l : portalListeners)
 			l.setVisibleWorld(this, getVisibleWorld());
+	}
+
+	@Override
+	public RobotType getSelectedType() {
+		return selectedType;
+	}
+
+	@Override
+	public void addTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.add(listener);
+	}
+
+	@Override
+	public void removeTypeSelectionListener(TypeSelectionListener listener) {
+		if (listener != null)
+			typeListeners.remove(listener);
+	}
+
+	@Override
+	public Side getSelectedSide() {
+		return selectedSide;
+	}
+
+	@Override
+	public void addSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.add(listener);
+	}
+
+	@Override
+	public void removeSideSelectionListener(SideSelectionListener listener) {
+		if (listener != null)
+			sideListeners.remove(listener);
 	}
 }

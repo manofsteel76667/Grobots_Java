@@ -23,7 +23,6 @@ import simulation.GBGame;
 import support.GBColor;
 import support.StringUtilities;
 import ui.SideSelectionListener;
-import ui.SideSelector;
 
 class StatisticsLine implements Comparable<StatisticsLine> {
 	public String name;
@@ -87,9 +86,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 	List<StatisticsLine> roundStatsList;
 	List<StatisticsLine> tournStatsList;
 
-	public GBScoresView(GBGame _game, SideSelector _selector) {
-		if (_selector != null)
-			_selector.addSideSelectionListener(this);
+	public GBScoresView(GBGame _game) {
 		game = _game;
 		lastSideDrawn = null;
 		kEdgeSpace = 4;
@@ -373,7 +370,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 	}
 
 	@Override
-	public void setSelectedSide(Object source, Side side) {
+	public void setSelectedSide(Side side) {
 		selectedSide = side;
 		repaint();
 	}

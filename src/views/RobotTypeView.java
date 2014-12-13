@@ -21,7 +21,6 @@ import support.StringUtilities;
 import ui.SideSelectionListener;
 import ui.TypeSelectionListener;
 import ui.TypeSelector;
-import ui.UIEventSource;
 import brains.BrainSpec;
 
 public class RobotTypeView extends ListView implements TypeSelector,
@@ -36,11 +35,7 @@ public class RobotTypeView extends ListView implements TypeSelector,
 	Side selectedSide;
 	List<TypeSelectionListener> typeListeners;
 
-	public RobotTypeView(GBGame _game, UIEventSource source) {
-		if (source != null) {
-			source.addTypeSelectionListener(this);
-			source.addSideSelectionListener(this);
-		}
+	public RobotTypeView(GBGame _game) {
 		typeListeners = new ArrayList<TypeSelectionListener>();
 		game = _game;
 		preferredWidth = 250;
@@ -373,17 +368,22 @@ public class RobotTypeView extends ListView implements TypeSelector,
 	}
 
 	@Override
-	public void setSelectedSide(Object source, Side side) {
-		selectedSide = side;
-		repaint();
+	public void setSelectedSide(Side side) {
+		if (side != selectedSide) {
+			selectedSide = side;
+			selectedType = null;
+			if (selectedSide != null)
+				if (selectedSide.types.size() > 0)
+					selectedType = selectedSide.types.get(0);
+			notifyListeners();
+			repaint();
+		}
 	}
 
 	@Override
-	public void setSelectedType(Object source, RobotType type) {
-		if (source != this) {
-			selectedType = type;
-			repaint();
-		}
+	public void setSelectedType(RobotType type) {
+		selectedType = type;
+		repaint();
 	}
 
 	@Override
@@ -406,6 +406,23 @@ public class RobotTypeView extends ListView implements TypeSelector,
 	void notifyListeners() {
 		for (TypeSelectionListener l : typeListeners)
 			if (l != null)
-				l.setSelectedType(this, selectedType);
+				l.setSelectedType(selectedType);
+	}
+
+	@Override
+	public Side getSelectedSide() {
+		return selectedSide;
+	}
+
+	@Override
+	public void addSideSelectionListener(SideSelectionListener listener) {
+		// Types view cannot change the selected side so no listeners are
+		// required
+	}
+
+	@Override
+	public void removeSideSelectionListener(SideSelectionListener listener) {
+		// Types view cannot change the selected side so no listeners are
+		// required
 	}
 }

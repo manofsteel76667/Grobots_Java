@@ -49,8 +49,8 @@ import exception.GBAbort;
 import exception.GBError;
 
 public class GBApplication extends JFrame implements Runnable, ActionListener,
-		UIEventSource, TypeSelectionListener, SideSelectionListener,
-		ObjectSelectionListener {
+		TypeSelectionListener, SideSelectionListener, ObjectSelectionListener,
+		SideSelector {
 	/**
 	 * 
 	 */
@@ -74,9 +74,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	Debugger debug;
 
 	// Listeners
-	List<ObjectSelectionListener> objectListeners;
 	List<SideSelectionListener> sideListeners;
-	List<TypeSelectionListener> typeListeners;
 
 	public enum StepRates {
 		slow(10), normal(30), fast(60), unlimited(10000);
@@ -123,9 +121,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		stepRate = StepRates.fast;
 
 		// Listener support
-		objectListeners = new ArrayList<ObjectSelectionListener>();
 		sideListeners = new ArrayList<SideSelectionListener>();
-		typeListeners = new ArrayList<TypeSelectionListener>();
 
 		// Create supporting views and menu.
 		mainMenu = new GBMenu(this);
@@ -266,18 +262,13 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	void createChildViews() {
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
-		portal = new GBPortal(game, this, false);
+		portal = new GBPortal(game, false);
 		portal.setPreferredSize(new Dimension(600, 600));
-		portal.addObjectSelectionListener(this);
-		minimap = new GBPortal(game, this, true);
-		portal.addPortalListener(minimap);
-		minimap.addPortalListener(portal);
-		roster = new GBRosterView(game, this);
-		roster.addSideSelectionListener(this);
+		minimap = new GBPortal(game, true);
+		roster = new GBRosterView(game);
 		tournament = new GBTournamentView(game);
-		type = new RobotTypeView(game, this);
-		type.addTypeSelectionListener(this);
-		statistics = new GBScoresView(game, this);
+		type = new RobotTypeView(game);
+		statistics = new GBScoresView(game);
 		center = new JPanel();
 		center.setLayout(new BorderLayout());
 		portalControls = mainMenu.simToolbar(this);
@@ -287,9 +278,39 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		center.add(portalControls, BorderLayout.LINE_START);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
-		debug = new Debugger(debugControls, this);
+		debug = new Debugger(debugControls);
 		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
 				.getPreferredHeight()));
+		// Wire up all the listeners and selectors
+		// Portal and minimap update each other
+		minimap.addPortalListener(portal);
+		portal.addPortalListener(minimap);
+		// Portal can select anything
+		portal.addSideSelectionListener(roster);
+		portal.addSideSelectionListener(type);
+		portal.addSideSelectionListener(statistics);
+		portal.addSideSelectionListener(this);
+		portal.addObjectSelectionListener(debug);
+		portal.addObjectSelectionListener(this);
+		portal.addTypeSelectionListener(type);
+		portal.addTypeSelectionListener(this);
+		// Roster selects sides
+		roster.addSideSelectionListener(portal);
+		roster.addSideSelectionListener(this);
+		roster.addSideSelectionListener(type);
+		roster.addSideSelectionListener(statistics);
+		// Type view selects types
+		type.addTypeSelectionListener(this);
+		type.addTypeSelectionListener(portal);
+		// UI can change selected side when Reload or Remove is used
+		this.addSideSelectionListener(portal);
+		this.addSideSelectionListener(roster);
+		this.addSideSelectionListener(type);
+		this.addSideSelectionListener(statistics);
+		// Game sets selected object to null at the end of each round but
+		// doesn't care otherwise
+		game.addObjectSelectionListener(portal);
+		game.addObjectSelectionListener(debug);
 	}
 
 	void updateMenu() {
@@ -359,45 +380,31 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	@Override
-	public void setSelectedType(Object source, RobotType _type) {
+	public void setSelectedType(RobotType _type) {
 		selectedType = _type;
-		notifyTypeListeners(source);
 	}
 
 	@Override
-	public GBObject getSelectedObject() {
-		return selectedObject;
-	}
-
-	@Override
-	public void setSelectedObject(Object source, GBObject _obj) {
+	public void setSelectedObject(GBObject _obj) {
 		selectedObject = _obj;
-		notifyObjectListeners(source);
-		setSelectedSide(this, _obj.Owner());
+		if (_obj != null)
+			setSelectedSide(_obj.Owner());
 		if (_obj instanceof GBRobot)
-			setSelectedType(source, ((GBRobot) _obj).Type());
+			setSelectedType(((GBRobot) _obj).Type());
 		else
-			setSelectedType(source, null);
+			setSelectedType(null);
 	}
 
 	@Override
-	public RobotType getSelectedType() {
-		return selectedType;
-	}
-
-	@Override
-	public void setSelectedSide(Object source, Side _side) {
+	public void setSelectedSide(Side _side) {
 		if (_side == null) {
 			selectedSide = _side;
-			notifySideListeners(source);
 			updateMenu();
 			selectedType = null;
 			return;
 		} else if (!_side.equals(selectedSide)) {
 			selectedSide = _side;
-			notifySideListeners(source);
-			setSelectedType(source, _side.types.size() > 0 ? _side.types.get(0)
-					: null);
+			setSelectedType(_side.types.size() > 0 ? _side.types.get(0) : null);
 		}
 		updateMenu();
 	}
@@ -567,25 +574,28 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					portal.Refollow();
 					break;
 				case reloadSide:
-					if (getSelectedSide() == null)
+					if (selectedSide == null)
 						break;
 					Side reload = SideReader.Load(selectedSide.filename);
 					game.ReplaceSide(selectedSide, reload);
-					setSelectedSide(this, reload);
+					selectedSide = reload;
+					notifySideListeners();
 					break;
 				case removeAllSides:
 					game.Reset();
 					game.RemoveAllSides();
 					game.running = false;
-					setSelectedSide(this, null);
+					selectedSide = null;
+					notifySideListeners();
 					updateMenu();
 					repaint();
 					break;
 				case removeSide:
-					if (getSelectedSide() == null)
+					if (selectedSide == null)
 						break;
 					game.RemoveSide(selectedSide);
-					setSelectedSide(this, null);
+					selectedSide = null;
+					notifySideListeners();
 					updateMenu();
 					repaint();
 					break;
@@ -747,11 +757,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					}
 					break;
 				case stopStartBrain:
-					if (getSelectedObject() == null)
+					if (selectedObject == null)
 						return;
-					if (getSelectedObject() instanceof GBRobot
-							&& getSelectedObject().Class() != GBObjectClass.ocDead) {
-						Brain brain = ((GBRobot) getSelectedObject()).Brain();
+					if (selectedObject instanceof GBRobot
+							&& selectedObject.Class() != GBObjectClass.ocDead) {
+						Brain brain = ((GBRobot) selectedObject).Brain();
 						if (brain == null)
 							return;
 						brain.status = brain.status == BrainStatus.bsOK ? BrainStatus.bsStopped
@@ -792,57 +802,20 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	@Override
-	public void addObjectSelectionListener(ObjectSelectionListener listener) {
-		if (listener != null)
-			objectListeners.add(listener);
-		listener.setSelectedObject(this, selectedObject);
-	}
-
-	void notifyObjectListeners(Object source) {
-		for (ObjectSelectionListener l : objectListeners)
-			if (l != null)
-				l.setSelectedObject(source, selectedObject);
-	}
-
-	@Override
 	public void addSideSelectionListener(SideSelectionListener listener) {
 		if (listener != null)
 			sideListeners.add(listener);
-		listener.setSelectedSide(this, selectedSide);
-	}
-
-	void notifySideListeners(Object source) {
-		for (SideSelectionListener l : sideListeners)
-			if (l != null)
-				l.setSelectedSide(source, selectedSide);
-	}
-
-	@Override
-	public void addTypeSelectionListener(TypeSelectionListener listener) {
-		if (listener != null)
-			typeListeners.add(listener);
-		listener.setSelectedType(this, selectedType);
-	}
-
-	void notifyTypeListeners(Object source) {
-		for (TypeSelectionListener l : typeListeners)
-			if (l != null)
-				l.setSelectedType(source, selectedType);
-	}
-
-	@Override
-	public void removeObjectSelectionListener(ObjectSelectionListener listener) {
-		objectListeners.remove(listener);
-
 	}
 
 	@Override
 	public void removeSideSelectionListener(SideSelectionListener listener) {
-		sideListeners.remove(listener);
+		if (listener != null)
+			sideListeners.remove(listener);
 	}
 
-	@Override
-	public void removeTypeSelectionListener(TypeSelectionListener listener) {
-		typeListeners.remove(listener);
+	void notifySideListeners() {
+		for (SideSelectionListener l : sideListeners)
+			if (l != null)
+				l.setSelectedSide(selectedSide);
 	}
 }
