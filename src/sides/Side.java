@@ -16,7 +16,6 @@ import java.util.List;
 import simulation.GBMessage;
 import simulation.GBMessageQueue;
 import support.FinePoint;
-import support.GBRandomState;
 import exception.GBBrainError;
 import exception.GBSimulationError;
 
@@ -56,20 +55,6 @@ public class Side implements Comparable<Side> {
 		msgQueues = new GBMessageQueue[GBMessageQueue.kNumMessageChannels];
 		types = new ArrayList<RobotType>();
 		seedIDs = new ArrayList<Integer>();
-	}
-
-	public Side copy() {
-		Side side = new Side();
-		for (int i = 0; i < types.size(); ++i)
-			side.AddType(new RobotType(types.get(i)));
-		side.name = name;
-		side.author = author;
-		side.SetColor(GBRandomState.gRandoms.ColorNear(color,
-				kSideCopyColorDistance));
-		for (int id : seedIDs)
-			side.seedIDs.add(id);
-		// id, comm and scores are not copied
-		return side;
 	}
 
 	@Override

@@ -9,10 +9,8 @@ import simulation.GBRobot;
 import simulation.GBWorld;
 import exception.GBBrainError;
 
-public class Brain {
+public abstract class Brain {
 	public BrainStatus status;
-
-	// public:
 
 	public Brain() {
 		status = BrainStatus.bsOK;
@@ -34,9 +32,7 @@ public class Brain {
 	 * @param robot
 	 * @param world
 	 */
-	public void think(GBRobot robot, GBWorld world) {
-
-	}
+	public abstract void think(GBRobot robot, GBWorld world);
 
 	/**
 	 * Can we think now?

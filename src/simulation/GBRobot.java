@@ -529,8 +529,8 @@ public class GBRobot extends GBObject {
 			}
 		}
 		// decoration appears inside the focus circle or the radial painter
-		double decorationWidth = (double) where.width * radialSteps[0];
-		double decorationHeight = (double) where.height * radialSteps[0];
+		double decorationWidth = where.width * radialSteps[0];
+		double decorationHeight = where.height * radialSteps[0];
 		Ellipse2D.Double decorationOval = new Ellipse2D.Double(focus.x
 				- decorationWidth / 2, focus.y - decorationHeight / 2,
 				decorationWidth, decorationHeight);

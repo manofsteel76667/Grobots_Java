@@ -84,7 +84,7 @@ public class GBBlast extends GBTimedShot {
 			g2d.fill(where);
 		} else if (hit) {
 			g2d.setPaint(Color());
-			g2d.fillOval((int) where.x, (int) where.y, where.width,
+			g2d.fillOval(where.x, where.y, where.width,
 					where.height);
 		} else {
 			// Looks like you're firing dicks at people :)
@@ -92,8 +92,8 @@ public class GBBlast extends GBTimedShot {
 			// g2d.drawOval((int) where.x, (int) where.y, where.width,
 			// where.height);
 
-			int cx = (int) where.x;
-			int cy = (int) where.y;
+			int cx = where.x;
+			int cy = where.y;
 			int thickness = (int) (2 + Math.floor(power / 20));
 			FinePoint head = Velocity().unit().multiply(where.getWidth())
 					.divide(2);

@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -47,6 +48,7 @@ import brains.Brain;
 import brains.BrainStatus;
 import exception.GBAbort;
 import exception.GBError;
+import exception.GBSimulationError;
 
 public class GBApplication extends JFrame implements Runnable, ActionListener,
 		TypeSelectionListener, SideSelectionListener, ObjectSelectionListener,
@@ -349,10 +351,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 							game.advanceFrame();
 							running = false;
 							prevFrameTime = System.nanoTime();
-						} catch (Exception e) {
+						} catch (GBSimulationError e) {
 							try {
 								GBError.NonfatalError("Error simulating: "
 										+ e.getMessage());
+							} catch (GBAbort a) {
+								// Retry
+							}
+						} catch (Exception e) {
+							try {
+								GBError.NonfatalError("Java Error: "
+										+ e.getMessage() + "\nTrace:\n"
+										+ Arrays.toString(e.getStackTrace()));
 							} catch (GBAbort a) {
 								// Retry
 							}

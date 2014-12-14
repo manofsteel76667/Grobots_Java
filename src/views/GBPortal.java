@@ -243,7 +243,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				FinePoint zoomPosition = fromScreen(arg0.getPoint().x,
 						arg0.getPoint().y);
 				FinePoint dp = zoomPosition.subtract(viewpoint);
-				int dir = (int) (notches / Math.abs(notches));
+				int dir = notches / Math.abs(notches);
 				doZoom(dir * -1);
 				viewpoint = new FinePoint(zoomPosition.x - dp.x / scale
 						* originalScale, zoomPosition.y - dp.y / scale
@@ -319,8 +319,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	void drawBackground(Graphics2D g2d) {
 		// Set colors for grid lines
 		int coarseThickness = 1 + scale / 20;
-		Color coarseColor = GBColor.Mix(coarseGridBaseColor, (float) scale * 6f
-				/ (float) maxZoom, tileColor);
+		Color coarseColor = GBColor.Mix(coarseGridBaseColor, scale * 6f
+				/ maxZoom, tileColor);
 		// Fine grid should be close to the coarse grid color when zoomed in and
 		// disappear into the background when zoomed out
 		Color fineColor = GBColor.Mix(coarseColor,
@@ -455,26 +455,26 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	@Override
 	public int toScreenX(double x) {
-		return (int) (Math.round((x - viewpoint.x) * (double) scale) + this
+		return (int) (Math.round((x - viewpoint.x) * scale) + this
 				.getVisibleRect().getCenterX());
 	}
 
 	@Override
 	public int toScreenY(double y) {
-		return (int) (Math.round((viewpoint.y - y) * (double) scale) + this
+		return (int) (Math.round((viewpoint.y - y) * scale) + this
 				.getVisibleRect().getCenterY());
 	}
 
 	@Override
 	public double fromScreenX(int x) {
-		return ((double) x - this.getVisibleRect().getCenterX())
-				/ (double) scale + viewpoint.x;
+		return (x - this.getVisibleRect().getCenterX())
+				/ scale + viewpoint.x;
 	}
 
 	@Override
 	public double fromScreenY(int y) {
-		return (this.getVisibleRect().getCenterY() - (double) y)
-				/ (double) scale + viewpoint.y;
+		return (this.getVisibleRect().getCenterY() - y)
+				/ scale + viewpoint.y;
 	}
 
 	@Override

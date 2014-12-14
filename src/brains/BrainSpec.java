@@ -8,33 +8,17 @@ package brains;
 import sides.HardwareItem;
 import exception.GBBrainError;
 
-public class BrainSpec extends HardwareItem {
-	public Brain MakeBrain() {
-		return null;
-	};
+public abstract class BrainSpec extends HardwareItem {
+	/**
+	 * Make an actual brain from the spec
+	 * @return
+	 */
+	public abstract Brain MakeBrain();
 
-	@Override
-	public BrainSpec clone() {
-		return null;
-	}
-
-	// computed
-	@Override
-	public double Cost() {
-		return 0;
-	}
-
-	@Override
-	public double Mass() {
-		return 0;
-	}
-
-	// loading
-	public void ParseLine(String line, short lineNum) {
-	};
-
-	public void Check() {
-	} // check OK to use
+	/**
+	 * Check ok to use
+	 */
+	public abstract void Check();
 
 	public BrainSpec() {
 		super(0, 0);

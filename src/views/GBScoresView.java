@@ -324,8 +324,8 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 			List<Integer> hist = allRounds ? s.TournamentScores()
 					.BiomassHistory() : s.Scores().BiomassHistory();
 			for (Integer value : hist)
-				scale = (int) Math.max(value, scale);
-			hscale = Math.max((int) hist.size() - 1, hscale);
+				scale = Math.max(value, scale);
+			hscale = Math.max(hist.size() - 1, hscale);
 		}
 		if (hscale < 1)
 			return;

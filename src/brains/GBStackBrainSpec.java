@@ -190,11 +190,6 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public BrainSpec clone() {
-		return new GBStackBrainSpec(this);
-	}
-
-	@Override
 	public Brain MakeBrain() {
 		return new GBStackBrain(this);
 	}

@@ -39,15 +39,6 @@ public class RobotType {
 		hardware = new HardwareSpec(debug);
 	}
 
-	public RobotType(RobotType type) {
-		this(type.side);
-		name = type.name;
-		SetColor(type.color);
-		SetDecoration(type.decoration, type.decorationColor);
-		hardware = type.hardware;
-		brain = type.brain.clone();
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
