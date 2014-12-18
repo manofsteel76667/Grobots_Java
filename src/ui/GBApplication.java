@@ -8,12 +8,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -21,17 +18,18 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.BoxLayout;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import sides.RobotType;
 import sides.Side;
-import sides.SideReader;
 import simulation.GBGame;
 import simulation.GBObject;
 import simulation.GBObjectClass;
@@ -51,8 +49,7 @@ import exception.GBError;
 import exception.GBSimulationError;
 
 public class GBApplication extends JFrame implements Runnable, ActionListener,
-		TypeSelectionListener, SideSelectionListener, ObjectSelectionListener,
-		SideSelector {
+		TypeSelectionListener, SideSelectionListener, ObjectSelectionListener {
 	/**
 	 * 
 	 */
@@ -72,11 +69,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	JDialog debugDialog;
 	JToolBar portalControls;
 	JToolBar debugControls;
-	JPanel center;
 	Debugger debug;
-
-	// Listeners
-	List<SideSelectionListener> sideListeners;
 
 	public enum StepRates {
 		slow(10), normal(30), fast(60), unlimited(10000);
@@ -111,6 +104,21 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	public GBApplication() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		// Creation code found in run() method per recommended java Swing
 		// practices
 	}
@@ -119,11 +127,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	public void run() {
 		// Create world and initial conditions
 		game = new GBGame(this);
-		// world = new GBWorld();
 		stepRate = StepRates.fast;
-
-		// Listener support
-		sideListeners = new ArrayList<SideSelectionListener>();
 
 		// Create supporting views and menu.
 		mainMenu = new GBMenu(this);
@@ -132,7 +136,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		createChildViews();
 
 		// Arrange the screen
-		this.getContentPane().setLayout(new GridBagLayout());
 		List<BufferedImage> icons = new ArrayList<BufferedImage>();
 		String[] resources = new String[] { "grobots16.png", "grobots32.png",
 				"grobots48.png", "grobots64.png", "grobots128.png" };
@@ -184,8 +187,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			public void actionPerformed(ActionEvent e) {
 				if (!running) {
 					rendering++;
-					if (roster.isVisible())
+					if (roster.isVisible()) {
+						roster.recalculate();
 						roster.repaint();
+					}
 					if (tournament.isVisible())
 						tournament.repaint();
 					if (type.isVisible())
@@ -207,58 +212,35 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	void setLayouts() {
 		for (Component c : this.getContentPane().getComponents())
 			this.getContentPane().remove(c);
-		GridBagConstraints c = new GridBagConstraints();
+		// 3 Child panels
+		this.getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.X_AXIS));
+		JPanel left = new JPanel();
+		JPanel center = new JPanel();
+		JPanel right = new JPanel();
+		add(roster);
+		//add(left);
+		add(center);
+		add(right);
 
-		// Roster
-		c.fill = GridBagConstraints.VERTICAL;
-		c.anchor = GridBagConstraints.FIRST_LINE_START;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weighty = 1;
-		c.weightx = 0;
-		c.gridheight = minimap.isVisible() ? 3 : 4;
-		this.getContentPane().add(roster, c);
+		// Left pane
+		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+		left.setPreferredSize(new Dimension(250, 800));
+		//left.add(roster);
+		
+		// Center pane
+		JPanel portalpanel = new JPanel();
+		portalpanel.setLayout(new BorderLayout());
+		portalpanel.add(portal);
+		portalpanel.add(portalControls, BorderLayout.LINE_START);
+		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+		center.add(portalpanel);
+		center.add(statistics);
 
-		// Portal and toolbar
-		center.setPreferredSize(new Dimension(1, 1));
-		c.fill = GridBagConstraints.BOTH;
-		c.anchor = GridBagConstraints.ABOVE_BASELINE;
-		c.gridx = 1;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.gridheight = statistics.isVisible() ? 2 : 4;
-		this.getContentPane().add(center, c);
-
-		// Statistics
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.BELOW_BASELINE;
-		c.gridx = 1;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridheight = 2;
-		c.gridwidth = 1;
-		this.getContentPane().add(statistics, c);
-
-		// Type View
-		c.fill = GridBagConstraints.VERTICAL;
-		c.anchor = GridBagConstraints.ABOVE_BASELINE;
-		c.gridx = 2;
-		c.gridy = 0;
-		c.weighty = 1;
-		c.gridwidth = 1;
-		c.gridheight = 4;
-		this.getContentPane().add(type, c);
-
-		// Minimap
-		c.fill = GridBagConstraints.NONE;
-		c.anchor = GridBagConstraints.SOUTHWEST;
-		c.gridx = 0;
-		c.gridy = 3;
-		// c.weighty = .5;
-		c.gridheight = 1;
+		// Right pane
+		right.setLayout(new BorderLayout());
+		right.add(type);
+		right.add(minimap, BorderLayout.PAGE_END);
 		minimap.setPreferredSize(new Dimension(200, 200));
-		this.getContentPane().add(minimap, c);
 	}
 
 	void createChildViews() {
@@ -271,13 +253,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		tournament = new GBTournamentView(game);
 		type = new RobotTypeView(game);
 		statistics = new GBScoresView(game);
-		center = new JPanel();
-		center.setLayout(new BorderLayout());
 		portalControls = mainMenu.simToolbar(this);
 		portalControls.setFloatable(false);
 		portalControls.setOrientation(JToolBar.VERTICAL);
-		center.add(portal);
-		center.add(portalControls, BorderLayout.LINE_START);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
 		debug = new Debugger(debugControls);
@@ -304,13 +282,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Type view selects types
 		type.addTypeSelectionListener(this);
 		type.addTypeSelectionListener(portal);
-		// UI can change selected side when Reload or Remove is used
-		this.addSideSelectionListener(portal);
-		this.addSideSelectionListener(roster);
-		this.addSideSelectionListener(type);
-		this.addSideSelectionListener(statistics);
-		// Game sets selected object to null at the end of each round but
-		// doesn't care otherwise
+		// Game sets selected object to null at the end of each round 
+		// to clean the graphics up, but no one else cares.
 		game.addObjectSelectionListener(portal);
 		game.addObjectSelectionListener(debug);
 	}
@@ -385,11 +358,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	@Override
-	public Side getSelectedSide() {
-		return selectedSide;
-	}
-
-	@Override
 	public void setSelectedType(RobotType _type) {
 		selectedType = _type;
 	}
@@ -457,10 +425,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					game.Reset();
 					break;
 				case duplicateSide:
-					if (selectedSide == null)
-						return;
-					Side newside = SideReader.Load(selectedSide.filename);
-					game.AddSide(newside);
+					roster.duplicateSide();
 					repaint();
 					break;
 				case erase:
@@ -510,24 +475,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 									.create("http://grobots.wikia.com/wiki/Grobots_Wiki"));
 					break;
 				case loadSide:
-					JFileChooser fc = new JFileChooser();
-					fc.setMultiSelectionEnabled(true);
-					// TODO default this to the app directory and only show .gb
-					// files
-					fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
-					int retval = fc.showOpenDialog(this);
-					if (retval == JFileChooser.APPROVE_OPTION) {
-						for (File f : fc.getSelectedFiles()) {
-							try {
-								Side _newside;
-								_newside = SideReader.Load(f.getPath());
-								game.AddSide(_newside);
-							} catch (Exception fileEx) {
-								GBError.NonfatalError(String.format(
-										"%s could not be loaded.", f.getName()));
-							}
-						}
-					}
+					roster.loadSide();
 					updateMenu();
 					repaint();
 					break;
@@ -584,28 +532,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					portal.Refollow();
 					break;
 				case reloadSide:
-					if (selectedSide == null)
-						break;
-					Side reload = SideReader.Load(selectedSide.filename);
-					game.ReplaceSide(selectedSide, reload);
-					selectedSide = reload;
-					notifySideListeners();
+					roster.reloadSide();
 					break;
 				case removeAllSides:
-					game.Reset();
-					game.RemoveAllSides();
-					game.running = false;
-					selectedSide = null;
-					notifySideListeners();
+					roster.removeAllSides();
 					updateMenu();
 					repaint();
 					break;
 				case removeSide:
-					if (selectedSide == null)
-						break;
-					game.RemoveSide(selectedSide);
-					selectedSide = null;
-					notifySideListeners();
+					roster.removeSide();
 					updateMenu();
 					repaint();
 					break;
@@ -809,23 +744,5 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				}
 			}
 		}
-	}
-
-	@Override
-	public void addSideSelectionListener(SideSelectionListener listener) {
-		if (listener != null)
-			sideListeners.add(listener);
-	}
-
-	@Override
-	public void removeSideSelectionListener(SideSelectionListener listener) {
-		if (listener != null)
-			sideListeners.remove(listener);
-	}
-
-	void notifySideListeners() {
-		for (SideSelectionListener l : sideListeners)
-			if (l != null)
-				l.setSelectedSide(selectedSide);
 	}
 }

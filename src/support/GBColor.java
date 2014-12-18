@@ -109,4 +109,7 @@ public class GBColor {
 		return new Color(r, g, b);
 	}
 
+	public static String toHex(Color base){
+		return String.format("#%02x%02x%02x", base.getRed(), base.getGreen(), base.getBlue());
+	}
 }
