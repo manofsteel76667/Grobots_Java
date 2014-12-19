@@ -256,6 +256,8 @@ class GBMenu extends JMenuBar {
 		viewOptions.get(MenuItems.showDecorations).setSelected(true);
 		viewOptions.get(MenuItems.showMeters).setSelected(true);
 		viewOptions.get(MenuItems.showMiniMapTrails).setSelected(true);
+		viewOptions.get(MenuItems.showRobotErrors).setSelected(game.getWorld().reportErrors);
+		viewOptions.get(MenuItems.showPrints).setSelected(game.getWorld().reportPrints);
 	}
 
 	/**

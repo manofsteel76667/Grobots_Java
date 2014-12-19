@@ -53,7 +53,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public boolean stopOnElimination;
 	public boolean tournament;
 	public int tournamentLength;
-	public boolean reportErrors, reportPrints;
+
 	// simulation parameters
 	public int seedLimit;
 	public boolean autoReseed;
@@ -72,7 +72,6 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		stopOnElimination = true;
 		timeLimit = kDefaultTimeLimit;
 		tournamentLength = -1;
-		reportErrors = true;
 		seedLimit = 10;
 		app = _app;
 	}
@@ -101,7 +100,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 			EndRound();
 	}
 
-	public void EndRound() throws GBSimulationError {
+	public void EndRound() {
 		// TODO: Replace when sound is implemented
 		// StartSound(siEndRound);
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
@@ -109,8 +108,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		ReportRound();
 		// Free references to the selected object so it can be GC'd
 		for (ObjectSelectionListener l : objectListeners)
-			if (l != null)
-				l.setSelectedObject(null);
+			l.setSelectedObject(null);
 		// Don't set selected side or type to null since someone may want to add
 		// a robot or something
 		if (tournament) {
@@ -516,5 +514,13 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public void removeObjectSelectionListener(ObjectSelectionListener listener) {
 		if (listener != null)
 			objectListeners.remove(listener);
+	}
+	
+	public void setReportErrors(boolean value){
+		world.reportErrors = value;
+	}
+	
+	public void setReportPrints(boolean value){
+		world.reportPrints = value;
 	}
 }

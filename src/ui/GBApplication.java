@@ -616,12 +616,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					setLayouts();
 					break;
 				case showPrints:
-					game.reportPrints = mainMenu.viewOptions.get(
-							ui.MenuItems.showPrints).isSelected();
+					game.setReportPrints(mainMenu.viewOptions.get(
+							ui.MenuItems.showPrints).isSelected());
 					break;
 				case showRobotErrors:
-					game.reportErrors = mainMenu.viewOptions.get(
-							ui.MenuItems.showRobotErrors).isSelected();
+					game.setReportErrors(mainMenu.viewOptions.get(
+							ui.MenuItems.showRobotErrors).isSelected());
 					break;
 				case showRoster:
 					roster.setVisible(!roster.isVisible());

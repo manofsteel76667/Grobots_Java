@@ -80,8 +80,7 @@ public class GBStackBrain extends Brain {
 		vectorVariables[index] = value;
 	}
 
-	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world)
-			throws GBBrainError {
+	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world){
 		int index = ins & StackBrainOpcode.kOpcodeIndexMask;
 		switch (OpType.byID(ins >> StackBrainOpcode.kOpcodeTypeShift)) {
 		case otPrimitive:
@@ -125,7 +124,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void ExecuteCall(int addr) throws GBStackOverflowError {
+	void ExecuteCall(int addr) {
 		if (returnStackHeight >= kReturnStackLimit)
 			throw new GBStackOverflowError();
 		returnStack[returnStackHeight++] = pc;
@@ -141,8 +140,7 @@ public class GBStackBrain extends Brain {
 	 * throw new GBStackUnderflowError(); stack[stackHeight - 1] =
 	 * op(stack[stackHeight - 1]); }
 	 */
-	void TwoNumberToNumberOp(TwoNumbertoNumberOperator op)
-			throws GBStackUnderflowError {
+	void TwoNumberToNumberOp(TwoNumbertoNumberOperator op){
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		--stackHeight;
@@ -174,8 +172,7 @@ public class GBStackBrain extends Brain {
 	 * VectorToScalarOp(VectortoScalarOperator op) { FinePoint v = PopVector();
 	 * Push((v.*op)()); }
 	 */
-	void TwoVectorToVectorOp(TwoVectortoVectorOperator op)
-			throws GBStackOverflowError, GBStackUnderflowError {
+	void TwoVectorToVectorOp(TwoVectortoVectorOperator op){
 		FinePoint v2 = PopVector();
 		FinePoint v1 = PopVector();
 		FinePoint result = new FinePoint();
@@ -195,8 +192,7 @@ public class GBStackBrain extends Brain {
 		PushVector(result);
 	}
 
-	void TwoVectorToScalarOp(TwoVectortoScalarOperator op)
-			throws GBStackOverflowError, GBStackUnderflowError {
+	void TwoVectorToScalarOp(TwoVectortoScalarOperator op) {
 		FinePoint v2 = PopVector();
 		FinePoint v1 = PopVector();
 		double result = 0;
@@ -213,19 +209,19 @@ public class GBStackBrain extends Brain {
 		Push(result);
 	}
 
-	void Push(double value) throws GBStackOverflowError {
+	void Push(double value) {
 		if (stackHeight >= kStackLimit)
 			throw new GBStackOverflowError();
 		stack[stackHeight++] = value;
 	}
 
-	double Pop() throws GBStackUnderflowError {
+	double Pop() {
 		if (stackHeight <= 0)
 			throw new GBStackUnderflowError();
 		return stack[--stackHeight];
 	}
 
-	double Peek(int delta) throws GBStackUnderflowError, GBStackOverflowError {
+	double Peek(int delta) {
 		if (delta < 1)
 			throw new GBBrainError("peeking stack element " + delta);
 		int where = stackHeight - delta;
@@ -236,14 +232,14 @@ public class GBStackBrain extends Brain {
 		return stack[where];
 	}
 
-	void PushVector(FinePoint v) throws GBStackOverflowError {
+	void PushVector(FinePoint v) {
 		if (stackHeight > kStackLimit - 2)
 			throw new GBStackOverflowError();
 		stack[stackHeight++] = v.x;
 		stack[stackHeight++] = v.y;
 	}
 
-	FinePoint PopVector() throws GBStackUnderflowError {
+	FinePoint PopVector() {
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		FinePoint v = new FinePoint(stack[stackHeight - 2],
@@ -252,21 +248,21 @@ public class GBStackBrain extends Brain {
 		return v;
 	}
 
-	int PopInteger() throws GBStackUnderflowError, GBNotIntegerError {
+	int PopInteger() {
 		return ToInteger(Pop());
 	}
 
-	void Pushboolean(boolean value) throws GBStackOverflowError {
+	void Pushboolean(boolean value) {
 		Push(FromBoolean(value));
 	}
 
-	void PushReturn(int value) throws GBStackOverflowError {
+	void PushReturn(int value) {
 		if (returnStackHeight >= kReturnStackLimit)
 			throw new GBStackOverflowError();
 		returnStack[returnStackHeight++] = value;
 	}
 
-	int PopReturn() throws GBStackUnderflowError {
+	int PopReturn() {
 		if (returnStackHeight <= 0)
 			throw new GBStackUnderflowError();
 		return returnStack[--returnStackHeight];
@@ -291,7 +287,7 @@ public class GBStackBrain extends Brain {
 		memory[addr - 1] = val;
 	}
 
-	int ToAddress(double value) throws GBBadAddressError {
+	int ToAddress(double value) {
 		int addr = (int) value;
 		if (addr == value) {
 			if (addr >= 0 && addr < spec.NumInstructions())
@@ -301,7 +297,7 @@ public class GBStackBrain extends Brain {
 		return -1;
 	}
 
-	int ToInteger(double value) throws GBNotIntegerError {
+	int ToInteger(double value) {
 		if (Math.floor(value) == value)
 			return (int) Math.floor(value);
 		else
@@ -360,7 +356,7 @@ public class GBStackBrain extends Brain {
 				+ robot.hardware.Processor();
 	}
 
-	public void ThinkOne(GBRobot robot, GBWorld world) throws GBBrainError {
+	public void ThinkOne(GBRobot robot, GBWorld world) {
 		int ins = spec.ReadInstruction(pc++);
 		remaining--; // currently all instructions take one cycle
 		used++;
@@ -466,8 +462,7 @@ public class GBStackBrain extends Brain {
 		return spec.VectorVariableName(index);
 	}
 
-	double ReadHardware(int index, GBRobot robot, GBWorld world)
-			throws GBUnknownHardwareVariableError {
+	double ReadHardware(int index, GBRobot robot, GBWorld world){
 		switch (StackBrainOpcode.byID(index)) {
 		// world
 		case hvTime:
@@ -775,9 +770,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void WriteHardware(int index, double value, GBRobot robot, GBWorld world)
-			throws GBReadOnlyError, GBNotIntegerError,
-			GBUnknownHardwareVariableError {
+	void WriteHardware(int index, double value, GBRobot robot, GBWorld world){
 		switch (StackBrainOpcode.byID(index)) {
 		case hvTime:
 		case hvTimeLimit:
@@ -1004,8 +997,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	FinePoint ReadHardwareVector(int index, GBRobot robot, GBWorld world)
-			throws GBUnknownHardwareVariableError {
+	FinePoint ReadHardwareVector(int index, GBRobot robot, GBWorld world){
 		switch (StackBrainOpcode.byID(index)) {
 		case hvvWorldSize:
 			return world.Size();
@@ -1052,8 +1044,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	void WriteHardwareVector(int index, FinePoint value, GBRobot robot,
-			GBWorld world) throws GBReadOnlyError,
-			GBUnknownHardwareVariableError {
+			GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvvWorldSize:
 		case hvvPosition:
@@ -1079,8 +1070,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void ExecutePrimitive(int index, GBRobot robot, GBWorld world)
-			throws GBBrainError {
+	void ExecutePrimitive(int index, GBRobot robot, GBWorld world){
 		double temp, temp2, temp3;
 		int tempInt;
 		switch (StackBrainOpcode.byID(index)) {
@@ -1735,9 +1725,7 @@ public class GBStackBrain extends Brain {
 		 */
 	}
 
-	void FirePeriodic(GBSensorState sensor, GBWorld world)
-			throws GBStackUnderflowError, GBStackOverflowError,
-			GBNotIntegerError {
+	void FirePeriodic(GBSensorState sensor, GBWorld world){
 		int period = PopInteger();
 		if (world.currentFrame >= sensor.Time() + period || sensor.Time() <= 0) {
 			sensor.Fire();

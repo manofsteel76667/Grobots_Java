@@ -224,13 +224,13 @@ public class GBStackBrainSpec extends BrainSpec {
 		cStack.add(value);
 	}
 
-	int CPeek() throws GBCStackError {
+	int CPeek() {
 		if (cStack.isEmpty())
 			throw new GBCStackError();
 		return cStack.get(cStack.size() - 1);
 	}
 
-	int CPop() throws GBCStackError {
+	int CPop() {
 		if (cStack.isEmpty())
 			throw new GBCStackError();
 		int i = cStack.get(cStack.size() - 1);
@@ -238,8 +238,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		return i;
 	}
 
-	void ExecuteCWord(StackBrainOpcode _code, int line) throws GBCStackError,
-			GBUnknownInstructionError {
+	void ExecuteCWord(StackBrainOpcode _code, int line) {
 		int temp, temp2;
 		switch (_code) {
 		case cwNop:
@@ -379,7 +378,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		vectorVariables.add(new GBVectorSymbol(name, value));
 	}
 
-	void AddLabel(String name) throws GBDuplicateSymbolError {
+	void AddLabel(String name) {
 		Iterator<GBLabel> it = labels.iterator();
 		while (it.hasNext()) {
 			// Check for forward declaration that hasn't been used yet
@@ -459,7 +458,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		labels.get(index).referenced = true;
 	}
 
-	public void ParseLine(String line, int lineNum) throws GBBrainError {
+	public void ParseLine(String line, int lineNum) {
 		String[] tokens = line.trim().split("\\s+");
 		for (String token : tokens) {
 			int index;
@@ -578,7 +577,7 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public void Check() throws GBBrainError {
+	public void Check() {
 		// check compile-time stack
 		if (!cStack.isEmpty())
 			throw new GBCStackError();
