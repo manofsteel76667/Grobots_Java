@@ -5,19 +5,22 @@
 package views;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.text.DefaultCaret;
 
 import sides.GBScores;
 import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
-import support.StringUtilities;
 
-public class GBTournamentView extends ListView {
+public class GBTournamentView extends JPanel {
 
 	/**
 	 * 
@@ -25,31 +28,54 @@ public class GBTournamentView extends ListView {
 	private static final long serialVersionUID = -4253425791054675659L;
 
 	GBGame game;
-	int headerHeight = 24;
-	int itemHeight = 15;
-	int footerHeight = 15;
-	int fontSize = 10;
-	boolean drawn;
-
-	List<Side> sideList;
+	JTextPane tournamentResults = new JTextPane();
+	
+	static final String headerText = "<thead class=header><tr>"
+			+ "<th></th>"
+			+ "<th>Side</th>"
+			+ "<th>Score</th>"
+			+ "<th>Error</th>"
+			+ "<th>Survival</th>"
+			+ "<th>Early<br/>Death</th>"
+			+ "<th>Late<br/>Death</th>"
+			+ "<th>Early<br/>Score</th>"
+			+ "<th>Fraction</th>"
+			+ "<th>Kills</th>"
+			+ "<th>Rounds</th>"
+			+ "</tr></thead>";
+	static final int numberWidth = 20;
+			
+	static final String tableFormat = "%s<table rules=groups>%s<tbody>%s</tbody>%s</table>";
+	
+	static final String inlineStyle = "<style type=text/css>"
+			+ ".header {border: 1px solid;}"
+			+ ".header td {valign: bottom;}"
+			+ ".bodyrow {border: 1px solid}"
+			+ "td {text-align: center; }"
+			+ "th {text-align: center; valign: bottom;}"
+			+ "</style>";
 
 	public GBTournamentView(GBGame _game) {
 		game = _game;
-		preferredWidth = 570;
+		tournamentResults.setContentType("text/html");
+		tournamentResults.setEditable(false);
+		update();
+		DefaultCaret caret = (DefaultCaret)tournamentResults.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+		JScrollPane scroll = new JScrollPane(tournamentResults);
+		scroll.setPreferredSize(new Dimension(600,400));
+		add(scroll);
 	}
-
-	public static final int kNameLeft = 25;
-	public static final int kPercentRight = 200;
-	public static final int kErrorRight = kPercentRight + 40;
-	public static final int kSurvivalRight = kErrorRight + 50;
-	public static final int kEarlyDeathRight = kSurvivalRight + 35;
-	public static final int kLateDeathRight = kEarlyDeathRight + 35;
-	public static final int kEarlyScoreRight = kLateDeathRight + 40;
-	public static final int kFractionRight = kEarlyScoreRight + 40;
-	public static final int kKillsRight = kFractionRight + 50;
-	public static final int kRoundsRight = kKillsRight + 40;
-	public static final int kWidth = kRoundsRight + 10;
-	public static final int kMinColorRounds = 10;
+	
+	public void update(){
+		tournamentResults.setText(String.format(tableFormat, 
+				inlineStyle,
+				headerText,
+				buildTableBody(),
+				buildFooter()));
+	}
+	
+	static final int kMinColorRounds = 10;
 
 	private Color rangeColor(double value, double min, double max, Color low,
 			Color high, int rounds, int minrounds) {
@@ -62,69 +88,135 @@ public class GBTournamentView extends ListView {
 		return Color.black;
 	}
 
-	public final String Name() {
-		return "Tournament";
+	public static String makeTableCell(int cellWidth, String format, Object cellValue, Color color){
+		StringBuilder sb = new StringBuilder();
+		sb.append("<td width=");
+		sb.append(cellWidth);
+		if (color != null){
+			sb.append(" color=");
+			sb.append(GBColor.toHex(color));
+		}
+		sb.append(">");
+		sb.append(String.format(format, cellValue));
+		sb.append("</td>");
+		return sb.toString();
+	}
+	
+	public static String makeTableCell(String format, Object cellValue, Color color){
+		return makeTableCell(numberWidth, format, cellValue, color);
+	}
+	
+	public static String makeEmptyTableCell(){
+		return "<td></td>";
+	}
+	
+	public static String makeEmptyTableCells(int count){
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i<count;i++)
+			sb.append(makeEmptyTableCell());
+		return sb.toString();
+	}
+	
+	public String buildTableBody(){
+		List<Side> list = new ArrayList<Side>();
+		list.addAll(game.sides);
+		Collections.sort(list);
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0;i< list.size();i++){
+			Side side = list.get(i);
+			GBScores scores = side.TournamentScores();
+			int rounds = scores.rounds;
+			int survived = scores.survived;
+			int notearly = rounds - scores.earlyDeaths;
+			sb.append("<tr class=bodyrow>");
+			//ID and name
+			sb.append(makeTableCell("%d.", i+1, GBColor.ContrastingTextColor(side.Color())));
+			sb.append(makeTableCell(150, "%s", side.Name(), null));
+			//Score error
+			if (rounds + survived >= 10)
+			sb.append(makeTableCell("%.1f%%", scores.BiomassFraction() * 100, 
+					survived > 10 ? null : Color.gray));
+			else
+				sb.append(makeEmptyTableCell());
+			// Other scores
+			if (rounds > 0){
+				sb.append(makeTableCell("%.1f%%", scores.BiomassFractionError() * 100, 
+						(rounds + survived < kMinColorRounds * 2 || scores.BiomassFractionError() < scores
+								.BiomassFractionError() * 2) ? Color.gray
+								: null));
+				sb.append(makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
+						rangeColor(scores.SurvivalNotSterile(), 0.2, 0.4, GBColor.darkRed,
+								GBColor.darkGreen, rounds, 0)));
+				sb.append(makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
+						rangeColor(scores.EarlyDeathRate(), 0.2, 0.4, GBColor.darkGreen,
+								GBColor.darkRed, rounds, 0)));
+				if (notearly > 0) {
+					sb.append(makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
+							rangeColor(scores.LateDeathRate(), 0.4, 0.6, GBColor.darkGreen,
+									GBColor.darkRed, notearly, 0)));
+				} else {
+					sb.append(makeEmptyTableCell());
+				}
+				sb.append(makeTableCell("%.0f%%", scores.EarlyBiomassFraction() * 100,
+						rangeColor(scores.EarlyBiomassFraction(), 0.08f, 0.12f, GBColor.darkRed,
+								GBColor.darkGreen, rounds + notearly,
+								kMinColorRounds * 2)));
+				if (survived > 0) {
+					sb.append(makeTableCell("%.0f%%", scores.SurvivalBiomassFraction() * 100,
+							rangeColor(scores.SurvivalBiomassFraction(), 0.2, 0.4, Color.blue, GBColor.purple,
+									survived, 0)));
+				}
+				else {
+					sb.append(makeEmptyTableCell());
+				}
+				sb.append(makeTableCell("%.0f%%", scores.KilledFraction() * 100,
+						rangeColor(scores.KilledFraction(), 0.05, 0.15, Color.blue, GBColor.purple,
+								survived, 0)));				
+			} else 
+				sb.append(makeEmptyTableCells(7));
+			sb.append(makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
+		}
+		sb.append("</tr>");
+		return sb.toString();
 	}
 
-	@Override
-	Rectangle drawHeader(Graphics2D g) {
-		sideList = new ArrayList<Side>();
-		sideList.addAll(game.sides);
-		Collections.sort(sideList);
-		headerHeight = g.getFontMetrics().getHeight() * 2 + padding * 2;
-		Rectangle box = getStartingHeaderRect(10, false);
-		box.setSize(box.width, headerHeight);
-		drawBox(g, box);
-		box.grow(-padding * 2, -padding * 2);
-		StringUtilities.drawStringLeft(g, "Side", box.x, box.y + box.height,
-				10, Color.black);
-		// draw various column headers
-		StringUtilities.drawStringRight(g, "Score", box.x + kPercentRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Error", box.x + kErrorRight, box.y
-				+ box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Survival", box.x + kSurvivalRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Death rates:", box.x
-				+ kLateDeathRight, box.y + g.getFontMetrics().getHeight(), 10,
-				Color.black);
-		StringUtilities.drawStringRight(g, "Early", box.x + kEarlyDeathRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Late", box.x + kLateDeathRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Early", box.x + kEarlyScoreRight,
-				box.y + g.getFontMetrics().getHeight(), 10, Color.black);
-		StringUtilities.drawStringRight(g, "Score", box.x + kEarlyScoreRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Fraction", box.x + kFractionRight,
-				box.y + box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Kills", box.x + kKillsRight, box.y
-				+ box.height, 10, Color.black);
-		StringUtilities.drawStringRight(g, "Rounds", box.x + kRoundsRight,
-				box.y + box.height, 10, Color.black);
-		box.grow(padding * 2, padding * 2);
-		drawn = true;// Hack so the tournDialog has a valid preferredsize to
-						// work with the first time
-		return box;
+	public String buildFooter(){
+		StringBuilder sb = new StringBuilder();
+		GBScores scores = game.TournamentScores();
+		int rounds = scores.rounds;
+		int notearly = scores.survived;
+		sb.append("<tr>");
+		sb.append(makeEmptyTableCell());
+		sb.append(makeTableCell(150, "%s", "Overall:", null));
+		sb.append(makeEmptyTableCells(2));
+		if (rounds > 0){
+			sb.append(makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
+					rangeColor(scores.SurvivalNotSterile(), 0.25, 0.5, GBColor.darkRed,
+							GBColor.darkGreen, rounds, 0)));
+			sb.append(makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
+					rangeColor(scores.EarlyDeathRate(), 0.2, 0.4, GBColor.darkGreen,
+							GBColor.darkRed, rounds, 0)));
+			if (notearly > 0) {
+			sb.append(makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
+					rangeColor(scores.LateDeathRate(), 0.45, 0.6, GBColor.darkGreen,
+							GBColor.darkRed, rounds, 0)));
+			} else {
+				sb.append(makeEmptyTableCell());
+			}			
+			sb.append(makeEmptyTableCells(2));
+			sb.append(makeTableCell("%.0f%%", scores.KillRate() * 100,
+					rangeColor(scores.KillRate(), 1.2, 1.8, Color.blue, GBColor.purple,
+							rounds, 0)));
+		}
+		else
+			sb.append(makeEmptyTableCells(6));
+		sb.append(makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
+		sb.append("</tr>");
+		return sb.toString();
 	}
-
-	@Override
+	
+	/*@Override
 	Rectangle drawOneItem(Graphics2D g, int index) {
-		itemHeight = g.getFontMetrics().getHeight() + padding * 2;
-		Rectangle box = getStartingItemRect(index, 10, false);
-		drawBox(g, box);
-		// DrawBox(box);
-		Side side = sideList.get(index);
-		if (side == null)
-			return box;
-		box.grow(-padding * 2, -padding * 2);
-		GBScores scores = side.TournamentScores();
-		// draw ID and name
-		StringUtilities.drawStringRight(g, Integer.toString(index + 1) + '.',
-				box.x + kNameLeft - 5, box.y + box.height, 10,
-				GBColor.ContrastingTextColor(side.Color()));
-		StringUtilities.drawStringLeft(g, side.Name(), box.x + kNameLeft, box.y
-				+ box.height, 10, Color.black);
 		// draw various numbers
 		int rounds = scores.rounds;
 		int survived = scores.survived;
@@ -212,9 +304,9 @@ public class GBTournamentView extends ListView {
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.black);
 		box.grow(padding * 2, padding * 2);
 		return box;
-	}
+	}*/
 
-	@Override
+	/*@Override
 	Rectangle drawFooter(Graphics2D g) {
 		Rectangle box = getStartingFooterRect(10, false);
 		drawBox(g, box);
@@ -271,10 +363,5 @@ public class GBTournamentView extends ListView {
 				rounds < kMinColorRounds ? GBColor.darkRed : Color.blue);
 		box.grow(padding * 2, padding * 2);
 		return box;
-	}
-
-	@Override
-	int setLength() {
-		return game.sides.size();
-	}
+	}*/
 }

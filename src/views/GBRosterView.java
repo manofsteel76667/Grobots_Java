@@ -79,19 +79,17 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	}
 
 	public void recalculate() {
-		int fps = 0;
 		if (game.sides.size() == 0) {
 			header.setText("<html><div align=center>" + "No sides loaded.</br>"
 					+ "Why not download some from the help menu?"
 					+ "</div></html>");
 		} else {
+			int fps = 0;
 			String status = game.tournament ? "Tournament: </br>" : "";
 			status += game.running ? "Running" : "Paused";
 			if (game.running && lastTime >= 0 && game.totalFrames > lastFrame) {
 				long frames = game.totalFrames - lastFrame;
-				long ms = System.currentTimeMillis() - lastTime;
-				if (ms == 0)
-					ms = 1;
+				long ms = Math.max(System.currentTimeMillis() - lastTime, 1);
 				fps = (int) (frames * 1000 / ms);
 			}
 			header.setText(String.format(headerLine, game.CurrentFrame(),
@@ -254,7 +252,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 					bioWidth = 1;
 				}
 			}
-			setText(String.format(cellFormat, sidecolor, index + 1,
+			setText(String.format(cellFormat, sidecolor, side.ID(),
 					side.Name(), bioWidth, biopercent, messageWidth,
 					messagecolor, message));
 			if (isSelected) {

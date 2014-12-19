@@ -192,7 +192,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						roster.repaint();
 					}
 					if (tournament.isVisible())
-						tournament.repaint();
+						tournament.update();
 					if (type.isVisible())
 						type.repaint();
 					if (statistics.isVisible())
@@ -638,20 +638,21 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					setLayouts();
 					break;
 				case showTournament:
-					if (tournDialog == null) {
+					//if (tournDialog == null) {
 						tournDialog = new JDialog(this, "Tournament Scores");
-						tournament.drawInBackground();
+						//tournament.drawInBackground();
 						tournDialog.getContentPane().add(tournament);
 						tournDialog.pack();
 						tournDialog.setLocation(
 								getWidth() / 2 - tournDialog.getWidth() / 2,
 								getHeight() / 2 - tournDialog.getHeight() / 2);
 						tournDialog.setVisible(true);
-					} else {
-						tournament.drawInBackground();
-						tournDialog.pack();
-						tournDialog.setVisible(true);
-					}
+					//} else {
+						//tournament.drawInBackground();
+					//	tournDialog.pack();
+					//	tournDialog.setVisible(true);
+					//}
+					//tournament.setVisible(true);
 					break;
 				case showTypes:
 					type.setVisible(!type.isVisible());
