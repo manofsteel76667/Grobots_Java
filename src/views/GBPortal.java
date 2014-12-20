@@ -120,7 +120,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	boolean isMiniMap;
 
-	public static final int kScale = 6; // default number of pixels per unit.
+	public static final int kScale = 10; // default number of pixels per unit.
 	static final int kMinDetailsScale = 10;
 	static final double kAutoScrollSpeed = 0.4;
 	static final double kAutofollowNearRange = 20;
@@ -256,8 +256,10 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// Rather than determining the edges of the map and painting a wall,
 		// we will make the background wall-colored and paint over it
 		// with tiles.
-		setBackground(Color.LIGHT_GRAY);
-		this.setBorder(BorderFactory.createLineBorder(Color.black));
+		if (!isMiniMap){
+			setBackground(Color.LIGHT_GRAY);
+			this.setBorder(BorderFactory.createLineBorder(Color.black));
+		}
 	}
 
 	@Override
@@ -294,7 +296,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			}
 			if (selectedObject != null) {
 				if (panning())
-					// TODO at full zoom the panning rate is slower than some
+					// FIXME at full zoom the panning rate is slower than some
 					// objects
 					if (!viewpoint.inRange(selectedObject.Position(),
 							16.0d / scale)) {
@@ -455,13 +457,13 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	@Override
 	public int toScreenX(double x) {
-		return (int) (Math.round((x - viewpoint.x) * scale) + this
+		return (int) ((x - viewpoint.x) * scale + this
 				.getVisibleRect().getCenterX());
 	}
 
 	@Override
 	public int toScreenY(double y) {
-		return (int) (Math.round((viewpoint.y - y) * scale) + this
+		return (int) ((viewpoint.y - y) * scale + this
 				.getVisibleRect().getCenterY());
 	}
 
@@ -511,13 +513,13 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	void RestrictScrolling() {
 		// prevent scrolling too far off edge.
 		if (viewpoint.x < world.Left())
-			viewpoint.x = (int) world.Left();
+			viewpoint.x = world.Left();
 		if (viewpoint.y < world.Bottom())
-			viewpoint.y = (int) world.Bottom();
+			viewpoint.y = world.Bottom();
 		if (viewpoint.x > world.Right())
-			viewpoint.x = (int) world.Right();
+			viewpoint.x = world.Right();
 		if (viewpoint.y > world.Top())
-			viewpoint.y = (int) world.Top();
+			viewpoint.y = world.Top();
 	}
 
 	@Override
@@ -531,7 +533,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewLeft() {
-		return viewpoint.x - getWidth() / (scale * 2);
+		return viewpoint.x - (double)getWidth() / (scale * 2);
 	}
 
 	/**
@@ -540,7 +542,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewTop() {
-		return viewpoint.y + getHeight() / (scale * 2);
+		return viewpoint.y + (double)getHeight() / (scale * 2);
 	}
 
 	/**
@@ -549,7 +551,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewRight() {
-		return viewpoint.x + getWidth() / (scale * 2);
+		return viewpoint.x + (double)getWidth() / (scale * 2);
 	}
 
 	/**
@@ -558,7 +560,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewBottom() {
-		return viewpoint.y - getHeight() / (scale * 2);
+		return viewpoint.y - (double)getHeight() / (scale * 2);
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {

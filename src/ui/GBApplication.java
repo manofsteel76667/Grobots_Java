@@ -83,11 +83,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	public StepRates stepRate;
 	public long lastTime;
 	int fastInterval = 20;// Repaint at 50Hz
-	javax.swing.Timer fastTimer;
-	ActionListener fastUpdate;
 	int slowInterval = 1500;
-	javax.swing.Timer slowTimer;
-	ActionListener slowUpdate;
 
 	GBMenu mainMenu;
 
@@ -104,23 +100,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	public GBApplication() {
+		//Global settings
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnsupportedLookAndFeelException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// Creation code found in run() method per recommended java Swing
-		// practices
 	}
 
 	@Override
@@ -143,7 +134,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			try {
 				icons.add(ImageIO.read(getClass().getResourceAsStream(s)));
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}
@@ -160,53 +150,57 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	void createTimers() {
-		fastUpdate = new ActionListener() {
+		javax.swing.Timer fastTimer = new javax.swing.Timer(fastInterval, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (!running) {
-					rendering++;
-					if (portal.isVisible())
-						portal.repaint();
-					if (minimap.isVisible())
-						minimap.repaint();
-					if (debug.isVisible())
-						debug.repaint();
-					rendering--;
-					fastTimer.setDelay(fastInterval);
+					drawFastPanels();
 				} else
-					fastTimer.setDelay(1);
+					game.fastDrawRequested = true;
 				;
 			};
-		};
-		fastTimer = new javax.swing.Timer(fastInterval, fastUpdate);
+		});
 		fastTimer.setRepeats(true);
 		fastTimer.setCoalesce(true);
 		fastTimer.start();
-		slowUpdate = new ActionListener() {
+		javax.swing.Timer slowTimer = new javax.swing.Timer(slowInterval, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (!running) {
-					rendering++;
-					if (roster.isVisible()) {
-						roster.recalculate();
-						roster.repaint();
-					}
-					if (tournament.isVisible())
-						tournament.update();
-					if (type.isVisible())
-						type.repaint();
-					if (statistics.isVisible())
-						statistics.repaint();
-					rendering--;
-					slowTimer.setDelay(slowInterval);
+					drawSlowPanels();
 				} else
-					slowTimer.setDelay(1);
+					game.slowDrawRequested = true;
 			}
-		};
-		slowTimer = new javax.swing.Timer(slowInterval, slowUpdate);
+		});
 		slowTimer.setRepeats(true);
 		slowTimer.setCoalesce(true);
 		slowTimer.start();
+	}
+	
+	public void drawFastPanels(){
+		rendering++;
+		if (portal.isVisible())
+			portal.repaint();
+		if (minimap.isVisible())
+			minimap.repaint();
+		if (debug.isVisible())
+			debug.repaint();
+		rendering--;
+	}
+	
+	public void drawSlowPanels(){
+		rendering++;
+		if (roster.isVisible()) {
+			roster.recalculate();
+			roster.repaint();
+		}
+		if (tournament.isVisible())
+			tournament.update();
+		if (type.isVisible())
+			type.repaint();
+		if (statistics.isVisible())
+			statistics.repaint();
+		rendering--;
 	}
 
 	void setLayouts() {
@@ -217,15 +211,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		JPanel left = new JPanel();
 		JPanel center = new JPanel();
 		JPanel right = new JPanel();
-		add(roster);
-		//add(left);
+		add(left);
 		add(center);
 		add(right);
 
 		// Left pane
 		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
 		left.setPreferredSize(new Dimension(250, 800));
-		//left.add(roster);
+		left.add(roster);
+		left.add(minimap, BorderLayout.PAGE_END);	
 		
 		// Center pane
 		JPanel portalpanel = new JPanel();
@@ -239,8 +233,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Right pane
 		right.setLayout(new BorderLayout());
 		right.add(type);
-		right.add(minimap, BorderLayout.PAGE_END);
-		minimap.setPreferredSize(new Dimension(200, 200));
 	}
 
 	void createChildViews() {
@@ -249,6 +241,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		portal = new GBPortal(game, false);
 		portal.setPreferredSize(new Dimension(600, 600));
 		minimap = new GBPortal(game, true);
+		minimap.setPreferredSize(new Dimension(200, 200));
 		roster = new GBRosterView(game);
 		tournament = new GBTournamentView(game);
 		type = new RobotTypeView(game);

@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+
 import sides.GBScores;
 import sides.RobotType;
 import sides.Side;
@@ -53,6 +55,10 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public boolean stopOnElimination;
 	public boolean tournament;
 	public int tournamentLength;
+	
+	// things to do after a round
+	public boolean slowDrawRequested;
+	public boolean fastDrawRequested;
 
 	// simulation parameters
 	public int seedLimit;
@@ -98,6 +104,24 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 			totalFrames = 0;
 		if (RoundOver())
 			EndRound();
+		if (fastDrawRequested || world.currentFrame == 0){
+			SwingUtilities.invokeLater(new Runnable(){
+				@Override
+				public void run(){
+					app.drawFastPanels();
+				}
+			});
+			fastDrawRequested = false;
+		}
+		if (slowDrawRequested || world.currentFrame == 0){
+			SwingUtilities.invokeLater(new Runnable(){
+				@Override
+				public void run(){
+					app.drawSlowPanels();
+				}
+			});
+			slowDrawRequested = false;
+		}
 	}
 
 	public void EndRound() {

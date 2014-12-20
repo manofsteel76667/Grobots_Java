@@ -273,12 +273,6 @@ public abstract class GBObject {
 			// if still moving closer...
 			FinePoint center = (rv1.multiply(m1).add(rv2.multiply(m2)))
 					.divide((m1 + m2)); // velocity of center-of-mass
-			/*
-			 * TODO: convert this to work without the FinePoint operators
-			 * Accelerate((rv2 - center) * (m2 * coefficient) / m1 - (rv1 -
-			 * center)); other.Accelerate((rv1 - center) * (m1 * coefficient) /
-			 * m2 - (rv2 - center));
-			 */
 			Accelerate(rv2.subtract(center).multiply(m2 * coefficient)
 					.divide(m1).subtract(rv1.subtract(center)));
 			other.Accelerate(rv1.subtract(center).multiply(m1 * coefficient)
@@ -287,11 +281,6 @@ public abstract class GBObject {
 		double totalr = radius + other.radius;
 		double overlap = totalr - dist;
 		if (overlap > kMaxOverlap) {
-			/* TODO: convert this to work without the FinePoint operators */
-			/*
-			 * FinePoint away1 = - cc / dist * m2 / (m1 + m2); FinePoint away2 =
-			 * cc / dist * m1 / (m1 + m2);
-			 */
 			FinePoint away1 = cc.negate().divide(dist).multiply(m2)
 					.divide(m1 + m2);
 			FinePoint away2 = cc.divide(dist).multiply(m1).divide(m1 + m2);

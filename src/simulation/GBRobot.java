@@ -495,11 +495,8 @@ public class GBRobot extends GBObject {
 		painter = new RadialGradientPaint(proj.toScreen(position),
 				(float) (radius * scale), focus, radialSteps, radialColors,
 				CycleMethod.NO_CYCLE);
-		// g2d.setPaint(robotColor);
 		g2d.setPaint(painter);
 		g2d.fill(where);
-		// g2d.setColor(type.Color());
-		// g2d.drawOval(where.x, where.y, where.width, where.height);
 		// meters
 		if (detailed) {
 			// energy meter

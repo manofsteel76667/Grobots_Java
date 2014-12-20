@@ -12,6 +12,8 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -145,17 +147,17 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	public void loadSide() {
 		JFileChooser fc = new JFileChooser();
 		fc.setMultiSelectionEnabled(true);
-		// TODO default this to the app directory and only show .gb
-		// files
-		fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
+		FileFilter filter = new FileNameExtensionFilter("Grobots sides", "gb");
+		fc.setFileFilter(filter);
+		//fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
 		int retval = fc.showOpenDialog(this);
 		if (retval == JFileChooser.APPROVE_OPTION) {
 			for (File f : fc.getSelectedFiles()) {
 				try {
-					Side _newside;
-					_newside = SideReader.Load(f.getPath());
-					game.AddSide(_newside);
-					model.addElement(_newside);
+					Side newside;
+					newside = SideReader.Load(f.getPath());
+					game.AddSide(newside);
+					model.addElement(newside);
 				} catch (Exception fileEx) {
 					GBError.NonfatalError(String.format(
 							"%s could not be loaded.", f.getName()));
