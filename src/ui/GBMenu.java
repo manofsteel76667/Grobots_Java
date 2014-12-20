@@ -449,20 +449,42 @@ class GBMenu extends JMenuBar {
 	public JToolBar simToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("back", MenuItems.slowdown.description,
+		btn = makeButton("control-rewind-icon.png", MenuItems.slowdown.description,
 				"Slow Down Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("pause", MenuItems.pause.description,
+		btn = makeButton("control-pause-icon.png", MenuItems.pause.description,
 				"Pause Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("play", MenuItems.play.description, "Run Simulation",
+		btn = makeButton("control-play-icon.png", MenuItems.play.description, "Run Simulation",
 				"");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("forward", MenuItems.speedup.description,
+		btn = makeButton("control-fastforward-icon.png", MenuItems.speedup.description,
 				"Speed Up Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		return ret;
+	}
+	
+	public JToolBar fileToolBar(ActionListener l) {
+		JToolBar ret = new JToolBar();
+		JButton btn;
+		btn = makeButton("actions-folder-new-icon.png", MenuItems.loadSide.description,
+				"Load Side", "Load");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("actions-edit-copy-icon.png", MenuItems.duplicateSide.description,
+				"Copy Side", "Copy");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("actions-edit-redo-icon.png", MenuItems.reloadSide.description,
+				"Reload Side", "Reload");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("actions-edit-delete-icon.png", MenuItems.removeSide.description,
+				"Remove Side", "Remove");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
@@ -471,11 +493,11 @@ class GBMenu extends JMenuBar {
 	public JToolBar debugToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("advance", MenuItems.singleFrame.description,
+		btn = makeButton("control-end-icon.png", MenuItems.singleFrame.description,
 				"Advance 1 Frame", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("step", MenuItems.stepBrain.description, "Step Brain",
+		btn = makeButton("right_footprint.png", MenuItems.stepBrain.description, "Step Brain",
 				"");
 		btn.addActionListener(l);
 		ret.add(btn);
@@ -485,8 +507,7 @@ class GBMenu extends JMenuBar {
 	protected JButton makeButton(String imageName, String actionCommand,
 			String toolTipText, String altText) {
 		// Look for the image.
-		String imgLocation = imageName + ".png";
-		URL imageURL = getClass().getResource(imgLocation);
+		URL imageURL = getClass().getResource(imageName);
 
 		// Create and initialize the button.
 		JButton button = new JButton();
@@ -497,7 +518,7 @@ class GBMenu extends JMenuBar {
 			button.setIcon(new ImageIcon(imageURL, altText));
 		} else { // no image found
 			button.setText(altText);
-			System.err.println("Resource not found: " + imgLocation);
+			System.err.println("Resource not found: " + imageName);
 		}
 
 		return button;

@@ -5,6 +5,7 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -18,7 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -67,7 +70,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	JDialog tournDialog;
 	JDialog aboutDialog;
 	JDialog debugDialog;
-	JToolBar portalControls;
 	JToolBar debugControls;
 	Debugger debug;
 
@@ -207,25 +209,32 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		for (Component c : this.getContentPane().getComponents())
 			this.getContentPane().remove(c);
 		// 3 Child panels
-		this.getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.X_AXIS));
+		JPanel children = new JPanel();
+		children.setLayout(new BoxLayout(children, BoxLayout.X_AXIS));
 		JPanel left = new JPanel();
+		left.setPreferredSize(new Dimension(270, 800));
+		left.setMaximumSize(new Dimension(200, 800));
+		left.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
 		JPanel center = new JPanel();
 		JPanel right = new JPanel();
-		add(left);
-		add(center);
-		add(right);
+		right.setPreferredSize(new Dimension(250, 800));
+		right.setMaximumSize(new Dimension(250, 800));
+		right.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
+		children.add(left);
+		children.add(center);
+		children.add(right);
+		add(children);
 
 		// Left pane
-		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-		left.setPreferredSize(new Dimension(250, 800));
+		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));		
 		left.add(roster);
-		left.add(minimap, BorderLayout.PAGE_END);	
+		left.add(minimap);
 		
 		// Center pane
 		JPanel portalpanel = new JPanel();
 		portalpanel.setLayout(new BorderLayout());
 		portalpanel.add(portal);
-		portalpanel.add(portalControls, BorderLayout.LINE_START);
+
 		center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 		center.add(portalpanel);
 		center.add(statistics);
@@ -233,6 +242,24 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Right pane
 		right.setLayout(new BorderLayout());
 		right.add(type);
+		
+		JToolBar main = new JToolBar();
+		main.setFloatable(false);
+		JToolBar fileControls = mainMenu.fileToolBar(this);
+		for(Component btn : fileControls.getComponents())
+			if (btn instanceof JButton) {
+				((JButton)btn).setBorder(BorderFactory.createLineBorder(Color.gray, 1, false));
+				((JButton)btn).setMinimumSize(new Dimension(25,25));
+			}
+		fileControls.setPreferredSize(new Dimension(200, 40));
+		left.add(fileControls);
+		main.add(fileControls);
+		JToolBar portalControls = mainMenu.simToolbar(this);
+		for(Component btn : portalControls.getComponents())
+			if (btn instanceof JButton)
+				((JButton)btn).setBorder(BorderFactory.createLineBorder(Color.gray, 1, false));
+		main.add(portalControls);
+		add(main, BorderLayout.NORTH);
 	}
 
 	void createChildViews() {
@@ -246,9 +273,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		tournament = new GBTournamentView(game);
 		type = new RobotTypeView(game);
 		statistics = new GBScoresView(game);
-		portalControls = mainMenu.simToolbar(this);
-		portalControls.setFloatable(false);
-		portalControls.setOrientation(JToolBar.VERTICAL);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
 		debug = new Debugger(debugControls);

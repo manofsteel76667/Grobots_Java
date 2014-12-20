@@ -24,7 +24,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import sides.RobotType;
@@ -258,7 +257,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// with tiles.
 		if (!isMiniMap){
 			setBackground(Color.LIGHT_GRAY);
-			this.setBorder(BorderFactory.createLineBorder(Color.black));
 		}
 	}
 

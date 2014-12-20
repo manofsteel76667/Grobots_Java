@@ -12,21 +12,21 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import sides.Side;
 import sides.SideReader;
 import simulation.GBGame;
 import support.GBColor;
-import support.StringUtilities;
 import ui.SideSelectionListener;
 import ui.SideSelector;
 import exception.GBError;
@@ -67,6 +67,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			model.addElement(s);
 		list = new JList<Side>(model);
 		list.setCellRenderer(new SideRenderer());
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		header = new JLabel();
 		recalculate();
@@ -190,13 +191,17 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			return;
 		Side newside = SideReader.Load(selectedSide.filename);
 		game.AddSide(newside);
+		model.addElement(newside);
 	}
 
 	public void reloadSide() {
 		if (selectedSide == null)
 			return;
+		int index = model.indexOf(selectedSide);
+		model.removeElementAt(index);
 		Side reload = SideReader.Load(selectedSide.filename);
 		game.ReplaceSide(selectedSide, reload);
+		model.add(index, reload);
 		selectedSide = reload;
 		notifySideListeners();
 	}
@@ -218,6 +223,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 		public JLabel getListCellRendererComponent(JList<? extends Side> list,
 				Side side, int index, boolean isSelected, boolean cellHasFocus) {
 			setText("");
+			setPreferredSize(new Dimension(240, 25));
 			String sidecolor = GBColor.toHex(GBColor.ContrastingTextColor(side
 					.Color()));
 			String biopercent = ""; // Biomass percent if healthy, null if
@@ -240,8 +246,8 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 					} else {
 						// Doing fine
 						// Bio percentage
-						biopercent = StringUtilities.toPercentString(side
-								.Scores().BiomassFraction(), 1);
+						biopercent = String.format("%.1f", side
+								.Scores().BiomassFraction());
 						// Population
 						message = Integer.toString(side.Scores().Population());
 					}
