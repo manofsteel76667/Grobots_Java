@@ -179,6 +179,7 @@ public class FinePoint extends Point2D.Double {
 		return new FinePoint(x * u.x + y * u.y, y * u.x - x * u.y);
 	}
 
+	@Override
 	public String toString() {
 		return String.format("(%f,  %f)", x, y);
 	}

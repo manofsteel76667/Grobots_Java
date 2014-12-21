@@ -15,6 +15,7 @@ import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 
 import sides.GBRobotDecoration;
 import sides.RobotType;
@@ -492,7 +493,7 @@ public class GBRobot extends GBObject {
 		radialColors[2] = robotColor;
 		FinePoint focus = proj.toScreen(position.add(velocity.multiply(radius
 				* kRadialPaintOffsetFactor)));
-		painter = new RadialGradientPaint(proj.toScreen(position),
+		painter = new RadialGradientPaint(new Point2D.Double(where.getCenterX(), where.getCenterY()),
 				(float) (radius * scale), focus, radialSteps, radialColors,
 				CycleMethod.NO_CYCLE);
 		g2d.setPaint(painter);
@@ -646,10 +647,10 @@ public class GBRobot extends GBObject {
 		int scale = proj.getScale();
 		// shield
 		if (hardware.ActualShield() > 0) {
-			halo.height += 4.0;
-			halo.width += 4.0;
-			halo.x -= 2.0;
-			halo.y -= 2.0;
+			halo.height += scale / 2;
+			halo.width += scale / 2;
+			halo.x -= scale / 2;
+			halo.y -= scale / 4;
 			g2d.setColor(GBColor.multiply(
 					shieldColor,
 					(float) (hardware.ActualShield() / (mass * kStandardShieldPerMass))));
@@ -662,10 +663,7 @@ public class GBRobot extends GBObject {
 					&& hardware.radio.writes[age] == 0)
 				continue;
 			double r = kRingGrowthRate * (age + 1);
-			Ellipse2D.Double ring = new Ellipse2D.Double(
-					proj.toScreenX(Left()), proj.toScreenY(Top()), r * 2
-							* scale, r * 2 * scale);
-			ring = proj.toScreenEllipse(this);
+			Ellipse2D.Double ring = proj.toScreenEllipse(this);
 			ring.x -= scale * r;
 			ring.y -= scale * r;
 			ring.width += r * 2 * scale;

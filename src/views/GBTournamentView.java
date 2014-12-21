@@ -19,6 +19,7 @@ import sides.GBScores;
 import sides.Side;
 import simulation.GBGame;
 import support.GBColor;
+import support.StringUtilities;
 
 public class GBTournamentView extends JPanel {
 
@@ -43,7 +44,6 @@ public class GBTournamentView extends JPanel {
 			+ "<th>Kills</th>"
 			+ "<th>Rounds</th>"
 			+ "</tr></thead>";
-	static final int numberWidth = 20;
 			
 	static final String tableFormat = "%s<table rules=groups>%s<tbody>%s</tbody>%s</table>";
 	
@@ -87,35 +87,6 @@ public class GBTournamentView extends JPanel {
 			return high;
 		return Color.black;
 	}
-
-	public static String makeTableCell(int cellWidth, String format, Object cellValue, Color color){
-		StringBuilder sb = new StringBuilder();
-		sb.append("<td width=");
-		sb.append(cellWidth);
-		if (color != null){
-			sb.append(" color=");
-			sb.append(GBColor.toHex(color));
-		}
-		sb.append(">");
-		sb.append(String.format(format, cellValue));
-		sb.append("</td>");
-		return sb.toString();
-	}
-	
-	public static String makeTableCell(String format, Object cellValue, Color color){
-		return makeTableCell(numberWidth, format, cellValue, color);
-	}
-	
-	public static String makeEmptyTableCell(){
-		return "<td></td>";
-	}
-	
-	public static String makeEmptyTableCells(int count){
-		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i<count;i++)
-			sb.append(makeEmptyTableCell());
-		return sb.toString();
-	}
 	
 	public String buildTableBody(){
 		List<Side> list = new ArrayList<Side>();
@@ -130,51 +101,51 @@ public class GBTournamentView extends JPanel {
 			int notearly = rounds - scores.earlyDeaths;
 			sb.append("<tr class=bodyrow>");
 			//ID and name
-			sb.append(makeTableCell("%d.", i+1, GBColor.ContrastingTextColor(side.Color())));
-			sb.append(makeTableCell(150, "%s", side.Name(), null));
+			sb.append(StringUtilities.makeTableCell("%d.", i+1, GBColor.ContrastingTextColor(side.Color())));
+			sb.append(StringUtilities.makeTableCell(150, "%s", side.Name(), null));
 			//Score error
 			if (rounds + survived >= 10)
-			sb.append(makeTableCell("%.1f%%", scores.BiomassFraction() * 100, 
+			sb.append(StringUtilities.makeTableCell("%.1f%%", scores.BiomassFraction() * 100, 
 					survived > 10 ? null : Color.gray));
 			else
-				sb.append(makeEmptyTableCell());
+				sb.append(StringUtilities.makeEmptyTableCell());
 			// Other scores
 			if (rounds > 0){
-				sb.append(makeTableCell("%.1f%%", scores.BiomassFractionError() * 100, 
+				sb.append(StringUtilities.makeTableCell("%.1f%%", scores.BiomassFractionError() * 100, 
 						(rounds + survived < kMinColorRounds * 2 || scores.BiomassFractionError() < scores
 								.BiomassFractionError() * 2) ? Color.gray
 								: null));
-				sb.append(makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
+				sb.append(StringUtilities.makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
 						rangeColor(scores.SurvivalNotSterile(), 0.2, 0.4, GBColor.darkRed,
 								GBColor.darkGreen, rounds, 0)));
-				sb.append(makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
+				sb.append(StringUtilities.makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
 						rangeColor(scores.EarlyDeathRate(), 0.2, 0.4, GBColor.darkGreen,
 								GBColor.darkRed, rounds, 0)));
 				if (notearly > 0) {
-					sb.append(makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
+					sb.append(StringUtilities.makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
 							rangeColor(scores.LateDeathRate(), 0.4, 0.6, GBColor.darkGreen,
 									GBColor.darkRed, notearly, 0)));
 				} else {
-					sb.append(makeEmptyTableCell());
+					sb.append(StringUtilities.makeEmptyTableCell());
 				}
-				sb.append(makeTableCell("%.0f%%", scores.EarlyBiomassFraction() * 100,
+				sb.append(StringUtilities.makeTableCell("%.0f%%", scores.EarlyBiomassFraction() * 100,
 						rangeColor(scores.EarlyBiomassFraction(), 0.08f, 0.12f, GBColor.darkRed,
 								GBColor.darkGreen, rounds + notearly,
 								kMinColorRounds * 2)));
 				if (survived > 0) {
-					sb.append(makeTableCell("%.0f%%", scores.SurvivalBiomassFraction() * 100,
+					sb.append(StringUtilities.makeTableCell("%.0f%%", scores.SurvivalBiomassFraction() * 100,
 							rangeColor(scores.SurvivalBiomassFraction(), 0.2, 0.4, Color.blue, GBColor.purple,
 									survived, 0)));
 				}
 				else {
-					sb.append(makeEmptyTableCell());
+					sb.append(StringUtilities.makeEmptyTableCell());
 				}
-				sb.append(makeTableCell("%.0f%%", scores.KilledFraction() * 100,
+				sb.append(StringUtilities.makeTableCell("%.0f%%", scores.KilledFraction() * 100,
 						rangeColor(scores.KilledFraction(), 0.05, 0.15, Color.blue, GBColor.purple,
 								survived, 0)));				
 			} else 
-				sb.append(makeEmptyTableCells(7));
-			sb.append(makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
+				sb.append(StringUtilities.makeEmptyTableCells(7));
+			sb.append(StringUtilities.makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
 		}
 		sb.append("</tr>");
 		return sb.toString();
@@ -186,31 +157,31 @@ public class GBTournamentView extends JPanel {
 		int rounds = scores.rounds;
 		int notearly = scores.survived;
 		sb.append("<tr>");
-		sb.append(makeEmptyTableCell());
-		sb.append(makeTableCell(150, "%s", "Overall:", null));
-		sb.append(makeEmptyTableCells(2));
+		sb.append(StringUtilities.makeEmptyTableCell());
+		sb.append(StringUtilities.makeTableCell(150, "%s", "Overall:", null));
+		sb.append(StringUtilities.makeEmptyTableCells(2));
 		if (rounds > 0){
-			sb.append(makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
+			sb.append(StringUtilities.makeTableCell("%.0f%%", scores.SurvivalNotSterile() * 100,
 					rangeColor(scores.SurvivalNotSterile(), 0.25, 0.5, GBColor.darkRed,
 							GBColor.darkGreen, rounds, 0)));
-			sb.append(makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
+			sb.append(StringUtilities.makeTableCell("%.0f%%", scores.EarlyDeathRate() * 100,
 					rangeColor(scores.EarlyDeathRate(), 0.2, 0.4, GBColor.darkGreen,
 							GBColor.darkRed, rounds, 0)));
 			if (notearly > 0) {
-			sb.append(makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
+			sb.append(StringUtilities.makeTableCell("%.0f%%", scores.LateDeathRate() * 100,
 					rangeColor(scores.LateDeathRate(), 0.45, 0.6, GBColor.darkGreen,
 							GBColor.darkRed, rounds, 0)));
 			} else {
-				sb.append(makeEmptyTableCell());
+				sb.append(StringUtilities.makeEmptyTableCell());
 			}			
-			sb.append(makeEmptyTableCells(2));
-			sb.append(makeTableCell("%.0f%%", scores.KillRate() * 100,
+			sb.append(StringUtilities.makeEmptyTableCells(2));
+			sb.append(StringUtilities.makeTableCell("%.0f%%", scores.KillRate() * 100,
 					rangeColor(scores.KillRate(), 1.2, 1.8, Color.blue, GBColor.purple,
 							rounds, 0)));
 		}
 		else
-			sb.append(makeEmptyTableCells(6));
-		sb.append(makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
+			sb.append(StringUtilities.makeEmptyTableCells(6));
+		sb.append(StringUtilities.makeTableCell("%d", rounds, rounds < kMinColorRounds ? GBColor.darkRed : null));
 		sb.append("</tr>");
 		return sb.toString();
 	}

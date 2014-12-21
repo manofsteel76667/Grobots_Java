@@ -276,8 +276,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
 		debug = new Debugger(debugControls);
-		debug.setPreferredSize(new Dimension(debug.getPreferredWidth(), debug
-				.getPreferredHeight()));
 		// Wire up all the listeners and selectors
 		// Portal and minimap update each other
 		minimap.addPortalListener(portal);
@@ -606,16 +604,17 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						// TODO: do the setsize step when Followed() changes,
 						// then make debug
 						// not resizable again
-						// debugDialog.setResizable(false);
-						debug.repaint();
+						debugDialog.setResizable(false);
+						//debug.repaint();
 						debugDialog.getContentPane().add(debug);
 						debugDialog.pack();
-						debugDialog.setLocation(
-								getWidth() / 2 - debugDialog.getWidth() / 2,
-								getHeight() / 2 - debugDialog.getHeight() / 2);
+						//debugDialog.setLocation(
+						//		getWidth() / 2 - debugDialog.getWidth() / 2,
+						//		getHeight() / 2 - debugDialog.getHeight() / 2);
 					}
-					debug.setSize(debug.getPreferredSize());
-					debugDialog.pack();
+					
+					//debugDialog.pack();
+					//debugDialog.setSize(new Dimension(600,600));
 					debugDialog.setVisible(true);
 					break;
 				case showDecorations:
