@@ -287,6 +287,7 @@ public class GBWorld extends GBObjectWorld {
 			if (sides.get(i).Name().equals(newSide.Name()))
 				newSide.SetName(newSide.Name() + '\'');
 		sides.add(pos, newSide);
+		clearSideObjects(oldSide);
 	}
 
 	public void RemoveSide(Side side) {
@@ -305,10 +306,12 @@ public class GBWorld extends GBObjectWorld {
 	void clearSideObjects(Side side) {
 		if (side == null)
 			throw new NullPointerException("can't clear objects for null side");
+		synchronized (allObjects) {
 		Iterator<GBObject> it = allObjects.iterator();
 		while (it.hasNext())
 			if (side.equals(it.next().Owner()))
 				it.remove();
+		}
 	}
 
 	public Side GetSide(int index) {

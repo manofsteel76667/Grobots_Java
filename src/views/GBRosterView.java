@@ -200,7 +200,8 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 		int index = model.indexOf(selectedSide);
 		model.removeElementAt(index);
 		Side reload = SideReader.Load(selectedSide.filename);
-		game.ReplaceSide(selectedSide, reload);
+		if (game.sides.contains(selectedSide))
+			game.ReplaceSide(selectedSide, reload);
 		model.add(index, reload);
 		selectedSide = reload;
 		notifySideListeners();
@@ -273,7 +274,6 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			setEnabled(list.isEnabled());
 			setFont(list.getFont());
 			setOpaque(true);
-			// this.setPreferredSize(new Dimension(250,10));
 			return this;
 		}
 	}

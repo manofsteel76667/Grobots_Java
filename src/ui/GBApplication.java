@@ -158,7 +158,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				if (!running) {
 					drawFastPanels();
 				} else
-					game.fastDrawRequested = true;
+					game.isFastDrawRequested = true;
 				;
 			};
 		});
@@ -171,7 +171,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				if (!running) {
 					drawSlowPanels();
 				} else
-					game.slowDrawRequested = true;
+					game.isSlowDrawRequested = true;
 			}
 		});
 		slowTimer.setRepeats(true);
@@ -304,12 +304,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	void updateMenu() {
-		setMenuItem(MenuItems.removeAllSides, game.sides.size() > 0
-				&& !game.running);
-		setMenuItem(MenuItems.reloadSide, selectedSide != null && !game.running);
-		setMenuItem(MenuItems.duplicateSide, selectedSide != null
-				&& !game.running);
-		setMenuItem(MenuItems.removeSide, selectedSide != null && !game.running);
+		setMenuItem(MenuItems.removeAllSides, game.sides.size() > 0);
+		setMenuItem(MenuItems.reloadSide, selectedSide != null);
+		setMenuItem(MenuItems.duplicateSide, selectedSide != null);
+		setMenuItem(MenuItems.removeSide, selectedSide != null);
 		setMenuItem(MenuItems.addRobot, selectedType != null);
 		setMenuItem(MenuItems.addSeed, selectedSide != null);
 		// Unimplemented items
@@ -547,7 +545,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					portal.Refollow();
 					break;
 				case reloadSide:
-					roster.reloadSide();
+					if (!running)
+						roster.reloadSide();
 					break;
 				case removeAllSides:
 					roster.removeAllSides();

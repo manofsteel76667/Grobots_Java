@@ -30,8 +30,16 @@ import exception.GBSimulationError;
 public class GBGame implements ScoreKeeper, ObjectSelector {
 	public List<Side> sides;
 	GBApplication app;
-	int previousSidesAlive; // num of non-extinct sides last frame
 	GBWorld world;
+	
+	//Post-simulation actions
+	List<Side> sidesToRemove;
+	public boolean isSlowDrawRequested;
+	public boolean isFastDrawRequested;
+	Side sideToReplace;
+	Side replacementSide;
+	int previousSidesAlive; // num of non-extinct sides last frame
+
 	// stats
 	int mannas, corpses;
 	int mannaValue, corpseValue, robotValue;
@@ -55,10 +63,6 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public boolean stopOnElimination;
 	public boolean tournament;
 	public int tournamentLength;
-	
-	// things to do after a round
-	public boolean slowDrawRequested;
-	public boolean fastDrawRequested;
 
 	// simulation parameters
 	public int seedLimit;
@@ -69,6 +73,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 
 	public GBGame(GBApplication _app) {
 		sides = new ArrayList<Side>();
+		sidesToRemove = new ArrayList<Side>();
 		objectListeners = new ArrayList<ObjectSelectionListener>();
 		typeListeners = new ArrayList<TypeSelectionListener>();
 		sideListeners = new ArrayList<SideSelectionListener>();
@@ -104,23 +109,38 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 			totalFrames = 0;
 		if (RoundOver())
 			EndRound();
-		if (fastDrawRequested || world.currentFrame == 0){
-			SwingUtilities.invokeLater(new Runnable(){
+		if (sidesToRemove.size() > 0) {
+			for (Side side : sidesToRemove) {
+				if (sides.contains(side))
+					sides.remove(side);
+				if (world.sides.contains(side))
+					world.RemoveSide(side);
+			}
+			sidesToRemove.clear();
+			checkSides();
+		}
+		if (isFastDrawRequested || world.currentFrame == 0) {
+			SwingUtilities.invokeLater(new Runnable() {
 				@Override
-				public void run(){
+				public void run() {
 					app.drawFastPanels();
 				}
 			});
-			fastDrawRequested = false;
+			isFastDrawRequested = false;
 		}
-		if (slowDrawRequested || world.currentFrame == 0){
-			SwingUtilities.invokeLater(new Runnable(){
+		if (isSlowDrawRequested || world.currentFrame == 0) {
+			SwingUtilities.invokeLater(new Runnable() {
 				@Override
-				public void run(){
+				public void run() {
 					app.drawSlowPanels();
 				}
 			});
-			slowDrawRequested = false;
+			isSlowDrawRequested = false;
+		}
+		if (sideToReplace != null && replacementSide != null) {
+			handleSideReplacement(sideToReplace, replacementSide);
+			sideToReplace = null;
+			replacementSide = null;
 		}
 	}
 
@@ -269,6 +289,18 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public void ReplaceSide(Side oldSide, Side newSide) {
 		if (oldSide == null || newSide == null)
 			throw new NullPointerException("replacing null side");
+		if (!running){
+			handleSideReplacement(oldSide, newSide);
+		}
+		else {
+			//Replacement will happen once the current frame is over.
+			sideToReplace = oldSide;
+			replacementSide = newSide;
+		}
+			
+	}
+	
+	void handleSideReplacement(Side oldSide, Side newSide) {
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
 		for (int i = 0; i < sides.size(); ++i)
@@ -282,15 +314,33 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public void RemoveSide(Side side) {
 		if (side == null)
 			throw new NullPointerException("tried to remove null side");
+		if (running){
+			sidesToRemove.add(side);
+			return;
+		}
 		sides.remove(side);
 		if (world.sides.contains(side))
 			world.RemoveSide(side);
+		checkSides();
+	}
+	
+	void checkSides() {
+		if (sides.size() == 0) {
+			for (ObjectSelectionListener l : objectListeners)
+				l.setSelectedObject(null);
+			running = false;
+			ResetTournamentScores();
+		}
 	}
 
 	public void RemoveAllSides() {
+		if (running) {
+			sidesToRemove.addAll(sides);
+			return;
+		}
 		sides.clear();
-		ResetTournamentScores();
 		world.RemoveAllSides();
+		checkSides();
 	}
 
 	public GBWorld getWorld() {
@@ -539,12 +589,12 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		if (listener != null)
 			objectListeners.remove(listener);
 	}
-	
-	public void setReportErrors(boolean value){
+
+	public void setReportErrors(boolean value) {
 		world.reportErrors = value;
 	}
-	
-	public void setReportPrints(boolean value){
+
+	public void setReportPrints(boolean value) {
 		world.reportPrints = value;
 	}
 }
