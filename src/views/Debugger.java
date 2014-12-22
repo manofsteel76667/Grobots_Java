@@ -419,10 +419,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			}
 			// Sensor section
 			String resultFormat = "%s-%s";
-			if (hw.sensor1.MaxResults() != 0 || hw.sensor2.Radius() != 0
-					|| hw.sensor3.Radius() != 0) {
+			if (hw.sensor1.MaxResults() != 0 || hw.sensor2.MaxResults() != 0
+					|| hw.sensor3.MaxResults() != 0) {
 				doc.insertString(doc.getLength(), "Sensors\n", bold);
-				if (hw.sensor1.Radius() != 0) {
+				if (hw.sensor1.MaxResults() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "robot-found",
