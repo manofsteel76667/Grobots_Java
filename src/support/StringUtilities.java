@@ -108,12 +108,12 @@ public class StringUtilities {
 		drawStringRight(g, str2, right, y, size, color, bold);
 	}
 	
-	public static String makeTableCell(int cellWidth, String format, Object cellValue, Color color){
+	public static String makeTableCell(int cellWidth, String format, Color color, Object... cellValue){
 		StringBuilder sb = new StringBuilder();
 		sb.append("<td width=");
 		sb.append(cellWidth);
 		if (color != null){
-			sb.append(" color=");
+			sb.append("><font color=");
 			sb.append(GBColor.toHex(color));
 		}
 		sb.append(">");
@@ -124,8 +124,8 @@ public class StringUtilities {
 	
 	static final int numberWidth = 20;
 	
-	public static String makeTableCell(String format, Object cellValue, Color color){
-		return makeTableCell(numberWidth, format, cellValue, color);
+	public static String makeTableCell(String format, Color color, Object... cellValue){
+		return makeTableCell(numberWidth, format, color, cellValue);
 	}
 	
 	public static String makeEmptyTableCell(){

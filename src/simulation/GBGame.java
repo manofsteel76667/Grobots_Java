@@ -4,6 +4,8 @@
  *******************************************************************************/
 package simulation;
 
+import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -19,6 +21,7 @@ import sides.GBScores;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
+import support.GBColor;
 import support.StringUtilities;
 import ui.GBApplication;
 import ui.ObjectSelectionListener;
@@ -31,8 +34,8 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public List<Side> sides;
 	GBApplication app;
 	GBWorld world;
-	
-	//Post-simulation actions
+
+	// Post-simulation actions
 	List<Side> sidesToRemove;
 	public boolean isSlowDrawRequested;
 	public boolean isFastDrawRequested;
@@ -289,17 +292,16 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public void ReplaceSide(Side oldSide, Side newSide) {
 		if (oldSide == null || newSide == null)
 			throw new NullPointerException("replacing null side");
-		if (!running){
+		if (!running) {
 			handleSideReplacement(oldSide, newSide);
-		}
-		else {
-			//Replacement will happen once the current frame is over.
+		} else {
+			// Replacement will happen once the current frame is over.
 			sideToReplace = oldSide;
 			replacementSide = newSide;
 		}
-			
+
 	}
-	
+
 	void handleSideReplacement(Side oldSide, Side newSide) {
 		int pos = sides.indexOf(oldSide);
 		sides.remove(oldSide);
@@ -314,7 +316,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	public void RemoveSide(Side side) {
 		if (side == null)
 			throw new NullPointerException("tried to remove null side");
-		if (running){
+		if (running) {
 			sidesToRemove.add(side);
 			return;
 		}
@@ -323,7 +325,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 			world.RemoveSide(side);
 		checkSides();
 	}
-	
+
 	void checkSides() {
 		if (sides.size() == 0) {
 			for (ObjectSelectionListener l : objectListeners)
@@ -435,27 +437,14 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		f.write(StringUtilities.toPercentString(percent, digits));
 	}
 
-	public static final int kMinColorRounds = 10;
-
-	// The low/high classification logic is duplicated from
-	// GBTournamentView::DrawItem.
 	public void DumpTournamentScores(boolean html) throws IOException {
+		String date = new SimpleDateFormat("M-d-Y H:m:s").format(new Date());
 		PrintWriter f = new PrintWriter("tournament-scores.html");
-		// FileOutputStream f = new FileOutputStream("tournament-scores.html");
-		// std::ofstream f("tournament-scores.html", std::ios::app);
-		// if ( !f.good() ) return;
-		// Date now = new Date();
-		String date = new SimpleDateFormat("M d Y H:m:s").format(new Date());
-		// strftime(date, 32, "%d %b %Y %H:%M:%S", localtime(&now));
-		if (html)
-			f.write("\n<h3>Tournament "
-					+ date
-					+ "</h3>\n\n<table>\n"
-					+ "<colgroup><col><col><col><colgroup><col class=key><col><col><col><col><col><col>\n"
-					+ "<thead><tr><th>Rank<th>Side<th>Author\n"
-					+ "<th>Score<th>Nonsterile<br>survival<th>Early<br>death<th>Late<br>death"
-					+ "<th>Early<br>score<th>Fraction<th>Kills\n" + "<tbody>\n");
-		else
+		if (html) {
+			f.write(htmlTournamentResults(true));
+			f.close();
+			return;
+		} else
 			f.write("\n==="
 					+ date
 					+ "===\n\n"
@@ -464,18 +453,12 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 					+ "!Early score\n!Fraction\n!Kills\n");
 		List<Side> sorted = sides;
 		Collections.sort(sorted);
-		// std::sort(sorted.begin(), sorted.end(), Side::Better);
 		double survival = tournamentScores.SurvivalNotSterile();
 		double earlyDeaths = tournamentScores.EarlyDeathRate();
 		double lateDeaths = tournamentScores.LateDeathRate();
 		for (int i = 0; i < sorted.size(); ++i) {
 			Side s = sorted.get(i);
-			if (html) {
-				f.write("<tr><td>" + (i + 1) + "<td><a href='sides/"
-						+ s.filename + "'>");
-				f.write(s.Name() + "</a><td>" + s.Author() + "\n");
-			} else
-				f.write("|-\n|" + (i + 1) + "||" + s.Name() + "||" + s.Author());
+			f.write("|-\n|" + (i + 1) + "||" + s.Name() + "||" + s.Author());
 			GBScores sc = s.TournamentScores();
 			int rounds = sc.rounds;
 			int notearly = rounds - sc.earlyDeaths;
@@ -499,36 +482,21 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 					rounds >= kMinColorRounds, 0.05f, 0.15f, "low", "high");
 			f.write("\n");
 		}
-		if (html)
-			f.write("<tfoot><tr><th colspan=4>Overall ("
-					+ tournamentScores.rounds
-					+ " rounds):<td>"
-					+ StringUtilities.toPercentString(
-							tournamentScores.SurvivalNotSterile(), 0)
-					+ "<td>"
-					+ StringUtilities.toPercentString(
-							tournamentScores.EarlyDeathRate(), 0)
-					+ "<td>"
-					+ StringUtilities.toPercentString(
-							tournamentScores.LateDeathRate(), 0)
-					+ "<th colspan=2><td>"
-					+ StringUtilities.toPercentString(
-							tournamentScores.KillRate(), 0) + "\n</table>\n");
-		else
-			f.write("|-\n!colspan='4'|Overall ("
-					+ tournamentScores.rounds
-					+ " rounds):||"
-					+ StringUtilities.toPercentString(
-							tournamentScores.SurvivalNotSterile(), 0)
-					+ "||"
-					+ StringUtilities.toPercentString(
-							tournamentScores.EarlyDeathRate(), 0)
-					+ "||"
-					+ StringUtilities.toPercentString(
-							tournamentScores.LateDeathRate(), 0)
-					+ "!!colspan='2'| ||"
-					+ StringUtilities.toPercentString(
-							tournamentScores.KillRate(), 0) + "\n|}\n");
+		f.write("|-\n!colspan='4'|Overall ("
+				+ tournamentScores.rounds
+				+ " rounds):||"
+				+ StringUtilities.toPercentString(
+						tournamentScores.SurvivalNotSterile(), 0)
+				+ "||"
+				+ StringUtilities.toPercentString(
+						tournamentScores.EarlyDeathRate(), 0)
+				+ "||"
+				+ StringUtilities.toPercentString(
+						tournamentScores.LateDeathRate(), 0)
+				+ "!!colspan='2'| ||"
+				+ StringUtilities.toPercentString(tournamentScores.KillRate(),
+						0) + "\n|}\n");
+		f.close();
 	}
 
 	public GBScores RoundScores() {
@@ -596,5 +564,174 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 
 	public void setReportPrints(boolean value) {
 		world.reportPrints = value;
+	}
+
+	static final String headerText = "<thead class=header><tr>" + "<th></th>"
+			+ "<th>Side</th>" + "<th>Author</th>" + "<th>Score</th>"
+			+ "<th>Error</th>" + "<th>Nonsterile<br/>Survival</th>"
+			+ "<th>Early<br/>Death</th>" + "<th>Late<br/>Death</th>"
+			+ "<th>Early<br/>Score</th>" + "<th>Fraction</th>"
+			+ "<th>Kills</th>" + "<th>Rounds</th>" + "</tr></thead>";
+
+	static final String tableFormat = "%s<table><caption>%s</caption>%s<tbody>%s</tbody><tfoot>%s</tfoot></table>";
+
+	static final String inlineStyle = "<style type=text/css>"
+			+ ".header {border: 1px solid; padding: 3px; }"
+			+ ".bodyrow {border: 1px solid; padding: 3px; }"
+			+ ".footer {border: 1px solid; padding: 3px; font-weight: bold}"
+			+ "td {text-align: center; }"
+			+ "th {text-align: center; padding: 5px;}"
+			+ "caption {font-weight: bold; text-align: center; padding: 5px; font-size: large;}"
+			+ "</style>";
+
+	public String htmlTournamentResults(boolean asDump) {
+		return String.format(
+				tableFormat,
+				inlineStyle,
+				asDump ? "Tournament Results<br/>"
+						+ new SimpleDateFormat("M-d-Y H:m:s")
+								.format(new Date()) : "Standings", headerText,
+				buildTableBody(asDump), buildFooter());
+	}
+
+	String buildTableBody(boolean asDump) {
+		List<Side> list = new ArrayList<Side>();
+		list.addAll(sides);
+		Collections.sort(list);
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < list.size(); i++) {
+			Side side = list.get(i);
+			GBScores scores = side.TournamentScores();
+			int rounds = scores.rounds;
+			int survived = scores.survived;
+			int notearly = rounds - scores.earlyDeaths;
+			sb.append("<tr class=bodyrow>");
+			// ID and name
+			sb.append(StringUtilities.makeTableCell("%d.",
+					GBColor.ContrastingTextColor(side.Color()), i + 1));
+			if (asDump)
+				sb.append(StringUtilities.makeTableCell(150,
+						"<a href='sides/%s'>%s</a>", null, new File(
+								side.filename).getName(), side.Name()));
+			else
+				sb.append(StringUtilities.makeTableCell(150, "%s", null,
+						side.Name()));
+			sb.append(StringUtilities.makeTableCell(75, "%s", null,
+					side.Author()));
+			// Score error
+			if (rounds + survived >= 10)
+				sb.append(StringUtilities.makeTableCell("%.1f%%",
+						survived > 10 ? null : Color.gray,
+						scores.BiomassFraction() * 100));
+			else
+				sb.append(StringUtilities.makeEmptyTableCell());
+			// Other scores
+			if (rounds > 0) {
+				sb.append(StringUtilities.makeTableCell("%.1f%%",
+						(rounds + survived < kMinColorRounds * 2 || scores
+								.BiomassFractionError() < scores
+								.BiomassFractionError() * 2) ? Color.gray
+								: null, scores.BiomassFractionError() * 100));
+				sb.append(StringUtilities.makeTableCell(
+						"%.0f%%",
+						rangeColor(scores.SurvivalNotSterile(), 0.2, 0.4,
+								GBColor.darkRed, GBColor.darkGreen, rounds, 0),
+						scores.SurvivalNotSterile() * 100));
+				sb.append(StringUtilities.makeTableCell(
+						"%.0f%%",
+						rangeColor(scores.EarlyDeathRate(), 0.2, 0.4,
+								GBColor.darkGreen, GBColor.darkRed, rounds, 0),
+						scores.EarlyDeathRate() * 100));
+				if (notearly > 0) {
+					sb.append(StringUtilities.makeTableCell(
+							"%.0f%%",
+							rangeColor(scores.LateDeathRate(), 0.4, 0.6,
+									GBColor.darkGreen, GBColor.darkRed,
+									notearly, 0), scores.LateDeathRate() * 100));
+				} else {
+					sb.append(StringUtilities.makeEmptyTableCell());
+				}
+				sb.append(StringUtilities.makeTableCell(
+						"%.0f%%",
+						rangeColor(scores.EarlyBiomassFraction(), 0.08f, 0.12f,
+								GBColor.darkRed, GBColor.darkGreen, rounds
+										+ notearly, kMinColorRounds * 2),
+						scores.EarlyBiomassFraction() * 100));
+				if (survived > 0) {
+					sb.append(StringUtilities.makeTableCell(
+							"%.0f%%",
+							rangeColor(scores.SurvivalBiomassFraction(), 0.2,
+									0.4, Color.blue, GBColor.purple, survived,
+									0), scores.SurvivalBiomassFraction() * 100));
+				} else {
+					sb.append(StringUtilities.makeEmptyTableCell());
+				}
+				sb.append(StringUtilities.makeTableCell(
+						"%.0f%%",
+						rangeColor(scores.KilledFraction(), 0.05, 0.15,
+								Color.blue, GBColor.purple, survived, 0),
+						scores.KilledFraction() * 100));
+			} else
+				sb.append(StringUtilities.makeEmptyTableCells(7));
+			sb.append(StringUtilities.makeTableCell("%d",
+					rounds < kMinColorRounds ? GBColor.darkRed : null, rounds));
+		}
+		sb.append("</tr>");
+		return sb.toString();
+	}
+
+	String buildFooter() {
+		StringBuilder sb = new StringBuilder();
+		GBScores scores = tournamentScores;
+		int rounds = scores.rounds;
+		int notearly = scores.survived;
+		sb.append("<tr class=footer>");
+		sb.append(StringUtilities.makeEmptyTableCell());
+		sb.append(StringUtilities.makeTableCell(150, "%s", null, "Overall:"));
+		sb.append(StringUtilities.makeEmptyTableCells(3));
+		if (rounds > 0) {
+			sb.append(StringUtilities.makeTableCell(
+					"%.0f%%",
+					rangeColor(scores.SurvivalNotSterile(), 0.25, 0.5,
+							GBColor.darkRed, GBColor.darkGreen, rounds, 0),
+					scores.SurvivalNotSterile() * 100));
+			sb.append(StringUtilities.makeTableCell(
+					"%.0f%%",
+					rangeColor(scores.EarlyDeathRate(), 0.2, 0.4,
+							GBColor.darkGreen, GBColor.darkRed, rounds, 0),
+					scores.EarlyDeathRate() * 100));
+			if (notearly > 0) {
+				sb.append(StringUtilities.makeTableCell(
+						"%.0f%%",
+						rangeColor(scores.LateDeathRate(), 0.45, 0.6,
+								GBColor.darkGreen, GBColor.darkRed, rounds, 0),
+						scores.LateDeathRate() * 100));
+			} else {
+				sb.append(StringUtilities.makeEmptyTableCell());
+			}
+			sb.append(StringUtilities.makeEmptyTableCells(2));
+			sb.append(StringUtilities.makeTableCell(
+					"%.0f%%",
+					rangeColor(scores.KillRate(), 1.2, 1.8, Color.blue,
+							GBColor.purple, rounds, 0), scores.KillRate() * 100));
+		} else
+			sb.append(StringUtilities.makeEmptyTableCells(6));
+		sb.append(StringUtilities.makeTableCell("%d",
+				rounds < kMinColorRounds ? GBColor.darkRed : null, rounds));
+		sb.append("</tr>");
+		return sb.toString();
+	}
+
+	static final int kMinColorRounds = 10;
+
+	private Color rangeColor(double value, double min, double max, Color low,
+			Color high, int rounds, int minrounds) {
+		if (rounds < minrounds)
+			return Color.gray;
+		if (value < min)
+			return low;
+		if (value > max)
+			return high;
+		return Color.black;
 	}
 }
