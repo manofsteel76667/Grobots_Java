@@ -4,11 +4,6 @@
  *******************************************************************************/
 package sides;
 
-//SideReader.cpp
-//parser for side files and hardware
-//Grobots (c) 2002-2007 Devon and Warren Schudy
-//Distributed under the GNU General Public License.
-
 //Note that #author, #date, #description, and #color can appear in multiple places.
 //These are conveniently distinguished by whether type is non-null.
 import java.awt.Color;
@@ -18,7 +13,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
 import simulation.GBObjectClass;
 import support.FinePoint;
@@ -62,38 +56,6 @@ enum GBElementType {
 		tagName = _tagName;
 	}
 
-}
-
-enum HardwareComponents {
-	hcNone("none_illegal"), hcProcessor("processor"), hcRadio("radio"), hcEngine(
-			"engine"), hcConstructor("constructor"), hcEnergy("energy"), hcSolarCells(
-			"solar-cells"), hcEater("eater"), hcArmor("armor"), hcRepairRate(
-			"repair-rate"), hcShield("shield"), hcRobotSensor("robot-sensor"), hcFoodSensor(
-			"food-sensor"), hcShotSensor("shot-sensor"), hcBlaster("blaster"), hcGrenades(
-			"grenades"), hcForceField("force-field"), hcBomb("bomb"), hcSyphon(
-			"syphon"), hcEnemySyphon("enemy-syphon");
-	public final String tagName;
-
-	public static HardwareComponents byTag(String _tagName)
-			throws GBElementArgumentError {
-		try {
-			return tagLookup.get(_tagName.toLowerCase());
-		} catch (Exception e) {
-			throw new GBElementArgumentError();
-		}
-	}
-
-	public static final int kHardwareComponentTypes = HardwareComponents
-			.values().length;
-	static final Map<String, HardwareComponents> tagLookup = new HashMap<String, HardwareComponents>();
-	static {
-		for (HardwareComponents typ : HardwareComponents.values())
-			tagLookup.put(typ.tagName, typ);
-	}
-
-	HardwareComponents(String _tagName) {
-		tagName = _tagName;
-	}
 }
 
 public class SideReader {
@@ -422,7 +384,7 @@ public class SideReader {
 		if (tokens.size() == 0)
 			return;
 		String name = tokens.removeFirst();
-		HardwareComponents hc = HardwareComponents.byTag(name);
+		HardwareTypes hc = HardwareTypes.byTag(name);
 		switch (hc) {
 		case hcProcessor: {
 			int speed = GetHardwareInteger();

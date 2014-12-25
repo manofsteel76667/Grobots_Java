@@ -578,7 +578,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	static final String inlineStyle = "<style type=text/css>"
 			+ ".header {border: 1px solid; padding: 3px; }"
 			+ ".bodyrow {border: 1px solid; padding: 3px; }"
-			+ ".footer {border: 1px solid; padding: 3px; font-weight: bold}"
+			+ ".footer {border: 1px solid; padding: 3px; font-weight: bold;}"
 			+ "td {text-align: center; }"
 			+ "th {text-align: center; padding: 5px;}"
 			+ "caption {font-weight: bold; text-align: center; padding: 5px; font-size: large;}"

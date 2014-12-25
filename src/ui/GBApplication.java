@@ -212,14 +212,11 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		JPanel children = new JPanel();
 		children.setLayout(new BoxLayout(children, BoxLayout.X_AXIS));
 		JPanel left = new JPanel();
-		left.setPreferredSize(new Dimension(270, 800));
+		left.setPreferredSize(new Dimension(270, 500));
 		left.setMaximumSize(new Dimension(200, 800));
 		left.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
 		JPanel center = new JPanel();
 		JPanel right = new JPanel();
-		right.setPreferredSize(new Dimension(250, 800));
-		right.setMaximumSize(new Dimension(250, 800));
-		right.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
 		children.add(left);
 		children.add(center);
 		children.add(right);
@@ -242,6 +239,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Right pane
 		right.setLayout(new BorderLayout());
 		right.add(type);
+		right.setMaximumSize(new Dimension(270,800));
 		
 		JToolBar main = new JToolBar();
 		main.setFloatable(false);
@@ -266,12 +264,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		about = new AboutBox();
 		about.setPreferredSize(new Dimension(270, 290));
 		portal = new GBPortal(game, false);
-		portal.setPreferredSize(new Dimension(600, 600));
 		minimap = new GBPortal(game, true);
 		minimap.setPreferredSize(new Dimension(200, 200));
 		roster = new GBRosterView(game);
 		tournament = new GBTournamentView(game);
-		type = new RobotTypeView(game);
+		type = new RobotTypeView();
+		type.setPreferredSize(new Dimension(300,300));
 		statistics = new GBScoresView(game);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);

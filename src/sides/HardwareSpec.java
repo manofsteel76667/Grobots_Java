@@ -494,5 +494,53 @@ public class HardwareSpec {
 	public double CoolingMass() {
 		return coolingCost * kStandardMassPerCost;
 	}
+	
+	public boolean hasHardware(HardwareTypes type) {
+		switch(type){
+		case hcArmor:
+			return true;
+		case hcBlaster:
+			return blaster.cost > 0;
+		case hcBomb:
+			return bomb > 0;
+		case hcConstructor:
+			return constructor.cost > 0;
+		case hcEater:
+			return eater > 0;
+		case hcEnemySyphon:
+			return enemySyphon.cost > 0;
+		case hcEnergy:
+			return true;
+		case hcEngine:
+			return this.engine > 0;
+		case hcFoodSensor:
+			return sensor2.cost > 0;
+		case hcForceField:
+			return forceField.cost > 0;
+		case hcGrenades:
+			return grenades.cost > 0;
+		case hcNone:
+			return false;
+		case hcProcessor:
+			return processor > 0;
+		case hcRadio:
+			return true;
+		case hcRepairRate:
+			return repairRate > 0;
+		case hcRobotSensor:
+			return sensor1.cost > 0;
+		case hcShield:
+			return this.shield > 0;
+		case hcShotSensor:
+			return sensor3.cost > 0;
+		case hcSolarCells:
+			return this.solarCells > 0;
+		case hcSyphon:
+			return this.syphon.cost > 0;
+		default:
+			return false;
+		
+		}
+	}
 
 }
