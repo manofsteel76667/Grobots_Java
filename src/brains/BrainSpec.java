@@ -11,6 +11,7 @@ import exception.GBBrainError;
 public abstract class BrainSpec extends HardwareItem {
 	/**
 	 * Make an actual brain from the spec
+	 * 
 	 * @return
 	 */
 	public abstract Brain MakeBrain();

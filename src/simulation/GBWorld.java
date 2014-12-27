@@ -307,10 +307,10 @@ public class GBWorld extends GBObjectWorld {
 		if (side == null)
 			throw new NullPointerException("can't clear objects for null side");
 		synchronized (allObjects) {
-		Iterator<GBObject> it = allObjects.iterator();
-		while (it.hasNext())
-			if (side.equals(it.next().Owner()))
-				it.remove();
+			Iterator<GBObject> it = allObjects.iterator();
+			while (it.hasNext())
+				if (side.equals(it.next().Owner()))
+					it.remove();
 		}
 	}
 

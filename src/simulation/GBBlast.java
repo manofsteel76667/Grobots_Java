@@ -84,8 +84,7 @@ public class GBBlast extends GBTimedShot {
 			g2d.fill(where);
 		} else if (hit) {
 			g2d.setPaint(Color());
-			g2d.fillOval(where.x, where.y, where.width,
-					where.height);
+			g2d.fillOval(where.x, where.y, where.width, where.height);
 		} else {
 			// Looks like you're firing dicks at people :)
 			// g2d.setPaint(Color.gray);

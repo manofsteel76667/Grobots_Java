@@ -171,9 +171,9 @@ public class GBScores {
 	public List<Integer> BiomassHistory() {
 		if (rounds <= 1)
 			return biomassHistory;
-		List<Integer> avg = biomassHistory;
-		for (int i = 0; i < avg.size(); i++)
-			avg.set(i, avg.get(i) / rounds);
+		List<Integer> avg = new ArrayList<Integer>();
+		for (int i = 0; i < biomassHistory.size(); i++)
+			avg.add(biomassHistory.get(i) / rounds);
 		return avg;
 	}
 

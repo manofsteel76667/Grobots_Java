@@ -22,8 +22,7 @@ public enum HardwareTypes {
 		}
 	}
 
-	public static final int kHardwareComponentTypes = HardwareTypes
-			.values().length;
+	public static final int kHardwareComponentTypes = HardwareTypes.values().length;
 	static final Map<String, HardwareTypes> tagLookup = new HashMap<String, HardwareTypes>();
 	static {
 		for (HardwareTypes typ : HardwareTypes.values())

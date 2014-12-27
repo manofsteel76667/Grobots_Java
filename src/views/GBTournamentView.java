@@ -22,21 +22,21 @@ public class GBTournamentView extends JPanel {
 
 	GBGame game;
 	JTextPane tournamentResults = new JTextPane();
-	
+
 	public GBTournamentView(GBGame _game) {
 		game = _game;
 		tournamentResults.setContentType("text/html");
 		tournamentResults.setEditable(false);
 		update();
-		DefaultCaret caret = (DefaultCaret)tournamentResults.getCaret();
+		DefaultCaret caret = (DefaultCaret) tournamentResults.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 		JScrollPane scroll = new JScrollPane(tournamentResults);
-		scroll.setPreferredSize(new Dimension(710,430));
+		scroll.setPreferredSize(new Dimension(710, 430));
 		scroll.setMinimumSize(scroll.getPreferredSize());
 		add(scroll);
 	}
-	
-	public void update(){
+
+	public void update() {
 		tournamentResults.setText(game.htmlTournamentResults(false));
 	}
 }

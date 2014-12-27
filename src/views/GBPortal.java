@@ -255,7 +255,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// Rather than determining the edges of the map and painting a wall,
 		// we will make the background wall-colored and paint over it
 		// with tiles.
-		if (!isMiniMap){
+		if (!isMiniMap) {
 			setBackground(Color.LIGHT_GRAY);
 		}
 	}
@@ -455,26 +455,24 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	@Override
 	public int toScreenX(double x) {
-		return (int) ((x - viewpoint.x) * scale + this
-				.getVisibleRect().getCenterX());
+		return (int) ((x - viewpoint.x) * scale + this.getVisibleRect()
+				.getCenterX());
 	}
 
 	@Override
 	public int toScreenY(double y) {
-		return (int) ((viewpoint.y - y) * scale + this
-				.getVisibleRect().getCenterY());
+		return (int) ((viewpoint.y - y) * scale + this.getVisibleRect()
+				.getCenterY());
 	}
 
 	@Override
 	public double fromScreenX(int x) {
-		return (x - this.getVisibleRect().getCenterX())
-				/ scale + viewpoint.x;
+		return (x - this.getVisibleRect().getCenterX()) / scale + viewpoint.x;
 	}
 
 	@Override
 	public double fromScreenY(int y) {
-		return (this.getVisibleRect().getCenterY() - y)
-				/ scale + viewpoint.y;
+		return (this.getVisibleRect().getCenterY() - y) / scale + viewpoint.y;
 	}
 
 	@Override
@@ -531,7 +529,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewLeft() {
-		return viewpoint.x - (double)getWidth() / (scale * 2);
+		return viewpoint.x - (double) getWidth() / (scale * 2);
 	}
 
 	/**
@@ -540,7 +538,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewTop() {
-		return viewpoint.y + (double)getHeight() / (scale * 2);
+		return viewpoint.y + (double) getHeight() / (scale * 2);
 	}
 
 	/**
@@ -549,7 +547,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewRight() {
-		return viewpoint.x + (double)getWidth() / (scale * 2);
+		return viewpoint.x + (double) getWidth() / (scale * 2);
 	}
 
 	/**
@@ -558,7 +556,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewBottom() {
-		return viewpoint.y - (double)getHeight() / (scale * 2);
+		return viewpoint.y - (double) getHeight() / (scale * 2);
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {

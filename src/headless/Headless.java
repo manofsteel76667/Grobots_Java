@@ -134,22 +134,26 @@ public class Headless {
 					sim.game.tournament = true;
 					sim.game.tournamentLength = StringUtilities.parseInt(arg
 							.substring(2));
-					System.out.println("#tournament " + sim.game.tournamentLength);
+					System.out.println("#tournament "
+							+ sim.game.tournamentLength);
 					break;
 				case 'S':
 					// SetupSound();
 					// SetSoundActive(true);
 					break;
 				case 'l':
-					sim.game.timeLimit = StringUtilities.parseInt(arg.substring(2));
+					sim.game.timeLimit = StringUtilities.parseInt(arg
+							.substring(2));
 					break;
 				case 'b':
-					sim.statsPeriod = StringUtilities.parseInt(arg.substring(2));
+					sim.statsPeriod = StringUtilities
+							.parseInt(arg.substring(2));
 					break;
 				case 'w':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					sim.game.Resize(new FinePoint(GBObjectWorld.kBackgroundTileSize
-							* dimension, sim.game.getWorld().Top()));
+					sim.game.Resize(new FinePoint(
+							GBObjectWorld.kBackgroundTileSize * dimension,
+							sim.game.getWorld().Top()));
 					break;
 				case 'h':
 					dimension = StringUtilities.parseInt(arg.substring(2));
@@ -157,7 +161,8 @@ public class Headless {
 							GBObjectWorld.kBackgroundTileSize * dimension));
 					break;
 				case 's':
-					sim.game.seedLimit = StringUtilities.parseInt(arg.substring(2));
+					sim.game.seedLimit = StringUtilities.parseInt(arg
+							.substring(2));
 					break;
 				case 'H':
 					dumpHtml = true;

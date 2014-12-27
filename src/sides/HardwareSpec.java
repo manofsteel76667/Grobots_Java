@@ -494,9 +494,9 @@ public class HardwareSpec {
 	public double CoolingMass() {
 		return coolingCost * kStandardMassPerCost;
 	}
-	
+
 	public boolean hasHardware(HardwareTypes type) {
-		switch(type){
+		switch (type) {
 		case hcArmor:
 			return true;
 		case hcBlaster:
@@ -539,7 +539,7 @@ public class HardwareSpec {
 			return this.syphon.cost > 0;
 		default:
 			return false;
-		
+
 		}
 	}
 

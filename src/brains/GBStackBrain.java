@@ -80,7 +80,7 @@ public class GBStackBrain extends Brain {
 		vectorVariables[index] = value;
 	}
 
-	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world){
+	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world) {
 		int index = ins & StackBrainOpcode.kOpcodeIndexMask;
 		switch (OpType.byID(ins >> StackBrainOpcode.kOpcodeTypeShift)) {
 		case otPrimitive:
@@ -140,7 +140,7 @@ public class GBStackBrain extends Brain {
 	 * throw new GBStackUnderflowError(); stack[stackHeight - 1] =
 	 * op(stack[stackHeight - 1]); }
 	 */
-	void TwoNumberToNumberOp(TwoNumbertoNumberOperator op){
+	void TwoNumberToNumberOp(TwoNumbertoNumberOperator op) {
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		--stackHeight;
@@ -172,7 +172,7 @@ public class GBStackBrain extends Brain {
 	 * VectorToScalarOp(VectortoScalarOperator op) { FinePoint v = PopVector();
 	 * Push((v.*op)()); }
 	 */
-	void TwoVectorToVectorOp(TwoVectortoVectorOperator op){
+	void TwoVectorToVectorOp(TwoVectortoVectorOperator op) {
 		FinePoint v2 = PopVector();
 		FinePoint v1 = PopVector();
 		FinePoint result = new FinePoint();
@@ -462,7 +462,7 @@ public class GBStackBrain extends Brain {
 		return spec.VectorVariableName(index);
 	}
 
-	double ReadHardware(int index, GBRobot robot, GBWorld world){
+	double ReadHardware(int index, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		// world
 		case hvTime:
@@ -770,7 +770,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void WriteHardware(int index, double value, GBRobot robot, GBWorld world){
+	void WriteHardware(int index, double value, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvTime:
 		case hvTimeLimit:
@@ -997,7 +997,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	FinePoint ReadHardwareVector(int index, GBRobot robot, GBWorld world){
+	FinePoint ReadHardwareVector(int index, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvvWorldSize:
 			return world.Size();
@@ -1070,7 +1070,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void ExecutePrimitive(int index, GBRobot robot, GBWorld world){
+	void ExecutePrimitive(int index, GBRobot robot, GBWorld world) {
 		double temp, temp2, temp3;
 		int tempInt;
 		switch (StackBrainOpcode.byID(index)) {
@@ -1725,7 +1725,7 @@ public class GBStackBrain extends Brain {
 		 */
 	}
 
-	void FirePeriodic(GBSensorState sensor, GBWorld world){
+	void FirePeriodic(GBSensorState sensor, GBWorld world) {
 		int period = PopInteger();
 		if (world.currentFrame >= sensor.Time() + period || sensor.Time() <= 0) {
 			sensor.Fire();

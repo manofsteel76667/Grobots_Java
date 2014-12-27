@@ -50,7 +50,8 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 		list.addListSelectionListener(this);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		JScrollPane scroll = new JScrollPane(list);
-		add(header);
+		setBackground(Color.white);
+		add(header, Component.CENTER_ALIGNMENT);
 		add(scroll);
 		add(hardwareList);
 		setIgnoreRepaint(true);
@@ -100,7 +101,8 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 					.format("<html><table>"
 							+ "<td align=left width=100><font size=4 color=%s>%s</font></td>"
 							+ "<td align=right width=100>%s</td></tr></table></html>",
-							GBColor.toHex(selectedSide.Color()),
+							GBColor.toHex(GBColor
+									.ContrastingTextColor(selectedSide.Color())),
 							selectedSide.Name(), selectedSide.Author());
 		else
 			text = "No side selected.";

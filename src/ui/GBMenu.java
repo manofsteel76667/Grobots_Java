@@ -256,8 +256,10 @@ class GBMenu extends JMenuBar {
 		viewOptions.get(MenuItems.showDecorations).setSelected(true);
 		viewOptions.get(MenuItems.showMeters).setSelected(true);
 		viewOptions.get(MenuItems.showMiniMapTrails).setSelected(true);
-		viewOptions.get(MenuItems.showRobotErrors).setSelected(game.getWorld().reportErrors);
-		viewOptions.get(MenuItems.showPrints).setSelected(game.getWorld().reportPrints);
+		viewOptions.get(MenuItems.showRobotErrors).setSelected(
+				game.getWorld().reportErrors);
+		viewOptions.get(MenuItems.showPrints).setSelected(
+				game.getWorld().reportPrints);
 	}
 
 	/**
@@ -449,42 +451,42 @@ class GBMenu extends JMenuBar {
 	public JToolBar simToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("control-rewind-icon.png", MenuItems.slowdown.description,
-				"Slow Down Simulation", "");
+		btn = makeButton("control-rewind-icon.png",
+				MenuItems.slowdown.description, "Slow Down Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("control-pause-icon.png", MenuItems.pause.description,
 				"Pause Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("control-play-icon.png", MenuItems.play.description, "Run Simulation",
-				"");
+		btn = makeButton("control-play-icon.png", MenuItems.play.description,
+				"Run Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("control-fastforward-icon.png", MenuItems.speedup.description,
-				"Speed Up Simulation", "");
+		btn = makeButton("control-fastforward-icon.png",
+				MenuItems.speedup.description, "Speed Up Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
 	}
-	
+
 	public JToolBar fileToolBar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("actions-folder-new-icon.png", MenuItems.loadSide.description,
-				"Load Side", "Load");
+		btn = makeButton("actions-folder-new-icon.png",
+				MenuItems.loadSide.description, "Load Side", "Load");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-copy-icon.png", MenuItems.duplicateSide.description,
-				"Copy Side", "Copy");
+		btn = makeButton("actions-edit-copy-icon.png",
+				MenuItems.duplicateSide.description, "Copy Side", "Copy");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-redo-icon.png", MenuItems.reloadSide.description,
-				"Reload Side", "Reload");
+		btn = makeButton("actions-edit-redo-icon.png",
+				MenuItems.reloadSide.description, "Reload Side", "Reload");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-delete-icon.png", MenuItems.removeSide.description,
-				"Remove Side", "Remove");
+		btn = makeButton("actions-edit-delete-icon.png",
+				MenuItems.removeSide.description, "Remove Side", "Remove");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
@@ -493,12 +495,12 @@ class GBMenu extends JMenuBar {
 	public JToolBar debugToolbar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("control-end-icon.png", MenuItems.singleFrame.description,
-				"Advance 1 Frame", "");
+		btn = makeButton("control-end-icon.png",
+				MenuItems.singleFrame.description, "Advance 1 Frame", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("right_footprint.png", MenuItems.stepBrain.description, "Step Brain",
-				"");
+		btn = makeButton("right_footprint.png",
+				MenuItems.stepBrain.description, "Step Brain", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;

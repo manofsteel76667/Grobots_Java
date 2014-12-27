@@ -102,7 +102,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	public GBApplication() {
-		//Global settings
+		// Global settings
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException e) {
@@ -152,34 +152,36 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	void createTimers() {
-		javax.swing.Timer fastTimer = new javax.swing.Timer(fastInterval, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (!running) {
-					drawFastPanels();
-				} else
-					game.isFastDrawRequested = true;
-				;
-			};
-		});
+		javax.swing.Timer fastTimer = new javax.swing.Timer(fastInterval,
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if (!running) {
+							drawFastPanels();
+						} else
+							game.isFastDrawRequested = true;
+						;
+					};
+				});
 		fastTimer.setRepeats(true);
 		fastTimer.setCoalesce(true);
 		fastTimer.start();
-		javax.swing.Timer slowTimer = new javax.swing.Timer(slowInterval, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (!running) {
-					drawSlowPanels();
-				} else
-					game.isSlowDrawRequested = true;
-			}
-		});
+		javax.swing.Timer slowTimer = new javax.swing.Timer(slowInterval,
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if (!running) {
+							drawSlowPanels();
+						} else
+							game.isSlowDrawRequested = true;
+					}
+				});
 		slowTimer.setRepeats(true);
 		slowTimer.setCoalesce(true);
 		slowTimer.start();
 	}
-	
-	public void drawFastPanels(){
+
+	public void drawFastPanels() {
 		rendering++;
 		if (portal.isVisible())
 			portal.repaint();
@@ -189,8 +191,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			debug.repaint();
 		rendering--;
 	}
-	
-	public void drawSlowPanels(){
+
+	public void drawSlowPanels() {
 		rendering++;
 		if (roster.isVisible()) {
 			roster.recalculate();
@@ -225,10 +227,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		add(children);
 
 		// Left pane
-		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));		
+		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
 		left.add(roster);
 		left.add(minimap);
-		
+
 		// Center pane
 		JPanel portalpanel = new JPanel();
 		portalpanel.setLayout(new BorderLayout());
@@ -241,23 +243,26 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Right pane
 		right.setLayout(new BorderLayout());
 		right.add(type);
-		right.setMaximumSize(new Dimension(270,800));
-		
+		right.setMaximumSize(new Dimension(270, 800));
+		right.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
+
 		JToolBar main = new JToolBar();
 		main.setFloatable(false);
 		JToolBar fileControls = mainMenu.fileToolBar(this);
-		for(Component btn : fileControls.getComponents())
+		for (Component btn : fileControls.getComponents())
 			if (btn instanceof JButton) {
-				((JButton)btn).setBorder(BorderFactory.createLineBorder(Color.gray, 1, false));
-				((JButton)btn).setMinimumSize(new Dimension(25,25));
+				((JButton) btn).setBorder(BorderFactory.createLineBorder(
+						Color.gray, 1, false));
+				((JButton) btn).setMinimumSize(new Dimension(25, 25));
 			}
 		fileControls.setPreferredSize(new Dimension(200, 40));
 		left.add(fileControls);
 		main.add(fileControls);
 		JToolBar portalControls = mainMenu.simToolbar(this);
-		for(Component btn : portalControls.getComponents())
+		for (Component btn : portalControls.getComponents())
 			if (btn instanceof JButton)
-				((JButton)btn).setBorder(BorderFactory.createLineBorder(Color.gray, 1, false));
+				((JButton) btn).setBorder(BorderFactory.createLineBorder(
+						Color.gray, 1, false));
 		main.add(portalControls);
 		add(main, BorderLayout.NORTH);
 	}
@@ -271,7 +276,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		roster = new GBRosterView(game);
 		tournament = new GBTournamentView(game);
 		type = new RobotTypeView();
-		type.setPreferredSize(new Dimension(300,300));
+		type.setPreferredSize(new Dimension(300, 300));
 		statistics = new GBScoresView(game);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);
@@ -297,7 +302,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Type view selects types
 		type.addTypeSelectionListener(this);
 		type.addTypeSelectionListener(portal);
-		// Game sets selected object to null at the end of each round 
+		// Game sets selected object to null at the end of each round
 		// to clean the graphics up, but no one else cares.
 		game.addObjectSelectionListener(portal);
 		game.addObjectSelectionListener(debug);
@@ -644,21 +649,21 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					setLayouts();
 					break;
 				case showTournament:
-					//if (tournDialog == null) {
-						tournDialog = new JDialog(this, "Tournament Scores");
-						//tournament.drawInBackground();
-						tournDialog.getContentPane().add(tournament);
-						tournDialog.pack();
-						tournDialog.setLocation(
-								getWidth() / 2 - tournDialog.getWidth() / 2,
-								getHeight() / 2 - tournDialog.getHeight() / 2);
-						tournDialog.setVisible(true);
-					//} else {
-						//tournament.drawInBackground();
-					//	tournDialog.pack();
-					//	tournDialog.setVisible(true);
-					//}
-					//tournament.setVisible(true);
+					// if (tournDialog == null) {
+					tournDialog = new JDialog(this, "Tournament Scores");
+					// tournament.drawInBackground();
+					tournDialog.getContentPane().add(tournament);
+					tournDialog.pack();
+					tournDialog.setLocation(
+							getWidth() / 2 - tournDialog.getWidth() / 2,
+							getHeight() / 2 - tournDialog.getHeight() / 2);
+					tournDialog.setVisible(true);
+					// } else {
+					// tournament.drawInBackground();
+					// tournDialog.pack();
+					// tournDialog.setVisible(true);
+					// }
+					// tournament.setVisible(true);
 					break;
 				case showTypes:
 					type.setVisible(!type.isVisible());

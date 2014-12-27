@@ -493,7 +493,8 @@ public class GBRobot extends GBObject {
 		radialColors[2] = robotColor;
 		FinePoint focus = proj.toScreen(position.add(velocity.multiply(radius
 				* kRadialPaintOffsetFactor)));
-		painter = new RadialGradientPaint(new Point2D.Double(where.getCenterX(), where.getCenterY()),
+		painter = new RadialGradientPaint(new Point2D.Double(
+				where.getCenterX(), where.getCenterY()),
 				(float) (radius * scale), focus, radialSteps, radialColors,
 				CycleMethod.NO_CYCLE);
 		g2d.setPaint(painter);

@@ -107,12 +107,13 @@ public class StringUtilities {
 		drawStringLeft(g, str1, left, y, size, color, bold);
 		drawStringRight(g, str2, right, y, size, color, bold);
 	}
-	
-	public static String makeTableCell(int cellWidth, String format, Color color, Object... cellValue){
+
+	public static String makeTableCell(int cellWidth, String format,
+			Color color, Object... cellValue) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<td width=");
 		sb.append(cellWidth);
-		if (color != null){
+		if (color != null) {
 			sb.append("><font color=");
 			sb.append(GBColor.toHex(color));
 		}
@@ -121,20 +122,21 @@ public class StringUtilities {
 		sb.append("</td>");
 		return sb.toString();
 	}
-	
+
 	static final int numberWidth = 20;
-	
-	public static String makeTableCell(String format, Color color, Object... cellValue){
+
+	public static String makeTableCell(String format, Color color,
+			Object... cellValue) {
 		return makeTableCell(numberWidth, format, color, cellValue);
 	}
-	
-	public static String makeEmptyTableCell(){
+
+	public static String makeEmptyTableCell() {
 		return "<td></td>";
 	}
-	
-	public static String makeEmptyTableCells(int count){
+
+	public static String makeEmptyTableCells(int count) {
 		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i<count;i++)
+		for (int i = 0; i < count; i++)
 			sb.append(makeEmptyTableCell());
 		return sb.toString();
 	}

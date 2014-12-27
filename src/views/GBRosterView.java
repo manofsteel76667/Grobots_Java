@@ -4,6 +4,7 @@
  *******************************************************************************/
 package views;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -31,6 +33,36 @@ import ui.SideSelectionListener;
 import ui.SideSelector;
 import exception.GBError;
 
+/**
+ * http://java.sun.com/products/jfc/tsc...t_1/jlist.html
+ * 
+ * @author mike
+ * 
+ */
+
+class ToggleSelectionModel extends DefaultListSelectionModel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7368341084169767401L;
+	boolean gestureStarted = false;
+
+	public void setSelectionInterval(int index0, int index1) {
+		if (isSelectedIndex(index0) && !gestureStarted) {
+			super.removeSelectionInterval(index0, index1);
+		} else {
+			super.setSelectionInterval(index0, index1);
+		}
+		gestureStarted = true;
+	}
+
+	public void setValueIsAdjusting(boolean isAdjusting) {
+		if (isAdjusting == false) {
+			gestureStarted = false;
+		}
+	}
+}
+
 public class GBRosterView extends JPanel implements SideSelectionListener,
 		SideSelector, ListSelectionListener {
 	/**
@@ -49,6 +81,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	Side selectedSide;
 	JList<Side> list;
 	JLabel header;
+	Side lastSelection;
 
 	DefaultListModel<Side> model = new DefaultListModel<Side>();
 
@@ -67,8 +100,10 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			model.addElement(s);
 		list = new JList<Side>(model);
 		list.setCellRenderer(new SideRenderer());
+		list.setSelectionModel(new ToggleSelectionModel());
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBackground(Color.white);
 		header = new JLabel();
 		recalculate();
 		list.addListSelectionListener(this);
@@ -143,6 +178,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 		} else
 			selectedSide = game.sides.get(index);
 		notifySideListeners();
+		lastSelection = selectedSide;
 	}
 
 	public void loadSide() {
@@ -150,7 +186,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 		fc.setMultiSelectionEnabled(true);
 		FileFilter filter = new FileNameExtensionFilter("Grobots sides", "gb");
 		fc.setFileFilter(filter);
-		//fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
+		// fc.setCurrentDirectory(new File("." + "\\src\\test\\sides"));
 		int retval = fc.showOpenDialog(this);
 		if (retval == JFileChooser.APPROVE_OPTION) {
 			for (File f : fc.getSelectedFiles()) {
@@ -247,8 +283,8 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 					} else {
 						// Doing fine
 						// Bio percentage
-						biopercent = String.format("%.1f", side
-								.Scores().BiomassFraction());
+						biopercent = String.format("%.1f", side.Scores()
+								.BiomassFraction());
 						// Population
 						message = Integer.toString(side.Scores().Population());
 					}

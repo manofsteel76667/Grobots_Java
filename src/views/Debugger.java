@@ -14,7 +14,6 @@ import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -116,7 +115,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.createParallelGroup(GroupLayout.Alignment.CENTER)
 				.addGroup(
 						layout.createSequentialGroup()
-								//.addComponent(robotIcon)
+								// .addComponent(robotIcon)
 								.addComponent(status,
 										GroupLayout.PREFERRED_SIZE,
 										GroupLayout.PREFERRED_SIZE, 200)
@@ -150,9 +149,8 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
-								//.addComponent(robotIcon)
-								.addComponent(status)
-								.addComponent(toolbar))
+						// .addComponent(robotIcon)
+								.addComponent(status).addComponent(toolbar))
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
@@ -503,9 +501,9 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		Graphics g = robotImage.getGraphics();
 		g.clearRect(0, 0, robotImage.getWidth(), robotImage.getHeight());
 		if (selectedObject != null) {
-		//	selectedObject.DrawUnderlay(g, this, false);
-			//selectedObject.Draw(g, this, false);
-			//selectedObject.DrawOverlay(g, this, false);
+			// selectedObject.DrawUnderlay(g, this, false);
+			// selectedObject.Draw(g, this, false);
+			// selectedObject.DrawOverlay(g, this, false);
 		}
 	}
 

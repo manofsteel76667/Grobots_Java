@@ -31,10 +31,6 @@ public class GBColor {
 		return new Color(Limit(grey), Limit(grey), Limit(grey));
 	}
 
-	public static Color getRGBColor(float red, float green, float blue) {
-		return new Color(Limit(red), Limit(green), Limit(blue));
-	}
-
 	/* Not used outside of this class; make private? */
 	public static float Lightness(Color c) {
 		return c.getRed() * kRedWeight + c.getGreen() * kGreenWeight
@@ -75,8 +71,7 @@ public class GBColor {
 	}
 
 	// Returns one of two colors which best contrasts with *this. If the primary
-	// color
-	// is at least cutoff contrast, secondary is not considered.
+	// color is at least cutoff contrast, secondary is not considered.
 	public static Color ChooseContrasting(Color base, Color primary,
 			Color secondary, float cutoff) {
 		float cp, cs;
@@ -109,7 +104,15 @@ public class GBColor {
 		return new Color(r, g, b);
 	}
 
-	public static String toHex(Color base){
-		return String.format("#%02x%02x%02x", base.getRed(), base.getGreen(), base.getBlue());
+	/**
+	 * Returns the hex representation of the given color. Useful for html and
+	 * css styling.
+	 * 
+	 * @param base
+	 * @return
+	 */
+	public static String toHex(Color base) {
+		return String.format("#%02x%02x%02x", base.getRed(), base.getGreen(),
+				base.getBlue());
 	}
 }
