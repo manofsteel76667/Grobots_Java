@@ -200,8 +200,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			tournament.update();
 		if (type.isVisible())
 			type.repaint();
-		if (statistics.isVisible())
+		if (statistics.isVisible()) {
+			statistics.updateScores();
 			statistics.repaint();
+		}
 		rendering--;
 	}
 
@@ -598,20 +600,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				case showDebugger:
 					if (debugDialog == null) {
 						debugDialog = new JDialog(this, "Debug");
-						// TODO: do the setsize step when Followed() changes,
-						// then make debug
-						// not resizable again
 						debugDialog.setResizable(false);
-						//debug.repaint();
 						debugDialog.getContentPane().add(debug);
 						debugDialog.pack();
-						//debugDialog.setLocation(
-						//		getWidth() / 2 - debugDialog.getWidth() / 2,
-						//		getHeight() / 2 - debugDialog.getHeight() / 2);
 					}
-					
-					//debugDialog.pack();
-					//debugDialog.setSize(new Dimension(600,600));
 					debugDialog.setVisible(true);
 					break;
 				case showDecorations:
@@ -647,6 +639,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				case showSharedMemory:
 					break;
 				case showStatistics:
+					statistics.updateScores();
 					statistics.setVisible(!statistics.isVisible());
 					setLayouts();
 					break;
