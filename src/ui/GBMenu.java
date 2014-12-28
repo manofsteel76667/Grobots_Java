@@ -473,19 +473,19 @@ class GBMenu extends JMenuBar {
 	public JToolBar fileToolBar(ActionListener l) {
 		JToolBar ret = new JToolBar();
 		JButton btn;
-		btn = makeButton("actions-folder-new-icon.png",
+		btn = makeButton("Actions-folder-new-icon.png",
 				MenuItems.loadSide.description, "Load Side", "Load");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-copy-icon.png",
+		btn = makeButton("Actions-edit-copy-icon.png",
 				MenuItems.duplicateSide.description, "Copy Side", "Copy");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-redo-icon.png",
+		btn = makeButton("Actions-edit-redo-icon.png",
 				MenuItems.reloadSide.description, "Reload Side", "Reload");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("actions-edit-delete-icon.png",
+		btn = makeButton("Actions-edit-delete-icon.png",
 				MenuItems.removeSide.description, "Remove Side", "Remove");
 		btn.addActionListener(l);
 		ret.add(btn);
