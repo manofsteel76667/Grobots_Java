@@ -20,6 +20,7 @@ import javax.swing.SwingUtilities;
 import sides.GBScores;
 import sides.RobotType;
 import sides.Side;
+import sound.SoundManager;
 import support.FinePoint;
 import support.GBColor;
 import support.StringUtilities;
@@ -104,7 +105,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		world.SimulateOneFrame();
 		CollectStatistics();
 		if (previousSidesAlive > world.SidesAlive()) {
-			// TODO: play extinction sound
+			SoundManager.playSound(SoundManager.SoundType.stExtinction);
 		}
 		if (totalFrames < Long.MAX_VALUE)// yeah, right...
 			totalFrames++;
@@ -148,8 +149,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 	}
 
 	public void EndRound() {
-		// TODO: Replace when sound is implemented
-		// StartSound(siEndRound);
+		SoundManager.playSound(SoundManager.SoundType.stEndRound);
 		// TODO extend biomassHistory to 18k when ending? (to avoid misleading
 		// graph)
 		ReportRound();

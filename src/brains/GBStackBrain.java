@@ -10,6 +10,7 @@ import simulation.GBMessage;
 import simulation.GBRobot;
 import simulation.GBSensorState;
 import simulation.GBWorld;
+import sound.SoundManager;
 import support.FinePoint;
 import support.GBMath;
 import exception.GBAbort;
@@ -1489,7 +1490,8 @@ public class GBStackBrain extends Brain {
 				GBError.NonfatalError(robot.toString() + " prints: "
 						+ lastPrint);
 			break;
-		case opBeep: /* TODO: waiting for sound StartSound(siBeep); */
+		case opBeep: 
+			SoundManager.playSound(SoundManager.SoundType.stBeep);
 			break;
 		case opStop:
 			status = BrainStatus.bsStopped;

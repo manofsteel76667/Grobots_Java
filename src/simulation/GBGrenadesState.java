@@ -5,6 +5,7 @@
 package simulation;
 
 import sides.GrenadesSpec;
+import sound.SoundManager;
 import support.GBMath;
 
 public class GBGrenadesState {
@@ -83,8 +84,7 @@ public class GBGrenadesState {
 					&& robot.hardware.UseEnergy(FiringCost() * effectiveness)) {
 				robot.Owner().Scores().expenditure.ReportWeapons(FiringCost()
 						* effectiveness);
-				// TODO: put back in when sound is implemented
-				// StartSound(siGrenade);
+				SoundManager.playSound(SoundManager.SoundType.stGrenade, robot.position);
 				int lifetime = (int) Math.max(
 						Math.floor((distance - robot.Radius()) / Speed()), 1);
 				GBObject shot = new GBGrenade(robot.Position().addPolar(

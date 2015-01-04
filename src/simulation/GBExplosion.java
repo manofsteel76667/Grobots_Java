@@ -10,21 +10,27 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import sides.Side;
+import sound.SoundManager;
 import support.FinePoint;
 import exception.GBSimulationError;
 
 public class GBExplosion extends GBTimedShot {
-	// public:
 	public GBExplosion(FinePoint where, Side who, double howMuch) {
 		super(where, PowerRadius(howMuch), who, howMuch, kExplosionLifetime);
 		if (howMuch < 0)
 			throw new GBSimulationError("negative explosion");
-		// TODO: when sound is done
-		/*
-		 * if ( howMuch > 100 ) StartSound(siLargeExplosion); else if ( howMuch
-		 * > 30 ) StartSound(siMediumExplosion); else if ( howMuch > 10 )
-		 * StartSound(siSmallExplosion); else StartSound(siTinyExplosion);
-		 */
+		if (howMuch > 100)
+			SoundManager.playSound(SoundManager.SoundType.stBigExplosion,
+					position);
+		else if (howMuch > 30)
+			SoundManager
+					.playSound(SoundManager.SoundType.stExplosion, position);
+		else if (howMuch > 10)
+			SoundManager.playSound(SoundManager.SoundType.stSmallExplosion,
+					position);
+		else
+			SoundManager.playSound(SoundManager.SoundType.stTinyExplosion,
+					position);
 	}
 
 	@Override

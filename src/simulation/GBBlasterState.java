@@ -5,6 +5,7 @@
 package simulation;
 
 import sides.BlasterSpec;
+import sound.SoundManager;
 import support.FinePoint;
 
 public class GBBlasterState {
@@ -73,11 +74,10 @@ public class GBBlasterState {
 					&& robot.hardware.UseEnergy(FiringCost() * effectiveness)) {
 				robot.Owner().Scores().expenditure.ReportWeapons(FiringCost()
 						* effectiveness);
-				// TODO: Put this back in when we implement sound
-				/*
-				 * if ( Damage() >= 12 ) StartSound(siBlast); else
-				 * StartSound(siSmallBlast);
-				 */
+				 if ( Damage() >= 12 ) 
+					 SoundManager.playSound(SoundManager.SoundType.stBigBlaster, robot.position);
+				 else
+					 SoundManager.playSound(SoundManager.SoundType.stBlaster, robot.position);
 				GBObject shot = new GBBlast(robot.Position().addPolar(
 						robot.Radius(), direction), robot.Velocity().addPolar(
 						Speed(), direction), robot.Owner(), Damage()

@@ -37,6 +37,7 @@ import simulation.GBGame;
 import simulation.GBObject;
 import simulation.GBObjectClass;
 import simulation.GBRobot;
+import sound.SoundManager;
 import views.AboutBox;
 import views.Debugger;
 import views.GBPortal;
@@ -114,6 +115,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		} catch (UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
+		SoundManager.setManager(new SoundManager());
 	}
 
 	@Override

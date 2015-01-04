@@ -39,6 +39,7 @@ import simulation.GBObjectWorld;
 import simulation.GBProjection;
 import simulation.GBRobot;
 import simulation.GBWorld;
+import sound.SoundManager;
 import support.FinePoint;
 import support.GBColor;
 import support.GBMath;
@@ -309,8 +310,11 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			}
 		}
 		RestrictScrolling();
-		if (!isMiniMap)
+		if (!isMiniMap) {
 			changeVisibleWorld(getVisibleWorld());
+			if (SoundManager.getManager() != null)
+				SoundManager.getManager().setViewPoint(viewpoint);
+		}
 	}
 
 	static Color tileColor = Color.black;

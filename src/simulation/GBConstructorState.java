@@ -6,6 +6,7 @@ package simulation;
 
 import sides.ConstructorSpec;
 import sides.RobotType;
+import sound.SoundManager;
 import support.GBMath;
 
 public class GBConstructorState {
@@ -80,8 +81,7 @@ public class GBConstructorState {
 			robot.Owner().Scores().expenditure.ReportConstruction(actual);
 			progress += actual;
 			if (Remaining() <= 0 && robot.hardware.ActualShield() == 0) {
-				// TODO: put back in when sound is implemented
-				// StartSound(siBirth);
+				SoundManager.playSound(SoundManager.SoundType.stBirth, robot.position);
 				double dir = world.random.Angle();
 				GBRobot child = new GBRobot(type, robot.Position().addPolar(
 						GBHardwareState.kBabyDisplacementFraction
