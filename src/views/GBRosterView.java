@@ -283,8 +283,8 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 					} else {
 						// Doing fine
 						// Bio percentage
-						biopercent = String.format("%.1f", side.Scores()
-								.BiomassFraction());
+						biopercent = String.format("%.1f%%", side.Scores()
+								.BiomassFraction() * 100);
 						// Population
 						message = Integer.toString(side.Scores().Population());
 					}

@@ -466,6 +466,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					break;
 				case fast:
 					stepRate = StepRates.fast;
+					SoundManager.unmute();
 					break;
 				case firstPage:
 					break;
@@ -504,6 +505,14 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					portal.setCursor(Cursor
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
+				case mute:
+					if (SoundManager.getManager() == null || this.stepRate == StepRates.unlimited)
+						break;
+					if (SoundManager.isMuted())
+						SoundManager.unmute();
+					else
+						SoundManager.mute();
+					break;
 				case newRound:
 					if (game.running) {
 						game.running = false;
@@ -519,6 +528,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					break;
 				case normal:
 					stepRate = StepRates.normal;
+					SoundManager.unmute();
 					break;
 				case pause:
 					game.running = false;
@@ -678,12 +688,15 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					break;
 				case slow:
 					stepRate = StepRates.slow;
+					SoundManager.unmute();
 					break;
 				case slowdown:
 					if (stepRate.ordinal() > 0) {
 						int i = stepRate.ordinal();
 						stepRate = StepRates.values()[i - 1];
 					}
+					if (stepRate != StepRates.unlimited)
+						SoundManager.unmute();
 					break;
 				case smite:
 					portal.currentTool = toolTypes.ptSmite;
@@ -695,6 +708,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						int i = stepRate.ordinal();
 						stepRate = StepRates.values()[i + 1];
 					}
+					if (stepRate == StepRates.unlimited)
+						SoundManager.mute();
 					break;
 				case stepBrain:
 					GBObject obj = selectedObject;
@@ -735,6 +750,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					break;
 				case unlimited:
 					stepRate = StepRates.unlimited;
+					SoundManager.mute();
 					break;
 				case zoomIn:
 					portal.doZoom(1);

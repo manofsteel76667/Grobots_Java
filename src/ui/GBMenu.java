@@ -128,7 +128,8 @@ enum MenuItems {
 	//Buttons found on the simulation toolbar
 	play("playpause"),
 	speedup("speedup"),
-	slowdown("slowdown")
+	slowdown("slowdown"),
+	mute("mute")
 	;
 	
 	MenuItems(String desc, KeyStroke accel) {
@@ -465,6 +466,10 @@ class GBMenu extends JMenuBar {
 		ret.add(btn);
 		btn = makeButton("control-fastforward-icon.png",
 				MenuItems.speedup.description, "Speed Up Simulation", "");
+		btn.addActionListener(l);
+		ret.add(btn);
+		btn = makeButton("kmixdocked_mute.png",
+				MenuItems.mute.description, "Mute / Unmute", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;

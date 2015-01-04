@@ -86,8 +86,11 @@ public class SoundManager {
 				clip.addLineListener(new LineListener() {
 					@Override
 					public void update(LineEvent evt) {
-						if (evt.getType() == LineEvent.Type.STOP)
+						if (evt.getType() == LineEvent.Type.STOP) {
 							((Clip) evt.getSource()).close();
+							if (SoundManager.getManager() != null)
+								SoundManager.getManager().soundsPlaying--;
+						}
 					}
 				});
 			} catch (Exception e) {
@@ -140,6 +143,27 @@ public class SoundManager {
 	FinePoint viewpoint = new FinePoint();
 	static SoundManager manager;
 	static final float kSoundDistanceFadeFactor = 1.2f;
+	static final float kSoundDistancePanFactor = .1f;
+	static final int kMaxSimultaneousSounds = Integer.MAX_VALUE;
+	static final int kMaxHearingDistance = 40;
+	int soundsPlaying = 0;
+	boolean muted;
+
+	public static void mute() {
+		if (manager != null)
+			manager.muted = true;
+	}
+
+	public static void unmute() {
+		if (manager != null)
+			manager.muted = false;
+	}
+	
+	public static boolean isMuted() {
+		if (manager == null)
+			return false;
+		return manager.muted;
+	}
 
 	public void setViewPoint(FinePoint point) {
 		viewpoint = point;
@@ -158,16 +182,20 @@ public class SoundManager {
 			manager = value;
 	}
 
-	public static synchronized void playSound(final SoundType sound) {
+	public static void playSound(final SoundType sound) {
 		if (manager == null)
 			return;
-		new Runnable() {
-			@Override
-			public void run() {
-				sound.open();
-				sound.play();
-			}
-		}.run();
+		if (manager.muted)
+			return;
+		if (manager.soundsPlaying < kMaxSimultaneousSounds)
+			new Runnable() {
+				@Override
+				public void run() {
+					sound.open();
+					manager.soundsPlaying++;
+					sound.play();
+				}
+			}.run();
 	}
 
 	/**
@@ -178,31 +206,45 @@ public class SoundManager {
 	 * @param location
 	 * @param viewpoint
 	 */
-	public static synchronized void playSound(final SoundType sound,
-			final FinePoint location) {
+	public static void playSound(final SoundType sound, final FinePoint location) {
 		if (manager == null)
 			return;
-		new Runnable() {
-			@Override
-			public void run() {
-				sound.open();
-				// Fade the sound based on how far it was from the viewpoint
-				double distance = location.distance(manager.getViewpoint());
-				float volume = Math.min(
-						Math.max(7 - kSoundDistanceFadeFactor
-								* (float) distance, -80), 6);
-				if (volume > -50) {
-					if (sound.getClip().isControlSupported(
-							FloatControl.Type.MASTER_GAIN)) {
-						FloatControl volumeControl = (FloatControl) sound
-								.getClip().getControl(
-										FloatControl.Type.MASTER_GAIN);
-						volumeControl.setValue(volume);
+		if (manager.muted)
+			return;
+		if (manager.soundsPlaying < kMaxSimultaneousSounds) {
+			// Fade the sound based on how far it was from the viewpoint
+			double distance = location.distance(manager.getViewpoint());
+			if (distance < kMaxHearingDistance) {
+				final float volume = 7 - kSoundDistanceFadeFactor
+						* (float) distance;
+				final float balance = (float) (kSoundDistancePanFactor
+						* (location.x - manager.getViewpoint().x));
+				new Runnable() {
+					@Override
+					public void run() {
+						sound.open();
+						if (sound.getClip().isControlSupported(
+								FloatControl.Type.MASTER_GAIN)) {
+							FloatControl volumeControl = (FloatControl) sound
+									.getClip().getControl(
+											FloatControl.Type.MASTER_GAIN);
+							volumeControl.setValue(Math.max(-80,
+									Math.min(volume, 6)));
+						}
+						if (sound.getClip().isControlSupported(
+								FloatControl.Type.BALANCE)) {
+							FloatControl balanceControl = (FloatControl) sound
+									.getClip().getControl(
+											FloatControl.Type.BALANCE);
+							balanceControl.setValue(Math.max(-1,
+									Math.min(balance, 1)));
+						}
+						manager.soundsPlaying++;
+						sound.play();
 					}
-					sound.play();
-				}
+				}.run();
 			}
-		}.run();
+		}
 	}
 
 	public SoundManager() {
