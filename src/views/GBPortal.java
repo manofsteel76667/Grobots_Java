@@ -39,7 +39,6 @@ import simulation.GBObjectWorld;
 import simulation.GBProjection;
 import simulation.GBRobot;
 import simulation.GBWorld;
-import sound.SoundManager;
 import support.FinePoint;
 import support.GBColor;
 import support.GBMath;
@@ -207,7 +206,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 					lasty = y;
 					lastClick = spot;
 					lastFrame = world.currentFrame;
-					// Changed();
 				} else {
 					if (x < 0 || x > getWidth() || y < 0 || y > getHeight()) {
 						ScrollToward(spot, kAutoScrollSpeed);
@@ -311,9 +309,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		}
 		RestrictScrolling();
 		if (!isMiniMap) {
-			changeVisibleWorld(getVisibleWorld());
-			if (SoundManager.getManager() != null)
-				SoundManager.getManager().setViewPoint(viewpoint);
+			visibleWorld = new Rectangle((int) viewLeft(), (int) viewBottom(), getWidth()
+					/ scale, getHeight() / scale);
+			changeVisibleWorld();
 		}
 	}
 
@@ -410,7 +408,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			g2d.setColor(Color.white);
 			g2d.setStroke(new BasicStroke(1));
 			g2d.draw(new Rectangle(toScreenX(visibleWorld.x),
-					toScreenY(visibleWorld.y), visibleWorld.width * scale,
+					toScreenY(visibleWorld.y + visibleWorld.height), visibleWorld.width * scale,
 					visibleWorld.height * scale));
 		}
 	}
@@ -564,6 +562,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {
+		//TODO: this may be the source of the stuttering!!
 		if (viewpoint.inRange(p, speed))
 			viewpoint = p;
 		else
@@ -679,8 +678,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	}
 
 	public Rectangle getVisibleWorld() {
-		return new Rectangle((int) viewLeft(), (int) viewTop(), getWidth()
-				/ scale, getHeight() / scale);
+		return visibleWorld;
 	}
 
 	public void setViewWindow(Object source, FinePoint newViewPoint) {
@@ -800,9 +798,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			l.setViewWindow(this, pt);
 	}
 
-	void changeVisibleWorld(Rectangle rect) {
+	void changeVisibleWorld() {
 		for (PortalListener l : portalListeners)
-			l.setVisibleWorld(this, getVisibleWorld());
+			l.setVisibleWorld(this, visibleWorld);
 	}
 
 	@Override

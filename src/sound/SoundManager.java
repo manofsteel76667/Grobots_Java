@@ -1,6 +1,7 @@
 package sound;
 
 import java.awt.FlowLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
@@ -22,22 +23,33 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import support.FinePoint;
+import ui.PortalListener;
 
-public class SoundManager {
+public class SoundManager implements PortalListener {
 	public enum SoundType {
-		stBirth("Birth.wav"), stBeep("Beep.wav"), stBigBlaster("BigBlaster.wav"), stBigExplosion(
-				"BigExplosion.wav"), stBlaster("Blaster.wav"), stEndRound(
-				"EndRound.wav"), stExplosion("Explosion.wav"), stExtinction(
-				"Extinction.wav"), stGrenade("Grenade.wav"), stSmallExplosion(
-				"SmallExplosion.wav"), stTinyExplosion("TinyExplosion.wav");
+		/* @formatter:off */
+		stBirth("Birth.wav", 12), 
+		stBeep("Beep.wav", 12), 
+		stBigBlaster("BigBlaster.wav", 32), 
+		stBigExplosion("BigExplosion.wav", 32), 
+		stBlaster("Blaster.wav", 32), 
+		stEndRound("EndRound.wav", 4), 
+		stExplosion("Explosion.wav", 32), 
+		stExtinction("Extinction.wav", 12), 
+		stGrenade("Grenade.wav", 32), 
+		stSmallExplosion("SmallExplosion.wav", 32), 
+		stTinyExplosion("TinyExplosion.wav", 32);
+		/* @formatter:on */
 
 		public final String filename;
 		AudioInputStream[] stream;
 		Clip[] clip;
-		static final int numClips = 4;
+		public final int numClips;
 		int nextClip = 0;
+		public int numPlaying;
 
-		SoundType(String _filename) {
+		SoundType(String _filename, int clips) {
+			numClips = clips;
 			clip = new Clip[numClips];
 			stream = new AudioInputStream[numClips];
 			filename = _filename;
@@ -52,27 +64,31 @@ public class SoundManager {
 			return clip[nextClip];
 		}
 
-		public void open() {
+		public synchronized boolean open() {
+			// Complete running sounds before starting new ones
 			try {
-				if (!clip[nextClip].isOpen())
+				if (!clip[nextClip].isOpen()) {
 					clip[nextClip].open(stream[nextClip]);
+					clip[nextClip].setFramePosition(0);
+					stream[nextClip].reset();
+					return true;
+				} else
+					return false;
 			} catch (LineUnavailableException | IOException e) {
 				e.printStackTrace();
+				return false;
 			}
 		}
 
 		/**
 		 * Play the sound from the beginning.
 		 */
-		public void play() {
+		public synchronized void play() {
+			if (numPlaying >= numClips)
+				return;
 			clip[nextClip].start();
+			numPlaying++;
 			nextClip = (nextClip + 1) % numClips;
-			clip[nextClip].setFramePosition(0);
-			try {
-				stream[nextClip].reset();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 
 		Clip makeClip() {
@@ -88,8 +104,7 @@ public class SoundManager {
 					public void update(LineEvent evt) {
 						if (evt.getType() == LineEvent.Type.STOP) {
 							((Clip) evt.getSource()).close();
-							if (SoundManager.getManager() != null)
-								SoundManager.getManager().soundsPlaying--;
+							numPlaying--;
 						}
 					}
 				});
@@ -140,62 +155,45 @@ public class SoundManager {
 		}
 	}
 
-	FinePoint viewpoint = new FinePoint();
-	static SoundManager manager;
+	//Sound positioning
+	static FinePoint viewpoint = new FinePoint();
+	static Rectangle visibleWorld = new Rectangle();
+	
+	//Sound manipulation
 	static final float kSoundDistanceFadeFactor = 1.2f;
 	static final float kSoundDistancePanFactor = .1f;
-	static final int kMaxSimultaneousSounds = Integer.MAX_VALUE;
 	static final int kMaxHearingDistance = 40;
-	int soundsPlaying = 0;
-	boolean muted;
-
-	public static void mute() {
-		if (manager != null)
-			manager.muted = true;
-	}
-
-	public static void unmute() {
-		if (manager != null)
-			manager.muted = false;
+	static final float kMaxVolume = 6;
+	static final float kMinVolume = -80;	
+	static boolean muted = true;
+	static SoundManager manager = new SoundManager();
+	
+	SoundManager() {
+		
 	}
 	
-	public static boolean isMuted() {
-		if (manager == null)
-			return false;
-		return manager.muted;
-	}
-
-	public void setViewPoint(FinePoint point) {
-		viewpoint = point;
-	}
-
-	public FinePoint getViewpoint() {
-		return viewpoint;
-	}
-
 	public static SoundManager getManager() {
 		return manager;
 	}
 
-	public static void setManager(SoundManager value) {
-		if (manager == null)
-			manager = value;
+	public static void setMuted(boolean mute) {
+		muted = mute;
+	}
+
+	public static boolean getMuted() {
+		return muted;
 	}
 
 	public static void playSound(final SoundType sound) {
-		if (manager == null)
+		if (muted)
 			return;
-		if (manager.muted)
-			return;
-		if (manager.soundsPlaying < kMaxSimultaneousSounds)
-			new Runnable() {
-				@Override
-				public void run() {
-					sound.open();
-					manager.soundsPlaying++;
+		new Runnable() {
+			@Override
+			public void run() {
+				if (sound.open())
 					sound.play();
-				}
-			}.run();
+			}
+		}.run();
 	}
 
 	/**
@@ -206,30 +204,31 @@ public class SoundManager {
 	 * @param location
 	 * @param viewpoint
 	 */
-	public static void playSound(final SoundType sound, final FinePoint location) {
-		if (manager == null)
+	public static void playSound(final SoundType sound, FinePoint location) {
+		if (muted)
 			return;
-		if (manager.muted)
-			return;
-		if (manager.soundsPlaying < kMaxSimultaneousSounds) {
-			// Fade the sound based on how far it was from the viewpoint
-			double distance = location.distance(manager.getViewpoint());
-			if (distance < kMaxHearingDistance) {
-				final float volume = 7 - kSoundDistanceFadeFactor
+		// Fade the sound based on how far it was from the viewpoint
+		double distance = location.distance(viewpoint);
+		if (distance < kMaxHearingDistance) {
+			float temp = 0;
+			if (!visibleWorld.contains(location))
+				temp = kMinVolume;
+			else
+				temp = 7 - kSoundDistanceFadeFactor
 						* (float) distance;
-				final float balance = (float) (kSoundDistancePanFactor
-						* (location.x - manager.getViewpoint().x));
-				new Runnable() {
-					@Override
-					public void run() {
-						sound.open();
+			final float volume = temp;
+			final float balance = (float) (kSoundDistancePanFactor * (location.x - viewpoint.x));
+			new Runnable() {
+				@Override
+				public void run() {
+					if (sound.open()) {
 						if (sound.getClip().isControlSupported(
 								FloatControl.Type.MASTER_GAIN)) {
 							FloatControl volumeControl = (FloatControl) sound
 									.getClip().getControl(
 											FloatControl.Type.MASTER_GAIN);
-							volumeControl.setValue(Math.max(-80,
-									Math.min(volume, 6)));
+							volumeControl.setValue(Math.max(kMinVolume,
+									Math.min(volume, kMaxVolume)));
 						}
 						if (sound.getClip().isControlSupported(
 								FloatControl.Type.BALANCE)) {
@@ -239,44 +238,43 @@ public class SoundManager {
 							balanceControl.setValue(Math.max(-1,
 									Math.min(balance, 1)));
 						}
-						manager.soundsPlaying++;
 						sound.play();
 					}
-				}.run();
-			}
-		}
-	}
-
-	public SoundManager() {
-
-	}
-
-	public static void main(String[] args) throws LineUnavailableException {
-		SoundManager.setManager(new SoundManager());
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		JPanel pane = new JPanel();
-		pane.setLayout(new FlowLayout());
-		frame.setContentPane(pane);
-		for (final SoundType type : SoundType.values()) {
-			JButton button = new JButton(type.filename);
-			button.addActionListener(new ActionListener() {
-				int distance = 1;
-
-				@Override
-				public void actionPerformed(ActionEvent arg0) {
-					try {
-						SoundManager.playSound(type, new FinePoint(distance,
-								distance));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					distance = (distance + 1) % 40;
 				}
-			});
-			pane.add(button);
+			}.run();
 		}
-		frame.pack();
-		frame.setVisible(true);
 	}
+
+	@Override
+	public void setViewWindow(Object source, FinePoint p) {
+		//Not used	
+	}
+
+	@Override
+	public void setVisibleWorld(Object source, Rectangle r) {
+		visibleWorld = r;	
+		visibleWorld.grow((int)(r.width * 0.1), (int)(r.height * .1));
+		viewpoint.x = r.getCenterX();
+		viewpoint.y = r.getCenterY();
+	}
+
+	@Override
+	public void addPortalListener(PortalListener pl) {
+		//Not used
+	}
+
+	/*
+	 * public static void main(String[] args) throws LineUnavailableException {
+	 * SoundManager.setManager(new SoundManager()); JFrame frame = new JFrame();
+	 * frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); JPanel pane = new
+	 * JPanel(); pane.setLayout(new FlowLayout()); frame.setContentPane(pane);
+	 * for (final SoundType type : SoundType.values()) { JButton button = new
+	 * JButton(type.filename); button.addActionListener(new ActionListener() {
+	 * int distance = 1;
+	 * 
+	 * @Override public void actionPerformed(ActionEvent arg0) { try {
+	 * SoundManager.playSound(type, new FinePoint(distance, distance)); } catch
+	 * (Exception e) { e.printStackTrace(); } distance = (distance + 1) % 40; }
+	 * }); pane.add(button); } frame.pack(); frame.setVisible(true); }
+	 */
 }
