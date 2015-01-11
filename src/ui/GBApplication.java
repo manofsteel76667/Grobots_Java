@@ -40,6 +40,7 @@ import simulation.GBObject;
 import simulation.GBObjectClass;
 import simulation.GBRobot;
 import sound.SoundManager;
+import sound.SoundManager.SoundType;
 import views.AboutBox;
 import views.Debugger;
 import views.GBPortal;
@@ -118,6 +119,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			e.printStackTrace();
 		}
 		SoundManager.setMuted(false);
+		//This does nothing but will call the static initializer to preload all the sounds
+		SoundType.stBeep.getClass();
 	}
 
 	@Override

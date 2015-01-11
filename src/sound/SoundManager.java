@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -16,6 +17,7 @@ import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import exception.GBError;
 import support.FinePoint;
 import ui.PortalListener;
 
@@ -34,6 +36,12 @@ public class SoundManager implements PortalListener {
 		stSmallExplosion("SmallExplosion.wav", 32), 
 		stTinyExplosion("TinyExplosion.wav", 32);
 		/* @formatter:on */
+		
+		static {
+			//This does nothing but will preload all the streams
+			for (SoundType type : SoundType.values())
+				type.getClass();
+		}
 
 		public final String filename;
 		AudioInputStream[] stream;
@@ -122,8 +130,9 @@ public class SoundManager implements PortalListener {
 			// will work, making
 			// the sound reusable without reloading it.
 			try {
-				ais = AudioSystem.getAudioInputStream(getClass()
-						.getResourceAsStream(filename));
+				URL url = getClass()
+						.getResource("/sound/" + filename);
+				ais = AudioSystem.getAudioInputStream(url);
 				byte[] buffer = new byte[1024 * 32];
 				int read = 0;
 				ByteArrayOutputStream baos = new ByteArrayOutputStream(
@@ -135,7 +144,7 @@ public class SoundManager implements PortalListener {
 						baos.toByteArray()), ais.getFormat(),
 						AudioSystem.NOT_SPECIFIED);
 			} catch (UnsupportedAudioFileException | IOException e) {
-				e.printStackTrace();
+				GBError.NonfatalError(e.getMessage());
 			} finally {
 				if (ais != null) {
 					try {
