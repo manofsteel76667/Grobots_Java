@@ -78,6 +78,8 @@ public class SoundManager implements PortalListener {
 					return false;
 			} catch (LineUnavailableException | IOException e) {
 				e.printStackTrace();
+				if (clip[nextClip].isOpen())
+					clip[nextClip].close();
 				return false;
 			}
 		}
