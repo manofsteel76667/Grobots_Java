@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -127,7 +129,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		// Create supporting views and menu.
 		mainMenu = new GBMenu(this);
 		this.setJMenuBar(mainMenu);
-		updateMenu();
 		createChildViews();
 
 		// Arrange the screen
@@ -150,7 +151,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		this.pack();
 		setVisible(true);
 		createTimers();
-
+		updateMenu();
 	}
 
 	void createTimers() {
@@ -212,8 +213,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	void setLayouts() {
-		for (Component c : this.getContentPane().getComponents())
-			this.getContentPane().remove(c);
 		// 3 Child panels
 		JPanel children = new JPanel();
 		children.setLayout(new BoxLayout(children, BoxLayout.X_AXIS));
@@ -248,19 +247,19 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		right.setMaximumSize(new Dimension(270, 800));
 		right.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
 
+		//Toolbar
 		JToolBar main = new JToolBar();
 		main.setFloatable(false);
 		JToolBar fileControls = mainMenu.fileToolBar(this);
+		fileControls.setFloatable(false);
 		for (Component btn : fileControls.getComponents())
 			if (btn instanceof JButton) {
 				((JButton) btn).setBorder(BorderFactory.createLineBorder(
 						Color.gray, 1, false));
-				((JButton) btn).setMinimumSize(new Dimension(25, 25));
 			}
-		fileControls.setPreferredSize(new Dimension(200, 40));
-		left.add(fileControls);
 		main.add(fileControls);
 		JToolBar portalControls = mainMenu.simToolbar(this);
+		portalControls.setFloatable(false);
 		for (Component btn : portalControls.getComponents())
 			if (btn instanceof JButton)
 				((JButton) btn).setBorder(BorderFactory.createLineBorder(
@@ -312,12 +311,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	}
 
 	void updateMenu() {
-		setMenuItem(MenuItems.removeAllSides, game.sides.size() > 0);
-		setMenuItem(MenuItems.reloadSide, selectedSide != null);
-		setMenuItem(MenuItems.duplicateSide, selectedSide != null);
-		setMenuItem(MenuItems.removeSide, selectedSide != null);
-		setMenuItem(MenuItems.addRobot, selectedType != null);
-		setMenuItem(MenuItems.addSeed, selectedSide != null);
+		MenuItems.removeAllSides.setEnabled(game.sides.size() > 0);
+		MenuItems.reloadSide.setEnabled(selectedSide != null && !game.running);
+		MenuItems.duplicateSide.setEnabled(selectedSide != null);
+		MenuItems.removeSide.setEnabled(selectedSide != null);
+		MenuItems.addRobot.setEnabled(selectedType != null);
+		MenuItems.addSeed.setEnabled(selectedSide != null);
 		// Unimplemented items
 		setMenuItem(MenuItems.showSharedMemory, false);
 	}
@@ -328,9 +327,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
-				// Removing an active side causes a crash
-				// setMenuItem(MenuItems.removeSide, false);
-				// setMenuItem(MenuItems.removeAllSides, false);
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						updateMenu();
+					}
+				});
 				while (game.running) {
 					long frameRate = 1000000000L / stepRate.value; // nanoseconds
 																	// per
@@ -363,7 +365,12 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						}
 					}
 				}
-				updateMenu();
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						updateMenu();
+					}
+				});
 			}
 		};
 		gameThread.start();
@@ -507,6 +514,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					break;
 				case mute:
 					SoundManager.setMuted(!SoundManager.getMuted());
+					URL imageURL = getClass().getResource(
+							!SoundManager.getMuted() ? "unmute.png" : "mute.png");
+					mi.setIcon(new ImageIcon(imageURL, "Mute/unmute"));
 					break;
 				case newRound:
 					if (game.running) {
@@ -699,8 +709,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						int i = stepRate.ordinal();
 						stepRate = StepRates.values()[i + 1];
 					}
-					//if (stepRate == StepRates.unlimited)
-					//	SoundManager.mute();
+					// if (stepRate == StepRates.unlimited)
+					// SoundManager.mute();
 					break;
 				case stepBrain:
 					GBObject obj = selectedObject;

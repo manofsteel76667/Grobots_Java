@@ -1,9 +1,6 @@
 package sound;
 
-import java.awt.FlowLayout;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,9 +15,6 @@ import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import support.FinePoint;
 import ui.PortalListener;
@@ -263,18 +257,4 @@ public class SoundManager implements PortalListener {
 		//Not used
 	}
 
-	/*
-	 * public static void main(String[] args) throws LineUnavailableException {
-	 * SoundManager.setManager(new SoundManager()); JFrame frame = new JFrame();
-	 * frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); JPanel pane = new
-	 * JPanel(); pane.setLayout(new FlowLayout()); frame.setContentPane(pane);
-	 * for (final SoundType type : SoundType.values()) { JButton button = new
-	 * JButton(type.filename); button.addActionListener(new ActionListener() {
-	 * int distance = 1;
-	 * 
-	 * @Override public void actionPerformed(ActionEvent arg0) { try {
-	 * SoundManager.playSound(type, new FinePoint(distance, distance)); } catch
-	 * (Exception e) { e.printStackTrace(); } distance = (distance + 1) % 40; }
-	 * }); pane.add(button); } frame.pack(); frame.setVisible(true); }
-	 */
 }

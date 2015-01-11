@@ -562,7 +562,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {
-		//TODO: this may be the source of the stuttering!!
 		if (viewpoint.inRange(p, speed))
 			viewpoint = p;
 		else

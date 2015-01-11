@@ -8,11 +8,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -132,6 +135,8 @@ enum MenuItems {
 	mute("mute")
 	;
 	
+	
+	
 	MenuItems(String desc, KeyStroke accel) {
 		description = desc;
 		accelerator = accel;
@@ -144,10 +149,16 @@ enum MenuItems {
 	public final String description;
 	public final KeyStroke accelerator;
 
+	/**
+	 * List of all buttons created for this command 
+	 */
+	List<AbstractButton> buttons = new ArrayList<AbstractButton>();
+	
 	public JMenuItem asJMenuItem() {
 		JMenuItem ret = new JMenuItem(description);
 		if (accelerator != null)
 			ret.setAccelerator(accelerator);
+		buttons.add(ret);
 		return ret;
 	}
 
@@ -155,6 +166,7 @@ enum MenuItems {
 		JRadioButtonMenuItem ret = new JRadioButtonMenuItem(description);
 		if (accelerator != null)
 			ret.setAccelerator(accelerator);
+		buttons.add(ret);
 		return ret;
 	}
 
@@ -162,12 +174,15 @@ enum MenuItems {
 		JCheckBoxMenuItem ret = new JCheckBoxMenuItem(description);
 		if (accelerator != null)
 			ret.setAccelerator(accelerator);
+		buttons.add(ret);
 		return ret;
 	}
 
 	public JButton asJButton() {
-		JButton ret = new JButton(description);
+		JButton ret = new JButton();
+		ret.setActionCommand(description);
 		// No accelerator key for a button
+		buttons.add(ret);
 		return ret;
 	}
 
@@ -182,6 +197,17 @@ enum MenuItems {
 	static {
 		for (MenuItems item : MenuItems.values())
 			descriptionLookup.put(item.description, item);
+	}
+	
+	public void setEnabled(boolean value) {
+		for (AbstractButton b : buttons)
+			b.setEnabled(value);
+	}
+	
+	public void setIcon(Icon value) {
+		for (AbstractButton b : buttons)
+			if (b.getIcon() != null)
+				b.setIcon(value);
 	}
 }
 
@@ -453,23 +479,23 @@ class GBMenu extends JMenuBar {
 		JToolBar ret = new JToolBar();
 		JButton btn;
 		btn = makeButton("control-rewind-icon.png",
-				MenuItems.slowdown.description, "Slow Down Simulation", "");
+				MenuItems.slowdown, "Slow Down Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("control-pause-icon.png", MenuItems.pause.description,
+		btn = makeButton("control-pause-icon.png", MenuItems.pause,
 				"Pause Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("control-play-icon.png", MenuItems.play.description,
+		btn = makeButton("control-play-icon.png", MenuItems.play,
 				"Run Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("control-fastforward-icon.png",
-				MenuItems.speedup.description, "Speed Up Simulation", "");
+				MenuItems.speedup, "Speed Up Simulation", "");
 		btn.addActionListener(l);
 		ret.add(btn);
-		btn = makeButton("kmixdocked_mute.png",
-				MenuItems.mute.description, "Mute / Unmute", "");
+		btn = makeButton("unmute.png",
+				MenuItems.mute, "Mute / Unmute", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
@@ -479,19 +505,19 @@ class GBMenu extends JMenuBar {
 		JToolBar ret = new JToolBar();
 		JButton btn;
 		btn = makeButton("Actions-folder-new-icon.png",
-				MenuItems.loadSide.description, "Load Side", "Load");
+				MenuItems.loadSide, "Load Side", "Load");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("Actions-edit-copy-icon.png",
-				MenuItems.duplicateSide.description, "Copy Side", "Copy");
+				MenuItems.duplicateSide, "Copy Side", "Copy");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("Actions-edit-redo-icon.png",
-				MenuItems.reloadSide.description, "Reload Side", "Reload");
+				MenuItems.reloadSide, "Reload Side", "Reload");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("Actions-edit-delete-icon.png",
-				MenuItems.removeSide.description, "Remove Side", "Remove");
+				MenuItems.removeSide, "Remove Side", "Remove");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
@@ -501,24 +527,23 @@ class GBMenu extends JMenuBar {
 		JToolBar ret = new JToolBar();
 		JButton btn;
 		btn = makeButton("control-end-icon.png",
-				MenuItems.singleFrame.description, "Advance 1 Frame", "");
+				MenuItems.singleFrame, "Advance 1 Frame", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		btn = makeButton("right_footprint.png",
-				MenuItems.stepBrain.description, "Step Brain", "");
+				MenuItems.stepBrain, "Step Brain", "");
 		btn.addActionListener(l);
 		ret.add(btn);
 		return ret;
 	}
 
-	protected JButton makeButton(String imageName, String actionCommand,
+	JButton makeButton(String imageName, MenuItems actionCommand,
 			String toolTipText, String altText) {
 		// Look for the image.
 		URL imageURL = getClass().getResource(imageName);
 
 		// Create and initialize the button.
-		JButton button = new JButton();
-		button.setActionCommand(actionCommand);
+		JButton button = actionCommand.asJButton();
 		button.setToolTipText(toolTipText);
 
 		if (imageURL != null) { // image found
