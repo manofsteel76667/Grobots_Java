@@ -15,12 +15,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,13 +74,13 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		}
 	};
 
-	// GBApplication app;
 	GBGame game;
 	GBWorld world;
 	FinePoint viewpoint;
 	GBObject selectedObject;
 	Side selectedSide;
 	RobotType selectedType;
+	boolean scaleChanged;
 
 	// Listeners
 	List<ObjectSelectionListener> objectListeners;
@@ -137,6 +139,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	static final double kEraseBigRadius = 2;
 	int minZoom = 4;
 	int maxZoom = 64;
+	BufferedImage background;
 
 	public GBPortal(GBGame _game, boolean mini) {
 		super(true);
@@ -251,12 +254,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		addMouseListener(ma);
 		addMouseMotionListener(ma);
 		addMouseWheelListener(ma);
-		// Rather than determining the edges of the map and painting a wall,
-		// we will make the background wall-colored and paint over it
-		// with tiles.
-		if (!isMiniMap) {
-			setBackground(Color.LIGHT_GRAY);
-		}
 	}
 
 	@Override
@@ -268,7 +265,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	void draw(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 		adjustViewpoint();
-		drawBackground(g2d);
+		if (background == null || scaleChanged)
+			drawBackground();
+		placeBackground(g2d);
 		drawObjects(g2d);
 		drawText(g2d);
 	}
@@ -294,12 +293,12 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			if (selectedObject != null) {
 				if (panning())
 					// FIXME at full zoom the panning rate is slower than some
-					// objects
+					// objects.
 					if (!viewpoint.inRange(selectedObject.Position(),
-							16.0d / scale)) {
+							16.0d * scale)) {
 						FinePoint distance = selectedObject.Position()
 								.subtract(viewpoint);
-						distance.setNorm(16.0d / scale);
+						distance.setNorm(16.0d * scale);
 						viewpoint = viewpoint.add(distance);
 					} else
 						viewpoint.set(selectedObject.Position());
@@ -309,8 +308,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		}
 		RestrictScrolling();
 		if (!isMiniMap) {
-			visibleWorld = new Rectangle((int) viewLeft(), (int) viewBottom(), getWidth()
-					/ scale, getHeight() / scale);
+			visibleWorld = new Rectangle((int) viewLeft(), (int) viewBottom(),
+					getWidth() / scale, getHeight() / scale);
 			changeVisibleWorld();
 		}
 	}
@@ -318,7 +317,10 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	static Color tileColor = Color.black;
 	static Color coarseGridBaseColor = Color.white;
 
-	void drawBackground(Graphics2D g2d) {
+	/**
+	 * Draw 1 background tile
+	 */
+	void drawBackground() {
 		// Set colors for grid lines
 		int coarseThickness = 1 + scale / 20;
 		Color coarseColor = GBColor.Mix(coarseGridBaseColor, scale * 6f
@@ -328,44 +330,67 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		Color fineColor = GBColor.Mix(coarseColor,
 				GBMath.clamp((float) scale / (float) maxZoom, 0, .8f),
 				tileColor);
+		background = new BufferedImage(10 * scale,
+				10 * scale,
+				BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = (Graphics2D) background.getGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		// Draw fine grid
+		g2d.setColor(fineColor);
+		g2d.setStroke(new BasicStroke(1));
+		for (int x = 0; x < 10; x++)
+			g2d.drawLine(x * scale, 0, x * scale, 10
+					* scale);
+		for (int y = 0; y < 10; y++)
+			g2d.drawLine(0, y * scale, 10 * scale, y
+					* scale);
+		// Draw coarse grid
+		g2d.setColor(coarseColor);
+		g2d.setStroke(new BasicStroke(coarseThickness));
+		g2d.drawRect(0, 0, background.getWidth(), background.getHeight());
+		scaleChanged = false;
+		g2d.dispose();
+	}
 
-		// Draw visible tiles
-		int minTileX = (int) Math.max(
-				Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
-		int minTileY = (int) Math
-				.max(Math.floor(viewBottom()
-						/ GBObjectWorld.kBackgroundTileSize), 0);
-		int maxTileX = (int) Math.ceil(Math.min(viewRight(),
-				GBObjectWorld.kWorldWidth) / GBObjectWorld.kBackgroundTileSize);
-		int maxTileY = (int) Math
-				.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
-						/ GBObjectWorld.kBackgroundTileSize);
-		for (int yi = minTileY; yi < maxTileY; yi++)
-			for (int xi = minTileX; xi < maxTileX; xi++) {
-				Rectangle tile = new Rectangle(
-						toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
-						toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
-						GBObjectWorld.kBackgroundTileSize * scale,
-						GBObjectWorld.kBackgroundTileSize * scale);
-				// Tile
-				g2d.setColor(tileColor);
-				g2d.fill(tile);
-				// Fine Grid
-				g2d.setColor(fineColor);
-				g2d.setStroke(new BasicStroke(1));
-				if (scale > minZoom && !isMiniMap)
-					for (int yf = tile.y + 1; yf < tile.y
-							+ GBObjectWorld.kForegroundTileSize * scale - 1; yf += scale)
-						for (int xf = tile.x + 1; xf < tile.x
-								+ GBObjectWorld.kForegroundTileSize * scale - 1; xf += scale) {
-							g2d.drawLine(tile.x, yf, tile.x + tile.width, yf);
-							g2d.drawLine(xf, tile.y, xf, tile.y + tile.height);
-						}
-				// Coarse grid
-				g2d.setStroke(new BasicStroke(coarseThickness));
-				g2d.setColor(coarseColor);
-				g2d.draw(tile);
-			}
+	void placeBackground(Graphics2D g2d) {
+		// Get offset of background vs screen, based on viewpoint
+		/* Draw visible tiles
+				int minTileX = (int) Math.max(
+						Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
+				int minTileY = (int) Math
+						.max(Math.floor(viewBottom()
+								/ GBObjectWorld.kBackgroundTileSize), 0);
+				int maxTileX = (int) Math.ceil(Math.min(viewRight(),
+						GBObjectWorld.kWorldWidth) / GBObjectWorld.kBackgroundTileSize);
+				int maxTileY = (int) Math
+						.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
+								/ GBObjectWorld.kBackgroundTileSize);
+				for (int yi = minTileY; yi < maxTileY; yi++)
+					for (int xi = minTileX; xi < maxTileX; xi++) {
+						Rectangle tile = new Rectangle(
+								toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
+								toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
+								GBObjectWorld.kBackgroundTileSize * scale,
+								GBObjectWorld.kBackgroundTileSize * scale);
+						// Tile
+						g2d.setColor(tileColor);
+						g2d.fill(tile);
+					}*/
+		int x = (int) (getVisibleRect().getCenterX() - viewpoint.x * scale);
+		int y = (int) (getVisibleRect().getCenterY() - (world
+				.ForegroundTilesY() * GBObjectWorld.kBackgroundTileSize - viewpoint.y)
+				* scale);
+		g2d.drawImage(background.getSubimage(
+				Math.max(0, -x),
+				Math.max(0, -y),
+				Math.min(
+						Math.min(background.getWidth(), background.getWidth()
+								+ x), getWidth()),
+				Math.min(
+						Math.min(background.getHeight(), background.getHeight()
+								+ y), getHeight())), Math.max(0, x), Math.max(
+				0, y), tileColor, null);
 	}
 
 	void drawObjects(Graphics2D g2d) {
@@ -408,8 +433,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			g2d.setColor(Color.white);
 			g2d.setStroke(new BasicStroke(1));
 			g2d.draw(new Rectangle(toScreenX(visibleWorld.x),
-					toScreenY(visibleWorld.y + visibleWorld.height), visibleWorld.width * scale,
-					visibleWorld.height * scale));
+					toScreenY(visibleWorld.y + visibleWorld.height),
+					visibleWorld.width * scale, visibleWorld.height * scale));
 		}
 	}
 
@@ -457,14 +482,14 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	@Override
 	public int toScreenX(double x) {
-		return (int) ((x - viewpoint.x) * scale + this.getVisibleRect()
-				.getCenterX());
+		return (int) Math.round((x - viewpoint.x) * scale
+				+ this.getVisibleRect().getCenterX());
 	}
 
 	@Override
 	public int toScreenY(double y) {
-		return (int) ((viewpoint.y - y) * scale + this.getVisibleRect()
-				.getCenterY());
+		return (int) Math.round((viewpoint.y - y) * scale
+				+ this.getVisibleRect().getCenterY());
 	}
 
 	@Override
@@ -589,12 +614,14 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	public void ResetZoom() {
 		scale = kScale;
+		scaleChanged = true;
 	}
 
 	public void doZoom(int direction) {
 		if (direction < 0 ? scale <= minZoom : scale >= maxZoom)
 			return;
 		scale += direction * Math.max(1, scale / 9);
+		scaleChanged = true;
 	}
 
 	boolean panning() {
@@ -669,6 +696,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	Rectangle visibleWorld;
 
+	@Override
 	public void setVisibleWorld(Object source, Rectangle rect) {
 		if (source != this) {
 			visibleWorld = rect;
@@ -680,7 +708,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		return visibleWorld;
 	}
 
-	public void setViewWindow(Object source, FinePoint newViewPoint) {
+	@Override
+	public void setViewpoint(Object source, FinePoint newViewPoint) {
 		if (!isMiniMap && source != this) {
 			following = false;
 			autofollow = false;
@@ -794,7 +823,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	void changeViewPoint(FinePoint pt) {
 		for (PortalListener l : portalListeners)
-			l.setViewWindow(this, pt);
+			l.setViewpoint(this, pt);
 	}
 
 	void changeVisibleWorld() {

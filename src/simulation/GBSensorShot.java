@@ -85,17 +85,13 @@ class GBSensorShot extends GBObject {
 		switch (seen) {
 		case ocRobot:
 			return new Color(0.4f * fraction, 0.8f * fraction, fraction);
-			// return new GBColor(0.4f, 0.8f, 1).multiply(fraction);
 		case ocFood:
 			return new Color(0.5f * fraction, fraction, 0.5f * fraction);
-			// return new GBColor(0.5f, 1, 0.5f).multiply(fraction);
 		case ocShot:
 			return new Color(fraction, fraction, 0.5f * fraction);
-			// return new GBColor(1, 1, 0.5f).multiply(fraction);
 		default:
-			break;
+			return new Color(fraction, fraction, fraction);
 		}
-		return new Color(fraction, fraction, fraction);
 	}
 
 	public GBRobot Firer() {

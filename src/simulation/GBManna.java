@@ -9,7 +9,7 @@ import java.awt.Color;
 import support.FinePoint;
 
 public class GBManna extends GBFood {
-	// public:
+
 	public GBManna(FinePoint where, double val) {
 		super(where, val);
 	}

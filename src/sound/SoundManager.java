@@ -251,7 +251,7 @@ public class SoundManager implements PortalListener {
 	}
 
 	@Override
-	public void setViewWindow(Object source, FinePoint p) {
+	public void setViewpoint(Object source, FinePoint p) {
 		//Not used	
 	}
 

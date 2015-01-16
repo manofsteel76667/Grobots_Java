@@ -7,7 +7,7 @@ package simulation;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 import sides.Side;
 import sound.SoundManager;
@@ -15,6 +15,8 @@ import support.FinePoint;
 import exception.GBSimulationError;
 
 public class GBExplosion extends GBTimedShot {
+	Color color = new Color(1, 0.9f, 0.2f);
+
 	public GBExplosion(FinePoint where, Side who, double howMuch) {
 		super(where, PowerRadius(howMuch), who, howMuch, kExplosionLifetime);
 		if (howMuch < 0)
@@ -31,6 +33,11 @@ public class GBExplosion extends GBTimedShot {
 		else
 			SoundManager.playSound(SoundManager.SoundType.stTinyExplosion,
 					position);
+		image = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = (Graphics2D) image.getGraphics();
+		g2d.setColor(Color());
+		g2d.fillOval(0, 0, 20, 20);
+		g2d.dispose();
 	}
 
 	@Override
@@ -76,15 +83,12 @@ public class GBExplosion extends GBTimedShot {
 
 	@Override
 	public Color Color() {
-		return new Color(1, 0.9f, 0.2f);
+		return color;
 	}
 
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
-		Graphics2D g2d = (Graphics2D) g;
-		Rectangle where = getScreenRect(proj);
-		g2d.setColor(Color());
-		g2d.fillOval(where.x, where.y, where.width, where.height);
+		drawImage(g, proj);
 	}
 
 	public static final double PowerRadius(double pwr) {

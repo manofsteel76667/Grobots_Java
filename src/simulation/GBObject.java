@@ -8,7 +8,9 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
 
 import sides.Side;
 //Maps FinePoints to screen locations
@@ -17,6 +19,11 @@ import support.FinePoint;
 public abstract class GBObject {
 	FinePoint position;
 	FinePoint velocity;
+
+	public BufferedImage image;
+
+	protected double radius;
+	protected double mass;
 
 	public static final double kCollisionRepulsion = 0.02;
 	public static final double kCollisionRepulsionSpeed = 0.1;
@@ -93,9 +100,6 @@ public abstract class GBObject {
 			boolean detailed) {
 	}
 
-	// protected:
-	protected double radius;
-	protected double mass;
 	public GBObject next;// references the next object; allows GBObject to act
 							// as a singly-linked list
 
@@ -304,8 +308,9 @@ public abstract class GBObject {
 	 */
 	protected Rectangle getScreenRect(GBProjection<GBObject> proj) {
 		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
-		return new Rectangle(proj.toScreenX(position.x) - oWidth / 2,
-				proj.toScreenY(position.y) - oWidth / 2, oWidth, oWidth);
+		//return new Rectangle(proj.toScreenX(position.x) - oWidth / 2,
+		//		proj.toScreenY(position.y) - oWidth / 2, oWidth, oWidth);
+		return new Rectangle(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
 	}
 
 	public void DrawShadow(Graphics g, GBProjection<GBObject> proj,
@@ -317,5 +322,21 @@ public abstract class GBObject {
 		where.y -= offset.y * scale;
 		g2d.setPaint(color);
 		g2d.fill(where);
+	}
+
+	protected void drawImage(Graphics g, GBProjection<GBObject> proj) {
+		if (image == null)
+			return;
+		int x1 = proj.toScreenX(Left());
+		int y1 = proj.toScreenY(Top());
+		int x2 = proj.toScreenX(Right());
+		int y2 = proj.toScreenY(Bottom());
+		if (x2 - x1 < 2)
+			x2 = x1 + 2;
+		if (y2 - y1 < 2)
+			y2 = y1 + 2;
+		((Graphics2D)g).setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g.drawImage(image, x1, y1, x2, y2, 0, 0, image.getWidth(),
+				image.getHeight(), null);
 	}
 };

@@ -7,15 +7,11 @@ package simulation;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 import sides.Side;
 import support.FinePoint;
 import exception.GBSimulationError;
-
-// GBFood.cpp
-// Grobots (c) 2002-2007 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
 
 public class GBFood extends GBObject {
 	public static final double kFoodMinRadius = 0.1;
@@ -37,15 +33,25 @@ public class GBFood extends GBObject {
 		super(where, Math.sqrt(val) * kFoodRadiusFactor + kFoodMinRadius, val
 				* kFoodMassPerValue);
 		value = Math.max(val, 0);
+		makeImage();
 	}
 
 	public GBFood(FinePoint where, FinePoint vel, double val) {
 		super(where, Math.sqrt(val) * kFoodRadiusFactor + kFoodMinRadius, vel,
 				val * kFoodMassPerValue);
 		value = val;
+		makeImage();
 
 		if (val < 0)
 			throw new GBSimulationError("negative-value food");
+	}
+
+	void makeImage() {
+		image = new BufferedImage(21, 21, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = (Graphics2D) image.getGraphics();
+		g2d.setColor(Color());
+		g2d.fillRect(0, 0, image.getWidth(), image.getHeight());
+		g2d.dispose();
 	}
 
 	@Override
@@ -108,9 +114,6 @@ public class GBFood extends GBObject {
 
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
-		Graphics2D g2d = (Graphics2D) g;
-		Rectangle where = getScreenRect(proj);
-		g2d.setColor(Color());
-		g2d.fillRect(where.x, where.y, where.width, where.height);
+		drawImage(g, proj);
 	}
 };

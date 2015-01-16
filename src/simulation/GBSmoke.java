@@ -7,7 +7,7 @@ package simulation;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 import support.FinePoint;
 
@@ -18,6 +18,7 @@ public class GBSmoke extends GBTimedDecoration {
 	// public:
 	public GBSmoke(FinePoint where, FinePoint vel, int life) {
 		super(where, kSmokeRadius, vel, life);
+		image = new BufferedImage(60, 60, BufferedImage.TYPE_INT_ARGB);
 	}
 
 	@Override
@@ -34,10 +35,10 @@ public class GBSmoke extends GBTimedDecoration {
 
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
-		Graphics2D g2d = (Graphics2D) g;
-		Rectangle where = getScreenRect(proj);
+		Graphics2D g2d = (Graphics2D) image.getGraphics();
 		g2d.setPaint(Color());
-		g2d.fillOval(where.x, where.y, where.width, where.height);
+		g2d.fillOval(0, 0, image.getWidth(), image.getHeight());
+		drawImage(g, proj);		
 	}
 
 }
