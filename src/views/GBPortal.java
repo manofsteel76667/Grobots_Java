@@ -254,6 +254,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		addMouseListener(ma);
 		addMouseMotionListener(ma);
 		addMouseWheelListener(ma);
+		setIgnoreRepaint(true);
 	}
 
 	@Override
@@ -323,8 +324,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	void drawBackground() {
 		// Set colors for grid lines
 		int coarseThickness = 1 + scale / 20;
-		int maxX = world.ForegroundTilesX() * 10;
-		int maxY = world.ForegroundTilesY() * 10;
 		Color coarseColor = GBColor.Mix(coarseGridBaseColor, scale * 6f
 				/ maxZoom, tileColor);
 		// Fine grid should be close to the coarse grid color when zoomed in and
@@ -332,8 +331,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		Color fineColor = GBColor.Mix(coarseColor,
 				GBMath.clamp((float) scale / (float) maxZoom, 0, .8f),
 				tileColor);
-		background = new BufferedImage(maxX * scale,
-				maxY * scale,
+		background = new BufferedImage(GBObjectWorld.kBackgroundTileSize
+				* scale, GBObjectWorld.kBackgroundTileSize * scale,
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = (Graphics2D) background.getGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
@@ -341,61 +340,40 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// Draw fine grid
 		g2d.setColor(fineColor);
 		g2d.setStroke(new BasicStroke(1));
-		for (int x = 0; x < maxX; x++)
-			g2d.drawLine(x * scale, 0, x * scale, maxY * scale);
-		for (int y = 0; y < maxY; y++)
-			g2d.drawLine(0, y * scale, maxX * scale, y
-					* scale);
+		for (int x = 0; x < GBObjectWorld.kBackgroundTileSize; x++)
+			g2d.drawLine(x * scale, 0, x * scale,
+					GBObjectWorld.kBackgroundTileSize * scale);
+		for (int y = 0; y < GBObjectWorld.kBackgroundTileSize; y++)
+			g2d.drawLine(0, y * scale, GBObjectWorld.kBackgroundTileSize
+					* scale, y * scale);
 		// Draw coarse grid
 		g2d.setColor(coarseColor);
 		g2d.setStroke(new BasicStroke(coarseThickness));
-		for(int x = 0; x <= 10; x++)
-			g2d.drawLine(x * scale * 10, 0, x * scale * 10, maxY * scale);
-		for(int y = 0; y <= 10; y++)
-			g2d.drawLine(0, y * scale * 10, maxX * scale, y * scale * 10);
-		//g2d.drawRect(0, 0, background.getWidth(), background.getHeight());
+		g2d.drawRect(0, 0, background.getWidth(), background.getHeight());
 		scaleChanged = false;
 		g2d.dispose();
 	}
 
 	void placeBackground(Graphics2D g2d) {
-		// Get offset of background vs screen, based on viewpoint
-		/* Draw visible tiles
-				int minTileX = (int) Math.max(
-						Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
-				int minTileY = (int) Math
-						.max(Math.floor(viewBottom()
-								/ GBObjectWorld.kBackgroundTileSize), 0);
-				int maxTileX = (int) Math.ceil(Math.min(viewRight(),
-						GBObjectWorld.kWorldWidth) / GBObjectWorld.kBackgroundTileSize);
-				int maxTileY = (int) Math
-						.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
-								/ GBObjectWorld.kBackgroundTileSize);
-				for (int yi = minTileY; yi < maxTileY; yi++)
-					for (int xi = minTileX; xi < maxTileX; xi++) {
-						Rectangle tile = new Rectangle(
-								toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
-								toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
-								GBObjectWorld.kBackgroundTileSize * scale,
-								GBObjectWorld.kBackgroundTileSize * scale);
-						// Tile
-						g2d.setColor(tileColor);
-						g2d.fill(tile);
-					}*/
-		int minX = (int) (getVisibleRect().getCenterX() - viewpoint.x * scale);
-		int minY = (int) (getVisibleRect().getCenterY() - (world
-				.ForegroundTilesY() * GBObjectWorld.kBackgroundTileSize - viewpoint.y)
-				* scale);
-		g2d.drawImage(background.getSubimage(
-				Math.max(0, -minX),
-				Math.max(0, -minY),
-				Math.min(
-						Math.min(background.getWidth(), background.getWidth()
-								+ minX), getWidth()),
-				Math.min(
-						Math.min(background.getHeight(), background.getHeight()
-								+ minY), getHeight())), Math.max(0, minX), Math.max(
-				0, minY), tileColor, null);
+		// Draw visible tiles
+		int minTileX = (int) Math.max(
+				Math.floor(viewLeft() / GBObjectWorld.kBackgroundTileSize), 0);
+		int minTileY = (int) Math
+				.max(Math.floor(viewBottom()
+						/ GBObjectWorld.kBackgroundTileSize), 0);
+		int maxTileX = (int) Math.ceil(Math.min(viewRight(),
+				GBObjectWorld.kWorldWidth) / GBObjectWorld.kBackgroundTileSize);
+		int maxTileY = (int) Math
+				.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
+						/ GBObjectWorld.kBackgroundTileSize);
+		for (int yi = minTileY; yi < maxTileY; yi++)
+			for (int xi = minTileX; xi < maxTileX; xi++) {
+				g2d.drawImage(
+						background,
+						toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
+						toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
+						tileColor, null);
+			}
 	}
 
 	void drawObjects(Graphics2D g2d) {
@@ -404,7 +382,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// could probably be improved
 		// Hide details when zoomed out or when going really fast
 		boolean detailed = showDetails && scale >= kMinDetailsScale;
-		// && app.stepRate.value < 200;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
 				ob.Draw(g2d, this, detailed);
