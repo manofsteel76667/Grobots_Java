@@ -233,12 +233,12 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	public void reloadSide() {
 		if (selectedSide == null)
 			return;
-		int index = model.indexOf(selectedSide);
-		model.removeElementAt(index);
 		Side reload = SideReader.Load(selectedSide.filename);
 		if (game.sides.contains(selectedSide))
 			game.ReplaceSide(selectedSide, reload);
-		model.add(index, reload);
+		model.clear();
+		for (Side s : game.sides)
+			model.addElement(s);
 		selectedSide = reload;
 		notifySideListeners();
 	}

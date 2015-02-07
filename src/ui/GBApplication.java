@@ -315,7 +315,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	void updateMenu() {
 		MenuItems.removeAllSides.setEnabled(game.sides.size() > 0);
-		MenuItems.reloadSide.setEnabled(selectedSide != null && !game.running);
+		MenuItems.reloadSide.setEnabled(selectedSide != null /*&& !game.running*/);
 		MenuItems.duplicateSide.setEnabled(selectedSide != null);
 		MenuItems.removeSide.setEnabled(selectedSide != null);
 		MenuItems.addRobot.setEnabled(selectedType != null);
