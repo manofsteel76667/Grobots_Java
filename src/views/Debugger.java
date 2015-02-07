@@ -166,6 +166,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 										GroupLayout.PREFERRED_SIZE,
 										Integer.MAX_VALUE))
 				.addComponent(lastPrint));
+		setIgnoreRepaint(true);
 	}
 
 	void setDefaultTextPaneStyle(JTextPane pane) {

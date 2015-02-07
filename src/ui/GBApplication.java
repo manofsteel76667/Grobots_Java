@@ -119,7 +119,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 			e.printStackTrace();
 		}
 		SoundManager.setMuted(false);
-		//This does nothing but will call the static initializer to preload all the sounds
+		// This does nothing but will call the static initializer to preload all
+		// the sounds
 		SoundType.stBeep.getClass();
 	}
 
@@ -166,7 +167,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 							drawFastPanels();
 						} else
 							game.isFastDrawRequested = true;
-						;
 					};
 				});
 		fastTimer.setRepeats(true);
@@ -250,7 +250,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		right.setMaximumSize(new Dimension(270, 800));
 		right.setBorder(BorderFactory.createLineBorder(getForeground(), 1));
 
-		//Toolbar
+		// Toolbar
 		JToolBar main = new JToolBar();
 		main.setFloatable(false);
 		JToolBar fileControls = mainMenu.fileToolBar(this);
@@ -330,50 +330,40 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						updateMenu();
-					}
-				});
 				while (game.running) {
-					long frameRate = 1000000000L / stepRate.value; // nanoseconds
-																	// per
-																	// frame
-
+					long frameRate = 1000000000L / stepRate.value;
 					if (System.nanoTime() > prevFrameTime + frameRate) {
-						try {
-							while (rendering > 0) {
-								Thread.sleep(1);
-							}
-							running = true;
-							game.advanceFrame();
-							running = false;
-							prevFrameTime = System.nanoTime();
-						} catch (GBSimulationError e) {
+						if (rendering == 0) {
 							try {
-								GBError.NonfatalError("Error simulating: "
-										+ e.getMessage());
-							} catch (GBAbort a) {
-								// Retry
-							}
-						} catch (Exception e) {
-							try {
-								GBError.NonfatalError("Java Error: "
-										+ e.getMessage() + "\nTrace:\n"
-										+ Arrays.toString(e.getStackTrace()));
-							} catch (GBAbort a) {
-								// Retry
+								running = true;
+								game.advanceFrame();
+								running = false;
+								prevFrameTime = System.nanoTime();
+							} catch (GBSimulationError e) {
+								try {
+									GBError.NonfatalError("Error simulating: "
+											+ e.getMessage());
+								} catch (GBAbort a) {
+									// Retry
+								}
+							} catch (Exception e) {
+								try {
+									GBError.NonfatalError("Java Error: "
+											+ e.getMessage()
+											+ "\nTrace:\n"
+											+ Arrays.toString(e.getStackTrace()));
+								} catch (GBAbort a) {
+									// Retry
+								}
 							}
 						}
-					}
+					} else
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 				}
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						updateMenu();
-					}
-				});
 			}
 		};
 		gameThread.start();
@@ -518,7 +508,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				case mute:
 					SoundManager.setMuted(!SoundManager.getMuted());
 					URL imageURL = getClass().getResource(
-							!SoundManager.getMuted() ? "unmute.png" : "mute.png");
+							!SoundManager.getMuted() ? "unmute.png"
+									: "mute.png");
 					mi.setIcon(new ImageIcon(imageURL, "Mute/unmute"));
 					break;
 				case newRound:
@@ -691,7 +682,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 				case singleFrame:
 					game.advanceFrame();
 					game.running = false;
-					repaint();
 					break;
 				case slow:
 					stepRate = StepRates.slow;
@@ -721,8 +711,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						return;
 					if (obj instanceof GBRobot
 							&& obj.Class() != GBObjectClass.ocDead) {
-						game.running = false;
-						Thread.sleep(100);
+						if (game.running) {
+							game.running = false;
+							Thread.sleep(100);
+						}
 						GBRobot target = (GBRobot) obj;
 						Brain brain = target.Brain();
 						if (brain == null)

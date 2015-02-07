@@ -288,6 +288,7 @@ public class GBWorld extends GBObjectWorld {
 				newSide.SetName(newSide.Name() + '\'');
 		sides.add(pos, newSide);
 		clearSideObjects(oldSide);
+		ResortObjects();
 	}
 
 	public void RemoveSide(Side side) {

@@ -98,9 +98,6 @@ public class GBObjectWorld {
 				if (obj.Class() != GBObjectClass.ocDead) {
 					addObject(obj);
 				} else
-					// TODO: check that allObjects is the only place the dead
-					// object is referenced;
-					// otherwise GC won't happen
 					it.remove();
 			}
 		}
@@ -115,7 +112,14 @@ public class GBObjectWorld {
 	 * @return
 	 */
 	public GBObject[] getObjects(GBObjectClass type) {
-		return objects.get(type);
+		//return objects.get(type);
+		synchronized (allObjects) {
+			List<GBObject> ret = new ArrayList<GBObject>();
+			for(GBObject obj : allObjects)
+				if (obj.Class() == type)
+					ret.add(obj);
+			return ret.toArray(new GBObject[ret.size()]);
+		}
 	}
 
 	private void addNewObjects() {
