@@ -15,8 +15,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
 import sides.GBScores;
 import sides.RobotType;
 import sides.Side;
@@ -122,24 +120,6 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 			}
 			sidesToRemove.clear();
 			checkSides();
-		}
-		if (isFastDrawRequested || world.currentFrame == 0) {
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					app.drawFastPanels();
-				}
-			});
-			isFastDrawRequested = false;
-		}
-		if (isSlowDrawRequested || world.currentFrame == 0) {
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					app.drawSlowPanels();
-				}
-			});
-			isSlowDrawRequested = false;
 		}
 		if (sideToReplace != null && replacementSide != null) {
 			handleSideReplacement(sideToReplace, replacementSide);

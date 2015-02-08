@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	Debugger debug;
 
 	public enum StepRates {
-		slow(10), normal(30), fast(60), unlimited(10000);
+		slow(10), normal(30), fast(60), unlimited(-1);
 		public final int value;
 
 		StepRates(int val) {
@@ -93,7 +94,6 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	GBMenu mainMenu;
 
-	long prevFrameTime;
 	Side selectedSide;
 	RobotType selectedType;
 	GBObject selectedObject;
@@ -165,8 +165,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					public void actionPerformed(ActionEvent e) {
 						if (!running) {
 							drawFastPanels();
-						} else
-							game.isFastDrawRequested = true;
+						} // else
+							// game.isFastDrawRequested = true;
 					};
 				});
 		fastTimer.setRepeats(true);
@@ -315,7 +315,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 
 	void updateMenu() {
 		MenuItems.removeAllSides.setEnabled(game.sides.size() > 0);
-		MenuItems.reloadSide.setEnabled(selectedSide != null /*&& !game.running*/);
+		MenuItems.reloadSide.setEnabled(selectedSide != null);
 		MenuItems.duplicateSide.setEnabled(selectedSide != null);
 		MenuItems.removeSide.setEnabled(selectedSide != null);
 		MenuItems.addRobot.setEnabled(selectedType != null);
@@ -330,15 +330,17 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		Thread gameThread = new Thread() {
 			@Override
 			public void run() {
+				running = true;
+				long prevFrameTime = System.currentTimeMillis();
+				long prevFastDrawTime = System.currentTimeMillis();
+				long prevSlowDrawTime = System.currentTimeMillis();
 				while (game.running) {
-					long frameRate = 1000000000L / stepRate.value;
-					if (System.nanoTime() > prevFrameTime + frameRate) {
+					long frameRate = 1000L / stepRate.value;
+					if (System.currentTimeMillis() >= prevFrameTime + frameRate) {
 						if (rendering == 0) {
 							try {
-								running = true;
 								game.advanceFrame();
-								running = false;
-								prevFrameTime = System.nanoTime();
+								prevFrameTime = System.currentTimeMillis();
 							} catch (GBSimulationError e) {
 								try {
 									GBError.NonfatalError("Error simulating: "
@@ -363,7 +365,34 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
+					try {
+						if (System.currentTimeMillis() >= prevFastDrawTime
+								+ fastInterval) {
+							SwingUtilities.invokeAndWait(new Runnable() {
+								@Override
+								public void run() {
+									drawFastPanels();
+								}
+							});
+							prevFastDrawTime = System.currentTimeMillis();
+						}
+						if (System.currentTimeMillis() >= prevSlowDrawTime
+								+ slowInterval) {
+							SwingUtilities.invokeAndWait(new Runnable() {
+								@Override
+								public void run() {
+									drawSlowPanels();
+								}
+							});
+							prevSlowDrawTime = System.currentTimeMillis();
+						}
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
+				running = false;
 			}
 		};
 		gameThread.start();

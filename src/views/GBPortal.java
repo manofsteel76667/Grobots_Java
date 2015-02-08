@@ -295,16 +295,15 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				if (panning())
 					// FIXME at full zoom the panning rate is slower than some
 					// objects.
-					if (!viewpoint.inRange(selectedObject.Position(),
-							16.0d * scale)) {
+					/*if (!viewpoint.inRange(selectedObject.Position(),
+							16.0)) {
 						FinePoint distance = selectedObject.Position()
 								.subtract(viewpoint);
-						distance.setNorm(16.0d * scale);
+						distance.setNorm(16.0d);
 						viewpoint = viewpoint.add(distance);
 					} else
-						viewpoint.set(selectedObject.Position());
-				else
-					viewpoint.set(selectedObject.Position());
+						viewpoint.set(selectedObject.Position());*/
+					ScrollToward(selectedObject.Position(), 16.0d);
 			}
 		}
 		RestrictScrolling();
@@ -319,7 +318,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	static Color coarseGridBaseColor = Color.white;
 
 	/**
-	 * Draw 1 background tile
+	 * Draw 1 background tile to a BufferedImage
 	 */
 	void drawBackground() {
 		// Set colors for grid lines
@@ -354,6 +353,11 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		g2d.dispose();
 	}
 
+	/**
+	 * Draw enough copies of the background tile to fill the screen, oriented 
+	 * based on the viewpoint and scale
+	 * @param g2d
+	 */
 	void placeBackground(Graphics2D g2d) {
 		// Draw visible tiles
 		int minTileX = (int) Math.max(
@@ -380,7 +384,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		// Draw all living objects in the game
 		// Draws everything even if it isn't on the screen. This
 		// could probably be improved
-		// Hide details when zoomed out or when going really fast
+		// Hide details when zoomed out
 		boolean detailed = showDetails && scale >= kMinDetailsScale;
 		for (GBObject spot : world.getObjects(GBObjectClass.ocFood))
 			for (GBObject ob = spot; ob != null; ob = ob.next)
