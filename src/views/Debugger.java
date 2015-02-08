@@ -358,7 +358,13 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			// Physics section
 			doc.insertString(doc.getLength(), "Physics\n", bold);
 			doc.insertString(doc.getLength(),
+					String.format(vectorFormat, "Position", selectedObject.Position()),
+					basicAttr);
+			doc.insertString(doc.getLength(),
 					String.format(varFormat, "Mass", selectedObject.Mass()),
+					basicAttr);
+			doc.insertString(doc.getLength(),
+					String.format(varFormat, "Radius", selectedObject.Radius()),
 					basicAttr);
 			doc.insertString(doc.getLength(), String.format(vectorFormat,
 					"Velocity", selectedObject.Velocity().toString(4)),
@@ -418,10 +424,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			}
 			// Sensor section
 			String resultFormat = "%s-%s";
-			if (hw.sensor1.MaxResults() != 0 || hw.sensor2.MaxResults() != 0
-					|| hw.sensor3.MaxResults() != 0) {
+			if (hw.sensor1.FiringCost() != 0 || hw.sensor2.FiringCost() != 0
+					|| hw.sensor3.FiringCost() != 0) {
 				doc.insertString(doc.getLength(), "Sensors\n", bold);
-				if (hw.sensor1.MaxResults() != 0) {
+				if (hw.sensor1.FiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "robot-found",
@@ -438,7 +444,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 							String.format(resultFormat, "robot", "velocity"),
 							hw.sensor1.Velocity().toString(4)), basicAttr);
 				}
-				if (hw.sensor2.MaxResults() != 0) {
+				if (hw.sensor2.FiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "food-found",
@@ -455,7 +461,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 							String.format(resultFormat, "food", "velocity"),
 							hw.sensor2.Velocity().toString(4)), basicAttr);
 				}
-				if (hw.sensor3.MaxResults() != 0) {
+				if (hw.sensor3.FiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "shot-found",
