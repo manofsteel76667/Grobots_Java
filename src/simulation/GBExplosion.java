@@ -88,6 +88,8 @@ public class GBExplosion extends GBTimedShot {
 
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+		// FIXME: The scaling and interpolation make a nice fuzzy explosion with
+		// jagged edges, but why does it always cut off the right and bottom edges?
 		drawImage(g, proj);
 	}
 

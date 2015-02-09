@@ -399,7 +399,9 @@ public class GBRobot extends GBObject {
 		gestationMeterColor = Color.yellow;
 		gestationMeterBackgroundColor = Color.GREEN;
 		baseDecorationColor = type.Decoration() == GBRobotDecoration.none ? Owner()
-				.Color() : type.DecorationColor();
+				.Color() : /*GBColor.ChooseContrasting(type.decorationColor,
+				Owner().Color(), Color.white, .7f);*/
+					type.decorationColor;
 		shieldColor = new Color(0.3f, 0.5f, 1);
 		/*
 		 * Center big enough to hold the decoration, a lighter ring around
@@ -407,10 +409,7 @@ public class GBRobot extends GBObject {
 		 * outer ring same color as base type
 		 */
 		radialSteps = new float[] { .3f, .35f, .9f, .95f };
-		radialColors = new Color[] {
-				type.Decoration() == GBRobotDecoration.none ? Owner().Color()
-						: GBColor.ChooseContrasting(type.decorationColor,
-								Owner().Color(), Color.black, .1f),
+		radialColors = new Color[] { baseDecorationColor,
 				new Color(1f, 1f, 1f, .8f), Color.white, type.color };
 	}
 
@@ -419,7 +418,8 @@ public class GBRobot extends GBObject {
 	void DrawMeter(Graphics2D g2d, double fraction, int inset, int zeroAngle,
 			int oneAngle, int width, Color color1, Color color2, Color bgcolor,
 			boolean pulse) {
-		g2d.setStroke(new BasicStroke(width));
+		g2d.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND,
+				BasicStroke.JOIN_MITER));
 		Color color = GBColor.ChooseContrasting(bgcolor, color1, color2,
 				kMinMeterContrast);
 		int angle = (int) Math.ceil(fraction * (oneAngle - zeroAngle));
@@ -504,54 +504,11 @@ public class GBRobot extends GBObject {
 		else if (size <= 10)
 			image = smallImage;
 		else {
-			int meterWidth = Math.max(1, size / 15);
-			image = new BufferedImage(size + meterWidth * 2, size + meterWidth
-					* 2, BufferedImage.TYPE_INT_ARGB);
-			double centerPoint = (size + meterWidth * 2) / 2;
+			int meterWidth = Math.max(1, size / 20);
+			image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+			double centerPoint = size / 2;
 			Graphics2D g2d = (Graphics2D) image.getGraphics();
 			// background and rim
-			radialColors[2] = GBColor.Mix(Color.red, 0.8f * recentDamage
-					/ kRecentDamageTime, Owner().Color());
-			FinePoint speedOffset = velocity.multiply(size / radius
-					* kRadialPaintOffsetFactor);
-			FinePoint focus = new FinePoint(centerPoint + speedOffset.x,
-					centerPoint - speedOffset.y);
-			painter = new RadialGradientPaint(new Point2D.Double(centerPoint,
-					centerPoint), size / 2, focus, radialSteps, radialColors,
-					CycleMethod.NO_CYCLE);
-			g2d.setPaint(painter);
-			g2d.fillOval(meterWidth, meterWidth, size, size);
-			// meters
-			if (detailed) {
-				// energy meter
-				if (hardware.MaxEnergy() != 0)
-					DrawMeter(g2d, hardware.Energy() / hardware.MaxEnergy(), meterWidth,
-							180, 0, meterWidth, energyMeterColor,
-							energyMeterBackgroundColor, Owner().Color(),
-							hardware.Eaten() != 0
-									|| hardware.syphon.Syphoned() != 0
-									|| hardware.enemySyphon.Syphoned() != 0);
-				// damage meter
-				if (hardware.Armor() < hardware.MaxArmor())
-					DrawMeter(g2d,
-							1.0 - hardware.Armor() / hardware.MaxArmor(), meterWidth,
-							360, 180, meterWidth, damageMeterColor,
-							damageMeterBackgroundColor, Owner().Color(),
-							hardware.RepairRate() != 0);
-				// gestation meter
-				if (hardware.constructor.Progress() != 0) {
-					DrawMeter(g2d, hardware.constructor.Fraction(),
-							meterWidth * 2, 0, 360, meterWidth,
-							gestationMeterColor, gestationMeterBackgroundColor,
-							Owner().Color(), hardware.constructor.Rate() != 0);
-				}
-			}
-			// decoration appears inside the focus circle or the radial painter
-			double decorationWidth = size * radialSteps[0];
-			double decorationHeight = size * radialSteps[0];
-			Ellipse2D.Double decorationOval = new Ellipse2D.Double(focus.x
-					- decorationWidth / 2, focus.y - decorationHeight / 2,
-					decorationWidth, decorationHeight);
 			// flash decoration when reloading or sensing
 			Color color = baseDecorationColor;
 			if (hardware.grenades.Cooldown() != 0)
@@ -565,6 +522,49 @@ public class GBRobot extends GBObject {
 						(float) hardware.blaster.Cooldown()
 								/ hardware.blaster.ReloadTime(),
 						baseDecorationColor);
+			radialColors[0] = color;
+			radialColors[2] = GBColor.Mix(Color.red, 0.8f * recentDamage
+					/ kRecentDamageTime, Owner().Color());
+			FinePoint speedOffset = velocity.multiply(size / radius
+					* kRadialPaintOffsetFactor);
+			FinePoint focus = new FinePoint(centerPoint + speedOffset.x,
+					centerPoint - speedOffset.y);
+			painter = new RadialGradientPaint(new Point2D.Double(centerPoint,
+					centerPoint), size / 2, focus, radialSteps, radialColors,
+					CycleMethod.NO_CYCLE);
+			g2d.setPaint(painter);
+			g2d.fillOval(0, 0, size, size);
+			// meters
+			if (detailed) {
+				// energy meter
+				if (hardware.MaxEnergy() != 0)
+					DrawMeter(g2d, hardware.Energy() / hardware.MaxEnergy(),
+							meterWidth, 180, 0, meterWidth, energyMeterColor,
+							energyMeterBackgroundColor, Owner().Color(),
+							hardware.Eaten() != 0
+									|| hardware.syphon.Syphoned() != 0
+									|| hardware.enemySyphon.Syphoned() != 0);
+				// damage meter
+				if (hardware.Armor() < hardware.MaxArmor())
+					DrawMeter(g2d,
+							1.0 - hardware.Armor() / hardware.MaxArmor(),
+							meterWidth, 360, 180, meterWidth, damageMeterColor,
+							damageMeterBackgroundColor, Owner().Color(),
+							hardware.RepairRate() != 0);
+				// gestation meter
+				if (hardware.constructor.Progress() != 0) {
+					DrawMeter(g2d, hardware.constructor.Fraction(),
+							meterWidth * 2, 0, 360, meterWidth,
+							gestationMeterColor, gestationMeterBackgroundColor,
+							Owner().Color(), hardware.constructor.Rate() != 0);
+				}
+			}
+			// decoration appears inside the focus circle or the radial painter
+			double decorationWidth = size * radialSteps[0];
+			double decorationHeight = size * radialSteps[0];
+			Ellipse2D.Double decorationOval = new Ellipse2D.Double(centerPoint
+					- decorationWidth / 2, centerPoint - decorationHeight / 2,
+					decorationWidth, decorationHeight);
 			// Draw decoration
 			g2d.setColor(color);
 			g2d.setPaint(color);
@@ -573,8 +573,8 @@ public class GBRobot extends GBObject {
 			switch (type.Decoration()) {
 			case none:
 			default:
-				if (hardware.blaster.Cooldown() == 0
-						&& hardware.grenades.Cooldown() == 0)
+				//if (hardware.blaster.Cooldown() == 0
+				//		&& hardware.grenades.Cooldown() == 0)
 					break;
 				// if we're flashing, fall through and draw a dot
 			case dot:
@@ -659,6 +659,7 @@ public class GBRobot extends GBObject {
 						+ decorationOval.height - cornerDist + thickness / 2));
 				break;
 			}
+			g2d.dispose();
 		}
 		drawImage(g, proj);
 	}

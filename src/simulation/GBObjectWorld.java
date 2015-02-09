@@ -112,14 +112,7 @@ public class GBObjectWorld {
 	 * @return
 	 */
 	public GBObject[] getObjects(GBObjectClass type) {
-		//return objects.get(type);
-		synchronized (allObjects) {
-			List<GBObject> ret = new ArrayList<GBObject>();
-			for(GBObject obj : allObjects)
-				if (obj.Class() == type)
-					ret.add(obj);
-			return ret.toArray(new GBObject[ret.size()]);
-		}
+		return objects.get(type);
 	}
 
 	private void addNewObjects() {
