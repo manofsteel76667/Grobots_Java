@@ -140,10 +140,18 @@ public class FinePoint extends Point2D.Double {
 		return Math.sqrt(x * x + y * y);
 	}
 
+	/**
+	 * Returns a point equal to 1 unit moved at the current angle from 0
+	 * @return
+	 */
 	public FinePoint unit() {
 		return makePolar(1, angle());
 	}
 
+	/**
+	 * 
+	 * @param norm
+	 */
 	public void setNorm(double norm) {
 		setPolar(norm, angle());
 		// this *= norm / Norm(); //faster but could overflow in some cases
