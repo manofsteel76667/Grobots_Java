@@ -100,10 +100,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * panning through various objects at random
 	 */
 	public boolean autofollow;
-	/**
-	 * Difference between viewpoint and position of the followed object
-	 */
-	FinePoint followPosition;
 	long lastFollow;
 
 	GBObject moving;
@@ -111,7 +107,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	int lastx, lasty; // where mouse was last if we're dragging
 	FinePoint lastClick;
 	int lastFrame; // when last tool effect was
-	// public:
 
 	public toolTypes currentTool;
 	public boolean showSensors;
@@ -121,7 +116,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	boolean isMiniMap;
 
-	public static final int kScale = 10; // default number of pixels per unit.
+	public static final int kScale = 8; // default number of pixels per unit.
 	static final int kMinDetailsScale = 10;
 	static final double kAutoScrollSpeed = 0.4;
 	static final double kAutofollowNearRange = 20;
@@ -152,9 +147,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		portalListeners = new ArrayList<PortalListener>();
 		showSideNames = true;
 		lastClick = new FinePoint();
-		lastFrame = world.currentFrame;
 		viewpoint = new FinePoint(world.Size().divide(2));
-		followPosition = new FinePoint(viewpoint);
 		if (isMiniMap) {
 			minZoom = 2;
 			scale = minZoom;
@@ -204,7 +197,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				if (currentTool == toolTypes.ptScroll) {
 					viewpoint = viewpoint.add(fromScreen(lastx, lasty)
 							.subtract(spot));
-					followPosition = viewpoint;
 					lastx = x;
 					lasty = y;
 					lastClick = spot;
@@ -292,21 +284,12 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				lastFollow = System.currentTimeMillis();
 			}
 			if (selectedObject != null) {
-				if (panning())
+				if (!selectedObject.Position().equals(viewpoint))
 					// FIXME at full zoom the panning rate is slower than some
 					// objects.
-					/*if (!viewpoint.inRange(selectedObject.Position(),
-							16.0)) {
-						FinePoint distance = selectedObject.Position()
-								.subtract(viewpoint);
-						distance.setNorm(16.0d);
-						viewpoint = viewpoint.add(distance);
-					} else
-						viewpoint.set(selectedObject.Position());*/
-					ScrollToward(selectedObject.Position(), 16.0d);
+					ScrollToward(selectedObject.Position(), kAutoScrollSpeed);
 			}
 		}
-		RestrictScrolling();
 		if (!isMiniMap) {
 			visibleWorld = new Rectangle((int) viewLeft(), (int) viewBottom(),
 					getWidth() / scale, getHeight() / scale);
@@ -354,8 +337,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	}
 
 	/**
-	 * Draw enough copies of the background tile to fill the screen, oriented 
+	 * Draw enough copies of the background tile to fill the screen, oriented
 	 * based on the viewpoint and scale
+	 * 
 	 * @param g2d
 	 */
 	void placeBackground(Graphics2D g2d) {
@@ -370,12 +354,11 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		int maxTileY = (int) Math
 				.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
 						/ GBObjectWorld.kBackgroundTileSize);
-		for (int yi = minTileY; yi < maxTileY; yi++)
-			for (int xi = minTileX; xi < maxTileX; xi++) {
-				g2d.drawImage(
-						background,
+		for (int yi = minTileY; yi <= maxTileY; yi++)
+			for (int xi = minTileX; xi <= maxTileX; xi++) {
+				g2d.drawImage(background,
 						toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
-						toScreenY(GBObjectWorld.kBackgroundTileSize * (yi + 1)),
+						toScreenY(GBObjectWorld.kBackgroundTileSize * yi),
 						tileColor, null);
 			}
 	}
@@ -542,7 +525,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewLeft() {
-		return viewpoint.x - (double) getWidth() / (scale * 2);
+		return fromScreenX(0);
+		//return viewpoint.x - getWidth() / (scale * 2);
 	}
 
 	/**
@@ -551,7 +535,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewTop() {
-		return viewpoint.y + (double) getHeight() / (scale * 2);
+		return fromScreenY(0);
+		//return viewpoint.y + getHeight() / (scale * 2);
 	}
 
 	/**
@@ -560,7 +545,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewRight() {
-		return viewpoint.x + (double) getWidth() / (scale * 2);
+		return fromScreenX(getWidth());
+		//return viewpoint.x + getWidth() / (scale * 2);
 	}
 
 	/**
@@ -569,16 +555,15 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 * @return
 	 */
 	double viewBottom() {
-		return viewpoint.y - (double) getHeight() / (scale * 2);
+		return fromScreenY(getHeight());
+		//return viewpoint.y - getHeight() / (scale * 2);
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {
-		if (viewpoint.inRange(p, speed))
-			viewpoint = p;
-		else
-			viewpoint = viewpoint.add(p.subtract(viewpoint).unit()
-					.multiply(speed));
-		RestrictScrolling();
+		double scrollSpeed = Math.min(speed, p.distance(viewpoint));
+		viewpoint = viewpoint.add(p.subtract(viewpoint).unit()
+				.multiply(scrollSpeed));
+		// RestrictScrolling();
 	}
 
 	public void Follow(GBObject ob) {
@@ -592,9 +577,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			}
 		}
 		notifyObjectListeners();
-		if (ob != null) {
-			followPosition = ob.Position().subtract(viewpoint);
-		}
 		following = ob != null;
 	}
 
@@ -608,11 +590,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			return;
 		scale += direction * Math.max(1, scale / 9);
 		scaleChanged = true;
-	}
-
-	boolean panning() {
-		boolean ret = following && !selectedObject.Position().equals(viewpoint);
-		return ret;
 	}
 
 	public void Unfollow() {
@@ -682,6 +659,10 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 
 	Rectangle visibleWorld;
 
+	/**
+	 * Draws the white rectangle on the minimap showing the bounds of the main
+	 * portal
+	 */
 	@Override
 	public void setVisibleWorld(Object source, Rectangle rect) {
 		if (source != this) {
@@ -694,6 +675,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		return visibleWorld;
 	}
 
+	/**
+	 * Centers the main portal on the point clicked on the minimap
+	 */
 	@Override
 	public void setViewpoint(Object source, FinePoint newViewPoint) {
 		if (!isMiniMap && source != this) {
