@@ -22,7 +22,6 @@ import sound.SoundManager;
 import support.FinePoint;
 import support.GBColor;
 import support.StringUtilities;
-import ui.GBApplication;
 import ui.ObjectSelectionListener;
 import ui.ObjectSelector;
 import ui.SideSelectionListener;
@@ -31,13 +30,10 @@ import exception.GBSimulationError;
 
 public class GBGame implements ScoreKeeper, ObjectSelector {
 	public List<Side> sides;
-	GBApplication app;
 	GBWorld world;
 
 	// Post-simulation actions
 	List<Side> sidesToRemove;
-	public boolean isSlowDrawRequested;
-	public boolean isFastDrawRequested;
 	Side sideToReplace;
 	Side replacementSide;
 	int previousSidesAlive; // num of non-extinct sides last frame
@@ -73,7 +69,7 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 
 	public static final int kDefaultTimeLimit = 18000;
 
-	public GBGame(GBApplication _app) {
+	public GBGame() {
 		sides = new ArrayList<Side>();
 		sidesToRemove = new ArrayList<Side>();
 		objectListeners = new ArrayList<ObjectSelectionListener>();
@@ -86,7 +82,6 @@ public class GBGame implements ScoreKeeper, ObjectSelector {
 		timeLimit = kDefaultTimeLimit;
 		tournamentLength = -1;
 		seedLimit = 10;
-		app = _app;
 	}
 
 	public void StartRound() {

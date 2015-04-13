@@ -127,7 +127,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	@Override
 	public void run() {
 		// Create world and initial conditions
-		game = new GBGame(this);
+		game = new GBGame();
 		stepRate = StepRates.fast;
 
 		// Create supporting views and menu.
@@ -178,8 +178,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					public void actionPerformed(ActionEvent e) {
 						if (!running) {
 							drawSlowPanels();
-						} else
-							game.isSlowDrawRequested = true;
+						} 
 					}
 				});
 		slowTimer.setRepeats(true);

@@ -28,7 +28,7 @@ public class Headless {
 	GBGame game;
 
 	public Headless() {
-		game = new GBGame(null);
+		game = new GBGame();
 		statsPeriod = 500;
 	}
 
