@@ -1,6 +1,6 @@
 package sound;
 
-import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,9 +17,9 @@ import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import exception.GBError;
 import support.FinePoint;
 import ui.PortalListener;
+import exception.GBError;
 
 public class SoundManager implements PortalListener {
 	public enum SoundType {
@@ -162,7 +162,7 @@ public class SoundManager implements PortalListener {
 
 	//Sound positioning
 	static FinePoint viewpoint = new FinePoint();
-	static Rectangle visibleWorld = new Rectangle();
+	static Rectangle2D.Double visibleWorld = new Rectangle2D.Double();
 	
 	//Sound manipulation
 	static final float kSoundDistanceFadeFactor = 1.2f;
@@ -256,9 +256,8 @@ public class SoundManager implements PortalListener {
 	}
 
 	@Override
-	public void setVisibleWorld(Object source, Rectangle r) {
-		visibleWorld = r;	
-		visibleWorld.grow((int)(r.width * 0.1), (int)(r.height * .1));
+	public void setVisibleWorld(Object source, Rectangle2D.Double r) {
+		visibleWorld.setRect(r.x - r.width * .1, r.y - r.height * .1, r.width * 1.2, r.height * 1.2); 
 		viewpoint.x = r.getCenterX();
 		viewpoint.y = r.getCenterY();
 	}

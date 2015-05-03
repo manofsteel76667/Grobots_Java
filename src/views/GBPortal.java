@@ -14,7 +14,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -263,6 +262,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		placeBackground(g2d);
 		drawObjects(g2d);
 		drawText(g2d);
+		g2d.dispose();
 	}
 
 	void adjustViewpoint() {
@@ -291,8 +291,8 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 			}
 		}
 		if (!isMiniMap) {
-			visibleWorld = new Rectangle((int) viewLeft(), (int) viewBottom(),
-					getWidth() / scale, getHeight() / scale);
+			visibleWorld = new Rectangle2D.Double(viewLeft(), viewBottom(),
+					getWidth() / (double)scale, getHeight() / (double)scale);
 			changeVisibleWorld();
 		}
 	}
@@ -401,7 +401,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		if (isMiniMap && visibleWorld != null) {
 			g2d.setColor(Color.white);
 			g2d.setStroke(new BasicStroke(1));
-			g2d.draw(new Rectangle(toScreenX(visibleWorld.x),
+			g2d.draw(new Rectangle2D.Double(toScreenX(visibleWorld.x),
 					toScreenY(visibleWorld.y + visibleWorld.height),
 					visibleWorld.width * scale, visibleWorld.height * scale));
 		}
@@ -657,21 +657,21 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		}
 	}
 
-	Rectangle visibleWorld;
+	Rectangle2D.Double visibleWorld;
 
 	/**
 	 * Draws the white rectangle on the minimap showing the bounds of the main
 	 * portal
 	 */
 	@Override
-	public void setVisibleWorld(Object source, Rectangle rect) {
+	public void setVisibleWorld(Object source, Rectangle2D.Double rect) {
 		if (source != this) {
 			visibleWorld = rect;
 			repaint();
 		}
 	}
 
-	public Rectangle getVisibleWorld() {
+	public Rectangle2D.Double getVisibleWorld() {
 		return visibleWorld;
 	}
 
