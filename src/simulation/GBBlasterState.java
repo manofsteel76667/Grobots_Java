@@ -16,7 +16,9 @@ public class GBBlasterState {
 	boolean firing;
 	double direction;
 
-	// public:
+	public void setReloaded() {
+		cooldown = 0;
+	}
 
 	GBBlasterState(BlasterSpec spc) {
 		spec = spc;

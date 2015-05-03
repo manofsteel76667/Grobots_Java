@@ -405,12 +405,12 @@ public class GBRobot extends GBObject {
 		shieldColor = new Color(0.3f, 0.5f, 1);
 		/*
 		 * Center big enough to hold the decoration, a lighter ring around
-		 * center Wide spot of colors that change based on game conditions, then
+		 * center, Wide spot of colors that change based on game conditions, then
 		 * outer ring same color as base type
 		 */
-		radialSteps = new float[] { .3f, .35f, .9f, .95f };
+		radialSteps = new float[] { .3f, .35f, .7f, .9f };
 		radialColors = new Color[] { baseDecorationColor,
-				new Color(1f, 1f, 1f, .8f), Color.white, type.color };
+				new Color(1f, 1f, 1f, .8f), Owner().Color(), type.color };
 	}
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make
@@ -432,7 +432,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj,
+	public void DrawUnderlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 		// Get the basics
 		Graphics2D g2d = (Graphics2D) g;
@@ -468,7 +468,7 @@ public class GBRobot extends GBObject {
 		// weapon ranges? //sensor results?
 	}
 
-	void drawRangeCircle(Graphics g, GBProjection<GBObject> proj, double r,
+	void drawRangeCircle(Graphics g, GBProjection proj, double r,
 			Color color) {
 		if (r <= 0)
 			return;
@@ -480,7 +480,7 @@ public class GBRobot extends GBObject {
 				(int) (r * 2 * proj.getScale()));
 	}
 
-	public void drawRangeCircles(Graphics g, GBProjection<GBObject> proj) {
+	public void drawRangeCircles(Graphics g, GBProjection proj) {
 		((Graphics2D) g).setStroke(new BasicStroke(1));
 		drawRangeCircle(g, proj, hardware.blaster.MaxRange(),
 				blasterRangeCircleColor);
@@ -497,7 +497,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		int size = (int) (Math.max(Math.round(radius * 2 * proj.getScale()), 1));
 		if (size <= 5)
 			image = miniImage;
@@ -665,7 +665,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj,
+	public void DrawOverlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double halo = getScreenEllipse(proj);
@@ -701,5 +701,14 @@ public class GBRobot extends GBObject {
 			g2d.setStroke(new BasicStroke(1));
 			g2d.draw(ring);
 		}
+	}
+	
+	/**
+	 * Used prior to generating the type icon so the center color will not show to be
+	 * reloading.
+	 */
+	public void setReloaded() {
+		hardware.grenades.setReloaded();
+		hardware.blaster.setReloaded();
 	}
 }

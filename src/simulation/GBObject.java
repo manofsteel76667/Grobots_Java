@@ -89,14 +89,14 @@ public abstract class GBObject {
 	// evil antimodular drawing code
 	public abstract Color Color();
 
-	public abstract void Draw(Graphics g, GBProjection<GBObject> proj,
+	public abstract void Draw(Graphics g, GBProjection proj,
 			boolean detailed);
 
-	public void DrawUnderlay(Graphics g, GBProjection<GBObject> proj,
+	public void DrawUnderlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 	}
 
-	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj,
+	public void DrawOverlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 	}
 
@@ -306,17 +306,17 @@ public abstract class GBObject {
 	 * @param proj
 	 * @return
 	 */
-	protected Rectangle getScreenRect(GBProjection<GBObject> proj) {
+	protected Rectangle getScreenRect(GBProjection proj) {
 		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
 		return new Rectangle(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
 	}
 	
-	protected Ellipse2D.Double getScreenEllipse(GBProjection<GBObject> proj) {
+	protected Ellipse2D.Double getScreenEllipse(GBProjection proj) {
 		double oWidth = Math.max(radius * proj.getScale() * 2, 1);
 		return new Ellipse2D.Double(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
 	}
 
-	public void DrawShadow(Graphics g, GBProjection<GBObject> proj,
+	public void DrawShadow(Graphics g, GBProjection proj,
 			FinePoint offset, Color color) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double where = getScreenEllipse(proj);
@@ -327,7 +327,7 @@ public abstract class GBObject {
 		g2d.fill(where);
 	}
 
-	protected void drawImage(Graphics g, GBProjection<GBObject> proj) {
+	protected void drawImage(Graphics g, GBProjection proj) {
 		if (image == null)
 			return;
 		int x1 = proj.toScreenX(Left());

@@ -17,7 +17,9 @@ public class GBGrenadesState {
 	double direction;
 	double distance;
 
-	// public:
+	public void setReloaded() {
+		cooldown = 0;
+	}
 
 	public GBGrenadesState(GrenadesSpec spc) {
 		spec = spc;

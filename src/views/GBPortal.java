@@ -48,7 +48,7 @@ import ui.PortalListener;
 import ui.SideSelectionListener;
 import ui.TypeSelectionListener;
 
-public class GBPortal extends JPanel implements GBProjection<GBObject>,
+public class GBPortal extends JPanel implements GBProjection,
 		ObjectSelectionListener, ObjectSelector, SideSelectionListener,
 		TypeSelectionListener, PortalListener {
 	/**
@@ -74,6 +74,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	GBGame game;
 	GBWorld world;
 	FinePoint viewpoint;
+	Rectangle2D.Double visibleWorld;
 	GBObject selectedObject;
 	Side selectedSide;
 	RobotType selectedType;
@@ -619,8 +620,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 		} catch (Exception e) {
 		}
 	}
-
-	Rectangle2D.Double visibleWorld;
 
 	/**
 	 * Draws the white rectangle on the minimap showing the bounds of the main

@@ -108,7 +108,7 @@ class GBSensorShot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		// show focus, owner, and side?
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);

@@ -34,7 +34,7 @@ public class GBSmoke extends GBTimedDecoration {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) image.getGraphics();
 		g2d.setPaint(Color());
 		g2d.fillOval(0, 0, image.getWidth(), image.getHeight());

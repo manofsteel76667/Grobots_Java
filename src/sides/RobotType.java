@@ -9,11 +9,16 @@
 package sides;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
+import simulation.GBProjection;
+import simulation.GBRobot;
+import support.FinePoint;
 import brains.Brain;
 import brains.BrainSpec;
 
-public class RobotType {
+public class RobotType implements GBProjection {
+	static int iconHeight = 64;
 	public static final double kStandardMass = 20;
 	public boolean debug = true;
 	public Side side;
@@ -26,6 +31,7 @@ public class RobotType {
 	public BrainSpec brain;
 	public int population;
 	public double biomass;
+	public BufferedImage icon;
 	// private:
 	double cost;
 	double mass;
@@ -173,4 +179,35 @@ public class RobotType {
 		return multiplier;
 	}
 
+	public void makeIcon() {
+		icon = new BufferedImage(iconHeight, iconHeight, BufferedImage.TYPE_INT_ARGB);
+		GBRobot bot = new GBRobot(this, new FinePoint(fromScreenX(iconHeight / 2), fromScreenY(iconHeight / 2)));
+		bot.setReloaded();
+		bot.Draw(icon.getGraphics(), this, true);
+	}
+
+	@Override
+	public int toScreenX(double x) {
+		return (int)Math.round(x * getScale());
+	}
+
+	@Override
+	public int toScreenY(double y) {
+		return (int)Math.round(iconHeight - y * getScale());
+	}
+
+	@Override
+	public double fromScreenX(int h) {
+		return (iconHeight - (double)h) / getScale();
+	}
+
+	@Override
+	public double fromScreenY(int v) {
+		return (iconHeight - (double)(iconHeight - v)) / getScale();
+	}
+
+	@Override
+	public int getScale() {
+		return iconHeight / 2;
+	}
 }

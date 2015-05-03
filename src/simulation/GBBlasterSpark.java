@@ -38,7 +38,7 @@ public class GBBlasterSpark extends GBTimedDecoration {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		drawImage(g, proj);
 	}
 

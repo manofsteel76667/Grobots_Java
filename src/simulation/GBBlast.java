@@ -110,7 +110,7 @@ public class GBBlast extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
+	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
 		if (Math.ceil(radius * 2 * proj.getScale()) <= 3) {
 			image = miniImage;			
 		} else if (hit) {

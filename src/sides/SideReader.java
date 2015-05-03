@@ -570,6 +570,8 @@ public class SideReader {
 			reader.LoadIt();
 			Side side = reader.Side();
 			side.filename = filename;
+			for(RobotType botType : side.types)
+				botType.makeIcon();
 			return side;
 		} catch (Exception e) {
 			GBError.NonfatalError("Error loading side: " + e.getMessage());

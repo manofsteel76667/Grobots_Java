@@ -12,7 +12,7 @@ package simulation;
  * @author mike
  * 
  */
-public interface GBProjection<T> {
+public interface GBProjection {
 	public int toScreenX(double x);
 
 	public int toScreenY(double y);

@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -337,6 +338,7 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 		 * 
 		 */
 		private static final long serialVersionUID = 1044029084694616742L;
+		ImageIcon thumbnail;
 
 		@Override
 		public Component getListCellRendererComponent(
@@ -373,11 +375,12 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				setBackground(list.getBackground());
 				setForeground(list.getForeground());
 			}
+			thumbnail = new ImageIcon(type.icon);
+			this.setIcon(thumbnail);
 			setEnabled(list.isEnabled());
 			setFont(list.getFont());
 			setOpaque(true);
 			return this;
 		}
-
 	}
 }
