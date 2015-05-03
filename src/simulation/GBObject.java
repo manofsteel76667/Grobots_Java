@@ -308,15 +308,18 @@ public abstract class GBObject {
 	 */
 	protected Rectangle getScreenRect(GBProjection<GBObject> proj) {
 		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
-		//return new Rectangle(proj.toScreenX(position.x) - oWidth / 2,
-		//		proj.toScreenY(position.y) - oWidth / 2, oWidth, oWidth);
 		return new Rectangle(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
+	}
+	
+	protected Ellipse2D.Double getScreenEllipse(GBProjection<GBObject> proj) {
+		double oWidth = Math.max(radius * proj.getScale() * 2, 1);
+		return new Ellipse2D.Double(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
 	}
 
 	public void DrawShadow(Graphics g, GBProjection<GBObject> proj,
 			FinePoint offset, Color color) {
 		Graphics2D g2d = (Graphics2D) g;
-		Ellipse2D.Double where = proj.toScreenEllipse(this);
+		Ellipse2D.Double where = getScreenEllipse(proj);
 		int scale = proj.getScale();
 		where.x += offset.x * scale;
 		where.y -= offset.y * scale;

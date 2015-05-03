@@ -436,7 +436,7 @@ public class GBRobot extends GBObject {
 			boolean detailed) {
 		// Get the basics
 		Graphics2D g2d = (Graphics2D) g;
-		Ellipse2D.Double halo = proj.toScreenEllipse(this);
+		Ellipse2D.Double halo = getScreenEllipse(proj);
 		if (halo.width <= 5) {
 			return;
 		}
@@ -668,7 +668,7 @@ public class GBRobot extends GBObject {
 	public void DrawOverlay(Graphics g, GBProjection<GBObject> proj,
 			boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
-		Ellipse2D.Double halo = proj.toScreenEllipse(this);
+		Ellipse2D.Double halo = getScreenEllipse(proj);
 		int scale = proj.getScale();
 		// shield
 		if (hardware.ActualShield() > 0) {
@@ -688,7 +688,7 @@ public class GBRobot extends GBObject {
 					&& hardware.radio.writes[age] == 0)
 				continue;
 			double r = kRingGrowthRate * (age + 1);
-			Ellipse2D.Double ring = proj.toScreenEllipse(this);
+			Ellipse2D.Double ring = getScreenEllipse(proj);
 			ring.x -= scale * r;
 			ring.y -= scale * r;
 			ring.width += r * 2 * scale;

@@ -4,11 +4,6 @@
  *******************************************************************************/
 package simulation;
 
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-
-import support.FinePoint;
 
 /**
  * Used for mapping GBWorld coordinates to screen locations. Could be included
@@ -26,14 +21,6 @@ public interface GBProjection<T> {
 
 	public double fromScreenY(int v);
 
-	public FinePoint fromScreen(int x, int y);
-
-	public FinePoint toScreen(Point2D.Double point);
-
 	public int getScale();
-
-	public Rectangle2D.Double toScreenRect(T gameObject);
-
-	public Ellipse2D.Double toScreenEllipse(T gameObject);
 
 }

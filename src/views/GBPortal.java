@@ -18,8 +18,6 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -166,7 +164,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				int y = arg0.getY();
 				lastx = x;
 				lasty = y;
-				lastClick = fromScreen(x, y);
+				lastClick = new FinePoint(fromScreenX(x), fromScreenY(y));
 				moving = null;
 				DoTool(lastClick);
 				lastFrame = world.currentFrame;
@@ -182,7 +180,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 					if (arg0.getClickCount() > 0
 							&& currentTool == toolTypes.ptScroll)
 						Follow(world.ObjectNear(
-								fromScreen(arg0.getX(), arg0.getY()), false));
+								new FinePoint(fromScreenX(arg0.getX()), fromScreenY(arg0.getY())), false));
 				dragged = false;
 			}
 
@@ -192,9 +190,9 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 					return;
 				int x = arg0.getX();
 				int y = arg0.getY();
-				FinePoint spot = fromScreen(x, y);
+				FinePoint spot = new FinePoint(fromScreenX(x), fromScreenY(y));
 				if (currentTool == toolTypes.ptScroll) {
-					viewpoint = viewpoint.add(fromScreen(lastx, lasty)
+					viewpoint = viewpoint.add(new FinePoint(fromScreenX(lastx), fromScreenY(lasty))
 							.subtract(spot));
 					lastx = x;
 					lasty = y;
@@ -232,8 +230,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 				if (notches == 0)
 					return;
 				int originalScale = scale;
-				FinePoint zoomPosition = fromScreen(arg0.getPoint().x,
-						arg0.getPoint().y);
+				FinePoint zoomPosition = new FinePoint(fromScreenX(arg0.getX()), fromScreenY(arg0.getY()));
 				FinePoint dp = zoomPosition.subtract(viewpoint);
 				int dir = notches / Math.abs(notches);
 				doZoom(dir * -1);
@@ -251,10 +248,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		draw(g);
-	}
-
-	void draw(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 		adjustViewpoint();
 		if (background == null || scaleChanged)
@@ -469,33 +462,7 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	@Override
 	public double fromScreenY(int y) {
 		return (this.getVisibleRect().getCenterY() - y) / scale + viewpoint.y;
-	}
-
-	@Override
-	public FinePoint fromScreen(int x, int y) {
-		return new FinePoint(fromScreenX(x), fromScreenY(y));
-	}
-
-	@Override
-	public FinePoint toScreen(Point2D.Double point) {
-		return new FinePoint(toScreenX(point.x), toScreenY(point.y));
-	}
-
-	@Override
-	public Rectangle2D.Double toScreenRect(GBObject gameObject) {
-		return new Rectangle2D.Double(toScreenX(gameObject.Position().x
-				- gameObject.Radius()), toScreenY(gameObject.Position().y
-				+ gameObject.Radius()), gameObject.Radius() * scale * 2,
-				gameObject.Radius() * scale * 2);
-	}
-
-	@Override
-	public Ellipse2D.Double toScreenEllipse(GBObject gameObject) {
-		return new Ellipse2D.Double(toScreenX(gameObject.Position().x
-				- gameObject.Radius()), toScreenY(gameObject.Position().y
-				+ gameObject.Radius()), gameObject.Radius() * scale * 2,
-				gameObject.Radius() * scale * 2);
-	}
+	}	
 
 	@Override
 	public int getScale() {
@@ -526,7 +493,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 */
 	double viewLeft() {
 		return fromScreenX(0);
-		//return viewpoint.x - getWidth() / (scale * 2);
 	}
 
 	/**
@@ -536,7 +502,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 */
 	double viewTop() {
 		return fromScreenY(0);
-		//return viewpoint.y + getHeight() / (scale * 2);
 	}
 
 	/**
@@ -546,7 +511,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 */
 	double viewRight() {
 		return fromScreenX(getWidth());
-		//return viewpoint.x + getWidth() / (scale * 2);
 	}
 
 	/**
@@ -556,7 +520,6 @@ public class GBPortal extends JPanel implements GBProjection<GBObject>,
 	 */
 	double viewBottom() {
 		return fromScreenY(getHeight());
-		//return viewpoint.y - getHeight() / (scale * 2);
 	}
 
 	public void ScrollToward(FinePoint p, double speed) {

@@ -54,7 +54,7 @@ public class GBGrenade extends GBTimedShot {
 	@Override
 	public void Draw(Graphics g, GBProjection<GBObject> proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
-		Ellipse2D.Double where = proj.toScreenEllipse(this);
+		Ellipse2D.Double where = getScreenEllipse(proj);
 		if (where.getWidth() <= 3) {
 			g2d.setPaint(Color());
 			g2d.fill(where.getBounds());
