@@ -348,8 +348,8 @@ public class GBPortal extends JPanel implements GBProjection,
 		int maxTileY = (int) Math
 				.ceil(Math.min(viewTop(), GBObjectWorld.kWorldHeight)
 						/ GBObjectWorld.kBackgroundTileSize);
-		for (int yi = minTileY; yi <= maxTileY; yi++)
-			for (int xi = minTileX; xi <= maxTileX; xi++) {
+		for (int yi = minTileY+1; yi <= maxTileY; yi++)
+			for (int xi = minTileX; xi < maxTileX; xi++) {
 				g2d.drawImage(background,
 						toScreenX(GBObjectWorld.kBackgroundTileSize * xi),
 						toScreenY(GBObjectWorld.kBackgroundTileSize * yi),
