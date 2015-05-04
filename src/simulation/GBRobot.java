@@ -15,6 +15,7 @@ import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.RadialGradientPaint;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 import sides.GBRobotDecoration;
@@ -408,7 +409,7 @@ public class GBRobot extends GBObject {
 		 * center, Wide spot of colors that change based on game conditions, then
 		 * outer ring same color as base type
 		 */
-		radialSteps = new float[] { .3f, .35f, .7f, .9f };
+		radialSteps = new float[] { .2f, .25f, .7f, .9f };
 		radialColors = new Color[] { baseDecorationColor,
 				new Color(1f, 1f, 1f, .8f), Owner().Color(), type.color };
 	}
@@ -565,6 +566,9 @@ public class GBRobot extends GBObject {
 			Ellipse2D.Double decorationOval = new Ellipse2D.Double(centerPoint
 					- decorationWidth / 2, centerPoint - decorationHeight / 2,
 					decorationWidth, decorationHeight);
+			double r1 = radius * proj.getScale() / GBMath.sqrt2;
+			double cornerStart = centerPoint - r1;
+			Rectangle2D.Double decorationSquare = new Rectangle2D.Double(cornerStart, cornerStart, r1*2, r1*2);
 			// Draw decoration
 			g2d.setColor(color);
 			g2d.setPaint(color);
@@ -584,79 +588,79 @@ public class GBRobot extends GBObject {
 				g2d.draw(decorationOval);
 				break;
 			case square:
-				g2d.draw(decorationOval.getBounds());
+				g2d.draw(decorationSquare.getBounds());
 				break;
 			case triangle:
-				double bottom = decorationOval.y + .75 * decorationOval.height;
-				double bottomHalfX = decorationOval.width / 4 * GBMath.sqrt3;
-				double topMiddleX = decorationOval.x + decorationOval.width / 2;
+				double bottom = decorationSquare.y + .75 * decorationSquare.height;
+				double bottomHalfX = decorationSquare.width / 4 * GBMath.sqrt3;
+				double topMiddleX = decorationSquare.x + decorationSquare.width / 2;
 				int[] x = new int[] { (int) (topMiddleX),
 						(int) (topMiddleX + bottomHalfX),
 						(int) (topMiddleX - bottomHalfX) };
-				int[] y = new int[] { (int) decorationOval.y, (int) bottom,
+				int[] y = new int[] { (int) decorationSquare.y, (int) bottom,
 						(int) bottom };
 				g2d.drawPolygon(x, y, 3);
 				break;
 			case cross:
 				g2d.drawLine(
-						(int) (decorationOval.x + thickness / 2),
-						(int) (decorationOval.y + decorationOval.height / 2 + thickness / 2),
-						(int) (decorationOval.x + decorationOval.width + thickness / 2),
-						(int) (decorationOval.y + decorationOval.height / 2 + thickness / 2));
+						(int) (decorationSquare.x + thickness / 2),
+						(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2),
+						(int) (decorationSquare.x + decorationSquare.width + thickness / 2),
+						(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2));
 				g2d.drawLine(
-						(int) (decorationOval.x + decorationOval.width / 2 + thickness / 2),
-						(int) (decorationOval.y + thickness / 2),
-						(int) (decorationOval.x + decorationOval.width / 2 + thickness / 2),
-						(int) (decorationOval.y + decorationOval.height + thickness / 2));
+						(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
+						(int) (decorationSquare.y + thickness / 2),
+						(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
+						(int) (decorationSquare.y + decorationSquare.height + thickness / 2));
 				break;
 			case x:
-				double cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+				double cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
 						/ (2 * GBMath.sqrt2);
 				g2d.drawLine(
-						(int) (decorationOval.x + cornerDist + thickness / 2),
-						(int) (decorationOval.y + cornerDist + thickness / 2),
-						(int) (decorationOval.x + decorationOval.width
+						(int) (decorationSquare.x + cornerDist + thickness / 2),
+						(int) (decorationSquare.y + cornerDist + thickness / 2),
+						(int) (decorationSquare.x + decorationSquare.width
 								- cornerDist + thickness / 2),
-						(int) (decorationOval.y + decorationOval.height
+						(int) (decorationSquare.y + decorationSquare.height
 								- cornerDist + thickness / 2));
-				g2d.drawLine((int) (decorationOval.x + decorationOval.width
-						- cornerDist + thickness / 2), (int) (decorationOval.y
-						+ cornerDist + thickness / 2), (int) (decorationOval.x
-						+ cornerDist + thickness / 2), (int) (decorationOval.y
-						+ decorationOval.height - cornerDist + thickness / 2));
+				g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
+						- cornerDist + thickness / 2), (int) (decorationSquare.y
+						+ cornerDist + thickness / 2), (int) (decorationSquare.x
+						+ cornerDist + thickness / 2), (int) (decorationSquare.y
+						+ decorationSquare.height - cornerDist + thickness / 2));
 				break;
 			case hline:
-				g2d.drawLine((int) decorationOval.x,
-						(int) (decorationOval.y + decorationOval.height / 2),
-						(int) (decorationOval.x + decorationOval.width),
-						(int) (decorationOval.y + decorationOval.height / 2));
+				g2d.drawLine((int) decorationSquare.x,
+						(int) (decorationSquare.y + decorationSquare.height / 2),
+						(int) (decorationSquare.x + decorationSquare.width),
+						(int) (decorationSquare.y + decorationSquare.height / 2));
 				break;
 			case vline:
 				g2d.drawLine(
-						(int) (decorationOval.x + decorationOval.height / 2),
-						(int) decorationOval.y,
-						(int) (decorationOval.x + decorationOval.height / 2),
-						(int) (decorationOval.y + decorationOval.height));
+						(int) (decorationSquare.x + decorationSquare.height / 2),
+						(int) decorationSquare.y,
+						(int) (decorationSquare.x + decorationSquare.height / 2),
+						(int) (decorationSquare.y + decorationSquare.height));
 				break;
 			case slash:
-				cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+				cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
 						/ (2 * GBMath.sqrt2);
 				g2d.drawLine(
-						(int) (decorationOval.x + cornerDist + thickness / 2),
-						(int) (decorationOval.y + cornerDist + thickness / 2),
-						(int) (decorationOval.x + decorationOval.width
+						(int) (decorationSquare.x + cornerDist + thickness / 2),
+						(int) (decorationSquare.y + cornerDist + thickness / 2),
+						(int) (decorationSquare.x + decorationSquare.width
 								- cornerDist + thickness / 2),
-						(int) (decorationOval.y + decorationOval.height
+						(int) (decorationSquare.y + decorationSquare.height
 								- cornerDist + thickness / 2));
 				break;
 			case backslash:
-				cornerDist = decorationOval.width * (GBMath.sqrt2 - 1)
+				cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
 						/ (2 * GBMath.sqrt2);
-				g2d.drawLine((int) (decorationOval.x + decorationOval.width
-						- cornerDist + thickness / 2), (int) (decorationOval.y
-						+ cornerDist + thickness / 2), (int) (decorationOval.x
-						+ cornerDist + thickness / 2), (int) (decorationOval.y
-						+ decorationOval.height - cornerDist + thickness / 2));
+				g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
+						- cornerDist + thickness / 2), (int) (decorationSquare.y
+						+ cornerDist + thickness / 2), (int) (decorationSquare.x
+						+ cornerDist + thickness / 2), (int) (decorationSquare.y
+						+ decorationSquare.height - cornerDist + thickness / 2));
 				break;
 			}
 			g2d.dispose();
