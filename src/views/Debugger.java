@@ -52,7 +52,6 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	JTextPane returnStack = new JTextPane();
 	JTextPane variables = new JTextPane();
 	JLabel lastPrint = new JLabel();
-	JLabel robotIcon = new JLabel();
 
 	Style basicStyle;
 	SimpleAttributeSet basicAttr;
@@ -63,9 +62,11 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	SimpleAttributeSet gray;
 
 	// Stuff to draw the robot with
-	int scale = 30;
-	BufferedImage robotImage = new BufferedImage(scale * 4, scale * 4,
+	int iconHeight = 64;
+	int scale = iconHeight / 2;
+	BufferedImage robotImage = new BufferedImage(iconHeight, iconHeight,
 			BufferedImage.TYPE_INT_ARGB);
+	JLabel robotIcon = new JLabel();
 
 	public Debugger(JToolBar bar) {
 		setMinimumSize(new Dimension(600, 600));
@@ -115,7 +116,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.createParallelGroup(GroupLayout.Alignment.CENTER)
 				.addGroup(
 						layout.createSequentialGroup()
-								// .addComponent(robotIcon)
+								.addComponent(robotIcon)
 								.addComponent(status,
 										GroupLayout.PREFERRED_SIZE,
 										GroupLayout.PREFERRED_SIZE, 200)
@@ -149,7 +150,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
-						// .addComponent(robotIcon)
+								.addComponent(robotIcon)
 								.addComponent(status).addComponent(toolbar))
 				.addGroup(
 						layout.createParallelGroup(
@@ -180,8 +181,6 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	void setAttributes() {
 		bold = new SimpleAttributeSet(basicAttr);
 		StyleConstants.setBold(bold, true);
-		red = new SimpleAttributeSet(basicAttr);
-		StyleConstants.setForeground(red, Color.red);
 		green = new SimpleAttributeSet(basicAttr);
 		StyleConstants.setForeground(green, Color.green);
 		blue = new SimpleAttributeSet(basicAttr);
@@ -508,9 +507,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		Graphics g = robotImage.getGraphics();
 		g.clearRect(0, 0, robotImage.getWidth(), robotImage.getHeight());
 		if (selectedObject != null) {
-			// selectedObject.DrawUnderlay(g, this, false);
-			// selectedObject.Draw(g, this, false);
-			// selectedObject.DrawOverlay(g, this, false);
+			robotImage = selectedObject.drawIn(scale, true);
 		}
 	}
 

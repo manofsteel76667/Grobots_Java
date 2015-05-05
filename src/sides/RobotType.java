@@ -183,7 +183,7 @@ public class RobotType implements GBProjection {
 		icon = new BufferedImage(iconHeight, iconHeight, BufferedImage.TYPE_INT_ARGB);
 		GBRobot bot = new GBRobot(this, new FinePoint(fromScreenX(iconHeight / 2), fromScreenY(iconHeight / 2)));
 		bot.setReloaded();
-		bot.Draw(icon.getGraphics(), this, true);
+		icon = bot.drawIn(iconHeight / 2, true);
 	}
 
 	@Override

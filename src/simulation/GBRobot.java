@@ -55,6 +55,7 @@ public class GBRobot extends GBObject {
 	// Minimap and tiny picture
 	BufferedImage miniImage;
 	BufferedImage smallImage;
+	public BufferedImage fullImage;
 
 	// Radial paint arrays
 	float[] radialSteps;
@@ -416,9 +417,10 @@ public class GBRobot extends GBObject {
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make
 	// the meter flash.
-	void DrawMeter(Graphics2D g2d, double fraction, int inset, int zeroAngle,
+	void DrawMeter(BufferedImage img, double fraction, int inset, int zeroAngle,
 			int oneAngle, int width, Color color1, Color color2, Color bgcolor,
 			boolean pulse) {
+		Graphics2D g2d = (Graphics2D)img.getGraphics();
 		g2d.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND,
 				BasicStroke.JOIN_MITER));
 		Color color = GBColor.ChooseContrasting(bgcolor, color1, color2,
@@ -427,9 +429,8 @@ public class GBRobot extends GBObject {
 		float phase = System.currentTimeMillis() * 6.28f / 500;
 		g2d.setColor(GBColor.multiply(color,
 				pulse ? 0.85f + 0.15f * (float) Math.sin(phase) : 1.0f));
-		g2d.drawArc(inset, inset, image.getWidth() - 2 * inset,
-				image.getWidth() - 2 * inset, zeroAngle, angle);
-
+		g2d.drawArc(inset, inset, img.getWidth() - 2 * inset,
+				img.getWidth() - 2 * inset, zeroAngle, angle);
 	}
 
 	@Override
@@ -496,6 +497,176 @@ public class GBRobot extends GBObject {
 		drawRangeCircle(g, proj, hardware.forceField.MaxRange(),
 				forcefieldRangeCircleColor);
 	}
+	
+	/**
+	 * Draws the robot to scale in the provided BufferedImage
+	 * @param imageIn
+	 * @param scale
+	 * @param detailed
+	 */
+	public BufferedImage drawIn(int scale, boolean detailed ) {
+		int size = (int) (Math.max(Math.round(radius * 2 * scale), 1));
+		BufferedImage imageIn = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		double centerPoint = size / 2;
+		int meterWidth = Math.max(1, size / 20);
+		Graphics2D g2d = (Graphics2D) imageIn.getGraphics();
+		// background and rim
+		// flash decoration when reloading or sensing
+		Color color = baseDecorationColor;
+		if (hardware.grenades.Cooldown() != 0)
+			color = GBColor.Mix(Color.yellow,
+					(float) hardware.grenades.Cooldown()
+							/ hardware.grenades.ReloadTime(),
+					baseDecorationColor);
+		else if (hardware.blaster.Cooldown() != 0)
+			color = GBColor.Mix(
+					Color.magenta,
+					(float) hardware.blaster.Cooldown()
+							/ hardware.blaster.ReloadTime(),
+					baseDecorationColor);
+		radialColors[0] = color;
+		radialColors[2] = GBColor.Mix(Color.red, 0.8f * recentDamage
+				/ kRecentDamageTime, Owner().Color());
+		FinePoint speedOffset = velocity.multiply(size / radius
+				* kRadialPaintOffsetFactor);
+		FinePoint focus = new FinePoint(centerPoint + speedOffset.x,
+				centerPoint - speedOffset.y);
+		painter = new RadialGradientPaint(new Point2D.Double(centerPoint,
+				centerPoint), size / 2, focus, radialSteps, radialColors,
+				CycleMethod.NO_CYCLE);
+		g2d.setPaint(painter);
+		g2d.fillOval(0, 0, size, size);
+		// meters
+		if (detailed) {
+			// energy meter
+			if (hardware.MaxEnergy() != 0)
+				DrawMeter(imageIn, hardware.Energy() / hardware.MaxEnergy(),
+						meterWidth, 180, 0, meterWidth, energyMeterColor,
+						energyMeterBackgroundColor, Owner().Color(),
+						hardware.Eaten() != 0
+								|| hardware.syphon.Syphoned() != 0
+								|| hardware.enemySyphon.Syphoned() != 0);
+			// damage meter
+			if (hardware.Armor() < hardware.MaxArmor())
+				DrawMeter(imageIn,
+						1.0 - hardware.Armor() / hardware.MaxArmor(),
+						meterWidth, 360, 180, meterWidth, damageMeterColor,
+						damageMeterBackgroundColor, Owner().Color(),
+						hardware.RepairRate() != 0);
+			// gestation meter
+			if (hardware.constructor.Progress() != 0) {
+				DrawMeter(imageIn, hardware.constructor.Fraction(),
+						meterWidth * 2, 0, 360, meterWidth,
+						gestationMeterColor, gestationMeterBackgroundColor,
+						Owner().Color(), hardware.constructor.Rate() != 0);
+			}
+		}
+		// decoration appears inside the focus circle or the radial painter
+		double decorationWidth = size * radialSteps[0];
+		double decorationHeight = size * radialSteps[0];
+		Ellipse2D.Double decorationOval = new Ellipse2D.Double(centerPoint
+				- decorationWidth / 2, centerPoint - decorationHeight / 2,
+				decorationWidth, decorationHeight);
+		double r1 = radius * scale / GBMath.sqrt2;
+		double cornerStart = centerPoint - r1;
+		Rectangle2D.Double decorationSquare = new Rectangle2D.Double(cornerStart, cornerStart, r1*2, r1*2);
+		// Draw decoration
+		g2d.setColor(color);
+		g2d.setPaint(color);
+		int thickness = (int) (15 + decorationOval.width) / 15;
+		g2d.setStroke(new BasicStroke(thickness));
+		switch (type.Decoration()) {
+		case none:
+		default:
+			//if (hardware.blaster.Cooldown() == 0
+			//		&& hardware.grenades.Cooldown() == 0)
+				break;
+			// if we're flashing, fall through and draw a dot
+		case dot:
+			g2d.fill(decorationOval);
+			break;
+		case circle:
+			g2d.draw(decorationOval);
+			break;
+		case square:
+			g2d.draw(decorationSquare.getBounds());
+			break;
+		case triangle:
+			double bottom = decorationSquare.y + .75 * decorationSquare.height;
+			double bottomHalfX = decorationSquare.width / 4 * GBMath.sqrt3;
+			double topMiddleX = decorationSquare.x + decorationSquare.width / 2;
+			int[] x = new int[] { (int) (topMiddleX),
+					(int) (topMiddleX + bottomHalfX),
+					(int) (topMiddleX - bottomHalfX) };
+			int[] y = new int[] { (int) decorationSquare.y, (int) bottom,
+					(int) bottom };
+			g2d.drawPolygon(x, y, 3);
+			break;
+		case cross:
+			g2d.drawLine(
+					(int) (decorationSquare.x + thickness / 2),
+					(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2),
+					(int) (decorationSquare.x + decorationSquare.width + thickness / 2),
+					(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2));
+			g2d.drawLine(
+					(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
+					(int) (decorationSquare.y + thickness / 2),
+					(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
+					(int) (decorationSquare.y + decorationSquare.height + thickness / 2));
+			break;
+		case x:
+			double cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine(
+					(int) (decorationSquare.x + cornerDist + thickness / 2),
+					(int) (decorationSquare.y + cornerDist + thickness / 2),
+					(int) (decorationSquare.x + decorationSquare.width
+							- cornerDist + thickness / 2),
+					(int) (decorationSquare.y + decorationSquare.height
+							- cornerDist + thickness / 2));
+			g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
+					- cornerDist + thickness / 2), (int) (decorationSquare.y
+					+ cornerDist + thickness / 2), (int) (decorationSquare.x
+					+ cornerDist + thickness / 2), (int) (decorationSquare.y
+					+ decorationSquare.height - cornerDist + thickness / 2));
+			break;
+		case hline:
+			g2d.drawLine((int) decorationSquare.x,
+					(int) (decorationSquare.y + decorationSquare.height / 2),
+					(int) (decorationSquare.x + decorationSquare.width),
+					(int) (decorationSquare.y + decorationSquare.height / 2));
+			break;
+		case vline:
+			g2d.drawLine(
+					(int) (decorationSquare.x + decorationSquare.height / 2),
+					(int) decorationSquare.y,
+					(int) (decorationSquare.x + decorationSquare.height / 2),
+					(int) (decorationSquare.y + decorationSquare.height));
+			break;
+		case slash:
+			cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine(
+					(int) (decorationSquare.x + cornerDist + thickness / 2),
+					(int) (decorationSquare.y + cornerDist + thickness / 2),
+					(int) (decorationSquare.x + decorationSquare.width
+							- cornerDist + thickness / 2),
+					(int) (decorationSquare.y + decorationSquare.height
+							- cornerDist + thickness / 2));
+			break;
+		case backslash:
+			cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
+					/ (2 * GBMath.sqrt2);
+			g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
+					- cornerDist + thickness / 2), (int) (decorationSquare.y
+					+ cornerDist + thickness / 2), (int) (decorationSquare.x
+					+ cornerDist + thickness / 2), (int) (decorationSquare.y
+					+ decorationSquare.height - cornerDist + thickness / 2));
+			break;
+		}
+		g2d.dispose();
+		return imageIn;
+	}
 
 	@Override
 	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
@@ -504,166 +675,8 @@ public class GBRobot extends GBObject {
 			image = miniImage;
 		else if (size <= 10)
 			image = smallImage;
-		else {
-			int meterWidth = Math.max(1, size / 20);
-			image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-			double centerPoint = size / 2;
-			Graphics2D g2d = (Graphics2D) image.getGraphics();
-			// background and rim
-			// flash decoration when reloading or sensing
-			Color color = baseDecorationColor;
-			if (hardware.grenades.Cooldown() != 0)
-				color = GBColor.Mix(Color.yellow,
-						(float) hardware.grenades.Cooldown()
-								/ hardware.grenades.ReloadTime(),
-						baseDecorationColor);
-			else if (hardware.blaster.Cooldown() != 0)
-				color = GBColor.Mix(
-						Color.magenta,
-						(float) hardware.blaster.Cooldown()
-								/ hardware.blaster.ReloadTime(),
-						baseDecorationColor);
-			radialColors[0] = color;
-			radialColors[2] = GBColor.Mix(Color.red, 0.8f * recentDamage
-					/ kRecentDamageTime, Owner().Color());
-			FinePoint speedOffset = velocity.multiply(size / radius
-					* kRadialPaintOffsetFactor);
-			FinePoint focus = new FinePoint(centerPoint + speedOffset.x,
-					centerPoint - speedOffset.y);
-			painter = new RadialGradientPaint(new Point2D.Double(centerPoint,
-					centerPoint), size / 2, focus, radialSteps, radialColors,
-					CycleMethod.NO_CYCLE);
-			g2d.setPaint(painter);
-			g2d.fillOval(0, 0, size, size);
-			// meters
-			if (detailed) {
-				// energy meter
-				if (hardware.MaxEnergy() != 0)
-					DrawMeter(g2d, hardware.Energy() / hardware.MaxEnergy(),
-							meterWidth, 180, 0, meterWidth, energyMeterColor,
-							energyMeterBackgroundColor, Owner().Color(),
-							hardware.Eaten() != 0
-									|| hardware.syphon.Syphoned() != 0
-									|| hardware.enemySyphon.Syphoned() != 0);
-				// damage meter
-				if (hardware.Armor() < hardware.MaxArmor())
-					DrawMeter(g2d,
-							1.0 - hardware.Armor() / hardware.MaxArmor(),
-							meterWidth, 360, 180, meterWidth, damageMeterColor,
-							damageMeterBackgroundColor, Owner().Color(),
-							hardware.RepairRate() != 0);
-				// gestation meter
-				if (hardware.constructor.Progress() != 0) {
-					DrawMeter(g2d, hardware.constructor.Fraction(),
-							meterWidth * 2, 0, 360, meterWidth,
-							gestationMeterColor, gestationMeterBackgroundColor,
-							Owner().Color(), hardware.constructor.Rate() != 0);
-				}
-			}
-			// decoration appears inside the focus circle or the radial painter
-			double decorationWidth = size * radialSteps[0];
-			double decorationHeight = size * radialSteps[0];
-			Ellipse2D.Double decorationOval = new Ellipse2D.Double(centerPoint
-					- decorationWidth / 2, centerPoint - decorationHeight / 2,
-					decorationWidth, decorationHeight);
-			double r1 = radius * proj.getScale() / GBMath.sqrt2;
-			double cornerStart = centerPoint - r1;
-			Rectangle2D.Double decorationSquare = new Rectangle2D.Double(cornerStart, cornerStart, r1*2, r1*2);
-			// Draw decoration
-			g2d.setColor(color);
-			g2d.setPaint(color);
-			int thickness = (int) (15 + decorationOval.width) / 15;
-			g2d.setStroke(new BasicStroke(thickness));
-			switch (type.Decoration()) {
-			case none:
-			default:
-				//if (hardware.blaster.Cooldown() == 0
-				//		&& hardware.grenades.Cooldown() == 0)
-					break;
-				// if we're flashing, fall through and draw a dot
-			case dot:
-				g2d.fill(decorationOval);
-				break;
-			case circle:
-				g2d.draw(decorationOval);
-				break;
-			case square:
-				g2d.draw(decorationSquare.getBounds());
-				break;
-			case triangle:
-				double bottom = decorationSquare.y + .75 * decorationSquare.height;
-				double bottomHalfX = decorationSquare.width / 4 * GBMath.sqrt3;
-				double topMiddleX = decorationSquare.x + decorationSquare.width / 2;
-				int[] x = new int[] { (int) (topMiddleX),
-						(int) (topMiddleX + bottomHalfX),
-						(int) (topMiddleX - bottomHalfX) };
-				int[] y = new int[] { (int) decorationSquare.y, (int) bottom,
-						(int) bottom };
-				g2d.drawPolygon(x, y, 3);
-				break;
-			case cross:
-				g2d.drawLine(
-						(int) (decorationSquare.x + thickness / 2),
-						(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2),
-						(int) (decorationSquare.x + decorationSquare.width + thickness / 2),
-						(int) (decorationSquare.y + decorationSquare.height / 2 + thickness / 2));
-				g2d.drawLine(
-						(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
-						(int) (decorationSquare.y + thickness / 2),
-						(int) (decorationSquare.x + decorationSquare.width / 2 + thickness / 2),
-						(int) (decorationSquare.y + decorationSquare.height + thickness / 2));
-				break;
-			case x:
-				double cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
-						/ (2 * GBMath.sqrt2);
-				g2d.drawLine(
-						(int) (decorationSquare.x + cornerDist + thickness / 2),
-						(int) (decorationSquare.y + cornerDist + thickness / 2),
-						(int) (decorationSquare.x + decorationSquare.width
-								- cornerDist + thickness / 2),
-						(int) (decorationSquare.y + decorationSquare.height
-								- cornerDist + thickness / 2));
-				g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
-						- cornerDist + thickness / 2), (int) (decorationSquare.y
-						+ cornerDist + thickness / 2), (int) (decorationSquare.x
-						+ cornerDist + thickness / 2), (int) (decorationSquare.y
-						+ decorationSquare.height - cornerDist + thickness / 2));
-				break;
-			case hline:
-				g2d.drawLine((int) decorationSquare.x,
-						(int) (decorationSquare.y + decorationSquare.height / 2),
-						(int) (decorationSquare.x + decorationSquare.width),
-						(int) (decorationSquare.y + decorationSquare.height / 2));
-				break;
-			case vline:
-				g2d.drawLine(
-						(int) (decorationSquare.x + decorationSquare.height / 2),
-						(int) decorationSquare.y,
-						(int) (decorationSquare.x + decorationSquare.height / 2),
-						(int) (decorationSquare.y + decorationSquare.height));
-				break;
-			case slash:
-				cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
-						/ (2 * GBMath.sqrt2);
-				g2d.drawLine(
-						(int) (decorationSquare.x + cornerDist + thickness / 2),
-						(int) (decorationSquare.y + cornerDist + thickness / 2),
-						(int) (decorationSquare.x + decorationSquare.width
-								- cornerDist + thickness / 2),
-						(int) (decorationSquare.y + decorationSquare.height
-								- cornerDist + thickness / 2));
-				break;
-			case backslash:
-				cornerDist = decorationSquare.width * (GBMath.sqrt2 - 1)
-						/ (2 * GBMath.sqrt2);
-				g2d.drawLine((int) (decorationSquare.x + decorationSquare.width
-						- cornerDist + thickness / 2), (int) (decorationSquare.y
-						+ cornerDist + thickness / 2), (int) (decorationSquare.x
-						+ cornerDist + thickness / 2), (int) (decorationSquare.y
-						+ decorationSquare.height - cornerDist + thickness / 2));
-				break;
-			}
-			g2d.dispose();
+		else {			
+			image = drawIn(proj.getScale(), detailed);
 		}
 		drawImage(g, proj);
 	}
