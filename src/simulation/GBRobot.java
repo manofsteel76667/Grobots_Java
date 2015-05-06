@@ -407,10 +407,11 @@ public class GBRobot extends GBObject {
 		shieldColor = new Color(0.3f, 0.5f, 1);
 		/*
 		 * Center big enough to hold the decoration, a lighter ring around
-		 * center, Wide spot of colors that change based on game conditions, then
-		 * outer ring same color as base type
+		 * center, Wide spot of colors that change based on game conditions
+		 * but are based on the side color, then
+		 * outer ring same color as bot type
 		 */
-		radialSteps = new float[] { .2f, .25f, .7f, .9f };
+		radialSteps = new float[] { .2f, .25f, .7f, .95f };
 		radialColors = new Color[] { baseDecorationColor,
 				new Color(1f, 1f, 1f, .8f), Owner().Color(), type.color };
 	}
