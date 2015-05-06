@@ -112,7 +112,6 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 		scroll.setPreferredSize(new Dimension(240, 600));
 		add(scroll);
 		setPreferredSize(new Dimension(240, 400));
-		this.setIgnoreRepaint(true);
 		setVisible(true);
 	}
 

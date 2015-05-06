@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import simulation.GBObjectClass;
+import simulation.GBRobot;
 import support.FinePoint;
 import support.StringUtilities;
 import brains.GBStackBrainSpec;
@@ -570,8 +571,10 @@ public class SideReader {
 			reader.LoadIt();
 			Side side = reader.Side();
 			side.filename = filename;
-			for(RobotType botType : side.types)
-				botType.makeIcon();
+			for (RobotType botType : side.types) {
+				botType.sample = new GBRobot(botType, new FinePoint(0, 0));
+				botType.sample.setReloaded();
+			}
 			return side;
 		} catch (Exception e) {
 			GBError.NonfatalError("Error loading side: " + e.getMessage());

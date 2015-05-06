@@ -9,15 +9,12 @@
 package sides;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 
-import simulation.GBProjection;
 import simulation.GBRobot;
-import support.FinePoint;
 import brains.Brain;
 import brains.BrainSpec;
 
-public class RobotType implements GBProjection {
+public class RobotType {
 	static int iconHeight = 64;
 	public static final double kStandardMass = 20;
 	public boolean debug = true;
@@ -31,7 +28,7 @@ public class RobotType implements GBProjection {
 	public BrainSpec brain;
 	public int population;
 	public double biomass;
-	public BufferedImage icon;
+	public GBRobot sample;
 	// private:
 	double cost;
 	double mass;
@@ -177,37 +174,5 @@ public class RobotType implements GBProjection {
 		if (mass > kStandardMass)
 			multiplier += (mass - kStandardMass) / 50;
 		return multiplier;
-	}
-
-	public void makeIcon() {
-		icon = new BufferedImage(iconHeight, iconHeight, BufferedImage.TYPE_INT_ARGB);
-		GBRobot bot = new GBRobot(this, new FinePoint(fromScreenX(iconHeight / 2), fromScreenY(iconHeight / 2)));
-		bot.setReloaded();
-		icon = bot.drawIn(iconHeight / 2, true);
-	}
-
-	@Override
-	public int toScreenX(double x) {
-		return (int)Math.round(x * getScale());
-	}
-
-	@Override
-	public int toScreenY(double y) {
-		return (int)Math.round(iconHeight - y * getScale());
-	}
-
-	@Override
-	public double fromScreenX(int h) {
-		return (iconHeight - (double)h) / getScale();
-	}
-
-	@Override
-	public double fromScreenY(int v) {
-		return (iconHeight - (double)(iconHeight - v)) / getScale();
-	}
-
-	@Override
-	public int getScale() {
-		return iconHeight / 2;
 	}
 }

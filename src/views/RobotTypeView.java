@@ -6,6 +6,8 @@ package views;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,8 +56,7 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 		setBackground(Color.white);
 		add(header, Component.CENTER_ALIGNMENT);
 		add(scroll);
-		add(hardwareList);
-		setIgnoreRepaint(true);
+		add(hardwareList, Component.CENTER_ALIGNMENT);
 		setVisible(true);
 	}
 
@@ -338,7 +339,6 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 		 * 
 		 */
 		private static final long serialVersionUID = 1044029084694616742L;
-		ImageIcon thumbnail;
 
 		@Override
 		public Component getListCellRendererComponent(
@@ -375,7 +375,15 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				setBackground(list.getBackground());
 				setForeground(list.getForeground());
 			}
-			thumbnail = new ImageIcon(type.icon);
+			int scale = 32;
+			BufferedImage img = new BufferedImage(scale * 2, scale * 2,
+					BufferedImage.TYPE_INT_ARGB);
+			Graphics g = img.getGraphics();
+			BufferedImage bot = type.sample.drawIn(scale, true);
+			g.drawImage(bot, scale - bot.getWidth() / 2,
+					scale - bot.getHeight() / 2, bot.getWidth(),
+					bot.getHeight(), null);
+			ImageIcon thumbnail = new ImageIcon(img);
 			this.setIcon(thumbnail);
 			setEnabled(list.isEnabled());
 			setFont(list.getFont());

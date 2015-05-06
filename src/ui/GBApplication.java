@@ -279,7 +279,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 		roster = new GBRosterView(game);
 		tournament = new GBTournamentView(game);
 		type = new RobotTypeView();
-		type.setPreferredSize(new Dimension(300, 300));
+		type.setPreferredSize(new Dimension(340, 300));
 		statistics = new GBScoresView(game);
 		debugControls = mainMenu.debugToolbar(this);
 		debugControls.setFloatable(false);

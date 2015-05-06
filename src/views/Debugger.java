@@ -150,8 +150,8 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
-								.addComponent(robotIcon)
-								.addComponent(status).addComponent(toolbar))
+								.addComponent(robotIcon).addComponent(status)
+								.addComponent(toolbar))
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
@@ -356,13 +356,15 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			String strFormat = "  %s:\t%s\n";
 			// Physics section
 			doc.insertString(doc.getLength(), "Physics\n", bold);
-			doc.insertString(doc.getLength(),
-					String.format(vectorFormat, "Position", selectedObject.Position()),
-					basicAttr);
+			doc.insertString(
+					doc.getLength(),
+					String.format(vectorFormat, "Position",
+							selectedObject.Position()), basicAttr);
 			doc.insertString(doc.getLength(),
 					String.format(varFormat, "Mass", selectedObject.Mass()),
 					basicAttr);
-			doc.insertString(doc.getLength(),
+			doc.insertString(
+					doc.getLength(),
 					String.format(varFormat, "Radius", selectedObject.Radius()),
 					basicAttr);
 			doc.insertString(doc.getLength(), String.format(vectorFormat,
@@ -507,7 +509,11 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		Graphics g = robotImage.getGraphics();
 		g.clearRect(0, 0, robotImage.getWidth(), robotImage.getHeight());
 		if (selectedObject != null) {
-			robotImage = selectedObject.drawIn(scale, true);
+			BufferedImage img = selectedObject.drawIn(scale, true);
+			g.drawImage(img, scale - img.getWidth() / 2,
+					scale - img.getHeight() / 2, img.getWidth(),
+					img.getHeight(), null);
+			g.dispose();
 		}
 	}
 
