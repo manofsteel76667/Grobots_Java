@@ -20,6 +20,7 @@ import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
@@ -47,10 +48,12 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	JTextPane status = new JTextPane();
 	JTextPane hardwareVariables = new JTextPane();
+	JScrollPane hwScrollPane;
 	JTextPane instructions = new JTextPane();
 	JTextPane stack = new JTextPane();
 	JTextPane returnStack = new JTextPane();
 	JTextPane variables = new JTextPane();
+	JScrollPane varScrollPane;
 	JLabel lastPrint = new JLabel();
 
 	Style basicStyle;
@@ -100,10 +103,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		setDefaultTextPaneStyle(variables);
 
 		// Add scrollpanes for variable windows
-		JScrollPane vars = new JScrollPane(variables);
+		varScrollPane = new JScrollPane(variables);
 		DefaultCaret caret = (DefaultCaret) variables.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-		JScrollPane vvars = new JScrollPane(hardwareVariables);
+		hwScrollPane = new JScrollPane(hardwareVariables);
 		caret = (DefaultCaret) hardwareVariables.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
@@ -137,10 +140,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 										Integer.MAX_VALUE))
 				.addGroup(
 						layout.createSequentialGroup()
-								.addComponent(vars, GroupLayout.PREFERRED_SIZE,
+								.addComponent(varScrollPane, GroupLayout.PREFERRED_SIZE,
 										GroupLayout.PREFERRED_SIZE,
 										Integer.MAX_VALUE)
-								.addComponent(vvars,
+								.addComponent(hwScrollPane,
 										GroupLayout.PREFERRED_SIZE,
 										GroupLayout.PREFERRED_SIZE,
 										Integer.MAX_VALUE))
@@ -160,10 +163,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				.addGroup(
 						layout.createParallelGroup(
 								GroupLayout.Alignment.BASELINE)
-								.addComponent(vars, 400,
+								.addComponent(varScrollPane, 400,
 										GroupLayout.PREFERRED_SIZE,
 										Integer.MAX_VALUE)
-								.addComponent(vvars, 400,
+								.addComponent(hwScrollPane, 400,
 										GroupLayout.PREFERRED_SIZE,
 										Integer.MAX_VALUE))
 				.addComponent(lastPrint));
@@ -193,6 +196,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	@Override
 	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 		buildStatus();
 		buildInstructions();
 		buildStack();
@@ -203,7 +207,6 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				hasBrain() ? brain.LastPrint() : "None"));
 		updateRobotImage();
 		robotIcon.setIcon(new ImageIcon(robotImage));
-		super.paintComponent(g);
 	}
 
 	boolean hasBrain() {
@@ -213,7 +216,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	}
 
 	void buildStatus() {
-		Document doc = status.getDocument();
+		Document doc = new DefaultStyledDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			if (selectedObject != null) {
@@ -240,14 +243,14 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				doc.insertString(doc.getLength(),
 						Integer.toString(brain.Remaining()), basicAttr);
 			}
-
+			status.setDocument(doc);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}
 
 	void buildInstructions() {
-		Document doc = instructions.getDocument();
+		Document doc = new DefaultStyledDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, "PC:\t", bold);
@@ -265,6 +268,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 							brain.DisassembleAddress(pc + i)), i == 0 ? blue
 							: basicAttr);
 			}
+			instructions.setDocument(doc);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
@@ -272,7 +276,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	}
 
 	void buildStack() {
-		Document doc = stack.getDocument();
+		Document doc = new DefaultStyledDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, "Stack:\n", bold);
@@ -287,13 +291,14 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 									brain.StackAt(height - i)), basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "Empty", basicAttr);
+			stack.setDocument(doc);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}
 
 	void buildReturnStack() {
-		Document doc = returnStack.getDocument();
+		Document doc = new DefaultStyledDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, "Return Stack:\n", bold);
@@ -309,13 +314,14 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 									- i))), basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "Empty", basicAttr);
+			returnStack.setDocument(doc);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}
 
 	void buildVariables() {
-		Document doc = variables.getDocument();
+		Document doc = new DefaultStyledDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, "Variables:\n", bold);
@@ -337,6 +343,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 				}
 			} else
 				doc.insertString(doc.getLength(), "No variables", basicAttr);
+			variables.setDocument(doc);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
@@ -344,11 +351,14 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	void buildHardwareVariables() {
 		Document doc = hardwareVariables.getDocument();
+		int scrollPosition = hwScrollPane.getVerticalScrollBar().getValue();
 		try {
-			doc.remove(0, doc.getLength());
-			doc.insertString(0, "Hardware Variables:\n", bold);
-			if (selectedObject == null)
+			int length = doc.getLength();
+			doc.insertString(length, "Hardware Variables:\n", bold);
+			if (selectedObject == null) {
+				doc.remove(0, length);
 				return;
+			}
 			GBHardwareState hw = selectedObject.hardware;
 			String varFormat = "  %s:\t%.4f\n";
 			String vectorFormat = "  %s:\t%s\n";
@@ -500,6 +510,8 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(doc.getLength(),
 					String.format(varFormat, "flag", selectedObject.flag),
 					basicAttr);
+			doc.remove(0, length);
+			hwScrollPane.getVerticalScrollBar().setValue(scrollPosition);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
