@@ -379,7 +379,7 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 			BufferedImage img = new BufferedImage(scale * 2, scale * 2,
 					BufferedImage.TYPE_INT_ARGB);
 			Graphics g = img.getGraphics();
-			BufferedImage bot = type.sample.drawIn(scale, true);
+			BufferedImage bot = type.sample.getScaledDrawing(scale, true);
 			g.drawImage(bot, scale - bot.getWidth() / 2,
 					scale - bot.getHeight() / 2, bot.getWidth(),
 					bot.getHeight(), null);

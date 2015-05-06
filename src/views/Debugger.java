@@ -521,7 +521,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		Graphics g = robotImage.getGraphics();
 		g.clearRect(0, 0, robotImage.getWidth(), robotImage.getHeight());
 		if (selectedObject != null) {
-			BufferedImage img = selectedObject.drawIn(scale, true);
+			BufferedImage img = selectedObject.getScaledDrawing(scale, true);
 			g.drawImage(img, scale - img.getWidth() / 2,
 					scale - img.getHeight() / 2, img.getWidth(),
 					img.getHeight(), null);

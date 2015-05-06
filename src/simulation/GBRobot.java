@@ -505,7 +505,7 @@ public class GBRobot extends GBObject {
 	 * @param scale
 	 * @param detailed
 	 */
-	public BufferedImage drawIn(int scale, boolean detailed ) {
+	public BufferedImage getScaledDrawing(int scale, boolean detailed ) {
 		int size = (int) (Math.max(Math.round(radius * 2 * scale), 1));
 		BufferedImage imageIn = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		double centerPoint = size / 2;
@@ -677,7 +677,7 @@ public class GBRobot extends GBObject {
 		else if (size <= 10)
 			image = smallImage;
 		else {			
-			image = drawIn(proj.getScale(), detailed);
+			image = getScaledDrawing(proj.getScale(), detailed);
 		}
 		drawImage(g, proj);
 	}
