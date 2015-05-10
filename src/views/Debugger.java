@@ -47,14 +47,40 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	GBStackBrain brain;
 
 	JTextPane status = new JTextPane();
-	JTextPane hardwareVariables = new JTextPane();
+	JTextPane hardwareVariables = new JTextPane(){
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -6242748078637577591L;
+		@Override
+        public boolean getScrollableTracksViewportHeight() {
+           return false;
+        }
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+           return false;
+        }
+     };
 	JScrollPane hwScrollPane;
 	JTextPane instructions = new JTextPane();
 	JTextPane stack = new JTextPane();
 	JTextPane returnStack = new JTextPane();
-	JTextPane variables = new JTextPane();
+	JTextPane variables = new JTextPane(){
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7101122340397798123L;
+		@Override
+        public boolean getScrollableTracksViewportHeight() {
+           return false;
+        }
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+           return false;
+        }
+     };
 	JScrollPane varScrollPane;
-	JLabel lastPrint = new JLabel();
+	JLabel lastPrint = new JLabel("Last Print:");
 
 	Style basicStyle;
 	SimpleAttributeSet basicAttr;
@@ -72,8 +98,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	JLabel robotIcon = new JLabel();
 
 	public Debugger(JToolBar bar) {
-		setMinimumSize(new Dimension(600, 600));
-		// setPreferredSize(getMinimumSize());
+		setMinimumSize(new Dimension(600, 620));
 		JToolBar toolbar = bar;
 		if (bar == null)
 			toolbar = new JToolBar();
@@ -104,9 +129,11 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 		// Add scrollpanes for variable windows
 		varScrollPane = new JScrollPane(variables);
+		varScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		DefaultCaret caret = (DefaultCaret) variables.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 		hwScrollPane = new JScrollPane(hardwareVariables);
+		hwScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		caret = (DefaultCaret) hardwareVariables.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
@@ -321,7 +348,9 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	}
 
 	void buildVariables() {
-		Document doc = new DefaultStyledDocument();
+		Document doc = variables.getDocument();
+		variables.setDocument(new DefaultStyledDocument());
+		int scrollPosition = varScrollPane.getVerticalScrollBar().getValue();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, "Variables:\n", bold);
@@ -344,6 +373,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			} else
 				doc.insertString(doc.getLength(), "No variables", basicAttr);
 			variables.setDocument(doc);
+			varScrollPane.getVerticalScrollBar().setValue(scrollPosition);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
@@ -351,12 +381,12 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 
 	void buildHardwareVariables() {
 		Document doc = hardwareVariables.getDocument();
+		hardwareVariables.setDocument(new DefaultStyledDocument());
 		int scrollPosition = hwScrollPane.getVerticalScrollBar().getValue();
 		try {
-			int length = doc.getLength();
-			doc.insertString(length, "Hardware Variables:\n", bold);
+			doc.remove(0, doc.getLength());
+			doc.insertString(0, "Hardware Variables:\n", bold);
 			if (selectedObject == null) {
-				doc.remove(0, length);
 				return;
 			}
 			GBHardwareState hw = selectedObject.hardware;
@@ -510,7 +540,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(doc.getLength(),
 					String.format(varFormat, "flag", selectedObject.flag),
 					basicAttr);
-			doc.remove(0, length);
+			hardwareVariables.setDocument(doc);
 			hwScrollPane.getVerticalScrollBar().setValue(scrollPosition);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
