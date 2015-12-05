@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+import Rendering.GBProjection;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
@@ -21,71 +22,72 @@ public class GBForceField extends GBShot {
 	// public:
 	public GBForceField(FinePoint where, FinePoint vel, Side who, double pwr,
 			double dir) {
-		super(where, PowerRadius(pwr), vel, who, pwr);
+		super(where, getPowerRadius(pwr), vel, who, pwr);
 		direction = dir;
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		return dead ? GBObjectClass.ocDead : GBObjectClass.ocArea;
 	}
 
 	@Override
-	public void Move() {
+	public void move() {
 		// don't move! velocity is only apparent.
 	}
 
 	@Override
-	public void CollideWith(GBObject other) {
-		double force = power / Math.max(other.Speed(), kMinEffectiveSpeed)
-				* OverlapFraction(other) * Math.sqrt(other.Mass())
+	public void collideWith(GBObject other) {
+		double force = power / Math.max(other.getSpeed(), kMinEffectiveSpeed)
+				* overlapFraction(other) * Math.sqrt(other.getMass())
 				* kForceFieldPushRatio;
-		other.PushBy(force, direction);
+		other.pushBy(force, direction);
 	}
 
 	@Override
-	public void Act(GBWorld world) {
-		super.Act(world);
+	public void act(GBWorld world) {
+		super.act(world);
 		dead = true;
 	}
 
 	@Override
-	public int Type() {
+	public int getShotType() {
 		return 5;
 	}
 
 	@Override
-	public double Interest() {
+	public double getInterest() {
 		return Math.abs(power) * 15 + 1;
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		return new Color(0, 0.8f, 1);
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
 		if (where.width <= kMaxSquareMiniSize) {
-			DrawMini(g, where);
+			g2d.setColor(getColor());
+			g2d.drawOval(where.x, where.y, where.width, where.height);
 			return;
 		}
 		int weight = where.getWidth() >= 20 ? 2 : 1;
-		FinePoint edge = Position().subtract(
-				Velocity().unit().multiply(Radius()));
+		FinePoint edge = getPosition().subtract(
+				getVelocity().unit().multiply(getRadius()));
 		// From robot to target
 		g2d.setStroke(new BasicStroke(weight));
-		g2d.setColor(GBColor.multiply(Color(), 0.5f));
+		g2d.setColor(GBColor.multiply(getColor(), 0.5f));
 		g2d.drawLine(proj.toScreenX(edge.x), proj.toScreenY(edge.y),
-				proj.toScreenX(Position().x - Velocity().x),
-				proj.toScreenY(Position().y - Velocity().y));
+				proj.toScreenX(getPosition().x - getVelocity().x),
+				proj.toScreenY(getPosition().y - getVelocity().y));
 		int cx = where.x + where.width / 2;
 		int cy = where.y + where.height / 2;
 		// From destination into the direction being pushed
 		g2d.setStroke(new BasicStroke(1));
-		g2d.setColor(owner != null ? owner.Color() : Color());
+		g2d.setColor(owner != null ? owner.getColor() : getColor());
 		g2d.drawLine(
 				cx,
 				cy,
@@ -94,17 +96,11 @@ public class GBForceField extends GBShot {
 								* where.getWidth() / 2), (cy - (int) Math
 						.round((Math.sin(direction) * where.getHeight() / 2))));
 		// Force field radius
-		g2d.setColor(Color());
+		g2d.setColor(getColor());
 		g2d.drawOval(where.x, where.y, where.width, where.height);
 	}
 
-	public void DrawMini(Graphics g, Rectangle where) {
-		Graphics2D g2d = (Graphics2D) g;
-		g2d.setColor(Color());
-		g2d.drawOval(where.x, where.y, where.width, where.height);
-	}
-
-	public static final double PowerRadius(double pwr) {
+	public static final double getPowerRadius(double pwr) {
 		return Math.pow(Math.abs(pwr), kForceFieldRadiusExponent)
 				* kForceFieldRadiusRatio;
 	}

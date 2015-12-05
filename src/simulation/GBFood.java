@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+import Rendering.GBProjection;
 import sides.Side;
 import support.FinePoint;
 import exception.GBSimulationError;
@@ -24,7 +25,7 @@ public class GBFood extends GBObject {
 	public static final double kQuadraticDragFactor = 0.3;
 	protected double value;
 
-	protected void Recalculate() {
+	protected void recalculate() {
 		radius = Math.sqrt(value) * kFoodRadiusFactor + kFoodMinRadius;
 		mass = value * kFoodMassPerValue;
 	}
@@ -49,41 +50,41 @@ public class GBFood extends GBObject {
 	void makeImage() {
 		image = new BufferedImage(21, 21, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = (Graphics2D) image.getGraphics();
-		g2d.setColor(Color());
+		g2d.setColor(getColor());
 		g2d.fillRect(0, 0, image.getWidth(), image.getHeight());
 		g2d.dispose();
 	}
 
 	@Override
-	public double Energy() {
+	public double getEnergy() {
 		return value;
 	}
 
 	@Override
-	public double TakeEnergy(double limit) {
+	public double takeEnergy(double limit) {
 		if (limit < 0)
 			throw new GBSimulationError("can't take negative energy from food");
 		if (value <= limit) {
 			double amt = value;
 			value = 0;
-			Recalculate();
+			recalculate();
 			return amt;
 		} else {
 			value -= limit;
 			if (value < 0)
 				throw new GBSimulationError("taking negative energy from food");
-			Recalculate();
+			recalculate();
 			return limit;
 		}
 	}
 
 	@Override
-	public double MaxTakeEnergy() {
+	public double maxTakeEnergy() {
 		return value;
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		if (value > 0)
 			return GBObjectClass.ocFood;
 		else
@@ -91,29 +92,29 @@ public class GBFood extends GBObject {
 	}
 
 	@Override
-	public Side Owner() {
+	public Side getOwner() {
 		return null;
 	}
 
 	@Override
-	public void Move() {
-		super.Move();
-		Drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
+	public void move() {
+		super.move();
+		drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
 	}
 
 	@Override
-	public void Act(GBWorld world) {
+	public void act(GBWorld world) {
 		value = Math.max(value - kFoodDecayRate, 0);
-		Recalculate(); // FIXME this is slow
+		recalculate(); // FIXME this is slow
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		return Color.white;
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		drawImage(g, proj);
 	}
 };

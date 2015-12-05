@@ -7,7 +7,7 @@ package sides;
 public class SyphonSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		if (power > 0)
 			return power
 					* (hitsEnemies ? HardwareSpec.kEnemySyphonMassPerPower
@@ -19,7 +19,7 @@ public class SyphonSpec extends HardwareItem {
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		if (power > 0)
 			return power
 					* (hitsEnemies ? HardwareSpec.kEnemySyphonCostPerPower
@@ -41,19 +41,19 @@ public class SyphonSpec extends HardwareItem {
 	double range;
 	boolean hitsEnemies;
 
-	public double Power() {
+	public double getPower() {
 		return power;
 	}
 
-	public double Range() {
+	public double getRange() {
 		return range;
 	}
 
-	public boolean HitsEnemies() {
+	public boolean getHitsEnemies() {
 		return hitsEnemies;
 	}
 
-	public void Set(double pwr, double rng, boolean newHitsEnemies) {
+	public void set(double pwr, double rng, boolean newHitsEnemies) {
 		power = Math.max(pwr, 0);
 		range = Math.max(rng, 0);
 		hitsEnemies = newHitsEnemies;

@@ -29,57 +29,57 @@ public class GBRadioState {
 			sent[i] = writes[i] = 0;
 	}
 
-	public void Write(double value, int address, Side side) {
-		side.WriteSharedMemory(value, address);
+	public void write(double value, int address, Side side) {
+		side.writeSharedMemory(value, address);
 		writes[0] += 1;
 	}
 
-	public double Read(int address, Side side) {
-		return side.ReadSharedMemory(address);
+	public double read(int address, Side side) {
+		return side.readSharedMemory(address);
 	}
 
-	public void Send(GBMessage mess, int channel, Side side) {
-		side.SendMessage(mess, channel);
+	public void send(GBMessage mess, int channel, Side side) {
+		side.sendMessage(mess, channel);
 		sent[0] += mess.length + 1; // note overhead
 	}
 
-	public int MessagesWaiting(int channel, Side side) {
+	public int getMessagesWaiting(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to receive on channel " + channel);
-		return side.MessagesWaiting(channel, nextMessage[channel - 1]);
+		return side.getMessagesWaiting(channel, nextMessage[channel - 1]);
 	}
 
-	public GBMessage Receive(int channel, Side side) {
+	public GBMessage receive(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to receive on channel " + channel);
-		GBMessage msg = side.ReceiveMessage(channel, nextMessage[channel - 1]);
+		GBMessage msg = side.receiveMessage(channel, nextMessage[channel - 1]);
 		if (msg != null)
 			nextMessage[channel - 1] = msg.sequenceNum + 1;
 		return msg;
 	}
 
-	public void Reset(Side side) {
+	public void reset(Side side) {
 		for (int i = 1; i <= GBMessageQueue.kNumMessageChannels; i++)
-			ClearChannel(i, side);
+			clearChannel(i, side);
 	}
 
-	public void ClearChannel(int channel, Side side) {
+	public void clearChannel(int channel, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to clear channel " + channel);
-		nextMessage[channel - 1] = side.NextMessageNumber(channel);
+		nextMessage[channel - 1] = side.getNextMessageNumber(channel);
 	}
 
-	public void SkipMessages(int channel, int skip, Side side) {
+	public void skipMessages(int channel, int skip, Side side) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to skip on channel " + channel);
 		if (skip <= 0)
 			return;
 		nextMessage[channel - 1] += skip;
-		if (nextMessage[channel - 1] > side.NextMessageNumber(channel))
-			nextMessage[channel - 1] = side.NextMessageNumber(channel);
+		if (nextMessage[channel - 1] > side.getNextMessageNumber(channel))
+			nextMessage[channel - 1] = side.getNextMessageNumber(channel);
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		for (int i = kRadioHistory - 1; i > 0; --i) {
 			sent[i] = sent[i - 1];
 			writes[i] = writes[i - 1];

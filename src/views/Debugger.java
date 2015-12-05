@@ -231,7 +231,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 		buildVariables();
 		buildHardwareVariables();
 		lastPrint.setText(String.format("Last Print: %s",
-				hasBrain() ? brain.LastPrint() : "None"));
+				hasBrain() ? brain.getLastPrint() : "None"));
 		updateRobotImage();
 		robotIcon.setIcon(new ImageIcon(robotImage));
 	}
@@ -239,7 +239,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 	boolean hasBrain() {
 		if (selectedObject == null)
 			return false;
-		return selectedObject.Brain() != null;
+		return selectedObject.getBrain() != null;
 	}
 
 	void buildStatus() {
@@ -268,7 +268,7 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(doc.getLength(), "Remaining: ", basicAttr);
 			if (brain != null) {
 				doc.insertString(doc.getLength(),
-						Integer.toString(brain.Remaining()), basicAttr);
+						Integer.toString(brain.getRemaining()), basicAttr);
 			}
 			status.setDocument(doc);
 		} catch (BadLocationException e) {
@@ -283,16 +283,16 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(0, "PC:\t", bold);
 			if (brain == null)
 				return;
-			int pc = brain.PC();
+			int pc = brain.getPC();
 			doc.insertString(
 					doc.getLength(),
 					String.format("%s (line %d)\n",
-							brain.AddressDescription(pc), brain.PCLine()), bold);
+							brain.getAddressDescription(pc), brain.getPCLine()), bold);
 			for (int i = -4; i <= 3; i++) {
-				if (brain.ValidAddress(pc + i))
+				if (brain.isValidAddress(pc + i))
 					doc.insertString(doc.getLength(), String.format(
-							"%s:\t%s\n", brain.AddressName(pc + i),
-							brain.DisassembleAddress(pc + i)), i == 0 ? blue
+							"%s:\t%s\n", brain.getAddressName(pc + i),
+							brain.getDisassembleAddress(pc + i)), i == 0 ? blue
 							: basicAttr);
 			}
 			instructions.setDocument(doc);
@@ -309,13 +309,13 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(0, "Stack:\n", bold);
 			if (brain == null)
 				return;
-			int height = brain.StackHeight();
+			int height = brain.getStackHeight();
 			if (height != 0) {
 				for (int i = 1; i < 5 && i <= height; i++)
 					doc.insertString(
 							doc.getLength(),
 							String.format("%d:\t%.4f\n", height - i,
-									brain.StackAt(height - i)), basicAttr);
+									brain.getStackAt(height - i)), basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "Empty", basicAttr);
 			stack.setDocument(doc);
@@ -331,13 +331,13 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(0, "Return Stack:\n", bold);
 			if (brain == null)
 				return;
-			int height = brain.ReturnStackHeight();
+			int height = brain.getReturnStackHeight();
 			if (height != 0) {
 				for (int i = 1; i < 5 && i <= height; i++)
 					doc.insertString(doc.getLength(), String.format(
 							"%d:\t%s\n",
 							height - i,
-							brain.AddressLastLabel(brain.ReturnStackAt(height
+							brain.getAddressLastLabel(brain.getReturnStackAt(height
 									- i))), basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "Empty", basicAttr);
@@ -356,18 +356,18 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(0, "Variables:\n", bold);
 			if (brain == null)
 				return;
-			int vars = brain.NumVariables();
-			int vvars = brain.NumVectorVariables();
+			int vars = brain.getNumVariables();
+			int vvars = brain.getNumVectorVariables();
 			if (vars != 0 || vvars != 0) {
 				for (int i = 0; i < vars; i++) {
 					doc.insertString(doc.getLength(), String.format(
-							"%s:\t%.4f\n", brain.VariableName(i),
-							brain.ReadVariable(i)), basicAttr);
+							"%s:\t%.4f\n", brain.getVariableName(i),
+							brain.readVariable(i)), basicAttr);
 				}
 				for (int i = 0; i < vvars; i++) {
 					doc.insertString(doc.getLength(), String.format(
-							"%s:\t%s\n", brain.VectorVariableName(i), brain
-									.ReadVectorVariable(i).toString(4)),
+							"%s:\t%s\n", brain.getVectorVariableName(i), brain
+									.readVectorVariable(i).toString(4)),
 							basicAttr);
 				}
 			} else
@@ -399,142 +399,142 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			doc.insertString(
 					doc.getLength(),
 					String.format(vectorFormat, "Position",
-							selectedObject.Position()), basicAttr);
+							selectedObject.getPosition()), basicAttr);
 			doc.insertString(doc.getLength(),
-					String.format(varFormat, "Mass", selectedObject.Mass()),
+					String.format(varFormat, "Mass", selectedObject.getMass()),
 					basicAttr);
 			doc.insertString(
 					doc.getLength(),
-					String.format(varFormat, "Radius", selectedObject.Radius()),
+					String.format(varFormat, "Radius", selectedObject.getRadius()),
 					basicAttr);
 			doc.insertString(doc.getLength(), String.format(vectorFormat,
-					"Velocity", selectedObject.Velocity().toString(4)),
+					"Velocity", selectedObject.getVelocity().toString(4)),
 					basicAttr);
 			doc.insertString(doc.getLength(),
-					String.format(varFormat, "Speed", selectedObject.Speed()),
+					String.format(varFormat, "Speed", selectedObject.getSpeed()),
 					basicAttr);
 			doc.insertString(doc.getLength(), String.format(vectorFormat,
-					"Engine Vel. ", hw.EngineVelocity().toString(4)), basicAttr);
+					"Engine Vel. ", hw.getEngineVelocity().toString(4)), basicAttr);
 			// Energy section
 			doc.insertString(doc.getLength(), "Energy\n", bold);
 			doc.insertString(
 					doc.getLength(),
-					String.format(varFormat, "Energy", selectedObject.Energy()),
+					String.format(varFormat, "Energy", selectedObject.getEnergy()),
 					basicAttr);
-			if (hw.Eater() > 0)
+			if (hw.getEater() > 0)
 				doc.insertString(doc.getLength(),
-						String.format(varFormat, "Eaten", hw.Eaten()), green);
-			if (hw.syphon.MaxRate() > 0)
+						String.format(varFormat, "Eaten", hw.getEaten()), green);
+			if (hw.syphon.getMaxRate() > 0)
 				doc.insertString(doc.getLength(), String.format(varFormat,
-						"Syphoned", hw.syphon.Syphoned()),
-						hw.syphon.Syphoned() > 0 ? green
-								: hw.syphon.Syphoned() == 0 ? basicAttr : red);
-			if (hw.enemySyphon.MaxRate() > 0)
+						"Syphoned", hw.syphon.getSyphoned()),
+						hw.syphon.getSyphoned() > 0 ? green
+								: hw.syphon.getSyphoned() == 0 ? basicAttr : red);
+			if (hw.enemySyphon.getMaxRate() > 0)
 				doc.insertString(
 						doc.getLength(),
 						String.format(varFormat, "Enemy Syphoned",
-								hw.enemySyphon.Syphoned()),
-						hw.enemySyphon.Syphoned() > 0 ? green : hw.enemySyphon
-								.Syphoned() == 0 ? basicAttr : red);
+								hw.enemySyphon.getSyphoned()),
+						hw.enemySyphon.getSyphoned() > 0 ? green : hw.enemySyphon
+								.getSyphoned() == 0 ? basicAttr : red);
 			// Defense section
 			doc.insertString(doc.getLength(), "Defense\n", bold);
 			doc.insertString(doc.getLength(),
-					String.format(varFormat, "Armor", hw.Armor()), basicAttr);
-			if (hw.ActualShield() != 0)
+					String.format(varFormat, "Armor", hw.getArmor()), basicAttr);
+			if (hw.getActualShield() != 0)
 				doc.insertString(
 						doc.getLength(),
 						String.format(varFormat, "Shield",
-								selectedObject.ShieldFraction()), basicAttr);
+								selectedObject.getShieldFraction()), basicAttr);
 			// Constructor Section
-			if (hw.constructor.MaxRate() != 0) {
+			if (hw.constructor.getMaxRate() != 0) {
 				doc.insertString(doc.getLength(), "Constructor\n", bold);
 				doc.insertString(doc.getLength(),
 						String.format(
 								strFormat,
 								"Type",
-								hw.constructor.Type() != null ? hw.constructor
-										.Type().name : "None"), basicAttr);
+								hw.constructor.getRobotType() != null ? hw.constructor
+										.getRobotType().name : "None"), basicAttr);
 				doc.insertString(
 						doc.getLength(),
-						String.format(varFormat, "Rate", hw.constructor.Rate()),
+						String.format(varFormat, "Rate", hw.constructor.getRate()),
 						basicAttr);
 				doc.insertString(
 						doc.getLength(),
 						String.format(varFormat, "Progress",
-								hw.constructor.Fraction()), basicAttr);
+								hw.constructor.getFraction()), basicAttr);
 			}
 			// Sensor section
 			String resultFormat = "%s-%s";
-			if (hw.sensor1.FiringCost() != 0 || hw.sensor2.FiringCost() != 0
-					|| hw.sensor3.FiringCost() != 0) {
+			if (hw.sensor1.getFiringCost() != 0 || hw.sensor2.getFiringCost() != 0
+					|| hw.sensor3.getFiringCost() != 0) {
 				doc.insertString(doc.getLength(), "Sensors\n", bold);
-				if (hw.sensor1.FiringCost() != 0) {
+				if (hw.sensor1.getFiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "robot-found",
-									hw.sensor1.NumResults()), basicAttr);
+									hw.sensor1.getNumResults()), basicAttr);
 					doc.insertString(doc.getLength(),
 							String.format(intFormat, "current-robot-result",
-									hw.sensor1.CurrentResult()), basicAttr);
+									hw.sensor1.getCurrentResult()), basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "robot", "position"),
-							hw.sensor1.WhereFound().toString(4)), basicAttr);
+							hw.sensor1.getWhereFound().toString(4)), basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "robot", "velocity"),
-							hw.sensor1.Velocity().toString(4)), basicAttr);
+							hw.sensor1.getVelocity().toString(4)), basicAttr);
 				}
-				if (hw.sensor2.FiringCost() != 0) {
+				if (hw.sensor2.getFiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "food-found",
-									hw.sensor2.NumResults()), basicAttr);
+									hw.sensor2.getNumResults()), basicAttr);
 					doc.insertString(doc.getLength(), String.format(intFormat,
-							"current-food-result", hw.sensor2.CurrentResult()),
+							"current-food-result", hw.sensor2.getCurrentResult()),
 							basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "food", "position"),
-							hw.sensor2.WhereFound().toString(4)), basicAttr);
+							hw.sensor2.getWhereFound().toString(4)), basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "food", "velocity"),
-							hw.sensor2.Velocity().toString(4)), basicAttr);
+							hw.sensor2.getVelocity().toString(4)), basicAttr);
 				}
-				if (hw.sensor3.FiringCost() != 0) {
+				if (hw.sensor3.getFiringCost() != 0) {
 					doc.insertString(
 							doc.getLength(),
 							String.format(intFormat, "shot-found",
-									hw.sensor3.NumResults()), basicAttr);
+									hw.sensor3.getNumResults()), basicAttr);
 					doc.insertString(doc.getLength(), String.format(intFormat,
-							"current-shot-result", hw.sensor3.CurrentResult()),
+							"current-shot-result", hw.sensor3.getCurrentResult()),
 							basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "shot", "position"),
-							hw.sensor3.WhereFound().toString(4)), basicAttr);
+							hw.sensor3.getWhereFound().toString(4)), basicAttr);
 					doc.insertString(doc.getLength(), String.format("  "
 							+ vectorFormat,
 							String.format(resultFormat, "shot", "velocity"),
-							hw.sensor3.Velocity().toString(4)), basicAttr);
+							hw.sensor3.getVelocity().toString(4)), basicAttr);
 				}
 			}
 			// Miscellaneous hardware values
 			doc.insertString(doc.getLength(), "Misc.\n", bold);
-			if (hw.blaster.Damage() > 0)
+			if (hw.blaster.getDamage() > 0)
 				doc.insertString(
 						doc.getLength(),
 						String.format(intFormat, "blaster-cooldown",
-								hw.blaster.Cooldown()), basicAttr);
-			if (hw.grenades.Damage() > 0)
+								hw.blaster.getCooldown()), basicAttr);
+			if (hw.grenades.getDamage() > 0)
 				doc.insertString(doc.getLength(), String.format(intFormat,
-						"grenades-cooldown", hw.grenades.Cooldown()), basicAttr);
-			if (hw.forceField.MaxPower() > 0) {
+						"grenades-cooldown", hw.grenades.getCooldown()), basicAttr);
+			if (hw.forceField.getMaxPower() > 0) {
 				doc.insertString(doc.getLength(), String.format(varFormat,
-						"force-field-angle", hw.forceField.Angle()), basicAttr);
+						"force-field-angle", hw.forceField.getAngle()), basicAttr);
 				doc.insertString(doc.getLength(), String.format(varFormat,
-						"force-field-distance", hw.forceField.Distance()),
+						"force-field-distance", hw.forceField.getDistance()),
 						basicAttr);
 			}
 			doc.insertString(doc.getLength(),
@@ -565,10 +565,10 @@ public class Debugger extends JPanel implements ObjectSelectionListener {
 			return;
 		if (obj instanceof GBRobot) {
 			selectedObject = (GBRobot) obj;
-			if (selectedObject.Class() == GBObjectClass.ocDead)
+			if (selectedObject.getObjectClass() == GBObjectClass.ocDead)
 				selectedObject = null;
 			if (hasBrain())
-				brain = (GBStackBrain) selectedObject.Brain();
+				brain = (GBStackBrain) selectedObject.getBrain();
 			else
 				brain = null;
 		} else {

@@ -7,7 +7,7 @@ package sides;
 public class ForceFieldSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		if (power > 0)
 			return power
 					* (HardwareSpec.kForceFieldMassPerPower + range
@@ -17,7 +17,7 @@ public class ForceFieldSpec extends HardwareItem {
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		if (power > 0)
 			return power
 					* (HardwareSpec.kForceFieldCostPerPower + range
@@ -35,15 +35,15 @@ public class ForceFieldSpec extends HardwareItem {
 		range = 0;
 	}
 
-	public double Power() {
+	public double getPower() {
 		return power;
 	}
 
-	public double Range() {
+	public double getRange() {
 		return range;
 	}
 
-	public void Set(double pwr, double rng) {
+	public void set(double pwr, double rng) {
 		power = Math.max(pwr, 0);
 		range = Math.max(rng, 0);
 	}

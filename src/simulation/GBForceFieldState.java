@@ -22,62 +22,62 @@ public class GBForceFieldState {
 		spec = spc;
 	}
 
-	public double MaxRange() {
-		return spec.Range();
+	public double getMaxRange() {
+		return spec.getRange();
 	}
 
-	public double MaxPower() {
-		return spec.Power();
+	public double getMaxPower() {
+		return spec.getPower();
 	}
 
-	public double Direction() {
+	public double getDirection() {
 		return direction;
 	}
 
-	public double Distance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public double Power() {
+	public double getPower() {
 		return power;
 	}
 
-	public double Angle() {
+	public double getAngle() {
 		return angle;
 	}
 
-	public double Radius() {
-		return GBForceField.PowerRadius(power);
+	public double getRadius() {
+		return GBForceField.getPowerRadius(power);
 	}
 
-	public void SetDistance(double dist) {
-		distance = GBMath.clamp(dist, 0, MaxRange());
+	public void getSetDistance(double dist) {
+		distance = GBMath.clamp(dist, 0, getMaxRange());
 	}
 
-	public void SetDirection(double dir) {
+	public void getSetDirection(double dir) {
 		direction = dir;
 	}
 
-	public void SetPower(double pwr) {
-		power = GBMath.clamp(pwr, 0, MaxPower());
+	public void getSetPower(double pwr) {
+		power = GBMath.clamp(pwr, 0, getMaxPower());
 	}
 
-	public void SetAngle(double ang) {
+	public void setAngle(double ang) {
 		angle = ang;
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		if (power == 0)
 			return;
-		double effective = power * robot.hardware.EffectivenessFraction()
-				* robot.ShieldFraction();
-		if (power > 0 && robot.hardware.UseEnergy(effective)) {
-			robot.Owner().Scores().expenditure.ReportForceField(effective);
+		double effective = power * robot.hardware.getEffectivenessFraction()
+				* robot.getShieldFraction();
+		if (power > 0 && robot.hardware.useEnergy(effective)) {
+			robot.getOwner().getScores().expenditure.reportForceField(effective);
 			FinePoint vel = FinePoint.makePolar(distance, direction);
 			GBObject shot = new GBForceField(
-					robot.Position().add(vel),
+					robot.getPosition().add(vel),
 					vel,
-					robot.Owner(),
+					robot.getOwner(),
 					effective
 							/ (distance
 									* GBHardwareState.kForceFieldRangeAttenuation + 1),

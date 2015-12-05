@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+import Rendering.GBProjection;
 import support.FinePoint;
 import support.GBColor;
 import exception.GBSimulationError;
@@ -22,49 +23,49 @@ public class GBSyphon extends GBTimedShot {
 	// public:
 	public GBSyphon(FinePoint where, double rate, GBRobot who,
 			GBSyphonState state, boolean newHitsEnemies) {
-		super(where, kSyphonRadius, where.subtract(who.Position()),
-				who.Owner(), rate, 1);
+		super(where, kSyphonRadius, where.subtract(who.getPosition()),
+				who.getOwner(), rate, 1);
 		sink = who;
 		creator = state;
 		hitsEnemies = newHitsEnemies;
 	}
 
 	@Override
-	public void Move() {
+	public void move() {
 		// don't move! velocity is only apparent.
 	}
 
 	@Override
-	public void CollideWith(GBObject other) {
-		if (other.Class() == GBObjectClass.ocRobot && power != 0
+	public void collideWith(GBObject other) {
+		if (other.getObjectClass() == GBObjectClass.ocRobot && power != 0
 				&& other != sink
-				&& (hitsEnemies || other.Owner() == sink.Owner())) {
+				&& (hitsEnemies || other.getOwner() == sink.getOwner())) {
 			if (power >= 0) {
 				try {
 					GBRobot otherBot = (GBRobot) other;
 					// FIXME shields affect syphons twice: here and when they're
 					// fired
-					double efficiency = sink.ShieldFraction()
-							* otherBot.ShieldFraction();
-					if (other.Owner() != sink.Owner()) {
-						if (otherBot.hardware.MaxEnergy() != 0)
+					double efficiency = sink.getShieldFraction()
+							* otherBot.getShieldFraction();
+					if (other.getOwner() != sink.getOwner()) {
+						if (otherBot.hardware.getMaxEnergy() != 0)
 							efficiency *= Math.min(1,
-									otherBot.hardware.Energy()
-											/ otherBot.hardware.MaxEnergy());
+									otherBot.hardware.getEnergy()
+											/ otherBot.hardware.getMaxEnergy());
 					}
-					double maxTransfer = Math.min(sink.MaxGiveEnergy(),
-							other.MaxTakeEnergy());
+					double maxTransfer = Math.min(sink.maxGiveEnergy(),
+							other.maxTakeEnergy());
 					double actual = Math.min(maxTransfer, power * efficiency);
 
 					if (actual > 0) {
-						double taken = other.TakeEnergy(actual);
-						double given = sink.GiveEnergy(actual);
+						double taken = other.takeEnergy(actual);
+						double given = sink.giveEnergy(actual);
 						power = Math.min(power - actual / efficiency, 0);
-						creator.ReportUse(taken);
-						if (taken > 0 && other.Owner() != owner) {
-							owner.ReportKleptotrophy(taken);
-							other.Owner().Scores().expenditure
-									.ReportStolen(taken);
+						creator.reportUse(taken);
+						if (taken > 0 && other.getOwner() != owner) {
+							owner.reportKleptotrophy(taken);
+							other.getOwner().getScores().expenditure
+									.reportStolen(taken);
 						}
 						if (taken != given || taken != actual) {
 							throw new GBSimulationError(
@@ -78,23 +79,23 @@ public class GBSyphon extends GBTimedShot {
 			} else { // giving energy: like taking, but target energy isn't a
 						// factor
 				GBRobot otherBot = (GBRobot) other;
-				double efficiency = sink.ShieldFraction()
-						* otherBot.ShieldFraction();
+				double efficiency = sink.getShieldFraction()
+						* otherBot.getShieldFraction();
 				// efficiency does not decrease with low energy when giving
-				double maxTransfer = Math.min(other.MaxGiveEnergy(),
-						sink.MaxTakeEnergy());
+				double maxTransfer = Math.min(other.maxGiveEnergy(),
+						sink.maxTakeEnergy());
 				double actual = Math.min(maxTransfer, -power * efficiency);
 
-				double taken = sink.TakeEnergy(actual);
-				double given = other.GiveEnergy(actual);
+				double taken = sink.takeEnergy(actual);
+				double given = other.giveEnergy(actual);
 				power = Math.max(power + actual / efficiency, 0);
 
-				creator.ReportUse(-given);
+				creator.reportUse(-given);
 
-				if (given > 0 && other.Owner() != owner) { // giving energy to
+				if (given > 0 && other.getOwner() != owner) { // giving energy to
 															// enemy :)
-					other.Owner().ReportKleptotrophy(given);
-					owner.Scores().expenditure.ReportStolen(given);
+					other.getOwner().reportKleptotrophy(given);
+					owner.getScores().expenditure.reportStolen(given);
 				}
 				if (taken != given || taken != actual) {
 					throw new GBSimulationError("Given != taken in CollideWith");
@@ -104,37 +105,37 @@ public class GBSyphon extends GBTimedShot {
 	}
 
 	@Override
-	public int Type() {
+	public int getShotType() {
 		return hitsEnemies ? 4 : 3;
 	}
 
 	@Override
-	public double Interest() {
+	public double getInterest() {
 		return Math.abs(power) * (hitsEnemies ? 5 : 1) + (hitsEnemies ? 2 : 1);
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		return (hitsEnemies ? new Color(0.6f, 1, 0) : new Color(0.5f, 0.8f, 1));
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle where = getScreenRect(proj);
-		g2d.setPaint(Color());
+		g2d.setPaint(getColor());
 		// draw tail showing origin, rate and whether it's working
 		// Dashed line whose dashes move in the direction of energy
 		// transfer over time
 		if (detailed) {
-			Color tailcolor = GBColor.multiply(Owner().Color(),
-					creator.Syphoned() != 0 ? 0.8f : 0.4f);
-			FinePoint unit = Velocity().unit().multiply(-1);
-			double phase = System.currentTimeMillis() / 1000.0 * creator.Rate();
-			for (double d = Speed() + (phase - Math.floor(phase)) - 1
-					- sink.Radius(); d >= Radius(); d -= 1) {
-				int x = proj.toScreenX(Position().x + unit.x * d);
-				int y = proj.toScreenY(Position().y + unit.y * d);
+			Color tailcolor = GBColor.multiply(getOwner().getColor(),
+					creator.getSyphoned() != 0 ? 0.8f : 0.4f);
+			FinePoint unit = getVelocity().unit().multiply(-1);
+			double phase = System.currentTimeMillis() / 1000.0 * creator.getRate();
+			for (double d = getSpeed() + (phase - Math.floor(phase)) - 1
+					- sink.getRadius(); d >= getRadius(); d -= 1) {
+				int x = proj.toScreenX(getPosition().x + unit.x * d);
+				int y = proj.toScreenY(getPosition().y + unit.y * d);
 				g2d.setPaint(tailcolor);
 				g2d.fillRect(x - 1, y - 1, 2, 2);
 			}
@@ -142,7 +143,7 @@ public class GBSyphon extends GBTimedShot {
 		// draw the syphon as a dashed X on the target
 		g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT,
 				BasicStroke.JOIN_BEVEL, 0, new float[] { 1, 2 }, 0));
-		g2d.setColor(Color());
+		g2d.setColor(getColor());
 		g2d.drawLine(where.x, where.y, where.x + where.width, where.y
 				+ where.height);
 		g2d.drawLine(where.x + where.width, where.y, where.x, where.y

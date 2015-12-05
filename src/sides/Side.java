@@ -85,49 +85,49 @@ public class Side implements Comparable<Side> {
 		return true;
 	}
 
-	public String Name() {
+	public String getName() {
 		return name;
 	}
 
-	public void SetName(String newname) {
+	public void setName(String newname) {
 		name = newname;
 	}
 
-	public String Author() {
+	public String getAuthor() {
 		if (author != null)
 			return author;
 		else
 			return "";
 	}
 
-	public void SetAuthor(String newauthor) {
+	public void getAuthor(String newauthor) {
 		author = newauthor;
 	}
 
-	public int ID() {
+	public int getID() {
 		return id;
 	}
 
-	public void SetID(int newid) {
+	public void setID(int newid) {
 		id = newid;
 	}
 
-	public Color Color() {
+	public Color getColor() {
 		return color;
 	}
 
-	public void SetColor(Color newcolor) {
+	public void setColor(Color newcolor) {
 		color = newcolor;
 	}
 
-	public RobotType GetType(int index) {
+	public RobotType getRobotType(int index) {
 		if (index <= 0 || index > types.size())
 			throw new IndexOutOfBoundsException("invalid type index: " + index);
 		return types.get(index - 1);
 	}
 
 	// used by brains
-	public int GetTypeIndex(RobotType type) {
+	public int getTypeIndex(RobotType type) {
 		if (type == null)
 			return 0;
 		for (int i = 0; i < types.size(); ++i)
@@ -136,42 +136,42 @@ public class Side implements Comparable<Side> {
 		return 0;
 	}
 
-	public int CountTypes() {
+	public int getTypeCount() {
 		return types.size();
 	}
 
-	public void AddType(RobotType type) {
+	public void addType(RobotType type) {
 		// adds type at end so they will stay in order
 		if (type == null)
 			throw new NullPointerException();
-		type.Recalculate();
+		type.recalculate();
 		types.add(type);
-		type.SetID(types.size());
+		type.setID(types.size());
 	}
 
-	public void RemoveAllTypes() {
+	public void removeAllTypes() {
 		types.clear();
 	}
 
-	public void AddSeedID(int id) {
+	public void addSeedID(int id) {
 		seedIDs.add(id);
 	}
 
-	public RobotType GetSeedType(int index) {
+	public RobotType getSeedType(int index) {
 		if (index < 0)
 			throw new GBSimulationError("type index must be positive: " + index);
 		if (seedIDs.isEmpty())
 			return null;
-		return GetType(seedIDs.get(index % seedIDs.size()));
+		return getRobotType(seedIDs.get(index % seedIDs.size()));
 	}
 
-	public int NumSeedTypes() {
+	public int getNumSeedTypes() {
 		return seedIDs.size();
 	}
 
-	public void Reset() {
+	public void reset() {
 		id = 0;
-		scores.Reset();
+		scores.reset();
 		center.set(0, 0);
 		groupPosition.set(0, 0);
 		int i;
@@ -182,76 +182,76 @@ public class Side implements Comparable<Side> {
 		}
 	}
 
-	public void ResetSampledStatistics() {
+	public void resetSampledStatistics() {
 		if (scores.population != 0)
-			center = center.add(groupPosition.divide(scores.Population()))
+			center = center.add(groupPosition.divide(scores.getPopulation()))
 					.divide(2);
 		groupPosition.set(0, 0);
-		scores.ResetSampledStatistics();
+		scores.resetSampledStatistics();
 		for (int i = 0; i < types.size(); ++i)
-			types.get(i).ResetSampledStatistics();
+			types.get(i).resetSampledStatistics();
 	}
 
-	public void ReportRobot(double biomass, RobotType type,
+	public void reportRobot(double biomass, RobotType type,
 			support.FinePoint where) {
-		HardwareSpec hw = type.Hardware();
-		scores.ReportRobot(biomass, hw.constructor.Cost(), hw.GrowthCost(),
+		HardwareSpec hw = type.getHardware();
+		scores.reportRobot(biomass, hw.constructor.getCost(), hw.GrowthCost(),
 				hw.CombatCost(), hw.BaseCost());
 		groupPosition = groupPosition.add(where);
 	}
 
-	public void ReportDead(double en) {
-		scores.ReportDead(en);
+	public void reportDead(double en) {
+		scores.reportDead(en);
 	}
 
-	public void ReportKilled(double en) {
-		scores.ReportKilled(en);
+	public void reportKilled(double en) {
+		scores.reportKilled(en);
 	}
 
-	public void ReportSuicide(double en) {
-		scores.ReportSuicide(en);
+	public void reportSuicide(double en) {
+		scores.reportSuicide(en);
 	}
 
-	public void ReportAutotrophy(double en) {
-		scores.income.ReportAutotrophy(en);
+	public void reportAutotrophy(double en) {
+		scores.income.reportAutotrophy(en);
 	}
 
-	public void ReportTheotrophy(double en) {
-		scores.income.ReportTheotrophy(en);
+	public void reportTheotrophy(double en) {
+		scores.income.reportTheotrophy(en);
 	}
 
-	public void ReportHeterotrophy(double en) {
-		scores.income.ReportHeterotrophy(en);
+	public void reportHeterotrophy(double en) {
+		scores.income.reportHeterotrophy(en);
 	}
 
-	public void ReportCannibalism(double en) {
-		scores.income.ReportCannibalism(en);
+	public void reportCannibalism(double en) {
+		scores.income.reportCannibalism(en);
 	}
 
-	public void ReportKleptotrophy(double en) {
-		scores.income.ReportKleptotrophy(en);
+	public void reportKleptotrophy(double en) {
+		scores.income.reportKleptotrophy(en);
 	}
 
-	public GBSideScores Scores() {
+	public GBSideScores getScores() {
 		return scores;
 	}
 
-	public GBScores TournamentScores() {
+	public GBScores getTournamentScores() {
 		return cScores;
 	}
 
-	public int GetNewRobotNumber() {
-		return scores.GetNewRobotNumber();
+	public int getNewRobotNumber() {
+		return scores.getNewRobotNumber();
 	}
 
-	public double ReadSharedMemory(int addr) {
+	public double readSharedMemory(int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
 			throw new GBBrainError("tried to read from shared memory at "
 					+ addr);
 		return sharedMemory[addr - 1];
 	}
 
-	public void WriteSharedMemory(double value, int addr) {
+	public void writeSharedMemory(double value, int addr) {
 		if (addr < 1 || addr > kSharedMemorySize)
 			throw new GBBrainError("tried to write to shared memory at " + addr);
 		sharedMemory[addr - 1] = value;
@@ -259,44 +259,44 @@ public class Side implements Comparable<Side> {
 
 	// Note: the pointer returned is to within an internal array and
 	// must be used and discarded before any robot calls SendMessage again!
-	public GBMessage ReceiveMessage(int channel, int desiredMessageNumber) {
+	public GBMessage receiveMessage(int channel, int desiredMessageNumber) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return null;
-		return msgQueues[channel - 1].GetMessage(desiredMessageNumber);
+		return msgQueues[channel - 1].getMessage(desiredMessageNumber);
 	}
 
-	public void SendMessage(GBMessage msg, int channel) {
+	public void sendMessage(GBMessage msg, int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to send on channel " + channel);
 		if (msgQueues[channel - 1] == null) {
 			msgQueues[channel - 1] = new GBMessageQueue();
 		}
-		msgQueues[channel - 1].AddMessage(msg);
+		msgQueues[channel - 1].addMessage(msg);
 	}
 
-	public int NextMessageNumber(int channel) {
+	public int getNextMessageNumber(int channel) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
-		return msgQueues[channel - 1].NextMessageNumber();
+		return msgQueues[channel - 1].getNextMessageNumber();
 	}
 
-	public int MessagesWaiting(int channel, int next) {
+	public int getMessagesWaiting(int channel, int next) {
 		if (channel < 1 || channel > GBMessageQueue.kNumMessageChannels)
 			throw new GBBrainError("tried to receive on channel " + channel);
 		if (msgQueues[channel - 1] == null)
 			return 0;
-		return msgQueues[channel - 1].MessagesWaiting(next);
+		return msgQueues[channel - 1].getMessagesWaiting(next);
 	}
 
 	@Override
 	public int compareTo(Side o) {
 		// Replaces the Better function, used for sorting
-		return (int) (o.TournamentScores().BiomassFraction() * 100 - TournamentScores()
-				.BiomassFraction() * 100);
+		return (int) (o.getTournamentScores().getBiomassFraction() * 100 - getTournamentScores()
+				.getBiomassFraction() * 100);
 	}
 
 }

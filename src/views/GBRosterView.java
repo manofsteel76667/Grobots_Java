@@ -129,7 +129,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 				long ms = Math.max(System.currentTimeMillis() - lastTime, 1);
 				fps = (int) (frames * 1000 / ms);
 			}
-			header.setText(String.format(headerLine, game.CurrentFrame(),
+			header.setText(String.format(headerLine, game.currentFrame(),
 					status, fps));
 		}
 		lastFrame = game.totalFrames;
@@ -191,8 +191,8 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			for (File f : fc.getSelectedFiles()) {
 				try {
 					Side newside;
-					newside = SideReader.Load(f.getPath());
-					game.AddSide(newside);
+					newside = SideReader.loadFromFile(f.getPath());
+					game.addSide(newside);
 					model.addElement(newside);
 				} catch (Exception fileEx) {
 					GBError.NonfatalError(String.format(
@@ -206,15 +206,15 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	public void removeSide() {
 		if (selectedSide == null)
 			return;
-		game.RemoveSide(selectedSide);
+		game.removeSide(selectedSide);
 		model.removeElement(selectedSide);
 		selectedSide = null;
 		notifySideListeners();
 	}
 
 	public void removeAllSides() {
-		game.Reset();
-		game.RemoveAllSides();
+		game.reset();
+		game.removeAllSides();
 		game.running = false;
 		model.clear();
 		selectedSide = null;
@@ -224,17 +224,17 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 	public void duplicateSide() {
 		if (selectedSide == null)
 			return;
-		Side newside = SideReader.Load(selectedSide.filename);
-		game.AddSide(newside);
+		Side newside = SideReader.loadFromFile(selectedSide.filename);
+		game.addSide(newside);
 		model.addElement(newside);
 	}
 
 	public void reloadSide() {
 		if (selectedSide == null)
 			return;
-		Side reload = SideReader.Load(selectedSide.filename);
+		Side reload = SideReader.loadFromFile(selectedSide.filename);
 		if (game.sides.contains(selectedSide))
-			game.ReplaceSide(selectedSide, reload);
+			game.replaceSide(selectedSide, reload);
 		model.clear();
 		for (Side s : game.sides)
 			model.addElement(s);
@@ -261,7 +261,7 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			setText("");
 			setPreferredSize(new Dimension(240, 25));
 			String sidecolor = GBColor.toHex(GBColor.ContrastingTextColor(side
-					.Color()));
+					.getColor()));
 			String biopercent = ""; // Biomass percent if healthy, null if
 									// sterile or extinct
 			String message = ""; // Robot count if healthy, extinct or sterile
@@ -269,35 +269,35 @@ public class GBRosterView extends JPanel implements SideSelectionListener,
 			String messagecolor = "blue";
 			int bioWidth = 30;
 			int messageWidth = 50;
-			if (side.Scores().Seeded() != 0) {
+			if (side.getScores().getSeeded() != 0) {
 				// Side status
-				if (side.Scores().Population() != 0) {
+				if (side.getScores().getPopulation() != 0) {
 					// Sterile?
-					if (side.Scores().sterile != 0) {
-						message = String.format("Sterile at %d", side.Scores()
-								.SterileTime());
+					if (side.getScores().sterile != 0) {
+						message = String.format("Sterile at %d", side.getScores()
+								.getSterileTime());
 						messagecolor = "gray";
 						messageWidth = 129;
 						bioWidth = 1;
 					} else {
 						// Doing fine
 						// Bio percentage
-						biopercent = String.format("%.1f%%", side.Scores()
-								.BiomassFraction() * 100);
+						biopercent = String.format("%.1f%%", side.getScores()
+								.getBiomassFraction() * 100);
 						// Population
-						message = Integer.toString(side.Scores().Population());
+						message = Integer.toString(side.getScores().getPopulation());
 					}
 				} else {
 					// Extinct
-					message = String.format("Extinct at %d", side.Scores()
-							.ExtinctTime());
+					message = String.format("Extinct at %d", side.getScores()
+							.getExtinctTime());
 					messagecolor = "gray";
 					messageWidth = 129;
 					bioWidth = 1;
 				}
 			}
-			setText(String.format(cellFormat, sidecolor, side.ID(),
-					side.Name(), bioWidth, biopercent, messageWidth,
+			setText(String.format(cellFormat, sidecolor, side.getID(),
+					side.getName(), bioWidth, biopercent, messageWidth,
 					messagecolor, message));
 			if (isSelected) {
 				setBackground(list.getSelectionBackground());

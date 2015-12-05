@@ -22,7 +22,7 @@ public abstract class Brain {
 	 * @param robot
 	 * @param world
 	 */
-	public void Step(GBRobot robot, GBWorld world) {
+	public void step(GBRobot robot, GBWorld world) {
 		think(robot, world);
 	}
 
@@ -37,7 +37,7 @@ public abstract class Brain {
 	/**
 	 * Can we think now?
 	 */
-	public boolean Ready() {
+	public boolean ready() {
 		return false;
 	}
 

@@ -9,7 +9,7 @@ import simulation.GBObjectClass;
 public class SensorSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		if (seen != GBObjectClass.ocDead.value)
 			return range
 					* (HardwareSpec.kSensorMassPerRange + range
@@ -20,7 +20,7 @@ public class SensorSpec extends HardwareItem {
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		if (seen != GBObjectClass.ocDead.value)
 			return range
 					* (HardwareSpec.kSensorCostPerRange + range
@@ -41,25 +41,25 @@ public class SensorSpec extends HardwareItem {
 	private double range;
 	private int seen;
 
-	public double Range() {
+	public double getRange() {
 		return range;
 	}
 
-	public int NumResults() {
+	public int getNumResults() {
 		return numResults;
 	}
 
-	public int Seen() {
+	public int getSeen() {
 		return seen;
 	}
 
-	public void Set(double rng, int rslts, int what) {
+	public void set(double rng, int rslts, int what) {
 		range = Math.max(rng, 0);
 		numResults = rslts < 1 ? 1 : rslts;
 		seen = what;
 	}
 
-	public double FiringCost() {
+	public double getFiringCost() {
 		return range * range * HardwareSpec.kSensorFiringCostPerPower;
 	}
 

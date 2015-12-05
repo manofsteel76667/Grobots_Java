@@ -57,82 +57,82 @@ public class GBStackBrain extends Brain {
 	int used;
 	String lastPrint;
 
-	public double ReadVariable(int index) {
-		if (index < 0 || index >= spec.NumVariables())
+	public double readVariable(int index) {
+		if (index < 0 || index >= spec.getVariablesCount())
 			throw new GBBadSymbolIndexError();
 		return variables[index];
 	}
 
-	public FinePoint ReadVectorVariable(int index) {
-		if (index < 0 || index >= spec.NumVectorVariables())
+	public FinePoint readVectorVariable(int index) {
+		if (index < 0 || index >= spec.getVectorVariablesCount())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables[index];
 	}
 
-	void WriteVariable(int index, double value) {
-		if (index < 0 || index >= spec.NumVariables())
+	void writeVariable(int index, double value) {
+		if (index < 0 || index >= spec.getVariablesCount())
 			throw new GBBadSymbolIndexError();
 		variables[index] = value;
 	}
 
-	void WriteVectorVariable(int index, FinePoint value) {
-		if (index < 0 || index >= spec.NumVectorVariables())
+	void writeVectorVariable(int index, FinePoint value) {
+		if (index < 0 || index >= spec.getVectorVariablesCount())
 			throw new GBBadSymbolIndexError();
 		vectorVariables[index] = value;
 	}
 
-	void ExecuteInstruction(int ins, GBRobot robot, GBWorld world) {
+	void executeInstruction(int ins, GBRobot robot, GBWorld world) {
 		int index = ins & StackBrainOpcode.kOpcodeIndexMask;
 		switch (OpType.byID(ins >> StackBrainOpcode.kOpcodeTypeShift)) {
 		case otPrimitive:
-			ExecutePrimitive(index, robot, world);
+			executePrimitive(index, robot, world);
 			break;
 		case otConstantRead:
-			Push(spec.ReadConstant(index));
+			push(spec.readConstant(index));
 			break;
 		case otVariableRead:
-			Push(ReadVariable(index));
+			push(readVariable(index));
 			break;
 		case otVariableWrite:
-			WriteVariable(index, Pop());
+			writeVariable(index, pop());
 			break;
 		case otVectorRead:
-			PushVector(ReadVectorVariable(index));
+			pushVector(readVectorVariable(index));
 			break;
 		case otVectorWrite:
-			WriteVectorVariable(index, PopVector());
+			writeVectorVariable(index, popVector());
 			break;
 		case otLabelRead:
-			Push(spec.ReadLabel(index));
+			push(spec.readLabel(index));
 			break;
 		case otLabelCall:
-			ExecuteCall(spec.ReadLabel(index));
+			executeCall(spec.readLabel(index));
 			break;
 		case otHardwareRead:
-			Push(ReadHardware(index, robot, world));
+			push(executeHardwareRead(index, robot, world));
 			break;
 		case otHardwareWrite:
-			WriteHardware(index, Pop(), robot, world);
+			executeHardwareWrite(index, pop(), robot, world);
 			break;
 		case otHardwareVectorRead:
-			PushVector(ReadHardwareVector(index, robot, world));
+			pushVector(executeHardwareVectorRead(index, robot, world));
 			break;
 		case otHardwareVectorWrite:
-			WriteHardwareVector(index, PopVector(), robot, world);
+			executeHardwareVectorWrite(index, popVector(), robot, world);
 			break;
 		default:
 			throw new GBUnknownInstructionError();
 		}
 	}
 
-	void ExecuteCall(int addr) {
+	void executeCall(int addr) {
 		if (returnStackHeight >= kReturnStackLimit)
 			throw new GBStackOverflowError();
 		returnStack[returnStackHeight++] = pc;
 		pc = addr;
 	}
 
-	void DoPrint(String str) {
+	void doPrint(String str) {
 		lastPrint = str;
 	}
 
@@ -141,7 +141,7 @@ public class GBStackBrain extends Brain {
 	 * throw new GBStackUnderflowError(); stack[stackHeight - 1] =
 	 * op(stack[stackHeight - 1]); }
 	 */
-	void TwoNumberToNumberOp(TwoNumbertoNumberOperator op) {
+	void twoNumberToNumberOp(TwoNumbertoNumberOperator op) {
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		--stackHeight;
@@ -173,9 +173,9 @@ public class GBStackBrain extends Brain {
 	 * VectorToScalarOp(VectortoScalarOperator op) { FinePoint v = PopVector();
 	 * Push((v.*op)()); }
 	 */
-	void TwoVectorToVectorOp(TwoVectortoVectorOperator op) {
-		FinePoint v2 = PopVector();
-		FinePoint v1 = PopVector();
+	void twoVectorToVectorOp(TwoVectortoVectorOperator op) {
+		FinePoint v2 = popVector();
+		FinePoint v1 = popVector();
 		FinePoint result = new FinePoint();
 		switch (op) {
 		case add:
@@ -190,12 +190,12 @@ public class GBStackBrain extends Brain {
 		default:
 			break;
 		}
-		PushVector(result);
+		pushVector(result);
 	}
 
-	void TwoVectorToScalarOp(TwoVectortoScalarOperator op) {
-		FinePoint v2 = PopVector();
-		FinePoint v1 = PopVector();
+	void twoVectorToScalarOp(TwoVectortoScalarOperator op) {
+		FinePoint v2 = popVector();
+		FinePoint v1 = popVector();
 		double result = 0;
 		switch (op) {
 		case cross:
@@ -207,22 +207,22 @@ public class GBStackBrain extends Brain {
 		default:
 			break;
 		}
-		Push(result);
+		push(result);
 	}
 
-	void Push(double value) {
+	void push(double value) {
 		if (stackHeight >= kStackLimit)
 			throw new GBStackOverflowError();
 		stack[stackHeight++] = value;
 	}
 
-	double Pop() {
+	double pop() {
 		if (stackHeight <= 0)
 			throw new GBStackUnderflowError();
 		return stack[--stackHeight];
 	}
 
-	double Peek(int delta) {
+	double peek(int delta) {
 		if (delta < 1)
 			throw new GBBrainError("peeking stack element " + delta);
 		int where = stackHeight - delta;
@@ -233,14 +233,14 @@ public class GBStackBrain extends Brain {
 		return stack[where];
 	}
 
-	void PushVector(FinePoint v) {
+	void pushVector(FinePoint v) {
 		if (stackHeight > kStackLimit - 2)
 			throw new GBStackOverflowError();
 		stack[stackHeight++] = v.x;
 		stack[stackHeight++] = v.y;
 	}
 
-	FinePoint PopVector() {
+	FinePoint popVector() {
 		if (stackHeight < 2)
 			throw new GBStackUnderflowError();
 		FinePoint v = new FinePoint(stack[stackHeight - 2],
@@ -249,67 +249,67 @@ public class GBStackBrain extends Brain {
 		return v;
 	}
 
-	int PopInteger() {
-		return ToInteger(Pop());
+	int popInteger() {
+		return toInteger(pop());
 	}
 
-	void Pushboolean(boolean value) {
-		Push(FromBoolean(value));
+	void pushboolean(boolean value) {
+		push(fromBoolean(value));
 	}
 
-	void PushReturn(int value) {
+	void pushReturn(int value) {
 		if (returnStackHeight >= kReturnStackLimit)
 			throw new GBStackOverflowError();
 		returnStack[returnStackHeight++] = value;
 	}
 
-	int PopReturn() {
+	int popReturn() {
 		if (returnStackHeight <= 0)
 			throw new GBStackUnderflowError();
 		return returnStack[--returnStackHeight];
 	}
 
-	double ReadLocalMemory(int addr, GBRobot robot) {
-		if (addr < 1 || addr > robot.hardware.Memory())
+	double readLocalMemory(int addr, GBRobot robot) {
+		if (addr < 1 || addr > robot.hardware.getMemory())
 			throw new GBBrainError("tried to read at address " + addr);
 		if (memory == null)
 			return 0;
 		return memory[addr - 1];
 	}
 
-	void WriteLocalMemory(int addr, double val, GBRobot robot) {
-		if (addr < 1 || addr > robot.hardware.Memory())
+	void writeLocalMemory(int addr, double val, GBRobot robot) {
+		if (addr < 1 || addr > robot.hardware.getMemory())
 			throw new GBBrainError("tried to write at address " + addr);
 		if (memory == null) {
-			if (robot.hardware.Memory() == 0)
+			if (robot.hardware.getMemory() == 0)
 				return; // fail silently
-			memory = new double[robot.hardware.Memory()];
+			memory = new double[robot.hardware.getMemory()];
 		}
 		memory[addr - 1] = val;
 	}
 
-	int ToAddress(double value) {
+	int toAddress(double value) {
 		int addr = (int) value;
 		if (addr == value) {
-			if (addr >= 0 && addr < spec.NumInstructions())
+			if (addr >= 0 && addr < spec.getInstructionsCount())
 				return addr;
 		} else
 			throw new GBBadAddressError(value);
 		return -1;
 	}
 
-	int ToInteger(double value) {
+	int toInteger(double value) {
 		if (Math.floor(value) == value)
 			return (int) Math.floor(value);
 		else
 			throw new GBNotIntegerError(value);
 	}
 
-	double FromBoolean(boolean value) {
+	double fromBoolean(boolean value) {
 		return value ? 1 : 0;
 	}
 
-	void BrainError(Exception err, GBRobot robot, GBWorld world) {
+	void raiseBrainError(Exception err, GBRobot robot, GBWorld world) {
 		status = BrainStatus.bsError;
 		if (world.reportErrors)
 			// Handle brain errors at this level before they bubble up to the
@@ -318,12 +318,12 @@ public class GBStackBrain extends Brain {
 			// will not.
 			GBError.NonfatalError(robot.toString()
 					+ " had error in brain, probably at "
-					+ AddressAndLine(pc - 1) + ": " + err.getMessage());
+					+ getAddressAndLine(pc - 1) + ": " + err.getMessage());
 	}
 
 	public GBStackBrain(GBStackBrainSpec spc) {
 		spec = spc;
-		pc = spc.StartAddress();
+		pc = spc.getStartAddress();
 		variables = new double[spc.variables.size()];
 		vectorVariables = new FinePoint[spc.vectorVariables.size()];
 		stack = new double[kStackLimit];
@@ -331,139 +331,139 @@ public class GBStackBrain extends Brain {
 		memory = null;
 		lastPrint = null;
 		int i;
-		for (i = 0; i < spc.NumVariables(); i++)
-			variables[i] = spc.ReadVariable(i);
-		for (i = 0; i < spc.NumVectorVariables(); i++)
-			vectorVariables[i] = spc.ReadVectorVariable(i);
+		for (i = 0; i < spc.getVariablesCount(); i++)
+			variables[i] = spc.readVariable(i);
+		for (i = 0; i < spc.getVectorVariablesCount(); i++)
+			vectorVariables[i] = spc.readVectorVariable(i);
 	}
 
 	@Override
 	public void think(GBRobot robot, GBWorld world) {
 		try {
 			while (status == BrainStatus.bsOK && remaining > 0)
-				ThinkOne(robot, world);
+				thinkOne(robot, world);
 		} catch (GBBrainError err) {
 			try {
-				BrainError(err, robot, world);
+				raiseBrainError(err, robot, world);
 			} catch (GBAbort a) {
 				status = BrainStatus.bsStopped;
 			}
 		}
 		double en = kProcessorUseCost * used;
-		robot.hardware.UseEnergy(en);
-		robot.Owner().Scores().expenditure.ReportBrain(en);
+		robot.hardware.useEnergy(en);
+		robot.getOwner().getScores().expenditure.reportBrain(en);
 		used = 0;
 		remaining = (remaining > 0 ? 0 : remaining)
-				+ robot.hardware.Processor();
+				+ robot.hardware.getProcessor();
 	}
 
-	public void ThinkOne(GBRobot robot, GBWorld world) {
-		int ins = spec.ReadInstruction(pc++);
+	public void thinkOne(GBRobot robot, GBWorld world) {
+		int ins = spec.readInstruction(pc++);
 		remaining--; // currently all instructions take one cycle
 		used++;
-		ExecuteInstruction(ins, robot, world);
+		executeInstruction(ins, robot, world);
 	}
 
 	@Override
-	public void Step(GBRobot robot, GBWorld world) {
+	public void step(GBRobot robot, GBWorld world) {
 		if (status != BrainStatus.bsOK)
 			return;
 		try {
-			ThinkOne(robot, world);
+			thinkOne(robot, world);
 		} catch (GBBrainError err) {
-			BrainError(err, robot, world);
+			raiseBrainError(err, robot, world);
 		} catch (GBAbort err) {
 			status = BrainStatus.bsStopped;
 		}
 	}
 
 	@Override
-	public boolean Ready() {
+	public boolean ready() {
 		return remaining > 0;
 	}
 
-	public int Remaining() {
+	public int getRemaining() {
 		return remaining;
 	}
 
-	public int PC() {
+	public int getPC() {
 		return pc;
 	}
 
-	public int StackHeight() {
+	public int getStackHeight() {
 		return stackHeight;
 	}
 
-	public int ReturnStackHeight() {
+	public int getReturnStackHeight() {
 		return returnStackHeight;
 	}
 
-	public double StackAt(int index) {
+	public double getStackAt(int index) {
 		if (index < 0 || index >= stackHeight)
 			throw new GBBrainError("tried to read stack element " + index);
 		return stack[index];
 	}
 
-	public int ReturnStackAt(int index) {
+	public int getReturnStackAt(int index) {
 		if (index < 0 || index >= returnStackHeight)
 			throw new GBBrainError("tried to read return stack element "
 					+ index);
 		return returnStack[index];
 	}
 
-	public boolean ValidAddress(int addr) {
-		return addr >= 0 && addr < spec.NumInstructions();
+	public boolean isValidAddress(int addr) {
+		return addr >= 0 && addr < spec.getInstructionsCount();
 	}
 
-	public String AddressName(int addr) {
-		return spec.AddressName(addr);
+	public String getAddressName(int addr) {
+		return spec.getAddressName(addr);
 	}
 
-	public String AddressDescription(int addr) {
-		return spec.AddressDescription(addr);
+	public String getAddressDescription(int addr) {
+		return spec.getAddressDescription(addr);
 	}
 
-	public String AddressLastLabel(int addr) {
-		GBLabel ret = spec.AddressLastLabel(addr - 1);
+	public String getAddressLastLabel(int addr) {
+		GBLabel ret = spec.getAddressLastLabel(addr - 1);
 		if (ret != null)
 			return ret.name;
 		else
 			return "";
 	}
 
-	public String AddressAndLine(int addr) {
-		return spec.AddressAndLine(addr);
+	public String getAddressAndLine(int addr) {
+		return spec.getAddressAndLine(addr);
 	}
 
-	public int PCLine() {
-		return spec.LineNumber(pc);
+	public int getPCLine() {
+		return spec.getLineNumber(pc);
 	}
 
-	public String DisassembleAddress(int addr) {
-		return spec.DisassembleAddress(addr);
+	public String getDisassembleAddress(int addr) {
+		return spec.disassembleAddress(addr);
 	}
 
-	public String LastPrint() {
+	public String getLastPrint() {
 		return lastPrint != null ? lastPrint : "none";
 	}
 
-	public int NumVariables() {
-		return spec.NumVariables();
+	public int getNumVariables() {
+		return spec.getVariablesCount();
 	}
 
-	public int NumVectorVariables() {
-		return spec.NumVectorVariables();
+	public int getNumVectorVariables() {
+		return spec.getVectorVariablesCount();
 	}
 
-	public String VariableName(int index) {
-		return spec.VariableName(index);
+	public String getVariableName(int index) {
+		return spec.getVariableName(index);
 	}
 
-	public String VectorVariableName(int index) {
-		return spec.VectorVariableName(index);
+	public String getVectorVariableName(int index) {
+		return spec.getVectorVariableName(index);
 	}
 
-	double ReadHardware(int index, GBRobot robot, GBWorld world) {
+	double executeHardwareRead(int index, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		// world
 		case hvTime:
@@ -471,307 +471,307 @@ public class GBStackBrain extends Brain {
 		case hvTimeLimit:
 			return world.getTimeLimit();
 		case hvWorldWidth:
-			return world.Size().x;
+			return world.getSize().x;
 		case hvWorldHeight:
-			return world.Size().y;
+			return world.getSize().y;
 			// robot
 		case hvRadius:
-			return robot.Radius();
+			return robot.getRadius();
 		case hvMass:
-			return robot.Mass();
+			return robot.getMass();
 		case hvSpeed:
-			return robot.Speed();
+			return robot.getSpeed();
 		case hvProcessor:
-			return robot.hardware.Processor();
+			return robot.hardware.getProcessor();
 		case hvRemaining:
 			return remaining;
 		case hvSideID:
-			return robot.Owner().ID();
+			return robot.getOwner().getID();
 		case hvTypeID:
-			return robot.Type().ID();
+			return robot.getRobotType().getID();
 		case hvRobotID:
-			return robot.ID();
+			return robot.getID();
 		case hvParentID:
-			return robot.ParentID();
+			return robot.getParentID();
 		case hvPopulation:
-			return robot.Owner().Scores().Population();
+			return robot.getOwner().getScores().getPopulation();
 		case hvEnginePower:
-			return robot.hardware.EnginePower();
+			return robot.hardware.getEnginePower();
 		case hvEngineMaxPower:
-			return robot.hardware.EngineMaxPower();
+			return robot.hardware.getEngineMaxPower();
 		case hvFlag:
 			return robot.flag;
 			// collisions
 		case hvCollision:
-			return robot.Collisions();
+			return robot.getCollisions();
 		case hvFriendlyCollision:
-			return robot.FriendlyCollisions();
+			return robot.getFriendlyCollisions();
 		case hvEnemyCollision:
-			return robot.EnemyCollisions();
+			return robot.getEnemyCollisions();
 		case hvFoodCollision:
-			return robot.FoodCollisions();
+			return robot.getFoodCollisions();
 		case hvShotCollision:
-			return robot.ShotCollisions();
+			return robot.getShotCollisions();
 		case hvWallCollision:
-			return robot.WallCollisions();
+			return robot.getWallCollisions();
 			// energy
 		case hvEnergy:
-			return robot.hardware.Energy();
+			return robot.hardware.getEnergy();
 		case hvMaxEnergy:
-			return robot.hardware.MaxEnergy();
+			return robot.hardware.getMaxEnergy();
 		case hvSolarCells:
-			return robot.hardware.SolarCells();
+			return robot.hardware.getSolarCells();
 		case hvEater:
-			return robot.hardware.Eater();
+			return robot.hardware.getEater();
 		case hvEaten:
-			return robot.hardware.Eaten();
+			return robot.hardware.getEaten();
 		case hvSyphonMaxRate:
-			return robot.hardware.syphon.MaxRate();
+			return robot.hardware.syphon.getMaxRate();
 		case hvSyphonRange:
-			return robot.hardware.syphon.MaxRange();
+			return robot.hardware.syphon.getMaxRange();
 		case hvSyphonDistance:
-			return robot.hardware.syphon.Distance();
+			return robot.hardware.syphon.getDistance();
 		case hvSyphonDirection:
-			return robot.hardware.syphon.Direction();
+			return robot.hardware.syphon.getDirection();
 		case hvSyphonRate:
-			return robot.hardware.syphon.Rate();
+			return robot.hardware.syphon.getRate();
 		case hvSyphoned:
-			return robot.hardware.syphon.Syphoned();
+			return robot.hardware.syphon.getSyphoned();
 		case hvEnemySyphonMaxRate:
-			return robot.hardware.enemySyphon.MaxRate();
+			return robot.hardware.enemySyphon.getMaxRate();
 		case hvEnemySyphonRange:
-			return robot.hardware.enemySyphon.MaxRange();
+			return robot.hardware.enemySyphon.getMaxRange();
 		case hvEnemySyphonDistance:
-			return robot.hardware.enemySyphon.Distance();
+			return robot.hardware.enemySyphon.getDistance();
 		case hvEnemySyphonDirection:
-			return robot.hardware.enemySyphon.Direction();
+			return robot.hardware.enemySyphon.getDirection();
 		case hvEnemySyphonRate:
-			return robot.hardware.enemySyphon.Rate();
+			return robot.hardware.enemySyphon.getRate();
 		case hvEnemySyphoned:
-			return robot.hardware.enemySyphon.Syphoned();
+			return robot.hardware.enemySyphon.getSyphoned();
 			// constructor
 		case hvConstructorMaxRate:
-			return robot.hardware.constructor.MaxRate();
+			return robot.hardware.constructor.getMaxRate();
 		case hvConstructorRate:
-			return robot.hardware.constructor.Rate();
+			return robot.hardware.constructor.getRate();
 		case hvConstructorProgress:
-			return robot.hardware.constructor.Progress();
+			return robot.hardware.constructor.getProgress();
 		case hvConstructorRemaining:
-			return robot.hardware.constructor.Remaining();
+			return robot.hardware.constructor.getRemaining();
 		case hvConstructorType:
-			return robot.Owner()
-					.GetTypeIndex(robot.hardware.constructor.Type());
+			return robot.getOwner()
+					.getTypeIndex(robot.hardware.constructor.getRobotType());
 		case hvChildID:
-			return robot.hardware.constructor.ChildID();
+			return robot.hardware.constructor.getChildID();
 			// robot sensor
 		case hvRobotSensorRange:
-			return robot.hardware.sensor1.MaxRange();
+			return robot.hardware.sensor1.getMaxRange();
 		case hvRobotSensorFiringCost:
-			return robot.hardware.sensor1.FiringCost();
+			return robot.hardware.sensor1.getFiringCost();
 		case hvRobotSensorFocusDistance:
-			return robot.hardware.sensor1.Distance();
+			return robot.hardware.sensor1.getDistance();
 		case hvRobotSensorFocusDirection:
-			return robot.hardware.sensor1.Direction();
+			return robot.hardware.sensor1.getDirection();
 		case hvRobotSensorSeesFriends:
-			return FromBoolean(robot.hardware.sensor1.SeesFriendly());
+			return fromBoolean(robot.hardware.sensor1.getSeesFriendly());
 		case hvRobotSensorSeesEnemies:
-			return FromBoolean(robot.hardware.sensor1.SeesEnemy());
+			return fromBoolean(robot.hardware.sensor1.getSeesEnemy());
 		case hvRobotSensorTime:
-			return robot.hardware.sensor1.Time();
+			return robot.hardware.sensor1.getTime();
 		case hvRobotSensorFound:
-			return robot.hardware.sensor1.Found();
+			return robot.hardware.sensor1.getFound();
 		case hvRobotSensorAngleFound:
-			return (robot.hardware.sensor1.WhereFound().subtract(
-					robot.Position()).angle()); // inconsistent: distance then
+			return (robot.hardware.sensor1.getWhereFound().subtract(
+					robot.getPosition()).angle()); // inconsistent: distance then
 												// or now?
 		case hvRobotSensorRangeFound:
-			return (robot.hardware.sensor1.WhereFound().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor1.getWhereFound().subtract(
+					robot.getPosition()).norm());
 		case hvRobotSensorSideFound:
-			return robot.hardware.sensor1.Side();
+			return robot.hardware.sensor1.getSide();
 		case hvRobotSensorRadiusFound:
-			return robot.hardware.sensor1.Radius();
+			return robot.hardware.sensor1.getRadius();
 		case hvRobotSensorMassFound:
-			return robot.hardware.sensor1.Mass();
+			return robot.hardware.sensor1.getMass();
 		case hvRobotSensorEnergyFound:
-			return robot.hardware.sensor1.Energy();
+			return robot.hardware.sensor1.getEnergy();
 		case hvRobotSensorTypeFound:
-			return robot.hardware.sensor1.Type();
+			return robot.hardware.sensor1.getFoundType();
 		case hvRobotSensorIDFound:
-			return robot.hardware.sensor1.ID();
+			return robot.hardware.sensor1.getID();
 		case hvRobotSensorShieldFractionFound:
-			return robot.hardware.sensor1.ShieldFraction();
+			return robot.hardware.sensor1.getShieldFraction();
 		case hvRobotSensorBombFound:
-			return robot.hardware.sensor1.Bomb();
+			return robot.hardware.sensor1.getBomb();
 		case hvRobotSensorReloadingFound:
-			return robot.hardware.sensor1.Reloading() ? 1 : 0;
+			return robot.hardware.sensor1.getReloading() ? 1 : 0;
 		case hvRobotSensorFlagFound:
-			return robot.hardware.sensor1.Flag();
+			return robot.hardware.sensor1.getFlag();
 		case hvRobotSensorRangeOverall:
-			return (robot.hardware.sensor1.WhereOverall().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor1.getWhereOverall().subtract(
+					robot.getPosition()).norm());
 		case hvRobotSensorAngleOverall:
-			return (robot.hardware.sensor1.WhereOverall().subtract(
-					robot.Position()).angle());
+			return (robot.hardware.sensor1.getWhereOverall().subtract(
+					robot.getPosition()).angle());
 		case hvRobotSensorCurrentResult:
-			return robot.hardware.sensor1.CurrentResult();
+			return robot.hardware.sensor1.getCurrentResult();
 		case hvRobotSensorNumResults:
-			return robot.hardware.sensor1.NumResults();
+			return robot.hardware.sensor1.getNumResults();
 		case hvRobotSensorMaxResults:
-			return robot.hardware.sensor1.MaxResults();
+			return robot.hardware.sensor1.getMaxResults();
 			// food sensor
 		case hvFoodSensorRange:
-			return robot.hardware.sensor2.MaxRange();
+			return robot.hardware.sensor2.getMaxRange();
 		case hvFoodSensorFiringCost:
-			return robot.hardware.sensor2.FiringCost();
+			return robot.hardware.sensor2.getFiringCost();
 		case hvFoodSensorFocusDistance:
-			return robot.hardware.sensor2.Distance();
+			return robot.hardware.sensor2.getDistance();
 		case hvFoodSensorFocusDirection:
-			return robot.hardware.sensor2.Direction();
+			return robot.hardware.sensor2.getDirection();
 		case hvFoodSensorTime:
-			return robot.hardware.sensor2.Time();
+			return robot.hardware.sensor2.getTime();
 		case hvFoodSensorFound:
-			return robot.hardware.sensor2.Found();
+			return robot.hardware.sensor2.getFound();
 		case hvFoodSensorAngleFound:
-			return (robot.hardware.sensor2.WhereFound().subtract(
-					robot.Position()).angle());
+			return (robot.hardware.sensor2.getWhereFound().subtract(
+					robot.getPosition()).angle());
 		case hvFoodSensorRangeFound:
-			return (robot.hardware.sensor2.WhereFound().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor2.getWhereFound().subtract(
+					robot.getPosition()).norm());
 		case hvFoodSensorSideFound:
-			return robot.hardware.sensor2.Side();
+			return robot.hardware.sensor2.getSide();
 		case hvFoodSensorRadiusFound:
-			return robot.hardware.sensor2.Radius();
+			return robot.hardware.sensor2.getRadius();
 		case hvFoodSensorMassFound:
-			return robot.hardware.sensor2.Mass();
+			return robot.hardware.sensor2.getMass();
 		case hvFoodSensorEnergyFound:
-			return robot.hardware.sensor2.Energy();
+			return robot.hardware.sensor2.getEnergy();
 		case hvFoodSensorRangeOverall:
-			return (robot.hardware.sensor2.WhereOverall().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor2.getWhereOverall().subtract(
+					robot.getPosition()).norm());
 		case hvFoodSensorAngleOverall:
-			return (robot.hardware.sensor2.WhereOverall().subtract(
-					robot.Position()).angle());
+			return (robot.hardware.sensor2.getWhereOverall().subtract(
+					robot.getPosition()).angle());
 		case hvFoodSensorCurrentResult:
-			return robot.hardware.sensor2.CurrentResult();
+			return robot.hardware.sensor2.getCurrentResult();
 		case hvFoodSensorNumResults:
-			return robot.hardware.sensor2.NumResults();
+			return robot.hardware.sensor2.getNumResults();
 		case hvFoodSensorMaxResults:
-			return robot.hardware.sensor2.NumResults();
+			return robot.hardware.sensor2.getNumResults();
 			// shot sensor
 		case hvShotSensorRange:
-			return robot.hardware.sensor3.MaxRange();
+			return robot.hardware.sensor3.getMaxRange();
 		case hvShotSensorFiringCost:
-			return robot.hardware.sensor3.FiringCost();
+			return robot.hardware.sensor3.getFiringCost();
 		case hvShotSensorFocusDistance:
-			return robot.hardware.sensor3.Distance();
+			return robot.hardware.sensor3.getDistance();
 		case hvShotSensorFocusDirection:
-			return robot.hardware.sensor3.Direction();
+			return robot.hardware.sensor3.getDirection();
 		case hvShotSensorSeesFriendly:
-			return FromBoolean(robot.hardware.sensor3.SeesFriendly());
+			return fromBoolean(robot.hardware.sensor3.getSeesFriendly());
 		case hvShotSensorSeesEnemy:
-			return FromBoolean(robot.hardware.sensor3.SeesEnemy());
+			return fromBoolean(robot.hardware.sensor3.getSeesEnemy());
 		case hvShotSensorTime:
-			return robot.hardware.sensor3.Time();
+			return robot.hardware.sensor3.getTime();
 		case hvShotSensorFound:
-			return robot.hardware.sensor3.Found();
+			return robot.hardware.sensor3.getFound();
 		case hvShotSensorAngleFound:
-			return (robot.hardware.sensor3.WhereFound().subtract(
-					robot.Position()).angle());
+			return (robot.hardware.sensor3.getWhereFound().subtract(
+					robot.getPosition()).angle());
 		case hvShotSensorRangeFound:
-			return (robot.hardware.sensor3.WhereFound().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor3.getWhereFound().subtract(
+					robot.getPosition()).norm());
 		case hvShotSensorSideFound:
-			return robot.hardware.sensor3.Side();
+			return robot.hardware.sensor3.getSide();
 		case hvShotSensorRadiusFound:
-			return robot.hardware.sensor3.Radius();
+			return robot.hardware.sensor3.getRadius();
 		case hvShotSensorPowerFound:
-			return robot.hardware.sensor3.Energy();
+			return robot.hardware.sensor3.getEnergy();
 		case hvShotSensorTypeFound:
-			return robot.hardware.sensor3.Type();
+			return robot.hardware.sensor3.getFoundType();
 		case hvShotSensorRangeOverall:
-			return (robot.hardware.sensor3.WhereOverall().subtract(
-					robot.Position()).norm());
+			return (robot.hardware.sensor3.getWhereOverall().subtract(
+					robot.getPosition()).norm());
 		case hvShotSensorAngleOverall:
-			return (robot.hardware.sensor3.WhereOverall().subtract(
-					robot.Position()).angle());
+			return (robot.hardware.sensor3.getWhereOverall().subtract(
+					robot.getPosition()).angle());
 		case hvShotSensorCurrentResult:
-			return robot.hardware.sensor3.CurrentResult();
+			return robot.hardware.sensor3.getCurrentResult();
 		case hvShotSensorNumResults:
-			return robot.hardware.sensor3.NumResults();
+			return robot.hardware.sensor3.getNumResults();
 		case hvShotSensorMaxResults:
-			return robot.hardware.sensor3.NumResults();
+			return robot.hardware.sensor3.getNumResults();
 			// defenses
 		case hvArmor:
-			return robot.hardware.Armor();
+			return robot.hardware.getArmor();
 		case hvMaxArmor:
-			return robot.hardware.MaxArmor();
+			return robot.hardware.getMaxArmor();
 		case hvRepairRate:
-			return robot.hardware.RepairRate();
+			return robot.hardware.getRepairRate();
 		case hvMaxRepairRate:
-			return robot.hardware.MaxRepairRate();
+			return robot.hardware.getMaxRepairRate();
 		case hvShield:
-			return robot.hardware.Shield();
+			return robot.hardware.getShield();
 		case hvMaxShield:
-			return robot.hardware.MaxShield();
+			return robot.hardware.getMaxShield();
 		case hvShieldFraction:
-			return robot.ShieldFraction();
+			return robot.getShieldFraction();
 		case hvLastHit:
-			return robot.LastHit() != null ? robot.LastHit().ID() : 0;
+			return robot.getLastHit() != null ? robot.getLastHit().getID() : 0;
 			// blaster
 		case hvBlasterDamage:
-			return robot.hardware.blaster.Damage();
+			return robot.hardware.blaster.getDamage();
 		case hvBlasterRange:
-			return robot.hardware.blaster.MaxRange();
+			return robot.hardware.blaster.getMaxRange();
 		case hvBlasterSpeed:
-			return robot.hardware.blaster.Speed();
+			return robot.hardware.blaster.getSpeed();
 		case hvBlasterLifetime:
-			return robot.hardware.blaster.MaxLifetime();
+			return robot.hardware.blaster.getMaxLifetime();
 		case hvBlasterReloadTime:
-			return robot.hardware.blaster.ReloadTime();
+			return robot.hardware.blaster.getReloadTime();
 		case hvBlasterFiringCost:
-			return robot.hardware.blaster.FiringCost();
+			return robot.hardware.blaster.getFiringCost();
 		case hvBlasterCooldown:
-			return robot.hardware.blaster.Cooldown();
+			return robot.hardware.blaster.getCooldown();
 			// grenades
 		case hvGrenadesDamage:
-			return robot.hardware.grenades.Damage();
+			return robot.hardware.grenades.getDamage();
 		case hvGrenadesSpeed:
-			return robot.hardware.grenades.Speed();
+			return robot.hardware.grenades.getSpeed();
 		case hvGrenadesLifetime:
-			return robot.hardware.grenades.MaxLifetime();
+			return robot.hardware.grenades.getMaxLifetime();
 		case hvGrenadesRange:
-			return robot.hardware.grenades.MaxRange();
+			return robot.hardware.grenades.getMaxRange();
 		case hvGrenadesReloadTime:
-			return robot.hardware.grenades.ReloadTime();
+			return robot.hardware.grenades.getReloadTime();
 		case hvGrenadesFiringCost:
-			return robot.hardware.grenades.FiringCost();
+			return robot.hardware.grenades.getFiringCost();
 		case hvGrenadesCooldown:
-			return robot.hardware.grenades.Cooldown();
+			return robot.hardware.grenades.getCooldown();
 		case hvGrenadesRadius:
-			return robot.hardware.grenades.ExplosionRadius();
+			return robot.hardware.grenades.getExplosionRadius();
 			// forcefield
 		case hvForceFieldMaxPower:
-			return robot.hardware.forceField.MaxPower();
+			return robot.hardware.forceField.getMaxPower();
 		case hvForceFieldRange:
-			return robot.hardware.forceField.MaxRange();
+			return robot.hardware.forceField.getMaxRange();
 		case hvForceFieldDistance:
-			return robot.hardware.forceField.Distance();
+			return robot.hardware.forceField.getDistance();
 		case hvForceFieldDirection:
-			return robot.hardware.forceField.Direction();
+			return robot.hardware.forceField.getDirection();
 		case hvForceFieldPower:
-			return robot.hardware.forceField.Power();
+			return robot.hardware.forceField.getPower();
 		case hvForceFieldAngle:
-			return robot.hardware.forceField.Angle();
+			return robot.hardware.forceField.getAngle();
 		case hvForceFieldRadius:
-			return robot.hardware.forceField.Radius();
+			return robot.hardware.forceField.getRadius();
 			//
 		default:
 			throw new GBUnknownHardwareVariableError();
 		}
 	}
 
-	void WriteHardware(int index, double value, GBRobot robot, GBWorld world) {
+	void executeHardwareWrite(int index, double value, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvTime:
 		case hvTimeLimit:
@@ -789,7 +789,7 @@ public class GBStackBrain extends Brain {
 		case hvPopulation:
 			throw new GBReadOnlyError();
 		case hvEnginePower:
-			robot.hardware.SetEnginePower(value);
+			robot.hardware.setEnginePower(value);
 			break;
 		case hvFlag:
 			robot.flag = value;
@@ -813,36 +813,36 @@ public class GBStackBrain extends Brain {
 		case hvSyphoned:
 			throw new GBReadOnlyError();
 		case hvSyphonDistance:
-			robot.hardware.syphon.SetDistance(value);
+			robot.hardware.syphon.setDistance(value);
 			break;
 		case hvSyphonDirection:
-			robot.hardware.syphon.SetDirection(value);
+			robot.hardware.syphon.setDirection(value);
 			break;
 		case hvSyphonRate:
-			robot.hardware.syphon.SetRate(value);
+			robot.hardware.syphon.setRate(value);
 			break;
 		case hvEnemySyphonMaxRate:
 		case hvEnemySyphonRange:
 		case hvEnemySyphoned:
 			throw new GBReadOnlyError();
 		case hvEnemySyphonDistance:
-			robot.hardware.enemySyphon.SetDistance(value);
+			robot.hardware.enemySyphon.setDistance(value);
 			break;
 		case hvEnemySyphonDirection:
-			robot.hardware.enemySyphon.SetDirection(value);
+			robot.hardware.enemySyphon.setDirection(value);
 			break;
 		case hvEnemySyphonRate:
-			robot.hardware.enemySyphon.SetRate(value);
+			robot.hardware.enemySyphon.setRate(value);
 			break;
 		// constructor
 		case hvConstructorType: {
-			int tmpindex = ToInteger(value);
-			robot.hardware.constructor.Start(tmpindex != 0 ? robot.Owner()
-					.GetType(tmpindex) : null, 0);
+			int tmpindex = toInteger(value);
+			robot.hardware.constructor.start(tmpindex != 0 ? robot.getOwner()
+					.getRobotType(tmpindex) : null, 0);
 		}
 			break;
 		case hvConstructorRate:
-			robot.hardware.constructor.SetRate(value);
+			robot.hardware.constructor.setRate(value);
 			break;
 		case hvConstructorMaxRate:
 		case hvConstructorProgress:
@@ -854,16 +854,16 @@ public class GBStackBrain extends Brain {
 		case hvRobotSensorFiringCost:
 			throw new GBReadOnlyError();
 		case hvRobotSensorFocusDistance:
-			robot.hardware.sensor1.SetDistance(value);
+			robot.hardware.sensor1.setDistance(value);
 			break;
 		case hvRobotSensorFocusDirection:
-			robot.hardware.sensor1.SetDirection(value);
+			robot.hardware.sensor1.setDirection(value);
 			break;
 		case hvRobotSensorSeesFriends:
-			robot.hardware.sensor1.SetSeesFriendly(value != 0);
+			robot.hardware.sensor1.setSeesFriendly(value != 0);
 			break;
 		case hvRobotSensorSeesEnemies:
-			robot.hardware.sensor1.SetSeesEnemy(value != 0);
+			robot.hardware.sensor1.setSeesEnemy(value != 0);
 			break;
 		case hvRobotSensorTime:
 		case hvRobotSensorFound:
@@ -882,7 +882,7 @@ public class GBStackBrain extends Brain {
 		case hvRobotSensorAngleOverall:
 			throw new GBReadOnlyError();
 		case hvRobotSensorCurrentResult:
-			robot.hardware.sensor1.SetCurrentResult(ToInteger(value));
+			robot.hardware.sensor1.getSetCurrentResult(toInteger(value));
 			break;
 		case hvRobotSensorNumResults:
 		case hvRobotSensorMaxResults:
@@ -892,10 +892,10 @@ public class GBStackBrain extends Brain {
 		case hvFoodSensorFiringCost:
 			throw new GBReadOnlyError();
 		case hvFoodSensorFocusDistance:
-			robot.hardware.sensor2.SetDistance(value);
+			robot.hardware.sensor2.setDistance(value);
 			break;
 		case hvFoodSensorFocusDirection:
-			robot.hardware.sensor2.SetDirection(value);
+			robot.hardware.sensor2.setDirection(value);
 			break;
 		case hvFoodSensorTime:
 		case hvFoodSensorFound:
@@ -909,7 +909,7 @@ public class GBStackBrain extends Brain {
 		case hvFoodSensorAngleOverall:
 			throw new GBReadOnlyError();
 		case hvFoodSensorCurrentResult:
-			robot.hardware.sensor2.SetCurrentResult(ToInteger(value));
+			robot.hardware.sensor2.getSetCurrentResult(toInteger(value));
 			break;
 		case hvFoodSensorNumResults:
 		case hvFoodSensorMaxResults:
@@ -919,16 +919,16 @@ public class GBStackBrain extends Brain {
 		case hvShotSensorFiringCost:
 			throw new GBReadOnlyError();
 		case hvShotSensorFocusDistance:
-			robot.hardware.sensor3.SetDistance(value);
+			robot.hardware.sensor3.setDistance(value);
 			break;
 		case hvShotSensorFocusDirection:
-			robot.hardware.sensor3.SetDirection(value);
+			robot.hardware.sensor3.setDirection(value);
 			break;
 		case hvShotSensorSeesFriendly:
-			robot.hardware.sensor3.SetSeesFriendly(value != 0);
+			robot.hardware.sensor3.setSeesFriendly(value != 0);
 			break;
 		case hvShotSensorSeesEnemy:
-			robot.hardware.sensor3.SetSeesEnemy(value != 0);
+			robot.hardware.sensor3.setSeesEnemy(value != 0);
 			break;
 		case hvShotSensorTime:
 		case hvShotSensorFound:
@@ -941,17 +941,17 @@ public class GBStackBrain extends Brain {
 		case hvShotSensorAngleOverall:
 			throw new GBReadOnlyError();
 		case hvShotSensorCurrentResult:
-			robot.hardware.sensor3.SetCurrentResult(ToInteger(value));
+			robot.hardware.sensor3.getSetCurrentResult(toInteger(value));
 			break;
 		case hvShotSensorNumResults:
 		case hvShotSensorMaxResults:
 			throw new GBReadOnlyError();
 			// defenses
 		case hvRepairRate:
-			robot.hardware.SetRepairRate(value);
+			robot.hardware.setRepairRate(value);
 			break;
 		case hvShield:
-			robot.hardware.SetShield(value);
+			robot.hardware.setShield(value);
 			break;
 		case hvArmor:
 		case hvMaxArmor:
@@ -979,16 +979,16 @@ public class GBStackBrain extends Brain {
 		case hvForceFieldRange:
 			throw new GBReadOnlyError();
 		case hvForceFieldDistance:
-			robot.hardware.forceField.SetDistance(value);
+			robot.hardware.forceField.getSetDistance(value);
 			break;
 		case hvForceFieldDirection:
-			robot.hardware.forceField.SetDirection(value);
+			robot.hardware.forceField.getSetDirection(value);
 			break;
 		case hvForceFieldPower:
-			robot.hardware.forceField.SetPower(value);
+			robot.hardware.forceField.getSetPower(value);
 			break;
 		case hvForceFieldAngle:
-			robot.hardware.forceField.SetAngle(value);
+			robot.hardware.forceField.setAngle(value);
 			break;
 		case hvForceFieldRadius:
 			throw new GBReadOnlyError();
@@ -998,53 +998,53 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	FinePoint ReadHardwareVector(int index, GBRobot robot, GBWorld world) {
+	FinePoint executeHardwareVectorRead(int index, GBRobot robot, GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvvWorldSize:
-			return world.Size();
+			return world.getSize();
 			//
 		case hvvPosition:
-			return robot.Position();
+			return robot.getPosition();
 		case hvvVelocity:
-			return robot.Velocity();
+			return robot.getVelocity();
 			//
 		case hvvEngineVelocity:
-			return robot.hardware.EngineVelocity();
+			return robot.hardware.getEngineVelocity();
 			// sensors
 		case hvvRobotSensorWhereFound:
-			return robot.hardware.sensor1.WhereFound();
+			return robot.hardware.sensor1.getWhereFound();
 		case hvvRobotSensorWhereRelative:
-			return robot.hardware.sensor1.WhereFound().subtract(
-					robot.Position());
+			return robot.hardware.sensor1.getWhereFound().subtract(
+					robot.getPosition());
 		case hvvRobotSensorVelocityFound:
-			return robot.hardware.sensor1.Velocity();
+			return robot.hardware.sensor1.getVelocity();
 		case hvvRobotSensorWhereOverall:
-			return robot.hardware.sensor1.WhereOverall();
+			return robot.hardware.sensor1.getWhereOverall();
 		case hvvFoodSensorWhereFound:
-			return robot.hardware.sensor2.WhereFound();
+			return robot.hardware.sensor2.getWhereFound();
 		case hvvFoodSensorWhereRelative:
-			return robot.hardware.sensor2.WhereFound().subtract(
-					robot.Position());
+			return robot.hardware.sensor2.getWhereFound().subtract(
+					robot.getPosition());
 		case hvvFoodSensorVelocityFound:
-			return robot.hardware.sensor2.Velocity();
+			return robot.hardware.sensor2.getVelocity();
 		case hvvFoodSensorWhereOverall:
-			return robot.hardware.sensor2.WhereOverall();
+			return robot.hardware.sensor2.getWhereOverall();
 		case hvvShotSensorWhereFound:
-			return robot.hardware.sensor3.WhereFound();
+			return robot.hardware.sensor3.getWhereFound();
 		case hvvShotSensorWhereRelative:
-			return robot.hardware.sensor3.WhereFound().subtract(
-					robot.Position());
+			return robot.hardware.sensor3.getWhereFound().subtract(
+					robot.getPosition());
 		case hvvShotSensorVelocityFound:
-			return robot.hardware.sensor3.Velocity();
+			return robot.hardware.sensor3.getVelocity();
 		case hvvShotSensorWhereOverall:
-			return robot.hardware.sensor3.WhereOverall();
+			return robot.hardware.sensor3.getWhereOverall();
 			//
 		default:
 			throw new GBUnknownHardwareVariableError();
 		}
 	}
 
-	void WriteHardwareVector(int index, FinePoint value, GBRobot robot,
+	void executeHardwareVectorWrite(int index, FinePoint value, GBRobot robot,
 			GBWorld world) {
 		switch (StackBrainOpcode.byID(index)) {
 		case hvvWorldSize:
@@ -1052,7 +1052,7 @@ public class GBStackBrain extends Brain {
 		case hvvVelocity:
 			throw new GBReadOnlyError();
 		case hvvEngineVelocity:
-			robot.hardware.SetEngineVelocity(value);
+			robot.hardware.setEngineVelocity(value);
 			break;
 		// sensors
 		case hvvRobotSensorWhereFound:
@@ -1071,7 +1071,7 @@ public class GBStackBrain extends Brain {
 		}
 	}
 
-	void ExecutePrimitive(int index, GBRobot robot, GBWorld world) {
+	void executePrimitive(int index, GBRobot robot, GBWorld world) {
 		double temp, temp2, temp3;
 		int tempInt;
 		switch (StackBrainOpcode.byID(index)) {
@@ -1079,413 +1079,413 @@ public class GBStackBrain extends Brain {
 			break;
 		// stack manipulation
 		case opDrop:
-			Pop();
+			pop();
 			break;
 		case op2Drop:
-			Pop();
-			Pop();
+			pop();
+			pop();
 			break;
 		case opNip:
-			temp = Pop();
-			Pop();
-			Push(temp);
+			temp = pop();
+			pop();
+			push(temp);
 			break;
 		case opRDrop:
-			PopReturn();
+			popReturn();
 			break;
 		case opDropN: {
-			int n = PopInteger();
+			int n = popInteger();
 			if (n > stackHeight)
 				throw new GBBrainError("dropped " + n + " of " + stackHeight);
 			stackHeight -= n;
 		}
 			break;
 		case opSwap:
-			temp = Pop();
-			temp2 = Pop();
-			Push(temp);
-			Push(temp2);
+			temp = pop();
+			temp2 = pop();
+			push(temp);
+			push(temp2);
 			break;
 		case op2Swap: {
-			FinePoint v1 = PopVector();
-			FinePoint v2 = PopVector();
-			PushVector(v1);
-			PushVector(v2);
+			FinePoint v1 = popVector();
+			FinePoint v2 = popVector();
+			pushVector(v1);
+			pushVector(v2);
 		}
 			break;
 		case opRotate:
-			temp = Pop();
-			temp2 = Pop();
-			temp3 = Pop();
-			Push(temp2);
-			Push(temp);
-			Push(temp3);
+			temp = pop();
+			temp2 = pop();
+			temp3 = pop();
+			push(temp2);
+			push(temp);
+			push(temp3);
 			break;
 		case opReverseRotate:
-			temp = Pop();
-			temp2 = Pop();
-			temp3 = Pop();
-			Push(temp);
-			Push(temp3);
-			Push(temp2);
+			temp = pop();
+			temp2 = pop();
+			temp3 = pop();
+			push(temp);
+			push(temp3);
+			push(temp2);
 			break;
 		case opDup:
-			temp = Peek(1);
-			Push(temp);
+			temp = peek(1);
+			push(temp);
 			break;
 		case op2Dup:
-			temp = Peek(2);
-			temp2 = Peek(1);
-			Push(temp);
-			Push(temp2);
+			temp = peek(2);
+			temp2 = peek(1);
+			push(temp);
+			push(temp2);
 			break;
 		case opTuck:
-			temp = Pop();
-			temp2 = Pop();
-			Push(temp);
-			Push(temp2);
-			Push(temp);
+			temp = pop();
+			temp2 = pop();
+			push(temp);
+			push(temp2);
+			push(temp);
 			break;
 		case opOver:
-			temp = Peek(2);
-			Push(temp);
+			temp = peek(2);
+			push(temp);
 			break;
 		case op2Over:
-			temp = Peek(4);
-			temp2 = Peek(3);
-			Push(temp);
-			Push(temp2);
+			temp = peek(4);
+			temp2 = peek(3);
+			push(temp);
+			push(temp2);
 			break;
 		case opStackHeight:
-			Push(stackHeight);
+			push(stackHeight);
 			break;
 		case opStackLimit:
-			Push(kStackLimit);
+			push(kStackLimit);
 			break;
 		case opPick:
-			Push(Peek(PopInteger()));
+			push(peek(popInteger()));
 			break;
 		case opToReturn:
-			PushReturn(ToAddress(Pop()));
+			pushReturn(toAddress(pop()));
 			break;
 		case opFromReturn:
-			Push(PopReturn());
+			push(popReturn());
 			break;
 		// branches
 		case opJump:
-			pc = ToAddress(Pop());
+			pc = toAddress(pop());
 			break;
 		case opCall:
-			ExecuteCall(ToAddress(Pop()));
+			executeCall(toAddress(pop()));
 			break;
 		case opReturn:
-			pc = PopReturn();
+			pc = popReturn();
 			break;
 		case opIfGo:
-			temp = Pop();
-			if (Pop() != 0)
-				pc = ToAddress(temp);
+			temp = pop();
+			if (pop() != 0)
+				pc = toAddress(temp);
 			break;
 		case opIfElseGo:
-			temp = Pop();
-			temp2 = Pop();
-			if (Pop() != 0)
-				pc = ToAddress(temp2);
+			temp = pop();
+			temp2 = pop();
+			if (pop() != 0)
+				pc = toAddress(temp2);
 			else
-				pc = ToAddress(temp);
+				pc = toAddress(temp);
 			break;
 		case opIfCall:
-			temp = Pop();
-			if (Pop() != 0)
-				ExecuteCall(ToAddress(temp));
+			temp = pop();
+			if (pop() != 0)
+				executeCall(toAddress(temp));
 			break;
 		case opIfElseCall:
-			temp = Pop();
-			temp2 = Pop();
-			if (Pop() != 0)
-				ExecuteCall(ToAddress(temp2));
+			temp = pop();
+			temp2 = pop();
+			if (pop() != 0)
+				executeCall(toAddress(temp2));
 			else
-				ExecuteCall(ToAddress(temp));
+				executeCall(toAddress(temp));
 			break;
 		case opIfReturn:
-			if (Pop() != 0)
-				pc = PopReturn();
+			if (pop() != 0)
+				pc = popReturn();
 			break;
 		case opNotIfGo:
-			temp = Pop();
-			if (Pop() == 0)
-				pc = ToAddress(temp);
+			temp = pop();
+			if (pop() == 0)
+				pc = toAddress(temp);
 			break;
 		case opNotIfReturn:
-			if (Pop() == 0)
-				pc = PopReturn();
+			if (pop() == 0)
+				pc = popReturn();
 			break;
 		case opNotIfCall:
-			temp = Pop();
-			if (Pop() == 0)
-				ExecuteCall(ToAddress(temp));
+			temp = pop();
+			if (pop() == 0)
+				executeCall(toAddress(temp));
 			break;
 		// arithmetic
 		case opAdd:
-			temp = Pop();
-			Push(Pop() + temp);
+			temp = pop();
+			push(pop() + temp);
 			break;
 		case opSubtract:
-			temp = Pop();
-			Push(Pop() - temp);
+			temp = pop();
+			push(pop() - temp);
 			break;
 		case opNegate:
-			Push(-Pop());
+			push(-pop());
 			break;
 		case opMultiply:
-			temp = Pop();
-			Push(Pop() * temp);
+			temp = pop();
+			push(pop() * temp);
 			break;
 		case opDivide:
-			temp = Pop();
-			Push(Pop() / temp);
+			temp = pop();
+			push(pop() / temp);
 			break;
 		case opReciprocal:
-			Push(1 / Pop());
+			push(1 / pop());
 			break;
 		case opMod:
-			TwoNumberToNumberOp(TwoNumbertoNumberOperator.mod);
+			twoNumberToNumberOp(TwoNumbertoNumberOperator.mod);
 			break;
 		case opRem:
-			TwoNumberToNumberOp(TwoNumbertoNumberOperator.rem);
+			twoNumberToNumberOp(TwoNumbertoNumberOperator.rem);
 			break;
 		case opSquare:
-			Push(Math.pow(Pop(), 2));
+			push(Math.pow(pop(), 2));
 			break;
 		case opSqrt:
-			Push(Math.sqrt(Pop()));
+			push(Math.sqrt(pop()));
 			break;
 		case opExponent:
-			temp = Pop();
-			Push(Math.pow(Pop(), temp));
+			temp = pop();
+			push(Math.pow(pop(), temp));
 			break;
 		case opIsInteger:
-			temp = Pop();
-			Pushboolean(temp == Math.floor(temp));
+			temp = pop();
+			pushboolean(temp == Math.floor(temp));
 			break;
 		case opFloor:
-			Push(Math.floor(Pop()));
+			push(Math.floor(pop()));
 			break;
 		case opCeiling:
-			Push(Math.ceil(Pop()));
+			push(Math.ceil(pop()));
 			break;
 		case opRound:
-			Push(Math.round(Pop()));
+			push(Math.round(pop()));
 			break;
 		case opMin:
-			Push(Math.min(Pop(), Pop()));
+			push(Math.min(pop(), pop()));
 			break;
 		case opMax:
-			Push(Math.max(Pop(), Pop()));
+			push(Math.max(pop(), pop()));
 			break;
 		case opAbs:
-			Push(Math.abs(Pop()));
+			push(Math.abs(pop()));
 			break;
 		case opSignum:
-			Push(Math.signum(Pop()));
+			push(Math.signum(pop()));
 			break;
 		case opReorient:
-			Push(GBMath.reorient(Pop()));
+			push(GBMath.reorient(pop()));
 			break;
 		case opSine:
-			Push(Math.sin(Pop()));
+			push(Math.sin(pop()));
 			break;
 		case opCosine:
-			Push(Math.cos(Pop()));
+			push(Math.cos(pop()));
 			break;
 		case opTangent:
-			Push(Math.tan(Pop()));
+			push(Math.tan(pop()));
 			break;
 		case opArcSine:
-			Push(Math.asin(Pop()));
+			push(Math.asin(pop()));
 			break;
 		case opArcCosine:
-			Push(Math.acos(Pop()));
+			push(Math.acos(pop()));
 			break;
 		case opArcTangent:
-			Push(Math.atan(Pop()));
+			push(Math.atan(pop()));
 			break;
 		case opRandom:
-			temp = Pop();
-			Push(world.random.InRange(Pop(), temp));
+			temp = pop();
+			push(world.random.InRange(pop(), temp));
 			break;
 		case opRandomAngle:
-			Push(world.random.Angle());
+			push(world.random.Angle());
 			break;
 		case opRandomInt:
-			temp = Pop();
-			Push(world.random.intInRange((int) Math.ceil(Pop()),
+			temp = pop();
+			push(world.random.intInRange((int) Math.ceil(pop()),
 					(int) Math.floor(temp)));
 			break;
 		case opRandomBoolean:
-			Pushboolean(world.random.bool(Pop()));
+			pushboolean(world.random.bool(pop()));
 			break;
 		// constants
 		case opPi:
-			Push(GBMath.kPi);
+			push(GBMath.kPi);
 			break;
 		case op2Pi:
-			Push(GBMath.kPi * 2);
+			push(GBMath.kPi * 2);
 			break;
 		case opPiOver2:
-			Push(GBMath.kPi / 2);
+			push(GBMath.kPi / 2);
 			break;
 		case opE:
-			Push(GBMath.kE);
+			push(GBMath.kE);
 			break;
 		case opEpsilon:
-			Push(GBMath.kEpsilon);
+			push(GBMath.kEpsilon);
 			break;
 		case opInfinity:
-			Push(GBMath.kInfinity);
+			push(GBMath.kInfinity);
 			break;
 		// vector operations
 		case opRectToPolar: {
-			FinePoint v = PopVector();
-			Push(v.norm());
-			Push(v.angle());
+			FinePoint v = popVector();
+			push(v.norm());
+			push(v.angle());
 		}
 			break;
 		case opPolarToRect:
-			temp = Pop();
-			temp2 = Pop();
-			PushVector(FinePoint.makePolar(temp2, temp));
+			temp = pop();
+			temp2 = pop();
+			pushVector(FinePoint.makePolar(temp2, temp));
 			break;
 		case opVectorAdd:
-			TwoVectorToVectorOp(TwoVectortoVectorOperator.add);
+			twoVectorToVectorOp(TwoVectortoVectorOperator.add);
 			break;
 		case opVectorSubtract:
-			TwoVectorToVectorOp(TwoVectortoVectorOperator.subtract);
+			twoVectorToVectorOp(TwoVectortoVectorOperator.subtract);
 			break;
 		case opVectorNegate:
-			PushVector(PopVector().negate());
+			pushVector(popVector().negate());
 			break;
 		case opVectorScalarMultiply:
-			temp = Pop();
-			PushVector(PopVector().multiply(temp));
+			temp = pop();
+			pushVector(popVector().multiply(temp));
 			break;
 		case opVectorScalarDivide:
-			temp = Pop();
-			PushVector(PopVector().divide(temp));
+			temp = pop();
+			pushVector(popVector().divide(temp));
 			break;
 		case opVectorNorm:
-			Push(PopVector().norm());
+			push(popVector().norm());
 			break;
 		case opVectorAngle:
-			Push(PopVector().angle());
+			push(popVector().angle());
 			break;
 		case opDotProduct:
-			TwoVectorToScalarOp(TwoVectortoScalarOperator.dot);
+			twoVectorToScalarOp(TwoVectortoScalarOperator.dot);
 			break;
 		case opProject:
-			TwoVectorToVectorOp(TwoVectortoVectorOperator.projection);
+			twoVectorToVectorOp(TwoVectortoVectorOperator.projection);
 			break;
 		case opCross:
-			TwoVectorToScalarOp(TwoVectortoScalarOperator.cross);
+			twoVectorToScalarOp(TwoVectortoScalarOperator.cross);
 			break;
 		case opUnitize:
-			PushVector(PopVector().unit());
+			pushVector(popVector().unit());
 			break;
 		case opVectorRotateTo:
-			TwoVectorToVectorOp(TwoVectortoVectorOperator.rotateto);
+			twoVectorToVectorOp(TwoVectortoVectorOperator.rotateto);
 			break;
 		case opVectorRotateFrom:
-			TwoVectorToVectorOp(TwoVectortoVectorOperator.rotatefrom);
+			twoVectorToVectorOp(TwoVectortoVectorOperator.rotatefrom);
 			break;
 		case opDistance:
-			Push(PopVector().subtract(PopVector()).norm());
+			push(popVector().subtract(popVector()).norm());
 			break;
 		case opInRange:
-			temp = Pop();
-			Pushboolean(PopVector().inRange(PopVector(), temp));
+			temp = pop();
+			pushboolean(popVector().inRange(popVector(), temp));
 			break;
 		case opRestrictPosition: {
-			temp = Pop(); // wall distance
-			FinePoint pos = PopVector();
-			Push(GBMath.clamp(pos.x, temp, world.Size().x - temp));
-			Push(GBMath.clamp(pos.y, temp, world.Size().y - temp));
+			temp = pop(); // wall distance
+			FinePoint pos = popVector();
+			push(GBMath.clamp(pos.x, temp, world.getSize().x - temp));
+			push(GBMath.clamp(pos.y, temp, world.getSize().y - temp));
 		}
 			break;
 		case opVectorEqual:
-			Pushboolean(PopVector() == PopVector());
+			pushboolean(popVector() == popVector());
 			break;
 		case opVectorNotEqual:
-			Pushboolean(PopVector() != PopVector());
+			pushboolean(popVector() != popVector());
 			break;
 		// comparisons
 		case opEqual:
-			Pushboolean(Pop() == Pop());
+			pushboolean(pop() == pop());
 			break;
 		case opNotEqual:
-			Pushboolean(Pop() != Pop());
+			pushboolean(pop() != pop());
 			break;
 		case opLessThan:
-			temp = Pop();
-			Pushboolean(Pop() < temp);
+			temp = pop();
+			pushboolean(pop() < temp);
 			break;
 		case opLessThanOrEqual:
-			temp = Pop();
-			Pushboolean(Pop() <= temp);
+			temp = pop();
+			pushboolean(pop() <= temp);
 			break;
 		case opGreaterThan:
-			temp = Pop();
-			Pushboolean(Pop() > temp);
+			temp = pop();
+			pushboolean(pop() > temp);
 			break;
 		case opGreaterThanOrEqual:
-			temp = Pop();
-			Pushboolean(Pop() >= temp);
+			temp = pop();
+			pushboolean(pop() >= temp);
 			break;
 		// booleans
 		case opNot:
-			Pushboolean(Pop() == 0);
+			pushboolean(pop() == 0);
 			break;
 		case opAnd:
-			temp = Pop();
-			temp2 = Pop();
-			Pushboolean(temp != 0 && temp2 != 0);
+			temp = pop();
+			temp2 = pop();
+			pushboolean(temp != 0 && temp2 != 0);
 			break;
 		case opOr:
-			temp = Pop();
-			temp2 = Pop();
-			Pushboolean(temp != 0 || temp2 != 0);
+			temp = pop();
+			temp2 = pop();
+			pushboolean(temp != 0 || temp2 != 0);
 			break;
 		case opXor:
-			temp = Pop();
-			temp2 = Pop();
-			Pushboolean(temp != 0 && temp2 == 0 || temp == 0 && temp2 != 0);
+			temp = pop();
+			temp2 = pop();
+			pushboolean(temp != 0 && temp2 == 0 || temp == 0 && temp2 != 0);
 			break;
 		case opNand:
-			temp = Pop();
-			temp2 = Pop();
-			Pushboolean(!(temp != 0 && temp2 != 0));
+			temp = pop();
+			temp2 = pop();
+			pushboolean(!(temp != 0 && temp2 != 0));
 			break;
 		case opNor:
-			temp = Pop();
-			temp2 = Pop();
-			Pushboolean(!(temp != 0 || temp2 != 0));
+			temp = pop();
+			temp2 = pop();
+			pushboolean(!(temp != 0 || temp2 != 0));
 			break;
 		case opValueConditional:
-			temp = Pop();
-			temp2 = Pop();
-			if (Pop() != 0)
-				Push(temp2);
+			temp = pop();
+			temp2 = pop();
+			if (pop() != 0)
+				push(temp2);
 			else
-				Push(temp);
+				push(temp);
 			break;
 		// misc external
 		case opPrint:
-			DoPrint(Double.toString(Pop()));
+			doPrint(Double.toString(pop()));
 			if (world.reportPrints)
 				GBError.NonfatalError(robot.toString() + " prints: "
 						+ lastPrint);
 			break;
 		case opPrintVector:
-			DoPrint(PopVector().toString());
+			doPrint(popVector().toString());
 			if (world.reportPrints)
 				GBError.NonfatalError(robot.toString() + " prints: "
 						+ lastPrint);
@@ -1505,194 +1505,194 @@ public class GBStackBrain extends Brain {
 			break;
 		// basic hardware
 		case opSeekLocation:
-			robot.EngineSeek(PopVector(), new FinePoint(0, 0));
+			robot.doEngineSeek(popVector(), new FinePoint(0, 0));
 			break;
 		case opSeekMovingLocation: {
-			FinePoint vel = PopVector();
-			robot.EngineSeek(PopVector(), vel);
+			FinePoint vel = popVector();
+			robot.doEngineSeek(popVector(), vel);
 		}
 			break;
 		case opDie:
-			robot.Die(robot.Owner());
+			robot.die(robot.getOwner());
 			status = BrainStatus.bsStopped;
 			break;
 		case opWriteLocalMemory:
-			tempInt = PopInteger();
-			WriteLocalMemory(tempInt, Pop(), robot);
+			tempInt = popInteger();
+			writeLocalMemory(tempInt, pop(), robot);
 			break;
 		case opReadLocalMemory:
-			tempInt = PopInteger();
-			Push(ReadLocalMemory(tempInt, robot));
+			tempInt = popInteger();
+			push(readLocalMemory(tempInt, robot));
 			break;
 		case opWriteLocalVector:
-			tempInt = PopInteger();
-			WriteLocalMemory(tempInt + 1, Pop(), robot);
-			WriteLocalMemory(tempInt, Pop(), robot);
+			tempInt = popInteger();
+			writeLocalMemory(tempInt + 1, pop(), robot);
+			writeLocalMemory(tempInt, pop(), robot);
 			break;
 		case opReadLocalVector:
-			tempInt = PopInteger();
-			Push(ReadLocalMemory(tempInt, robot));
-			Push(ReadLocalMemory(tempInt + 1, robot));
+			tempInt = popInteger();
+			push(readLocalMemory(tempInt, robot));
+			push(readLocalMemory(tempInt + 1, robot));
 			break;
 		case opWriteSharedMemory:
-			tempInt = PopInteger();
-			robot.hardware.radio.Write(Pop(), tempInt, robot.Owner());
+			tempInt = popInteger();
+			robot.hardware.radio.write(pop(), tempInt, robot.getOwner());
 			break;
 		case opReadSharedMemory:
-			Push(robot.hardware.radio.Read(PopInteger(), robot.Owner()));
+			push(robot.hardware.radio.read(popInteger(), robot.getOwner()));
 			break;
 		case opWriteSharedVector:
-			tempInt = PopInteger();
-			robot.hardware.radio.Write(Pop(), tempInt + 1, robot.Owner());
-			robot.hardware.radio.Write(Pop(), tempInt, robot.Owner());
+			tempInt = popInteger();
+			robot.hardware.radio.write(pop(), tempInt + 1, robot.getOwner());
+			robot.hardware.radio.write(pop(), tempInt, robot.getOwner());
 			break;
 		case opReadSharedVector:
-			tempInt = PopInteger();
-			Push(robot.hardware.radio.Read(tempInt, robot.Owner()));
-			Push(robot.hardware.radio.Read(tempInt + 1, robot.Owner()));
+			tempInt = popInteger();
+			push(robot.hardware.radio.read(tempInt, robot.getOwner()));
+			push(robot.hardware.radio.read(tempInt + 1, robot.getOwner()));
 			break;
 		case opMessagesWaiting:
-			Push(robot.hardware.radio.MessagesWaiting(PopInteger(),
-					robot.Owner()));
+			push(robot.hardware.radio.getMessagesWaiting(popInteger(),
+					robot.getOwner()));
 			break;
 		case opSendMessage: {
 			GBMessage sendee = new GBMessage();
-			tempInt = PopInteger(); // channel
-			int numArgs = ToInteger(Pop()); // number of numbers
+			tempInt = popInteger(); // channel
+			int numArgs = toInteger(pop()); // number of numbers
 			for (int i = 0; i < numArgs; i++) {
-				sendee.AddDatum(Pop()); // higher indices in message correspond
+				sendee.addDatum(pop()); // higher indices in message correspond
 										// with earlier numbers in stack. :(
 			}
 			if (numArgs <= 0)
 				throw new GBBrainError(
 						"Cannot send message of non-positive length");
-			robot.hardware.radio.Send(sendee, tempInt, robot.Owner());
+			robot.hardware.radio.send(sendee, tempInt, robot.getOwner());
 		}
 			break;
 		case opReceiveMessage: {
-			tempInt = PopInteger();
-			GBMessage received = robot.hardware.radio.Receive(tempInt,
-					robot.Owner());
+			tempInt = popInteger();
+			GBMessage received = robot.hardware.radio.receive(tempInt,
+					robot.getOwner());
 			if (received == null) {
-				Push(0);
+				push(0);
 			} else {
 				if (received.length <= 0) {
 					throw new GBBrainError(
 							"non-positive length message received");
 				}
 				for (int i = received.length - 1; i >= 0; i--)
-					Push(received.Datum(i));
-				Push(received.length);
+					push(received.getDatum(i));
+				push(received.length);
 			}
 		}
 			break;
 		case opClearMessages:
-			robot.hardware.radio.ClearChannel(PopInteger(), robot.Owner());
+			robot.hardware.radio.clearChannel(popInteger(), robot.getOwner());
 			break;
 		case opSkipMessages:
-			tempInt = PopInteger();
-			robot.hardware.radio.SkipMessages(tempInt, PopInteger(),
-					robot.Owner());
+			tempInt = popInteger();
+			robot.hardware.radio.skipMessages(tempInt, popInteger(),
+					robot.getOwner());
 			break;
 		case opTypePopulation: {
-			RobotType theType = robot.Owner().GetType(PopInteger());
+			RobotType theType = robot.getOwner().getRobotType(popInteger());
 			if (theType != null)
-				Push(theType.population);
+				push(theType.population);
 			else
-				Push(-1);
+				push(-1);
 		}
 			break;
 		case opAutoConstruct: {
 			GBConstructorState ctor = robot.hardware.constructor;
-			if (robot.Energy() > robot.hardware.MaxEnergy() * .9) {
-				if (ctor.Type() == null)
-					ctor.Start(robot.Type(), 0);
-				ctor.SetRate(ctor.MaxRate());
+			if (robot.getEnergy() > robot.hardware.getMaxEnergy() * .9) {
+				if (ctor.getRobotType() == null)
+					ctor.start(robot.getRobotType(), 0);
+				ctor.setRate(ctor.getMaxRate());
 			} else
-				ctor.SetRate(ctor.Type() != null
-						&& robot.Energy() > ctor.Remaining() + 10 ? ctor
-						.MaxRate() : 0);
+				ctor.setRate(ctor.getRobotType() != null
+						&& robot.getEnergy() > ctor.getRemaining() + 10 ? ctor
+						.getMaxRate() : 0);
 		}
 			break;
 		case opBalanceTypes: { // frac type --
-			RobotType theType = robot.Owner().GetType(PopInteger());
-			double fraction = Pop();
+			RobotType theType = robot.getOwner().getRobotType(popInteger());
+			double fraction = pop();
 			if (theType != null
 					&& theType.population < fraction
-							* robot.Owner().Scores().Population())
-				robot.hardware.constructor.Start(theType, 0); // FIXME don't
+							* robot.getOwner().getScores().getPopulation())
+				robot.hardware.constructor.start(theType, 0); // FIXME don't
 																// abort?
 		}
 			break;
 		// sensors
 		case opFireRobotSensor:
-			robot.hardware.sensor1.Fire();
+			robot.hardware.sensor1.fire();
 			break;
 		case opFireFoodSensor:
-			robot.hardware.sensor2.Fire();
+			robot.hardware.sensor2.fire();
 			break;
 		case opFireShotSensor:
-			robot.hardware.sensor3.Fire();
+			robot.hardware.sensor3.fire();
 			break;
 		case opRobotSensorNext:
-			Push(robot.hardware.sensor1.NextResult() ? 1 : 0);
+			push(robot.hardware.sensor1.getNextResult() ? 1 : 0);
 			break;
 		case opFoodSensorNext:
-			Push(robot.hardware.sensor2.NextResult() ? 1 : 0);
+			push(robot.hardware.sensor2.getNextResult() ? 1 : 0);
 			break;
 		case opShotSensorNext:
-			Push(robot.hardware.sensor3.NextResult() ? 1 : 0);
+			push(robot.hardware.sensor3.getNextResult() ? 1 : 0);
 			break;
 		case opPeriodicRobotSensor:
-			FirePeriodic(robot.hardware.sensor1, world);
+			firePeriodic(robot.hardware.sensor1, world);
 			break;
 		case opPeriodicFoodSensor:
-			FirePeriodic(robot.hardware.sensor2, world);
+			firePeriodic(robot.hardware.sensor2, world);
 			break;
 		case opPeriodicShotSensor:
-			FirePeriodic(robot.hardware.sensor3, world);
+			firePeriodic(robot.hardware.sensor3, world);
 			break;
 		// weapons
 		case opFireBlaster:
-			robot.hardware.blaster.Fire(Pop());
+			robot.hardware.blaster.fire(pop());
 			break;
 		case opFireGrenade:
-			temp = Pop();
-			robot.hardware.grenades.Fire(Pop(), temp);
+			temp = pop();
+			robot.hardware.grenades.fire(pop(), temp);
 			break;
 		case opLeadBlaster: { // pos vel --
-			FinePoint vel = PopVector().subtract(robot.Velocity());
-			FinePoint pos = PopVector().subtract(robot.Position());
-			FinePoint target = LeadShot(pos, vel,
-					robot.hardware.blaster.Speed(), robot.Radius());
+			FinePoint vel = popVector().subtract(robot.getVelocity());
+			FinePoint pos = popVector().subtract(robot.getPosition());
+			FinePoint target = leadShot(pos, vel,
+					robot.hardware.blaster.getSpeed(), robot.getRadius());
 			if (target.isNonzero()
-					&& target.norm() <= robot.hardware.blaster.MaxRange()
-							+ robot.Radius())
-				robot.hardware.blaster.Fire(target.angle());
+					&& target.norm() <= robot.hardware.blaster.getMaxRange()
+							+ robot.getRadius())
+				robot.hardware.blaster.fire(target.angle());
 		}
 			break;
 		case opLeadGrenade: { // pos vel --
-			FinePoint vel = PopVector().subtract(robot.Velocity());
-			FinePoint pos = PopVector().subtract(robot.Position());
-			FinePoint target = LeadShot(pos, vel,
-					robot.hardware.grenades.Speed(), robot.Radius());
+			FinePoint vel = popVector().subtract(robot.getVelocity());
+			FinePoint pos = popVector().subtract(robot.getPosition());
+			FinePoint target = leadShot(pos, vel,
+					robot.hardware.grenades.getSpeed(), robot.getRadius());
 			if (target.isNonzero()
-					&& target.norm() <= robot.hardware.grenades.MaxRange()
-							+ robot.Radius())
-				robot.hardware.grenades.Fire(target.norm(), target.angle()); // worry
+					&& target.norm() <= robot.hardware.grenades.getMaxRange()
+							+ robot.getRadius())
+				robot.hardware.grenades.fire(target.norm(), target.angle()); // worry
 																				// about
 																				// short
 																				// range?
 		}
 			break;
 		case opSetForceField: { // pos angle --
-			temp = Pop();
-			FinePoint pos = PopVector().subtract(robot.Position());
-			robot.hardware.forceField.SetDistance(pos.norm());
-			robot.hardware.forceField.SetDirection(pos.angle());
-			robot.hardware.forceField.SetAngle(temp);
-			robot.hardware.forceField.SetPower(robot.hardware.forceField
-					.MaxPower());
+			temp = pop();
+			FinePoint pos = popVector().subtract(robot.getPosition());
+			robot.hardware.forceField.getSetDistance(pos.norm());
+			robot.hardware.forceField.getSetDirection(pos.angle());
+			robot.hardware.forceField.setAngle(temp);
+			robot.hardware.forceField.getSetPower(robot.hardware.forceField
+					.getMaxPower());
 		}
 			break;
 		// otherwise...
@@ -1704,7 +1704,7 @@ public class GBStackBrain extends Brain {
 	}
 
 	// pos and vel are relative to ourself
-	static FinePoint LeadShot(FinePoint pos, FinePoint vel, double shotSpeed,
+	static FinePoint leadShot(FinePoint pos, FinePoint vel, double shotSpeed,
 			double r) {
 		// if (true) {
 		double dt = (pos.add(vel.multiply(pos.norm() / shotSpeed))).norm()
@@ -1727,14 +1727,14 @@ public class GBStackBrain extends Brain {
 		 */
 	}
 
-	void FirePeriodic(GBSensorState sensor, GBWorld world) {
-		int period = PopInteger();
-		if (world.currentFrame >= sensor.Time() + period || sensor.Time() <= 0) {
-			sensor.Fire();
+	void firePeriodic(GBSensorState sensor, GBWorld world) {
+		int period = popInteger();
+		if (world.currentFrame >= sensor.getTime() + period || sensor.getTime() <= 0) {
+			sensor.fire();
 			remaining = 0;
-			Pushboolean(true);
+			pushboolean(true);
 		} else
-			Pushboolean(false);
+			pushboolean(false);
 	}
 
 };

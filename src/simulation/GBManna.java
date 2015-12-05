@@ -15,8 +15,8 @@ public class GBManna extends GBFood {
 	}
 
 	@Override
-	public void CollectStatistics(ScoreKeeper keeper) {
-		keeper.ReportManna(value);
+	public void collectStatistics(ScoreKeeper keeper) {
+		keeper.reportManna(value);
 	}
 
 	@Override
@@ -24,7 +24,7 @@ public class GBManna extends GBFood {
 		return String.format("Manna (%.0f)", value);
 	}
 
-	public Color Color() {
+	public Color getColor() {
 		return Color.green;
 	}
 }

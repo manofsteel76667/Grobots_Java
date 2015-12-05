@@ -7,7 +7,7 @@ package sides;
 public class GrenadesSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		if (damage > 0)
 			return (1.0 / reloadTime + HardwareSpec.kGrenadesBarrelMass)
 					* (damage + HardwareSpec.kGrenadesDamageOverhead)
@@ -20,7 +20,7 @@ public class GrenadesSpec extends HardwareItem {
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		if (damage > 0)
 			return (1.0 / reloadTime + HardwareSpec.kGrenadesBarrelCost)
 					* (damage + HardwareSpec.kGrenadesDamageOverhead)
@@ -45,31 +45,31 @@ public class GrenadesSpec extends HardwareItem {
 		reloadTime = 1;
 	}
 
-	public double Damage() {
+	public double getDamage() {
 		return damage;
 	}
 
-	public double Range() {
+	public double getRange() {
 		return range;
 	}
 
-	public double Speed() {
+	public double getSpeed() {
 		return speed;
 	}
 
-	public int Lifetime() {
+	public int getLifetime() {
 		return (int) Math.ceil(range / speed);
 	}
 
-	public int ReloadTime() {
+	public int getReloadTime() {
 		return reloadTime;
 	}
 
-	public double Recoil() {
+	public double getRecoil() {
 		return range * damage * HardwareSpec.kGrenadesRecoil;
 	}
 
-	public void Set(double dmg, double rng, int reload) {
+	public void set(double dmg, double rng, int reload) {
 		damage = Math.max(dmg, 0);
 		range = Math.max(rng, 0);
 		speed = Math.pow(range / HardwareSpec.kGrenadesLifetimeSpeedTradeoff,
@@ -78,7 +78,7 @@ public class GrenadesSpec extends HardwareItem {
 												// frame
 	}
 
-	public double FiringCost() {
+	public double getFiringCost() {
 		return (damage + HardwareSpec.kGrenadesDamageOverhead)
 				* (HardwareSpec.kGrenadesFiringCostPerDamage + range
 						* HardwareSpec.kGrenadesFiringCostPerRange + Math.pow(

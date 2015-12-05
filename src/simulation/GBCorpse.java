@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import Rendering.GBProjection;
 import sides.RobotType;
 import sides.Side;
 import support.FinePoint;
@@ -23,26 +24,26 @@ public class GBCorpse extends GBFood {
 		type = who;
 		killer = cause;
 		Graphics2D g2d = (Graphics2D) image.getGraphics();
-		g2d.setColor(Owner().Color());
+		g2d.setColor(getOwner().getColor());
 		g2d.fillRect(7, 7, 7, 7);
 		if (killer != null) {
-			g2d.setPaint(killer.Color());
+			g2d.setPaint(killer.getColor());
 			g2d.fillRect(8, 8, 5, 5);
 		}
 	}
 
 	@Override
-	public Side Owner() {
+	public Side getOwner() {
 		return type.side;
 	}
 
 	@Override
-	public void CollectStatistics(ScoreKeeper keeper) {
-		keeper.ReportCorpse(value);
+	public void collectStatistics(ScoreKeeper keeper) {
+		keeper.reportCorpse(value);
 	}
 
 	@Override
-	public double Interest() {
+	public double getInterest() {
 		return value / 500;
 	}
 
@@ -52,18 +53,18 @@ public class GBCorpse extends GBFood {
 	}
 
 	@Override
-	public String Details() {
+	public String getDetails() {
 		return String.format("%.0f energy, killed by %s ", value,
-				killer != null ? killer.Name() : "unknown");
+				killer != null ? killer.getName() : "unknown");
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		return Color.red;
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		drawImage(g, proj);
 	}
 

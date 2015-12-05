@@ -190,12 +190,12 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public Brain MakeBrain() {
+	public Brain makeBrain() {
 		return new GBStackBrain(this);
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		return kCostPerInstruction * code.size() + kCostPerConstant
 				* constants.size() + kCostPerVariable * variables.size() + 2
 				* kCostPerVariable * vectorVariables.size() + kCostPerLabel
@@ -203,34 +203,34 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		return kMassPerInstruction * code.size() + kMassPerConstant
 				* constants.size() + kMassPerVariable * variables.size() + 2
 				* kMassPerVariable * vectorVariables.size() + kMassPerLabel
 				* labels.size();
 	}
 
-	void AddInstruction(int ins, int line) {
+	void addInstruction(int ins, int line) {
 		code.add(ins);
 		lineNumbers.add(line);
 	}
 
-	void AddInstruction(int type, int index, int line) {
+	void addInstruction(int type, int index, int line) {
 		code.add((type << StackBrainOpcode.kOpcodeTypeShift) + index);
 		lineNumbers.add(line);
 	}
 
-	void CPush(int value) {
+	void cPush(int value) {
 		cStack.add(value);
 	}
 
-	int CPeek() {
+	int cPeek() {
 		if (cStack.isEmpty())
 			throw new GBCStackError();
 		return cStack.get(cStack.size() - 1);
 	}
 
-	int CPop() {
+	int cPop() {
 		if (cStack.isEmpty())
 			throw new GBCStackError();
 		int i = cStack.get(cStack.size() - 1);
@@ -238,100 +238,100 @@ public class GBStackBrainSpec extends BrainSpec {
 		return i;
 	}
 
-	void ExecuteCWord(StackBrainOpcode _code, int line) {
+	void executeCWord(StackBrainOpcode _code, int line) {
 		int temp, temp2;
 		switch (_code) {
 		case cwNop:
 			break;
 		case cwIf:
-			temp = AddGensym("if-skip-g");
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID,
+			temp = addGensym("if-skip-g");
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID,
 					StackBrainOpcode.opNotIfGo.ID, line);
 			// AddInstruction(OpType.otPrimitive.ID,
 			// StackBrainOpcode.opNotIfGo.ID, line);
-			CPush(temp);
+			cPush(temp);
 			break;
 		case cwNotIf:
-			temp = AddGensym("nif-skip-g");
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
+			temp = addGensym("nif-skip-g");
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
 					line);
-			CPush(temp);
+			cPush(temp);
 			break;
 		case cwElse:
-			temp = AddGensym("else-skip-g");
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
+			temp = addGensym("else-skip-g");
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
 					line);
 			// and the address
-			temp2 = CPop();
-			ResolveGensym(temp2);
-			CPush(temp);
+			temp2 = cPop();
+			resolveGensym(temp2);
+			cPush(temp);
 			break;
 		case cwThen:
-			temp = CPop();
-			ResolveGensym(temp);
+			temp = cPop();
+			resolveGensym(temp);
 			break;
 		case cwAndIf:
-			temp = CPeek();
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID,
+			temp = cPeek();
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID,
 					StackBrainOpcode.opNotIfGo.ID, line);
 			break;
 		case cwNotAndIf:
-			temp = CPeek();
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
+			temp = cPeek();
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
 					line);
 			break;
 		case cwCElse: // end skip -- end
-			temp = CPop();
-			temp2 = CPeek();
-			AddLabelRead(temp2, line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
+			temp = cPop();
+			temp2 = cPeek();
+			addLabelRead(temp2, line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
 					line);
-			ResolveGensym(temp);
+			resolveGensym(temp);
 			break;
 		case cwDo: // -- loop-start
-			temp = AddGensym("loop-start-g");
-			ResolveGensym(temp);
-			CPush(temp);
+			temp = addGensym("loop-start-g");
+			resolveGensym(temp);
+			cPush(temp);
 			break;
 		case cwLoop: // loop-start loop-end --
-			temp = CPop();
-			AddLabelRead(CPop(), line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
+			temp = cPop();
+			addLabelRead(cPop(), line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
 					line);
-			ResolveGensym(temp);
+			resolveGensym(temp);
 			break;
 		case cwForever: // loop-start --
-			AddLabelRead(CPop(), line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
+			addLabelRead(cPop(), line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opJump.ID,
 					line);
 			break;
 		case cwWhile: // -- loop-end
-			temp = AddGensym("loop-end-g");
-			CPush(temp);
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID,
+			temp = addGensym("loop-end-g");
+			cPush(temp);
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID,
 					StackBrainOpcode.opNotIfGo.ID, line);
 			break;
 		case cwUntil: // -- loop-end
-			temp = AddGensym("loop-end-g");
-			CPush(temp);
-			AddLabelRead(temp, line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
+			temp = addGensym("loop-end-g");
+			cPush(temp);
+			addLabelRead(temp, line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
 					line);
 			break;
 		case cwWhileLoop: // loop-start --
-			AddLabelRead(CPop(), line);
-			AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
+			addLabelRead(cPop(), line);
+			addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opIfGo.ID,
 					line);
 			break;
 		case cwUntilLoop: // loop-start --
-			AddLabelRead(CPop(), line);
-			AddInstruction(OpType.otPrimitive.ID,
+			addLabelRead(cPop(), line);
+			addInstruction(OpType.otPrimitive.ID,
 					StackBrainOpcode.opNotIfGo.ID, line);
 			break;
 		default:
@@ -339,46 +339,46 @@ public class GBStackBrainSpec extends BrainSpec {
 		}
 	}
 
-	void AddLabelRead(int index, int line) {
+	void addLabelRead(int index, int line) {
 		if (index >= labels.size() || index < 0)
 			throw new GBBadSymbolIndexError();
-		AddInstruction(OpType.otLabelRead.ID, index, line);
+		addInstruction(OpType.otLabelRead.ID, index, line);
 		labels.get(index).referenced = true;
 	}
 
-	void AddLabelCall(int index, int line) {
+	void addLabelCall(int index, int line) {
 		if (index >= labels.size() || index < 0)
 			throw new GBBadSymbolIndexError();
-		AddInstruction(OpType.otLabelCall.ID, index, line);
+		addInstruction(OpType.otLabelCall.ID, index, line);
 		labels.get(index).referenced = true;
 	}
 
-	void AddImmediate(String name, double value, int line) {
+	void addImmediate(String name, double value, int line) {
 		// avoid proliferation of immediates
 		// (but should we require name equivalence?)
 		for (int i = 0; i < constants.size(); i++)
 			if (constants.get(i).value == value
 					&& constants.get(i).name.equals(name)) {
-				AddInstruction(OpType.otConstantRead.ID, i, line);
+				addInstruction(OpType.otConstantRead.ID, i, line);
 				return;
 			}
-		AddConstant(name, value);
-		AddInstruction(OpType.otConstantRead.ID, constants.size() - 1, line);
+		addConstant(name, value);
+		addInstruction(OpType.otConstantRead.ID, constants.size() - 1, line);
 	}
 
-	public void AddConstant(String name, double value) {
+	public void addConstant(String name, double value) {
 		constants.add(new GBConstant(name, value));
 	}
 
-	public void AddVariable(String name, double value) {
+	public void addVariable(String name, double value) {
 		variables.add(new GBConstant(name, value));
 	}
 
-	public void AddVectorVariable(String name, FinePoint value) {
+	public void addVectorVariable(String name, FinePoint value) {
 		vectorVariables.add(new GBVectorSymbol(name, value));
 	}
 
-	void AddLabel(String name) {
+	void addLabel(String name) {
 		Iterator<GBLabel> it = labels.iterator();
 		while (it.hasNext()) {
 			// Check for forward declaration that hasn't been used yet
@@ -394,27 +394,27 @@ public class GBStackBrainSpec extends BrainSpec {
 		labels.add(new GBLabel(name, code.size(), false));
 	}
 
-	void AddForwardLabel(String name) {
+	void addForwardLabel(String name) {
 		GBLabel lbl = new GBLabel(name, -1, false);
 		lbl.referenced = true;
 		labels.add(lbl);
 	}
 
-	int LookupConstant(String name) {
+	int getConstantIndex(String name) {
 		for (int i = 0; i < constants.size(); i++)
 			if (constants.get(i).name.toLowerCase().equals(name.toLowerCase()))
 				return i;
 		return -1;
 	}
 
-	int LookupVariable(String name) {
+	int getVariableIndex(String name) {
 		for (int i = 0; i < variables.size(); i++)
 			if (variables.get(i).name.toLowerCase().equals(name.toLowerCase()))
 				return i;
 		return -1;
 	}
 
-	int LookupVectorVariable(String name) {
+	int getVectorVariableIndex(String name) {
 		for (int i = 0; i < vectorVariables.size(); i++)
 			if (vectorVariables.get(i).name.toLowerCase().equals(
 					name.toLowerCase()))
@@ -422,7 +422,7 @@ public class GBStackBrainSpec extends BrainSpec {
 		return -1;
 	}
 
-	int LookupLabel(String name) {
+	int getLabelIndex(String name) {
 		for (int i = 0; i < labels.size(); i++)
 			if (!labels.get(i).gensym
 					&& labels.get(i).name.toLowerCase().equals(
@@ -431,34 +431,34 @@ public class GBStackBrainSpec extends BrainSpec {
 		return -1;
 	}
 
-	public int LabelReferenced(String name) {
+	public int getLabelReferencedIndex(String name) {
 		for (int i = 0; i < labels.size(); i++)
 			if (labels.get(i).name.toLowerCase().equals(name.toLowerCase()))
 				return i;
-		AddForwardLabel(name);
+		addForwardLabel(name);
 		return labels.size() - 1;
 	}
 
-	public int AddGensym(String name) {
+	public int addGensym(String name) {
 		labels.add(new GBLabel(name + Integer.toString(++gensymCounter), -1,
 				true));
 		return labels.size() - 1;
 	}
 
-	public void ResolveGensym(int index) {
+	public void resolveGensym(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		labels.get(index).address = code.size();
 	}
 
-	public void SetStartingLabel(int index) {
+	public void setStartingLabel(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		startingLabel = index;
 		labels.get(index).referenced = true;
 	}
 
-	public void ParseLine(String line, int lineNum) {
+	public void parseLine(String line, int lineNum) {
 		String[] tokens = line.trim().split("\\s+");
 		for (String token : tokens) {
 			int index;
@@ -471,15 +471,15 @@ public class GBStackBrainSpec extends BrainSpec {
 				switch (token.charAt(token.length() - 1)) {
 				case '!':
 					stem = token.substring(0, token.length() - 1);
-					index = LookupVariable(stem);
+					index = getVariableIndex(stem);
 					if (index != -1) {
-						AddInstruction(OpType.otVariableWrite.ID, index,
+						addInstruction(OpType.otVariableWrite.ID, index,
 								lineNum);
 						continue;
 					}
-					index = LookupVectorVariable(stem);
+					index = getVectorVariableIndex(stem);
 					if (index != -1) {
-						AddInstruction(OpType.otVectorWrite.ID, index, lineNum);
+						addInstruction(OpType.otVectorWrite.ID, index, lineNum);
 						continue;
 					}
 					// Must be a reserved word
@@ -487,11 +487,11 @@ public class GBStackBrainSpec extends BrainSpec {
 					if (code != null) {
 						switch (code.type) {
 						case ocHardwareVariable:
-							AddInstruction(OpType.otHardwareWrite.ID, code.ID,
+							addInstruction(OpType.otHardwareWrite.ID, code.ID,
 									lineNum);
 							continue;
 						case ocHardwareVector:
-							AddInstruction(OpType.otHardwareVectorWrite.ID,
+							addInstruction(OpType.otHardwareVectorWrite.ID,
 									code.ID, lineNum);
 							continue;
 						default:
@@ -501,22 +501,22 @@ public class GBStackBrainSpec extends BrainSpec {
 					// I have no idea what you just said
 					throw new GBUnknownSymbolError(stem);
 				case ':':
-					AddLabel(token.substring(0, token.length() - 1));
+					addLabel(token.substring(0, token.length() - 1));
 					continue;
 				case '&':
 					stem = token.substring(0, token.length() - 1);
-					index = LabelReferenced(stem);
+					index = getLabelReferencedIndex(stem);
 					if (index != -1) {
-						AddLabelRead(index, lineNum);
+						addLabelRead(index, lineNum);
 						continue;
 					}
 					throw new GBUnknownSymbolError(stem); // shouldn't
 					// happen
 				case '^':
 					stem = token.substring(0, token.length() - 1);
-					index = LabelReferenced(stem);
+					index = getLabelReferencedIndex(stem);
 					if (index != -1) {
-						AddLabelCall(index, lineNum);
+						addLabelCall(index, lineNum);
 						continue;
 					}
 					throw new GBUnknownSymbolError(stem); // shouldn't
@@ -525,41 +525,41 @@ public class GBStackBrainSpec extends BrainSpec {
 					break;
 				}
 			// unadorned - look up in various tables
-			index = LookupConstant(token);
+			index = getConstantIndex(token);
 			if (index != -1) {
-				AddInstruction(OpType.otConstantRead.ID, index, lineNum);
+				addInstruction(OpType.otConstantRead.ID, index, lineNum);
 				continue;
 			}
-			index = LookupVariable(token);
+			index = getVariableIndex(token);
 			if (index != -1) {
-				AddInstruction(OpType.otVariableRead.ID, index, lineNum);
+				addInstruction(OpType.otVariableRead.ID, index, lineNum);
 				continue;
 			}
-			index = LookupVectorVariable(token);
+			index = getVectorVariableIndex(token);
 			if (index != -1) {
-				AddInstruction(OpType.otVectorRead.ID, index, lineNum);
+				addInstruction(OpType.otVectorRead.ID, index, lineNum);
 				continue;
 			}
-			index = LookupLabel(token);
+			index = getLabelIndex(token);
 			if (index != -1) {
-				AddLabelCall(index, lineNum);
+				addLabelCall(index, lineNum);
 				continue;
 			}
 			code = StackBrainOpcode.byName(token);
 			if (code != null)
 				switch (code.type) {
 				case ocCompileWord:
-					ExecuteCWord(code, lineNum);
+					executeCWord(code, lineNum);
 					continue;
 				case ocHardwareVariable:
-					AddInstruction(OpType.otHardwareRead.ID, code.ID, lineNum);
+					addInstruction(OpType.otHardwareRead.ID, code.ID, lineNum);
 					continue;
 				case ocHardwareVector:
-					AddInstruction(OpType.otHardwareVectorRead.ID, code.ID,
+					addInstruction(OpType.otHardwareVectorRead.ID, code.ID,
 							lineNum);
 					continue;
 				case ocPrimitive:
-					AddInstruction(OpType.otPrimitive.ID, code.ID, lineNum);
+					addInstruction(OpType.otPrimitive.ID, code.ID, lineNum);
 					continue;
 				default:
 					break;
@@ -567,7 +567,7 @@ public class GBStackBrainSpec extends BrainSpec {
 			// try as a number
 			try {
 				double num = Double.parseDouble(token);
-				AddImmediate(token, num, lineNum);
+				addImmediate(token, num, lineNum);
 				continue;
 			} catch (NumberFormatException e) {
 			}
@@ -577,7 +577,7 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	@Override
-	public void Check() {
+	public void check() {
 		// check compile-time stack
 		if (!cStack.isEmpty())
 			throw new GBCStackError();
@@ -586,71 +586,71 @@ public class GBStackBrainSpec extends BrainSpec {
 			if (labels.get(i).address < 0)
 				throw new GBUnresolvedSymbolError(labels.get(i).name);
 		// add sentinel
-		AddInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opEnd.ID, -1);
+		addInstruction(OpType.otPrimitive.ID, StackBrainOpcode.opEnd.ID, -1);
 	}
 
-	int NumInstructions() {
+	int getInstructionsCount() {
 		return code.size();
 	}
 
-	int NumConstants() {
+	int getConstantsCount() {
 		return constants.size();
 	}
 
-	int NumVariables() {
+	int getVariablesCount() {
 		return variables.size();
 	}
 
-	int NumVectorVariables() {
+	int getVectorVariablesCount() {
 		return vectorVariables.size();
 	}
 
-	int NumLabels() {
+	int getLabelsCount() {
 		return labels.size();
 	}
 
-	int ReadInstruction(int index) {
+	int readInstruction(int index) {
 		return code.get(index);
 	}
 
-	double ReadConstant(int index) {
+	double readConstant(int index) {
 		if (index < 0 || index >= constants.size())
 			throw new GBBadSymbolIndexError();
 		return constants.get(index).value;
 	}
 
-	double ReadVariable(int index) {
+	double readVariable(int index) {
 		if (index < 0 || index >= variables.size())
 			throw new GBBadSymbolIndexError();
 		return variables.get(index).value;
 	}
 
-	FinePoint ReadVectorVariable(int index) {
+	FinePoint readVectorVariable(int index) {
 		if (index < 0 || index >= vectorVariables.size())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables.get(index).value;
 	}
 
-	int ReadLabel(int index) {
+	int readLabel(int index) {
 		if (index < 0 || index >= labels.size())
 			throw new GBBadSymbolIndexError();
 		return labels.get(index).address;
 	}
 
-	int StartAddress() {
+	int getStartAddress() {
 		if (startingLabel < 0)
 			return 0; // default to first instruction
-		return ReadLabel(startingLabel);
+		return readLabel(startingLabel);
 	}
 
-	int LineNumber(int index) {
+	int getLineNumber(int index) {
 		if (index < 0 || index >= code.size())
 			return 0;
 		return lineNumbers.get(index);
 	}
 
 	// For the debugger: label name if available, or else the raw address.
-	String AddressName(int addr) {
+	String getAddressName(int addr) {
 		for (int i = 0; i < labels.size(); i++)
 			if (labels.get(i).address == addr)
 				return labels.get(i).name;
@@ -658,8 +658,8 @@ public class GBStackBrainSpec extends BrainSpec {
 	}
 
 	// Human-readable address, e.g. "main + 62"
-	String AddressDescription(int addr) {
-		GBLabel label = AddressLastLabel(addr);
+	String getAddressDescription(int addr) {
+		GBLabel label = getAddressLastLabel(addr);
 		if (label != null)
 			return addr == label.address ? label.name : label.name + " + "
 					+ Integer.toString(addr - label.address);
@@ -667,12 +667,12 @@ public class GBStackBrainSpec extends BrainSpec {
 			return Integer.toString(addr);
 	}
 
-	String AddressAndLine(int addr) {
-		return AddressDescription(addr) + " (line "
-				+ Integer.toString(LineNumber(addr)) + ")";
+	String getAddressAndLine(int addr) {
+		return getAddressDescription(addr) + " (line "
+				+ Integer.toString(getLineNumber(addr)) + ")";
 	}
 
-	GBLabel AddressLastLabel(int addr) {
+	GBLabel getAddressLastLabel(int addr) {
 		GBLabel closest = null;
 		for (int i = 0; i < labels.size(); i++)
 			if (!labels.get(i).gensym
@@ -682,17 +682,17 @@ public class GBStackBrainSpec extends BrainSpec {
 		return closest;
 	}
 
-	String DisassembleAddress(int addr) {
+	String disassembleAddress(int addr) {
 		if (addr < 0 || addr >= code.size())
 			return "";
-		return DisassembleInstruction(code.get(addr));
+		return disassembleInstruction(code.get(addr));
 	}
 
-	String DisassembleInstruction(int instruction) {
+	String disassembleInstruction(int instruction) {
 		int index = instruction & StackBrainOpcode.kOpcodeIndexMask;
 		switch (OpType.byID(instruction >> StackBrainOpcode.kOpcodeTypeShift)) {
 		case otPrimitive:
-			if (index >= StackBrainOpcode.kNumPrimitives())
+			if (StackBrainOpcode.byID(index).type != OpCodeType.ocPrimitive)
 				return "bad-primitive";
 			return StackBrainOpcode.byID(index).name;
 		case otConstantRead:
@@ -748,13 +748,13 @@ public class GBStackBrainSpec extends BrainSpec {
 		}
 	}
 
-	String VariableName(int index) {
+	String getVariableName(int index) {
 		if (index >= variables.size())
 			throw new GBBadSymbolIndexError();
 		return variables.get(index).name;
 	}
 
-	String VectorVariableName(int index) {
+	String getVectorVariableName(int index) {
 		if (index >= vectorVariables.size())
 			throw new GBBadSymbolIndexError();
 		return vectorVariables.get(index).name;

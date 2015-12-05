@@ -19,7 +19,7 @@ public class GBIncomeStatistics {
 	{
 	}
 
-	public void Reset() {
+	public void reset() {
 		autotrophy = 0;
 		theotrophy = 0;
 		heterotrophy = 0;
@@ -27,27 +27,27 @@ public class GBIncomeStatistics {
 		kleptotrophy = 0;
 	}
 
-	public void ReportAutotrophy(double en) {
+	public void reportAutotrophy(double en) {
 		autotrophy += en;
 	}
 
-	public void ReportTheotrophy(double en) {
+	public void reportTheotrophy(double en) {
 		theotrophy += en;
 	}
 
-	public void ReportHeterotrophy(double en) {
+	public void reportHeterotrophy(double en) {
 		heterotrophy += en;
 	}
 
-	public void ReportCannibalism(double en) {
+	public void reportCannibalism(double en) {
 		cannibalism += en;
 	}
 
-	public void ReportKleptotrophy(double en) {
+	public void reportKleptotrophy(double en) {
 		kleptotrophy += en;
 	}
 
-	public int Total() {
+	public int total() {
 		// excludes cannibalism and seeded
 		return (int) (autotrophy + theotrophy + heterotrophy + kleptotrophy);
 	}

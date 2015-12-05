@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+import Rendering.GBProjection;
 import support.FinePoint;
 
 public class GBSmoke extends GBTimedDecoration {
@@ -27,16 +28,16 @@ public class GBSmoke extends GBTimedDecoration {
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		float intensity = 0.8f * lifetime
 				/ (lifetime + kSmokeHalfBrightnessTime);
 		return new Color(intensity, intensity, intensity, intensity / 10);
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		Graphics2D g2d = (Graphics2D) image.getGraphics();
-		g2d.setPaint(Color());
+		g2d.setPaint(getColor());
 		g2d.fillOval(0, 0, image.getWidth(), image.getHeight());
 		drawImage(g, proj);	
 		g2d.dispose();

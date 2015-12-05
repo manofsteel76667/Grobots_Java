@@ -45,29 +45,29 @@ public class GBSensorResult {
 	}
 
 	GBSensorResult(GBObject obj, double dis) {
-		where = new FinePoint(obj.Position());
-		vel = new FinePoint(obj.Velocity());
+		where = new FinePoint(obj.getPosition());
+		vel = new FinePoint(obj.getVelocity());
 		dist = dis;
-		side = obj.Owner();
-		radius = obj.Radius();
-		mass = obj.Mass();
-		energy = obj.Energy();
+		side = obj.getOwner();
+		radius = obj.getRadius();
+		mass = obj.getMass();
+		energy = obj.getEnergy();
 		shieldFraction = 1;
 		if (obj instanceof GBRobot) {
 			GBRobot rob = (GBRobot) obj;
-			type = rob.Type().ID();
-			ID = rob.ID();
-			shieldFraction = rob.ShieldFraction();
-			bomb = rob.hardware.Bomb();
-			reloading = rob.hardware.blaster.Cooldown() > 0
-					|| rob.hardware.grenades.Cooldown() > 0;
+			type = rob.getRobotType().getID();
+			ID = rob.getID();
+			shieldFraction = rob.getShieldFraction();
+			bomb = rob.hardware.getBomb();
+			reloading = rob.hardware.blaster.getCooldown() > 0
+					|| rob.hardware.grenades.getCooldown() > 0;
 			flag = rob.flag;
 			return;
 		}
 		if (obj instanceof GBShot) {
 			GBShot shot = (GBShot) obj;
-			type = shot.Type();
-			energy = shot.Power();
+			type = shot.getShotType();
+			energy = shot.getPower();
 			return;
 		}
 	}

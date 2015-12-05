@@ -63,10 +63,10 @@ public class GBObjectWorld {
 				.synchronizedList(new ArrayList<GBObject>(10000));
 		objects = new HashMap<GBObjectClass, GBObject[]>();
 		newObjects = new ArrayList<GBObject>(2000);
-		MakeTiles();
+		makeTiles();
 	}
 
-	protected void MakeTiles() {
+	protected void makeTiles() {
 		GBObject[] template = new GBObject[tilesX * tilesY + 1];
 		for (GBObjectClass cl : GBObjectClass.values())
 			objects.put(cl, template.clone());
@@ -75,8 +75,8 @@ public class GBObjectWorld {
 	/**
 	 * Clear all object lists and reset each object's next
 	 */
-	protected void ClearLists() {
-		MakeTiles();
+	protected void clearLists() {
+		makeTiles();
 		synchronized (allObjects) {
 			for (GBObject obj : allObjects)
 				obj.next = null;
@@ -88,14 +88,14 @@ public class GBObjectWorld {
 	/**
 	 * Puts objects in the appropriate class and tile, and deletes dead ones.
 	 */
-	protected void ResortObjects() {
-		MakeTiles();
+	protected void resortObjects() {
+		makeTiles();
 		synchronized (allObjects) {
 			Iterator<GBObject> it = allObjects.iterator();
 			while (it.hasNext()) {
 				GBObject obj = it.next();
 				obj.next = null;
-				if (obj.Class() != GBObjectClass.ocDead) {
+				if (obj.getObjectClass() != GBObjectClass.ocDead) {
 					addObject(obj);
 				} else
 					it.remove();
@@ -152,107 +152,107 @@ public class GBObjectWorld {
 
 	private void addObject(GBObject ob) {
 		if (ob != null)
-			if (ob.Class() != GBObjectClass.ocDead) {
+			if (ob.getObjectClass() != GBObjectClass.ocDead) {
 				// If object is dead, leave it alone.
-				int tile = ob.Radius() * 2 >= kForegroundTileSize ? tilesX
-						* tilesY : FindTile(ob.Position());
-				ob.next = objects.get(ob.Class())[tile];
-				objects.get(ob.Class())[tile] = ob;
+				int tile = ob.getRadius() * 2 >= kForegroundTileSize ? tilesX
+						* tilesY : findTile(ob.getPosition());
+				ob.next = objects.get(ob.getObjectClass())[tile];
+				objects.get(ob.getObjectClass())[tile] = ob;
 			}
 	}
 
-	protected void CollideObjectWithWalls(GBObject ob) {
-		GBObjectClass cl = ob.Class();
-		if (ob.Left() < Left()) {
-			FinePoint vel = ob.Velocity();
-			ob.SetVelocity(Math.abs(vel.x) * kWallRestitution, vel.y);
+	protected void collideObjectWithWalls(GBObject ob) {
+		GBObjectClass cl = ob.getObjectClass();
+		if (ob.getLeft() < getLeft()) {
+			FinePoint vel = ob.getVelocity();
+			ob.setVelocity(Math.abs(vel.x) * kWallRestitution, vel.y);
 			if (cl == GBObjectClass.ocRobot || cl == GBObjectClass.ocFood)
-				ob.MoveBy(Left() - ob.Left(), 0);
-			ob.CollideWithWall();
-		} else if (ob.Right() > Right()) {
-			FinePoint vel = ob.Velocity();
-			ob.SetVelocity(Math.abs(vel.x) * -kWallRestitution, vel.y);
+				ob.moveBy(getLeft() - ob.getLeft(), 0);
+			ob.collideWithWall();
+		} else if (ob.getRight() > getRight()) {
+			FinePoint vel = ob.getVelocity();
+			ob.setVelocity(Math.abs(vel.x) * -kWallRestitution, vel.y);
 			if (cl == GBObjectClass.ocRobot || cl == GBObjectClass.ocFood)
-				ob.MoveBy(Right() - ob.Right(), 0);
-			ob.CollideWithWall();
+				ob.moveBy(getRight() - ob.getRight(), 0);
+			ob.collideWithWall();
 		}
-		if (ob.Bottom() < Bottom()) {
-			FinePoint vel = ob.Velocity();
-			ob.SetVelocity(vel.x, Math.abs(vel.y) * kWallRestitution);
+		if (ob.getBottom() < getBottom()) {
+			FinePoint vel = ob.getVelocity();
+			ob.setVelocity(vel.x, Math.abs(vel.y) * kWallRestitution);
 			if (cl == GBObjectClass.ocRobot || cl == GBObjectClass.ocFood)
-				ob.MoveBy(0, Bottom() - ob.Bottom());
-			ob.CollideWithWall();
-		} else if (ob.Top() > Top()) {
-			FinePoint vel = ob.Velocity();
-			ob.SetVelocity(vel.x, Math.abs(vel.y) * -kWallRestitution);
+				ob.moveBy(0, getBottom() - ob.getBottom());
+			ob.collideWithWall();
+		} else if (ob.getTop() > getTop()) {
+			FinePoint vel = ob.getVelocity();
+			ob.setVelocity(vel.x, Math.abs(vel.y) * -kWallRestitution);
 			if (cl == GBObjectClass.ocRobot || cl == GBObjectClass.ocFood)
-				ob.MoveBy(0, Top() - ob.Top());
-			ob.CollideWithWall();
+				ob.moveBy(0, getTop() - ob.getTop());
+			ob.collideWithWall();
 		}
 	}
 
-	protected void MoveAllObjects() {
+	protected void moveAllObjects() {
 		for (int i = 0; i < tilesX * tilesY; i++)
 			for (GBObjectClass cl : GBObjectClass.values())
 				for (GBObject obj = objects.get(cl)[i]; obj != null; obj = obj.next) {
-					obj.Move();
+					obj.move();
 					if (i < tilesX || i > tilesX * (tilesY - 1)
 							|| i % tilesX == 0 || i % tilesX == tilesX - 1)
-						CollideObjectWithWalls(obj); // only large objects
+						collideObjectWithWalls(obj); // only large objects
 														// and edge tiles
 				}
 	}
 
-	protected void CollideAllObjects() {
+	protected void collideAllObjects() {
 		for (int tx = 0; tx < tilesX; tx++)
 			for (int ty = 0; ty < tilesY; ty++) {
 				int t = ty * tilesX + tx;
-				CollideSameTile(t);
+				collideSameTile(t);
 				// collide with adjacent tiles
 				if (tx < tilesX - 1) {
-					CollideTwoTiles(t, t + 1);
+					collideTwoTiles(t, t + 1);
 					if (ty < tilesY - 1)
-						CollideTwoTiles(t, t + tilesX + 1);
+						collideTwoTiles(t, t + tilesX + 1);
 				}
 				if (ty < tilesY - 1) {
-					CollideTwoTiles(t, t + tilesX);
+					collideTwoTiles(t, t + tilesX);
 					if (tx > 0)
-						CollideTwoTiles(t, t + tilesX - 1);
+						collideTwoTiles(t, t + tilesX - 1);
 				}
 				// collide with large-object tile
-				CollideTwoTiles(t, tilesX * tilesY);
+				collideTwoTiles(t, tilesX * tilesY);
 			}
 		// intercollide large objects, in case that ever matters
-		CollideSameTile(tilesX * tilesY);
+		collideSameTile(tilesX * tilesY);
 	}
 
-	protected void CollideSameTile(int t) {
+	protected void collideSameTile(int t) {
 		String stage = "";
 		try {
 			for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t]; bot != null; bot = bot.next) {
 				stage = "colliding robots";
 				for (GBObject bot2 = bot.next; bot2 != null; bot2 = bot2.next) {
-					bot.SolidCollide(bot2, kRobotRestitution);
+					bot.doSolidCollide(bot2, kRobotRestitution);
 				}
-				if (((GBRobot) bot).hardware.EaterLimit() != 0) {
+				if (((GBRobot) bot).hardware.getEaterLimit() != 0) {
 					stage = "colliding robot and food";
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next) {
-						bot.BasicCollide(food);
+						bot.doBasicCollide(food);
 					}
 				}
 				stage = "colliding robot and shot";
 				for (GBObject shot = objects.get(GBObjectClass.ocShot)[t]; shot != null; shot = shot.next)
-					bot.BasicCollide(shot);
+					bot.doBasicCollide(shot);
 				stage = "colliding robot and area";
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next)
-					bot.BasicCollide(area);
+					bot.doBasicCollide(area);
 			}
 			stage = "colliding area and food";
 			for (GBObject area = objects.get(GBObjectClass.ocArea)[t]; area != null; area = area.next)
 				for (GBObject food = objects.get(GBObjectClass.ocFood)[t]; food != null; food = food.next)
-					area.BasicCollide(food);
+					area.doBasicCollide(food);
 			stage = "colliding sensors";
-			CollideSensors(t, t);
+			collideSensors(t, t);
 		} catch (Exception e) {
 			throw new GBSimulationError("Error " + stage + ": "
 					+ e.getMessage());
@@ -268,21 +268,21 @@ public class GBObjectWorld {
 	 * @param t2
 	 * @return
 	 */
-	protected boolean ObjectReachesTile(GBObject ob, int t1, int t2) {
+	protected boolean objectReachesTile(GBObject ob, int t1, int t2) {
 		if (t2 == tilesX * tilesY)
 			return true;
 		int dt = t2 - t1;
 		if ((dt == 1 || dt == tilesX + 1)
-				&& ob.Right() < (t2 % tilesX) * kForegroundTileSize - 2
+				&& ob.getRight() < (t2 % tilesX) * kForegroundTileSize - 2
 				|| dt == tilesX - 1
-				&& ob.Left() < (t1 % tilesX) * kForegroundTileSize + 2)
+				&& ob.getLeft() < (t1 % tilesX) * kForegroundTileSize + 2)
 			return false;
-		if (dt != 1 && ob.Top() < (t2 / tilesX) * kForegroundTileSize - 2)
+		if (dt != 1 && ob.getTop() < (t2 / tilesX) * kForegroundTileSize - 2)
 			return false;
 		return true;
 	}
 
-	protected void CollideTwoTiles(int t1, int t2) {
+	protected void collideTwoTiles(int t1, int t2) {
 		// Now tries to avoid looking at t2 when the object in t1 isn't even
 		// close to it.
 		double t2edge = (t2 / tilesX) * kForegroundTileSize - 2;
@@ -291,67 +291,67 @@ public class GBObjectWorld {
 		String stage = "";
 		try {
 			for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t1]; bot != null; bot = bot.next) {
-				if (bot.Top() > t2edge) {
+				if (bot.getTop() > t2edge) {
 					stage = "colliding robots";
 					for (GBObject bot2 = objects.get(GBObjectClass.ocRobot)[t2]; bot2 != null; bot2 = bot2.next) {
-						bot.SolidCollide(bot2, kRobotRestitution);
+						bot.doSolidCollide(bot2, kRobotRestitution);
 					}
-					if (((GBRobot) bot).hardware.EaterLimit() != 0) {
+					if (((GBRobot) bot).hardware.getEaterLimit() != 0) {
 						stage = "colliding robot and food";
 						for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
-							bot.BasicCollide(food);
+							bot.doBasicCollide(food);
 						}
 					}
 					stage = "colliding robot and shot";
 					for (GBObject shot = objects.get(GBObjectClass.ocShot)[t2]; shot != null; shot = shot.next) {
-						bot.BasicCollide(shot);
+						bot.doBasicCollide(shot);
 					}
 				}
 				stage = "colliding robot and area";
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
-					bot.BasicCollide(area);
+					bot.doBasicCollide(area);
 				}
 			}
 			for (GBObject food = objects.get(GBObjectClass.ocFood)[t1]; food != null; food = food.next) {
-				if (food.Top() > t2edge)
+				if (food.getTop() > t2edge)
 					stage = "colliding food and robot";
 				for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
-					food.BasicCollide(bot);
+					food.doBasicCollide(bot);
 				}
 				stage = "colliding food and area";
 				for (GBObject area = objects.get(GBObjectClass.ocArea)[t2]; area != null; area = area.next) {
-					food.BasicCollide(area);
+					food.doBasicCollide(area);
 				}
 			}
 			stage = "colliding shot and robot";
 			for (GBObject shot = objects.get(GBObjectClass.ocShot)[t1]; shot != null; shot = shot.next) {
-				if (shot.Top() > t2edge)
+				if (shot.getTop() > t2edge)
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
-						shot.BasicCollide(bot);
+						shot.doBasicCollide(bot);
 					}
 			}
 			for (GBObject area = objects.get(GBObjectClass.ocArea)[t1]; area != null; area = area.next) {
-				if (area.Top() > t2edge) {
+				if (area.getTop() > t2edge) {
 					stage = "colliding area and robot";
 					for (GBObject bot = objects.get(GBObjectClass.ocRobot)[t2]; bot != null; bot = bot.next) {
-						area.BasicCollide(bot);
+						area.doBasicCollide(bot);
 					}
 					stage = "colliding area and food";
 					for (GBObject food = objects.get(GBObjectClass.ocFood)[t2]; food != null; food = food.next) {
-						area.BasicCollide(food);
+						area.doBasicCollide(food);
 					}
 				}
 			}
 			stage = "colliding sensors";
-			CollideSensors(t1, t2);
-			CollideSensors(t2, t1);
+			collideSensors(t1, t2);
+			collideSensors(t2, t1);
 		} catch (Exception e) {
 			throw new GBSimulationError("Error " + stage + ": "
 					+ e.getMessage());
 		}
 	}
 
-	protected void CollideSensors(int sensorTile, int otherTile) {
+	protected void collideSensors(int sensorTile, int otherTile) {
 		double tileBottom = (otherTile / tilesX) * kForegroundTileSize - 2;
 		double tileTop = (otherTile / tilesX + 1) * kForegroundTileSize - 2;
 		if (otherTile == tilesX * tilesY) {
@@ -359,26 +359,26 @@ public class GBObjectWorld {
 			tileTop = size.y + 1000;
 		}
 		for (GBObject sensor = objects.get(GBObjectClass.ocSensorShot)[sensorTile]; sensor != null; sensor = sensor.next) {
-			GBObjectClass seen = ((GBSensorShot) sensor).Seen();
+			GBObjectClass seen = ((GBSensorShot) sensor).getSeen();
 			if (seen != GBObjectClass.ocDead) {
-				if (sensor.Top() > tileBottom && sensor.Bottom() < tileTop)
+				if (sensor.getTop() > tileBottom && sensor.getBottom() < tileTop)
 					for (GBObject ob = objects.get(seen)[otherTile]; ob != null; ob = ob.next) {
-						if (sensor.Intersects(ob))
-							sensor.CollideWith(ob);
+						if (sensor.intersects(ob))
+							sensor.collideWith(ob);
 						// note one-directional collision, since ob mustn't
 						// care it's been sensed
 					}
 				if (seen == GBObjectClass.ocShot) // shot sensors see area
 													// shots too
 					for (GBObject ob = objects.get(GBObjectClass.ocArea)[otherTile]; ob != null; ob = ob.next) {
-						if (sensor.Intersects(ob))
-							sensor.CollideWith(ob);
+						if (sensor.intersects(ob))
+							sensor.collideWith(ob);
 					}
 			}
 		}
 	}
 
-	protected int FindTile(FinePoint where) {
+	protected int findTile(FinePoint where) {
 		int tx = (int) (Math.floor(where.x) / kForegroundTileSize);
 		if (tx < 0)
 			tx = 0;
@@ -392,18 +392,18 @@ public class GBObjectWorld {
 		return ty * tilesX + tx;
 	}
 
-	public void EraseAt(FinePoint where, double radius) {
-		MakeTiles();
+	public void eraseAt(FinePoint where, double radius) {
+		makeTiles();
 		synchronized (allObjects) {
 			Iterator<GBObject> it = allObjects.iterator();
 			while (it.hasNext()) {
 				GBObject obj = it.next();
-				if (obj.Position().inRange(where, obj.Radius() + radius))
-					if (obj.Class() == GBObjectClass.ocRobot) { // must stick
+				if (obj.getPosition().inRange(where, obj.getRadius() + radius))
+					if (obj.getObjectClass() == GBObjectClass.ocRobot) { // must stick
 																// around a
 																// frame for
 																// sensors
-						((GBRobot) obj).Die(null);
+						((GBRobot) obj).die(null);
 						addObjectLater(obj); // new so it'll be deleted next
 												// resort
 					} else
@@ -415,81 +415,81 @@ public class GBObjectWorld {
 	}
 
 	// TODO: Find where this is used and make sure it acts like it should
-	public void Resize(FinePoint newsize) {
+	public void resize(FinePoint newsize) {
 		size = newsize;
 		tilesX = (int) Math.ceil(size.x / kForegroundTileSize);
 		tilesY = (int) Math.ceil(size.y / kForegroundTileSize);
 		// fix tiles
-		MakeTiles();
-		ClearLists();
-		ResortObjects();
+		makeTiles();
+		clearLists();
+		resortObjects();
 	}
 
-	public FinePoint Size() {
+	public FinePoint getSize() {
 		return size;
 	}
 
-	public double Left() {
+	public double getLeft() {
 		return 0;
 	}
 
-	public double Top() {
+	public double getTop() {
 		return size.y;
 	}
 
-	public double Right() {
+	public double getRight() {
 		return size.x;
 	}
 
-	public double Bottom() {
+	public double getBottom() {
 		return 0;
 	}
 
 	// eventually replace calculation with getting from Rules.
-	public int BackgroundTilesX() {
+	public int getBackgroundTilesX() {
 		return (int) Math.ceil(size.x / kBackgroundTileSize);
 	}
 
-	public int BackgroundTilesY() {
+	public int getBackgroundTilesY() {
 		return (int) Math.ceil(size.y / kBackgroundTileSize);
 	}
 
-	public int ForegroundTilesX() {
+	public int getForegroundTilesX() {
 		return tilesX;
 	}
 
-	public int ForegroundTilesY() {
+	public int getForegroundTilesY() {
 		return tilesY;
 	}
 
 	// Object selectors triggered from the UI. Synchronization required
-	public GBObject ObjectNear(FinePoint where, boolean hitSensors) {
+	public GBObject getObjectNear(FinePoint where, boolean hitSensors) {
 		GBObject best = null;
 		double dist = 25; // never see objects farther than this
 		synchronized (allObjects) {
 			for (GBObject ob : allObjects)
-				if ((ob.Class() != GBObjectClass.ocSensorShot || hitSensors)
-						&& ob.Class() != GBObjectClass.ocDecoration
-						&& (ob.Class() == GBObjectClass.ocRobot || best == null
-								|| best.Class() != GBObjectClass.ocRobot || where
-									.inRange(ob.Position(), ob.Radius()))
-						&& ob.Position().inRangeSquared(where, dist)) {
+				if ((ob.getObjectClass() != GBObjectClass.ocSensorShot || hitSensors)
+						&& ob.getObjectClass() != GBObjectClass.ocDecoration
+						&& (ob.getObjectClass() == GBObjectClass.ocRobot || best == null
+								|| best.getObjectClass() != GBObjectClass.ocRobot || where
+									.inRange(ob.getPosition(), ob.getRadius()))
+						&& ob.getPosition().inRangeSquared(where, dist)) {
 					best = ob;
-					dist = (best.Position().subtract(where)).normSquare();
+					dist = (best.getPosition().subtract(where)).normSquare();
 				}
 		}
 		return best;
 	}
 
-	public GBObject RandomInterestingObject() {
+	public GBObject getRandomInterestingObject() {
 		double totalInterest = 0;
 		synchronized (allObjects) {
 			for (GBObject ob : allObjects)
-				totalInterest += ob.Interest();
+				totalInterest += ob.getInterest();
 			if (totalInterest == 0)
 				return null;
 			for (GBObject ob : allObjects) {
-				double interest = ob.Interest();
+				double interest = ob.getInterest();
 				if (GBRandomState.gRandoms.bool(interest / totalInterest))
 					return ob;
 				totalInterest -= interest;
@@ -498,17 +498,17 @@ public class GBObjectWorld {
 		return null;
 	}
 
-	public GBObject RandomInterestingObjectNear(FinePoint where, double radius) {
+	public GBObject getRandomInterestingObjectNear(FinePoint where, double radius) {
 		double totalInterest = 0;
 		synchronized (allObjects) {
 			for (GBObject ob : allObjects)
-				if (ob.Position().inRange(where, radius))
-					totalInterest += ob.Interest();
+				if (ob.getPosition().inRange(where, radius))
+					totalInterest += ob.getInterest();
 			if (totalInterest == 0)
 				return null;
 			for (GBObject ob : allObjects)
-				if (ob.Position().inRange(where, radius)) {
-					double interest = ob.Interest();
+				if (ob.getPosition().inRange(where, radius)) {
+					double interest = ob.getInterest();
 					if (GBRandomState.gRandoms.bool(interest / totalInterest))
 						return ob;
 					totalInterest -= interest;

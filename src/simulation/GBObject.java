@@ -12,6 +12,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 
+import Rendering.GBProjection;
 import sides.Side;
 //Maps FinePoints to screen locations
 import support.FinePoint;
@@ -33,70 +34,70 @@ public abstract class GBObject {
 	// Some abstract functions aren't implemented by all descendants.
 	// Java hates this so they were made protected and given default behavior
 	// here.
-	protected void TakeDamage(double amount, Side origin) {
+	protected void takeDamage(double amount, Side origin) {
 	}
 
-	protected double TakeEnergy(double amount) {
+	protected double takeEnergy(double amount) {
 		return 0;
 	}
 
-	protected double GiveEnergy(double amount) {
+	protected double giveEnergy(double amount) {
 		return 0;
 	}
 
-	protected double MaxTakeEnergy() {
+	protected double maxTakeEnergy() {
 		return 0;
 	}
 
-	protected double MaxGiveEnergy() {
+	protected double maxGiveEnergy() {
 		return 0;
 	}
 
 	// high-level actions
-	protected void Think(GBWorld world) {
+	protected void think(GBWorld world) {
 	} // Not everything has a brain
 
-	public abstract void Act(GBWorld world); // Everything can act
+	public abstract void act(GBWorld world); // Everything can act
 
-	protected void CollideWithWall() {
+	protected void collideWithWall() {
 	}
 
-	protected void CollideWith(GBObject other) {
+	protected void collideWith(GBObject other) {
 	}
 
-	protected void CollectStatistics(ScoreKeeper keeper) {
+	protected void collectStatistics(ScoreKeeper keeper) {
 	}
 
 	// high-level queries
-	public abstract GBObjectClass Class();
+	public abstract GBObjectClass getObjectClass();
 
-	public Side Owner() {
+	public Side getOwner() {
 		return null;
 	} // food is not owned by anyone
 
-	protected double Energy() {
+	protected double getEnergy() {
 		return 0;
 	}
 
-	protected double Interest() {
+	protected double getInterest() {
 		return 0;
 	} // how attractive to autocamera
-
-	public String Details() {
+	
+	public String getDetails() {
 		return "";
 	}
 
 	// evil antimodular drawing code
-	public abstract Color Color();
+	public abstract Color getColor();
 
-	public abstract void Draw(Graphics g, GBProjection proj,
+	public abstract void draw(Graphics g, GBProjection proj,
 			boolean detailed);
 
-	public void DrawUnderlay(Graphics g, GBProjection proj,
+	public void drawUnderlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 	}
 
-	public void DrawOverlay(Graphics g, GBProjection proj,
+	public void drawOverlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 	}
 
@@ -135,79 +136,79 @@ public abstract class GBObject {
 		next = null;
 	}
 
-	public FinePoint Position() {
+	public FinePoint getPosition() {
 		return position;
 	}
 
-	public void SetPosition(FinePoint newPosition) {
+	public void setPosition(FinePoint newPosition) {
 		position = newPosition;
 	}
 
-	public void MoveBy(FinePoint delta) {
+	public void moveBy(FinePoint delta) {
 		position = position.add(delta);
 	}
 
-	public void MoveBy(double deltax, double deltay) {
+	public void moveBy(double deltax, double deltay) {
 		position.x += deltax;
 		position.y += deltay;
 	}
 
-	public double Left() {
+	public double getLeft() {
 		return position.x - radius;
 	}
 
-	public double Top() {
+	public double getTop() {
 		return position.y + radius;
 	}
 
-	public double Right() {
+	public double getRight() {
 		return position.x + radius;
 	}
 
-	public double Bottom() {
+	public double getBottom() {
 		return position.y - radius;
 	}
 
-	public FinePoint Velocity() {
+	public FinePoint getVelocity() {
 		return velocity;
 	}
 
-	public double Speed() {
+	public double getSpeed() {
 		return velocity.norm();
 	}
 
-	public void SetVelocity(double sx, double sy) {
+	public void setVelocity(double sx, double sy) {
 		velocity.set(sx, sy);
 	}
 
-	public void SetSpeed(double speed) {
+	public void setSpeed(double speed) {
 		velocity.setNorm(speed);
 	}
 
-	public void Accelerate(FinePoint deltav) {
+	public void accelerate(FinePoint deltav) {
 		velocity = velocity.add(deltav);
 	}
 
-	public void Drag(double friction, double linearCoeff, double quadraticCoeff) {
+	public void drag(double friction, double linearCoeff, double quadraticCoeff) {
 		if (velocity.isZero())
 			return;
-		double speed = Speed();
+		double speed = getSpeed();
 		speed -= speed * (speed * quadraticCoeff + linearCoeff);
 		if (speed > friction)
-			SetSpeed(speed - friction);
+			setSpeed(speed - friction);
 		else
-			SetVelocity(0, 0);
+			setVelocity(0, 0);
 	}
 
-	public double Radius() {
+	public double getRadius() {
 		return radius;
 	}
 
-	public double Mass() {
+	public double getMass() {
 		return mass;
 	}
 
-	public boolean Intersects(GBObject other) {
+	public boolean intersects(GBObject other) {
 		double r = radius + other.radius;
 		return other.position.x - position.x < r
 				&& position.x - other.position.x < r
@@ -216,7 +217,7 @@ public abstract class GBObject {
 				&& position.inRange(other.position, r);
 	}
 
-	public double OverlapFraction(GBObject other) {
+	public double overlapFraction(GBObject other) {
 		if (radius == 0)
 			return 0;
 		// returns the fraction of our radius that other overlaps
@@ -226,38 +227,38 @@ public abstract class GBObject {
 		return Math.min(dist / radius, 1.0); // don't overlap more than 1
 	}
 
-	public void BasicCollide(GBObject other) {
-		if (Intersects(other)) {
-			CollideWith(other);
-			other.CollideWith(this);
+	public void doBasicCollide(GBObject other) {
+		if (intersects(other)) {
+			collideWith(other);
+			other.collideWith(this);
 		}
 	}
 
-	public void SolidCollide(GBObject other, double coefficient) {
-		if (Intersects(other)) {
-			CollideWith(other);
-			other.CollideWith(this);
-			ElasticBounce(other, coefficient);
+	public void doSolidCollide(GBObject other, double coefficient) {
+		if (intersects(other)) {
+			collideWith(other);
+			other.collideWith(this);
+			doElasticBounce(other, coefficient);
 		}
 	}
 
-	public void PushBy(FinePoint impulse) {
+	public void pushBy(FinePoint impulse) {
 		if (mass != 0)
 			velocity = velocity.add(impulse.divide(mass));
 	}
 
-	public void PushBy(double impulse, double dir) {
-		PushBy(FinePoint.makePolar(impulse, dir));
+	public void pushBy(double impulse, double dir) {
+		pushBy(FinePoint.makePolar(impulse, dir));
 	}
 
-	public void Push(GBObject other, double impulse) {
+	public void push(GBObject other, double impulse) {
 		FinePoint cc = other.position.subtract(position); // center-to-center
 		if (cc.normSquare() == 0)
 			return; // don't push if in same location
-		other.PushBy(cc.divide(cc.norm()).multiply(impulse));
+		other.pushBy(cc.divide(cc.norm()).multiply(impulse));
 	}
 
-	public void ElasticBounce(GBObject other, double coefficient /*
+	public void doElasticBounce(GBObject other, double coefficient /*
 																 * TODO:
 																 * substitute
 																 * default value
@@ -277,9 +278,9 @@ public abstract class GBObject {
 			// if still moving closer...
 			FinePoint center = (rv1.multiply(m1).add(rv2.multiply(m2)))
 					.divide((m1 + m2)); // velocity of center-of-mass
-			Accelerate(rv2.subtract(center).multiply(m2 * coefficient)
+			accelerate(rv2.subtract(center).multiply(m2 * coefficient)
 					.divide(m1).subtract(rv1.subtract(center)));
-			other.Accelerate(rv1.subtract(center).multiply(m1 * coefficient)
+			other.accelerate(rv1.subtract(center).multiply(m1 * coefficient)
 					.divide(m2).subtract(rv2.subtract(center)));
 		}
 		double totalr = radius + other.radius;
@@ -288,14 +289,14 @@ public abstract class GBObject {
 			FinePoint away1 = cc.negate().divide(dist).multiply(m2)
 					.divide(m1 + m2);
 			FinePoint away2 = cc.divide(dist).multiply(m1).divide(m1 + m2);
-			MoveBy(away1.multiply(kCollisionRepulsionSpeed));
-			other.MoveBy(away2.multiply(kCollisionRepulsionSpeed));
-			Accelerate(away1.multiply(kCollisionRepulsion));
-			other.Accelerate(away2.multiply(kCollisionRepulsion));
+			moveBy(away1.multiply(kCollisionRepulsionSpeed));
+			other.moveBy(away2.multiply(kCollisionRepulsionSpeed));
+			accelerate(away1.multiply(kCollisionRepulsion));
+			other.accelerate(away2.multiply(kCollisionRepulsion));
 		}
 	}
 
-	public void Move() {
+	public void move() {
 		position = position.add(velocity);
 	}
 
@@ -308,15 +309,15 @@ public abstract class GBObject {
 	 */
 	protected Rectangle getScreenRect(GBProjection proj) {
 		int oWidth = (int) Math.max(radius * proj.getScale() * 2, 1);
-		return new Rectangle(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
+		return new Rectangle(proj.toScreenX(getLeft()), proj.toScreenY(getTop()), oWidth, oWidth);
 	}
 	
 	protected Ellipse2D.Double getScreenEllipse(GBProjection proj) {
 		double oWidth = Math.max(radius * proj.getScale() * 2, 1);
-		return new Ellipse2D.Double(proj.toScreenX(Left()), proj.toScreenY(Top()), oWidth, oWidth);
+		return new Ellipse2D.Double(proj.toScreenX(getLeft()), proj.toScreenY(getTop()), oWidth, oWidth);
 	}
 
-	public void DrawShadow(Graphics g, GBProjection proj,
+	public void drawShadow(Graphics g, GBProjection proj,
 			FinePoint offset, Color color) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double where = getScreenEllipse(proj);
@@ -330,10 +331,10 @@ public abstract class GBObject {
 	protected void drawImage(Graphics g, GBProjection proj) {
 		if (image == null)
 			return;
-		int x1 = proj.toScreenX(Left());
-		int y1 = proj.toScreenY(Top());
-		int x2 = proj.toScreenX(Right());
-		int y2 = proj.toScreenY(Bottom());
+		int x1 = proj.toScreenX(getLeft());
+		int y1 = proj.toScreenY(getTop());
+		int x2 = proj.toScreenX(getRight());
+		int y2 = proj.toScreenY(getBottom());
 		if (x2 - x1 < 2)
 			x2 = x1 + 2;
 		if (y2 - y1 < 2)

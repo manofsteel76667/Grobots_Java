@@ -21,56 +21,56 @@ public class GBSyphonState {
 		spec = spc;
 	}
 
-	public double MaxRate() {
-		return spec.Power();
+	public double getMaxRate() {
+		return spec.getPower();
 	}
 
-	public double MaxRange() {
-		return spec.Range();
+	public double getMaxRange() {
+		return spec.getRange();
 	}
 
-	public double Direction() {
+	public double getDirection() {
 		return direction;
 	}
 
-	public double Distance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public double Rate() {
+	public double getRate() {
 		return rate;
 	}
 
-	public double Syphoned() {
+	public double getSyphoned() {
 		return syphoned;
 	}
 
-	public void SetDistance(double dist) {
+	public void setDistance(double dist) {
 		distance = Math.max(dist, 0);
 	}
 
-	public void SetDirection(double dir) {
+	public void setDirection(double dir) {
 		direction = dir;
 	}
 
-	public void SetRate(double pwr) {
-		rate = GBMath.clamp(pwr, -MaxRate(), MaxRate());
+	public void setRate(double pwr) {
+		rate = GBMath.clamp(pwr, -getMaxRate(), getMaxRate());
 	}
 
-	public void ReportUse(double pwr) {
+	public void reportUse(double pwr) {
 		syphoned += pwr;
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		if (rate != 0) {
-			double limit = MaxRate() * robot.ShieldFraction(); // should maybe
+			double limit = getMaxRate() * robot.getShieldFraction(); // should maybe
 																// diminish with
 																// distance
 			double actual = GBMath.clamp(rate, -limit, limit);
 			GBObject shot = new GBSyphon(
-					robot.Position().addPolar(
-							Math.min(distance, robot.Radius() + MaxRange()),
-							direction), actual, robot, this, spec.HitsEnemies());
+					robot.getPosition().addPolar(
+							Math.min(distance, robot.getRadius() + getMaxRange()),
+							direction), actual, robot, this, spec.getHitsEnemies());
 			world.addObjectLater(shot);
 		}
 		syphoned = 0;

@@ -15,11 +15,11 @@ public class HardwareItem {
 		cost = _cost;
 	}
 
-	public double Mass() {
+	public double getMass() {
 		return mass;
 	}
 
-	public double Cost() {
+	public double getCost() {
 		return cost;
 	}
 }

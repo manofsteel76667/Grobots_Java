@@ -29,7 +29,7 @@ public abstract class GBTimedDecoration extends GBObject {
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		if (lifetime > 0)
 			return GBObjectClass.ocDecoration;
 		else
@@ -42,10 +42,10 @@ public abstract class GBTimedDecoration extends GBObject {
 	}
 
 	@Override
-	public void Act(GBWorld world) {
+	public void act(GBWorld world) {
 		lifetime--;
 	}
 
 	@Override
-	public abstract Color Color();
+	public abstract Color getColor();
 };

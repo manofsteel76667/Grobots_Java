@@ -22,75 +22,75 @@ public class GBBlasterState {
 
 	GBBlasterState(BlasterSpec spc) {
 		spec = spc;
-		cooldown = spc.ReloadTime();
+		cooldown = spc.getReloadTime();
 	}
 
-	public int ReloadTime() {
-		return spec.ReloadTime();
+	public int getReloadTime() {
+		return spec.getReloadTime();
 	}
 
-	public double Speed() {
-		return spec.Speed();
+	public double getSpeed() {
+		return spec.getSpeed();
 	}
 
-	public int MaxLifetime() {
-		return spec.Lifetime();
+	public int getMaxLifetime() {
+		return spec.getLifetime();
 	}
 
-	public double MaxRange() {
-		return spec.Range();
+	public double getMaxRange() {
+		return spec.getRange();
 	}
 
-	public double Damage() {
-		return spec.Damage();
+	public double getDamage() {
+		return spec.getDamage();
 	}
 
-	public double FiringCost() {
-		return spec.FiringCost();
+	public double getFiringCost() {
+		return spec.getFiringCost();
 	}
 
-	public int Cooldown() {
+	public int getCooldown() {
 		return cooldown;
 	}
 
-	public boolean Firing() {
+	public boolean getFiring() {
 		return firing;
 	}
 
-	public double Direction() {
+	public double getDirection() {
 		return direction;
 	}
 
-	public void Fire(double dir) {
-		if (cooldown == 0 && Damage() != 0) {
-			cooldown = ReloadTime();
+	public void fire(double dir) {
+		if (cooldown == 0 && getDamage() != 0) {
+			cooldown = getReloadTime();
 			firing = true;
 			direction = dir;
 		}
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		if (firing) {
-			double effectiveness = robot.hardware.EffectivenessFraction();
-			if (robot.hardware.ActualShield() == 0
-					&& robot.hardware.UseEnergy(FiringCost() * effectiveness)) {
-				robot.Owner().Scores().expenditure.ReportWeapons(FiringCost()
+			double effectiveness = robot.hardware.getEffectivenessFraction();
+			if (robot.hardware.getActualShield() == 0
+					&& robot.hardware.useEnergy(getFiringCost() * effectiveness)) {
+				robot.getOwner().getScores().expenditure.reportWeapons(getFiringCost()
 						* effectiveness);
-				 if ( Damage() >= 12 ) 
+				 if ( getDamage() >= 12 ) 
 					 SoundManager.playSound(SoundManager.SoundType.stBigBlaster, robot.position);
 				 else
 					 SoundManager.playSound(SoundManager.SoundType.stBlaster, robot.position);
-				GBObject shot = new GBBlast(robot.Position().addPolar(
-						robot.Radius(), direction), robot.Velocity().addPolar(
-						Speed(), direction), robot.Owner(), Damage()
-						* effectiveness, MaxLifetime());
-				shot.MoveBy(FinePoint.makePolar(shot.Radius()
+				GBObject shot = new GBBlast(robot.getPosition().addPolar(
+						robot.getRadius(), direction), robot.getVelocity().addPolar(
+						getSpeed(), direction), robot.getOwner(), getDamage()
+						* effectiveness, getMaxLifetime());
+				shot.moveBy(FinePoint.makePolar(shot.getRadius()
 						+ GBHardwareState.kBlastSpacing, direction)); // to
 																		// avoid
 																		// hitting
 																		// self
 				world.addObjectLater(shot);
-				cooldown = ReloadTime();
+				cooldown = getReloadTime();
 			}
 			firing = false;
 		}

@@ -7,12 +7,12 @@ package sides;
 public class ConstructorSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		return rate * HardwareSpec.kConstructorMassPerRate;
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		return rate * HardwareSpec.kConstructorCostPerRate;
 	}
 
@@ -23,11 +23,11 @@ public class ConstructorSpec extends HardwareItem {
 
 	private double rate;
 
-	public double Rate() {
+	public double getRate() {
 		return rate;
 	}
 
-	public void Set(double nrate) {
+	public void set(double nrate) {
 		rate = Math.max(nrate, 0);
 	}
 

@@ -19,26 +19,26 @@ public class GBMessage {
 		data = new double[kMaxMessageLength];
 	}
 
-	public void SetMessageNumber(int num) {
+	public void setMessageNumber(int num) {
 		if (num < 0)
 			throw new GBBrainError("message number must be positive: " + num);
 		sequenceNum = num;
 	}
 
-	public void AddDatum(double elt) {
+	public void addDatum(double elt) {
 		if (length >= kMaxMessageLength)
 			throw new GBBrainError(
 					"Attempting to make a message that's too long");
 		data[length++] = elt;
 	}
 
-	public double Datum(int n) {
+	public double getDatum(int n) {
 		if (n < 0 || n >= kMaxMessageLength)
 			throw new GBBrainError("invalid message data index: " + n);
 		return data[n];
 	}
 
-	public void ClearDatums() {
+	public void clearDatums() {
 		length = 0;
 	}
 

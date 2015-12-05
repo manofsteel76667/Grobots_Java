@@ -24,7 +24,7 @@ public class GBExpenditureStatistics {
 	GBExpenditureStatistics() {
 	}
 
-	public void Reset() {
+	public void reset() {
 		construction = 0;
 		engine = 0;
 		weapons = 0;
@@ -37,47 +37,47 @@ public class GBExpenditureStatistics {
 		wasted = 0;
 	}
 
-	public void ReportConstruction(double en) {
+	public void reportConstruction(double en) {
 		construction += en;
 	}
 
-	public void ReportEngine(double en) {
+	public void reportEngine(double en) {
 		engine += en;
 	}
 
-	public void ReportForceField(double en) {
+	public void reportForceField(double en) {
 		forceField += en;
 	}
 
-	public void ReportWeapons(double en) {
+	public void reportWeapons(double en) {
 		weapons += en;
 	}
 
-	public void ReportShield(double en) {
+	public void reportShield(double en) {
 		shield += en;
 	}
 
-	public void ReportRepairs(double en) {
+	public void reportRepairs(double en) {
 		repairs += en;
 	}
 
-	public void ReportSensors(double en) {
+	public void reportSensors(double en) {
 		sensors += en;
 	}
 
-	public void ReportBrain(double en) {
+	public void reportBrain(double en) {
 		brain += en;
 	}
 
-	public void ReportStolen(double en) {
+	public void reportStolen(double en) {
 		stolen += en;
 	}
 
-	public void ReportWasted(double en) {
+	public void reportWasted(double en) {
 		wasted += en;
 	}
 
-	public int Total() {
+	public int total() {
 		return (int) (construction + engine + weapons + forceField + shield
 				+ repairs + sensors + brain + stolen + wasted);
 	}

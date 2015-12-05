@@ -4,9 +4,6 @@
  *******************************************************************************/
 package simulation;
 
-// GBRobot.cpp
-// Grobots (c) 2002-2007 Devon and Warren Schudy
-// Distributed under the GNU General Public License.
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -24,6 +21,7 @@ import sides.Side;
 import support.FinePoint;
 import support.GBColor;
 import support.GBMath;
+import Rendering.GBProjection;
 import brains.Brain;
 import brains.BrainStatus;
 
@@ -88,33 +86,33 @@ public class GBRobot extends GBObject {
 	public static final double kRingGrowthRate = 0.1;
 	public static final double kRadialPaintOffsetFactor = 3;
 
-	public void Recalculate() {
-		mass = type.Mass() + hardware.constructor.FetusMass();
+	public void recalculate() {
+		mass = type.getMass() + hardware.constructor.getFetusMass();
 		radius = Math.sqrt(mass + kRobotRadiusPadding) * kRobotRadiusFactor;
 	}
 
 	public GBRobot(RobotType rtype, FinePoint where) {
-		super(where, 0.5, rtype.Mass());
+		super(where, 0.5, rtype.getMass());
 		type = rtype;
-		brain = rtype.MakeBrain();
-		id = rtype.side.GetNewRobotNumber();
-		hardware = new GBHardwareState(rtype.Hardware());
-		hardware.radio.Reset(Owner());
+		brain = rtype.makeBrain();
+		id = rtype.side.getNewRobotNumber();
+		hardware = new GBHardwareState(rtype.getHardware());
+		hardware.radio.reset(getOwner());
 		calcColors();
-		Recalculate();
+		recalculate();
 		makeImages();
 	}
 
 	public GBRobot(RobotType rtype, FinePoint where, FinePoint vel, int parentID) {
-		super(where, 0.5, vel, rtype.Mass());
+		super(where, 0.5, vel, rtype.getMass());
 		type = rtype;
-		brain = rtype.MakeBrain();
-		id = rtype.side.GetNewRobotNumber();
+		brain = rtype.makeBrain();
+		id = rtype.side.getNewRobotNumber();
 		parent = parentID;
-		hardware = new GBHardwareState(rtype.Hardware());
-		hardware.radio.Reset(Owner());
+		hardware = new GBHardwareState(rtype.getHardware());
+		hardware.radio.reset(getOwner());
 		calcColors();
-		Recalculate();
+		recalculate();
 		makeImages();
 	}
 
@@ -125,21 +123,21 @@ public class GBRobot extends GBObject {
 		g2d.setPaint(minimapColor);
 		g2d.fillRect(0, 0, 5, 5);
 		g2d = (Graphics2D) smallImage.getGraphics();
-		g2d.setPaint(this.Owner().Color());
+		g2d.setPaint(this.getOwner().getColor());
 		g2d.fillOval(0, 0, 10, 10);
-		g2d.setColor(type.Color());
+		g2d.setColor(type.getColor());
 		g2d.drawOval(0, 0, 10, 10);
 	}
 
-	public RobotType Type() {
+	public RobotType getRobotType() {
 		return type;
 	}
 
-	public int ID() {
+	public int getID() {
 		return id;
 	}
 
-	public int ParentID() {
+	public int getParentID() {
 		return parent;
 	}
 
@@ -149,133 +147,133 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public String Details() {
-		String dets = String.format("%.0f energy, %.0f armor", Energy(),
+	public String getDetails() {
+		String dets = String.format("%.0f energy, %.0f armor", getEnergy(),
 				hardware.armor);
-		if (hardware.constructor.Progress() != 0)
+		if (hardware.constructor.getProgress() != 0)
 			dets += String.format(", %.1f%% %s",
-					hardware.constructor.Progress()
-							/ hardware.constructor.Type().Cost() * 100,
-					hardware.constructor.Type().name);
+					hardware.constructor.getProgress()
+							/ hardware.constructor.getRobotType().getCost() * 100,
+					hardware.constructor.getRobotType().name);
 		return dets;
 	}
 
-	public int Collisions() {
+	public int getCollisions() {
 		return friendlyCollisions + enemyCollisions + wallCollisions;
 	}
 
-	public int FriendlyCollisions() {
+	public int getFriendlyCollisions() {
 		return friendlyCollisions;
 	}
 
-	public int EnemyCollisions() {
+	public int getEnemyCollisions() {
 		return enemyCollisions;
 	}
 
-	public int FoodCollisions() {
+	public int getFoodCollisions() {
 		return foodCollisions;
 	}
 
-	public int ShotCollisions() {
+	public int getShotCollisions() {
 		return shotCollisions;
 	}
 
-	public int WallCollisions() {
+	public int getWallCollisions() {
 		return wallCollisions;
 	}
 
-	public Side LastHit() {
+	public Side getLastHit() {
 		return lastHit;
 	}
 
-	public Brain Brain() {
+	public Brain getBrain() {
 		return brain;
 	}
 
-	public double ShieldFraction() {
-		if (hardware.ActualShield() != 0)
+	public double getShieldFraction() {
+		if (hardware.getActualShield() != 0)
 			// return 1 / (square(hardware.ActualShield() * kShieldEffectiveness
 			// / mass) + 1);
-			return 1 / (Math.pow(hardware.ActualShield() * kShieldEffectiveness
+			return 1 / (Math.pow(hardware.getActualShield() * kShieldEffectiveness
 					/ mass, 2) + 1);
 		return 1;
 	}
 
 	@Override
-	public void TakeDamage(double amount, Side origin) {
-		double actual = amount * type.MassiveDamageMultiplier(mass)
-				* ShieldFraction();
-		hardware.TakeDamage(actual);
+	public void takeDamage(double amount, Side origin) {
+		double actual = amount * type.getMassiveDamageMultiplier(mass)
+				* getShieldFraction();
+		hardware.takeDamage(actual);
 		lastHit = origin;
 		recentDamage = kRecentDamageTime;
-		if (origin == Owner())
-			Owner().Scores().ReportFriendlyFire(actual);
+		if (origin == getOwner())
+			getOwner().getScores().reportFriendlyFire(actual);
 		else {
-			Owner().Scores().ReportDamageTaken(actual);
+			getOwner().getScores().reportDamageTaken(actual);
 			if (origin != null)
-				origin.Scores().ReportDamageDone(actual);
+				origin.getScores().reportDamageDone(actual);
 		}
 	}
 
 	@Override
-	public double TakeEnergy(double amount) {
-		return hardware.UseEnergyUpTo(amount);
+	public double takeEnergy(double amount) {
+		return hardware.useEnergyUpTo(amount);
 	}
 
 	@Override
-	public double GiveEnergy(double amount) {
-		return hardware.GiveEnergy(amount);
+	public double giveEnergy(double amount) {
+		return hardware.giveEnergy(amount);
 	}
 
 	@Override
-	public double MaxTakeEnergy() {
-		return hardware.Energy();
+	public double maxTakeEnergy() {
+		return hardware.getEnergy();
 	}
 
 	@Override
-	public double MaxGiveEnergy() {
-		return hardware.MaxEnergy() - hardware.Energy();
+	public double maxGiveEnergy() {
+		return hardware.getMaxEnergy() - hardware.getEnergy();
 	}
 
-	public void EngineSeek(FinePoint pos, FinePoint vel) {
-		FinePoint delta = pos.subtract(Position());
+	public void doEngineSeek(FinePoint pos, FinePoint vel) {
+		FinePoint delta = pos.subtract(getPosition());
 		if (vel.isZero()
-				&& (delta.add(Velocity().multiply(11))).norm() < radius)
-			hardware.SetEnginePower(0);
+				&& (delta.add(getVelocity().multiply(11))).norm() < radius)
+			hardware.setEnginePower(0);
 		else {
-			hardware.SetEnginePower(hardware.EngineMaxPower());
-			hardware.SetEngineVelocity(vel.add(delta.multiply(0.09))); // FIXME:
+			hardware.setEnginePower(hardware.getEngineMaxPower());
+			hardware.setEngineVelocity(vel.add(delta.multiply(0.09))); // FIXME:
 																		// better
 																		// seek
 		}
 	}
 
-	public void Die(Side killer) {
+	public void die(Side killer) {
 		dead = true;
 		lastHit = killer;
 	}
 
 	@Override
-	public void Move() {
+	public void move() {
 		friendlyCollisions = 0;
 		enemyCollisions = 0;
 		foodCollisions = 0;
 		shotCollisions = 0;
 		wallCollisions = 0;
-		super.Move();
-		Drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
+		super.move();
+		drag(kFriction, kLinearDragFactor, kQuadraticDragFactor);
 	}
 
 	@Override
-	public void CollideWithWall() {
+	public void collideWithWall() {
 		wallCollisions++;
 	}
 
 	@Override
-	public void CollideWith(GBObject other) {
-		switch (other.Class()) {
+	public void collideWith(GBObject other) {
+		switch (other.getObjectClass()) {
 		case ocRobot:
-			if (other.Owner() == Owner())
+			if (other.getOwner() == getOwner())
 				friendlyCollisions++;
 			else
 				enemyCollisions++;
@@ -283,15 +281,15 @@ public class GBRobot extends GBObject {
 		case ocFood: {
 			foodCollisions++;
 			// FIXME shields don't affect eaters
-			double eaten = other.TakeEnergy(hardware.EaterLimit());
-			hardware.Eat(eaten);
-			Side source = other.Owner();
+			double eaten = other.takeEnergy(hardware.getEaterLimit());
+			hardware.eat(eaten);
+			Side source = other.getOwner();
 			if (source == null)
-				Owner().ReportTheotrophy(eaten);
-			else if (source == Owner())
-				Owner().ReportCannibalism(eaten);
+				getOwner().reportTheotrophy(eaten);
+			else if (source == getOwner())
+				getOwner().reportCannibalism(eaten);
 			else
-				Owner().ReportHeterotrophy(eaten);
+				getOwner().reportHeterotrophy(eaten);
 		}
 			break;
 		case ocShot:
@@ -303,38 +301,38 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void Think(GBWorld world) {
+	public void think(GBWorld world) {
 		if (brain != null)
 			brain.think(this, world);
 	}
 
 	@Override
-	public void Act(GBWorld world) {
-		hardware.Act(this, world);
+	public void act(GBWorld world) {
+		hardware.act(this, world);
 		if (dead) {
 			if (lastHit == null)
 				; // no reports for accidents
-			else if (lastHit == Owner())
-				lastHit.ReportSuicide(Biomass());
+			else if (lastHit == getOwner())
+				lastHit.reportSuicide(getBiomass());
 			else
-				lastHit.ReportKilled(Biomass());
-			Owner().ReportDead(Biomass());
+				lastHit.reportKilled(getBiomass());
+			getOwner().reportDead(getBiomass());
 		}
 		if (recentDamage != 0)
 			--recentDamage;
-		Recalculate();
+		recalculate();
 	}
 
 	@Override
-	public void CollectStatistics(ScoreKeeper keeper) {
-		double bm = Biomass();
-		Owner().ReportRobot(bm, type, Position());
-		type.ReportRobot(bm);
-		keeper.ReportRobot(bm);
+	public void collectStatistics(ScoreKeeper keeper) {
+		double bm = getBiomass();
+		getOwner().reportRobot(bm, type, getPosition());
+		type.reportRobot(bm);
+		keeper.reportRobot(bm);
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		if (dead)
 			return GBObjectClass.ocDead;
 		else
@@ -342,45 +340,45 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public Side Owner() {
+	public Side getOwner() {
 		return type.side;
 	}
 
 	@Override
-	public double Energy() {
-		return hardware.Energy();
+	public double getEnergy() {
+		return hardware.getEnergy();
 	}
 
-	public double Biomass() {
-		return type.Cost() - type.Hardware().InitialEnergy()
-				+ hardware.Energy() + hardware.constructor.Progress();
+	public double getBiomass() {
+		return type.getCost() - type.getHardware().InitialEnergy()
+				+ hardware.getEnergy() + hardware.constructor.getProgress();
 	}
 
 	@Override
-	public double Interest() {
-		double interest = Biomass() * (0.001 + Speed() * 0.01)
-				+ hardware.ActualShield() / 2;
-		if (hardware.blaster.Cooldown() != 0)
-			interest += hardware.blaster.Damage() * 10
-					/ hardware.blaster.ReloadTime();
-		if (hardware.grenades.Cooldown() != 0)
-			interest += hardware.grenades.Damage() * 10
-					/ hardware.grenades.ReloadTime();
-		if (hardware.blaster.Cooldown() != 0)
-			interest += Math.abs(hardware.forceField.Power()) * 15 + 1;
-		if (hardware.syphon.Rate() != 0)
-			interest += Math.abs(hardware.syphon.Rate()) + 1;
-		if (hardware.enemySyphon.Rate() != 0)
-			interest += Math.abs(hardware.enemySyphon.Rate()) * 5 + 2;
+	public double getInterest() {
+		double interest = getBiomass() * (0.001 + getSpeed() * 0.01)
+				+ hardware.getActualShield() / 2;
+		if (hardware.blaster.getCooldown() != 0)
+			interest += hardware.blaster.getDamage() * 10
+					/ hardware.blaster.getReloadTime();
+		if (hardware.grenades.getCooldown() != 0)
+			interest += hardware.grenades.getDamage() * 10
+					/ hardware.grenades.getReloadTime();
+		if (hardware.blaster.getCooldown() != 0)
+			interest += Math.abs(hardware.forceField.getPower()) * 15 + 1;
+		if (hardware.syphon.getRate() != 0)
+			interest += Math.abs(hardware.syphon.getRate()) + 1;
+		if (hardware.enemySyphon.getRate() != 0)
+			interest += Math.abs(hardware.enemySyphon.getRate()) * 5 + 2;
 		return interest;
 	}
 
 	// This color is only used for the minimap, so it has built-in contrast
 	// handling.
 	@Override
-	public Color Color() {
-		return GBColor.Mix(GBColor.EnsureContrastWithBlack(Owner().Color(),
-				kMinMinimapBotContrast), 0.9f, type.Color());
+	public Color getColor() {
+		return GBColor.Mix(GBColor.EnsureContrastWithBlack(getOwner().getColor(),
+				kMinMinimapBotContrast), 0.9f, type.getColor());
 		// return
 		// Owner().Color().EnsureContrastWithBlack(kMinMinimapBotContrast)
 		// .Mix(0.9f, type.Color());
@@ -388,7 +386,7 @@ public class GBRobot extends GBObject {
 
 	// Precalculation of colors that won't change over the robot's life
 	void calcColors() {
-		minimapColor = GBColor.Mix(Color(), 0.5f, type.color);
+		minimapColor = GBColor.Mix(getColor(), 0.5f, type.color);
 		blasterRangeCircleColor = new Color(1f, 0f, 1f, .5f);
 		grenadesRangeCircleColor = new Color(1f, 1f, 0f, .5f);
 		syphonRangeCircleColor = new Color(1f, 1f, 0f, .5f);
@@ -400,8 +398,8 @@ public class GBRobot extends GBObject {
 		damageMeterBackgroundColor = Color.lightGray;
 		gestationMeterColor = Color.yellow;
 		gestationMeterBackgroundColor = Color.GREEN;
-		baseDecorationColor = type.Decoration() == GBRobotDecoration.none ? Owner()
-				.Color() : /*GBColor.ChooseContrasting(type.decorationColor,
+		baseDecorationColor = type.getDecoration() == GBRobotDecoration.none ? getOwner()
+				.getColor() : /*GBColor.ChooseContrasting(type.decorationColor,
 				Owner().Color(), Color.white, .7f);*/
 					type.decorationColor;
 		shieldColor = new Color(0.3f, 0.5f, 1);
@@ -413,12 +411,12 @@ public class GBRobot extends GBObject {
 		 */
 		radialSteps = new float[] { .2f, .25f, .7f, .95f };
 		radialColors = new Color[] { baseDecorationColor,
-				new Color(1f, 1f, 1f, .8f), Owner().Color(), type.color };
+				new Color(1f, 1f, 1f, .8f), getOwner().getColor(), type.color };
 	}
 
 	// Draw a meter with whichever color gives better contrast. If pulse, make
 	// the meter flash.
-	void DrawMeter(BufferedImage img, double fraction, int inset, int zeroAngle,
+	void drawMeter(BufferedImage img, double fraction, int inset, int zeroAngle,
 			int oneAngle, int width, Color color1, Color color2, Color bgcolor,
 			boolean pulse) {
 		Graphics2D g2d = (Graphics2D)img.getGraphics();
@@ -435,7 +433,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void DrawUnderlay(Graphics g, GBProjection proj,
+	public void drawUnderlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 		// Get the basics
 		Graphics2D g2d = (Graphics2D) g;
@@ -452,14 +450,14 @@ public class GBRobot extends GBObject {
 				g2d.fill(halo);
 			}
 		// velocity and engine-velocity
-		if (detailed && hardware.EnginePower() != 0
-				&& hardware.EngineVelocity().isNonzero()) {
-			FinePoint dv = hardware.EngineVelocity().subtract(Velocity());
+		if (detailed && hardware.getEnginePower() != 0
+				&& hardware.getEngineVelocity().isNonzero()) {
+			FinePoint dv = hardware.getEngineVelocity().subtract(getVelocity());
 			if (dv.normSquare() > 0.0001) {
-				FinePoint head = Position().add(
+				FinePoint head = getPosition().add(
 						dv.unit().multiply(
-								Radius() + hardware.EnginePower()
-										/ Math.sqrt(Mass()) * 30));
+								getRadius() + hardware.getEnginePower()
+										/ Math.sqrt(getMass()) * 30));
 				g2d.setStroke(new BasicStroke(2));
 				g2d.setColor(Color.green);
 				g2d.drawLine(proj.toScreenX(position.x),
@@ -467,7 +465,7 @@ public class GBRobot extends GBObject {
 						proj.toScreenY(head.y));
 			}
 		}
-		DrawShadow(g2d, proj, new FinePoint(0, -.25), GBColor.shadow);
+		drawShadow(g2d, proj, new FinePoint(0, -.25), GBColor.shadow);
 		// weapon ranges? //sensor results?
 	}
 
@@ -485,17 +483,17 @@ public class GBRobot extends GBObject {
 
 	public void drawRangeCircles(Graphics g, GBProjection proj) {
 		((Graphics2D) g).setStroke(new BasicStroke(1));
-		drawRangeCircle(g, proj, hardware.blaster.MaxRange(),
+		drawRangeCircle(g, proj, hardware.blaster.getMaxRange(),
 				blasterRangeCircleColor);
-		drawRangeCircle(g, proj, hardware.grenades.MaxRange(),
+		drawRangeCircle(g, proj, hardware.grenades.getMaxRange(),
 				grenadesRangeCircleColor);
-		if (hardware.syphon.MaxRate() > 0)
-			drawRangeCircle(g, proj, hardware.syphon.MaxRange(),
+		if (hardware.syphon.getMaxRate() > 0)
+			drawRangeCircle(g, proj, hardware.syphon.getMaxRange(),
 					syphonRangeCircleColor);
-		if (hardware.enemySyphon.MaxRate() > 0)
-			drawRangeCircle(g, proj, hardware.enemySyphon.MaxRange(),
+		if (hardware.enemySyphon.getMaxRate() > 0)
+			drawRangeCircle(g, proj, hardware.enemySyphon.getMaxRange(),
 					enemySyphonRangeCircleColor);
-		drawRangeCircle(g, proj, hardware.forceField.MaxRange(),
+		drawRangeCircle(g, proj, hardware.forceField.getMaxRange(),
 				forcefieldRangeCircleColor);
 	}
 	
@@ -514,20 +512,20 @@ public class GBRobot extends GBObject {
 		// background and rim
 		// flash decoration when reloading or sensing
 		Color color = baseDecorationColor;
-		if (hardware.grenades.Cooldown() != 0)
+		if (hardware.grenades.getCooldown() != 0)
 			color = GBColor.Mix(Color.yellow,
-					(float) hardware.grenades.Cooldown()
-							/ hardware.grenades.ReloadTime(),
+					(float) hardware.grenades.getCooldown()
+							/ hardware.grenades.getReloadTime(),
 					baseDecorationColor);
-		else if (hardware.blaster.Cooldown() != 0)
+		else if (hardware.blaster.getCooldown() != 0)
 			color = GBColor.Mix(
 					Color.magenta,
-					(float) hardware.blaster.Cooldown()
-							/ hardware.blaster.ReloadTime(),
+					(float) hardware.blaster.getCooldown()
+							/ hardware.blaster.getReloadTime(),
 					baseDecorationColor);
 		radialColors[0] = color;
 		radialColors[2] = GBColor.Mix(Color.red, 0.8f * recentDamage
-				/ kRecentDamageTime, Owner().Color());
+				/ kRecentDamageTime, getOwner().getColor());
 		FinePoint speedOffset = velocity.multiply(size / radius
 				* kRadialPaintOffsetFactor);
 		FinePoint focus = new FinePoint(centerPoint + speedOffset.x,
@@ -540,26 +538,26 @@ public class GBRobot extends GBObject {
 		// meters
 		if (detailed) {
 			// energy meter
-			if (hardware.MaxEnergy() != 0)
-				DrawMeter(imageIn, hardware.Energy() / hardware.MaxEnergy(),
+			if (hardware.getMaxEnergy() != 0)
+				drawMeter(imageIn, hardware.getEnergy() / hardware.getMaxEnergy(),
 						meterWidth, 180, 0, meterWidth, energyMeterColor,
-						energyMeterBackgroundColor, Owner().Color(),
-						hardware.Eaten() != 0
-								|| hardware.syphon.Syphoned() != 0
-								|| hardware.enemySyphon.Syphoned() != 0);
+						energyMeterBackgroundColor, getOwner().getColor(),
+						hardware.getEaten() != 0
+								|| hardware.syphon.getSyphoned() != 0
+								|| hardware.enemySyphon.getSyphoned() != 0);
 			// damage meter
-			if (hardware.Armor() < hardware.MaxArmor())
-				DrawMeter(imageIn,
-						1.0 - hardware.Armor() / hardware.MaxArmor(),
+			if (hardware.getArmor() < hardware.getMaxArmor())
+				drawMeter(imageIn,
+						1.0 - hardware.getArmor() / hardware.getMaxArmor(),
 						meterWidth, 360, 180, meterWidth, damageMeterColor,
-						damageMeterBackgroundColor, Owner().Color(),
-						hardware.RepairRate() != 0);
+						damageMeterBackgroundColor, getOwner().getColor(),
+						hardware.getRepairRate() != 0);
 			// gestation meter
-			if (hardware.constructor.Progress() != 0) {
-				DrawMeter(imageIn, hardware.constructor.Fraction(),
+			if (hardware.constructor.getProgress() != 0) {
+				drawMeter(imageIn, hardware.constructor.getFraction(),
 						meterWidth * 2, 0, 360, meterWidth,
 						gestationMeterColor, gestationMeterBackgroundColor,
-						Owner().Color(), hardware.constructor.Rate() != 0);
+						getOwner().getColor(), hardware.constructor.getRate() != 0);
 			}
 		}
 		// decoration appears inside the focus circle or the radial painter
@@ -576,7 +574,7 @@ public class GBRobot extends GBObject {
 		g2d.setPaint(color);
 		int thickness = (int) (15 + decorationOval.width) / 15;
 		g2d.setStroke(new BasicStroke(thickness));
-		switch (type.Decoration()) {
+		switch (type.getDecoration()) {
 		case none:
 		default:
 			//if (hardware.blaster.Cooldown() == 0
@@ -670,7 +668,7 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		int size = (int) (Math.max(Math.round(radius * 2 * proj.getScale()), 1));
 		if (size <= 5)
 			image = miniImage;
@@ -683,20 +681,20 @@ public class GBRobot extends GBObject {
 	}
 
 	@Override
-	public void DrawOverlay(Graphics g, GBProjection proj,
+	public void drawOverlay(Graphics g, GBProjection proj,
 			boolean detailed) {
 		Graphics2D g2d = (Graphics2D) g;
 		Ellipse2D.Double halo = getScreenEllipse(proj);
 		int scale = proj.getScale();
 		// shield
-		if (hardware.ActualShield() > 0) {
+		if (hardware.getActualShield() > 0) {
 			halo.height += scale / 2;
 			halo.width += scale / 2;
 			halo.x -= scale / 2;
 			halo.y -= scale / 4;
 			g2d.setColor(GBColor.multiply(
 					shieldColor,
-					(float) (hardware.ActualShield() / (mass * kStandardShieldPerMass))));
+					(float) (hardware.getActualShield() / (mass * kStandardShieldPerMass))));
 			g2d.setStroke(new BasicStroke(1));
 			g2d.draw(halo);
 		}

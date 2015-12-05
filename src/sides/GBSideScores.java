@@ -12,7 +12,7 @@ public class GBSideScores extends GBScores {
 	public GBSideScores() {
 	}
 
-	public void ResetSampledStatistics() {
+	public void resetSampledStatistics() {
 		population = 0;
 		biomass = 0;
 		constructor = economyHardware = combatHardware = totalHardware = 0;
@@ -20,13 +20,13 @@ public class GBSideScores extends GBScores {
 	}
 
 	@Override
-	public void Reset() {
-		super.Reset();
+	public void reset() {
+		super.reset();
 		extinctTime = 0;
 		sterileTime = 0;
 	}
 
-	public void ReportRobot(double botBiomass, double construc, double econ,
+	public void reportRobot(double botBiomass, double construc, double econ,
 			double combat, double hw) {
 		population += 1;
 		biomass += botBiomass;
@@ -36,31 +36,31 @@ public class GBSideScores extends GBScores {
 		totalHardware += hw;
 	}
 
-	public void ReportDead(double en) {
+	public void reportDead(double en) {
 		dead += en;
 	}
 
-	public void ReportKilled(double en) {
+	public void reportKilled(double en) {
 		killed += en;
 	}
 
-	public void ReportSuicide(double en) {
+	public void reportSuicide(double en) {
 		suicide += en;
 	}
 
-	public void ReportDamageDone(double d) {
+	public void reportDamageDone(double d) {
 		damageDone += d;
 	}
 
-	public void ReportDamageTaken(double d) {
+	public void reportDamageTaken(double d) {
 		damageTaken += d;
 	}
 
-	public void ReportFriendlyFire(double d) {
+	public void reportFriendlyFire(double d) {
 		friendlyFire += d;
 	}
 
-	public void ReportSeeded(double en) {
+	public void reportSeeded(double en) {
 		seeded += en;
 		if (biomassHistory.size() == 1)
 			biomassHistory.set(0, (int) seeded);
@@ -68,22 +68,22 @@ public class GBSideScores extends GBScores {
 		rounds = 1;
 	}
 
-	public void ReportTerritory() {
+	public void reportTerritory() {
 		++territory;
 	}
 
-	public void ReportTotals(GBScores totals) {
-		biomassFraction = totals.Biomass() != 0 ? biomass / totals.Biomass()
+	public void reportTotals(GBScores totals) {
+		biomassFraction = totals.getBiomass() != 0 ? biomass / totals.getBiomass()
 				: 0.0;
 		biomassFractionSquared = biomassFraction * biomassFraction;
-		earlyBiomassFraction = totals.EarlyBiomass() != 0 ? earlyBiomass
-				/ totals.EarlyBiomass() : 0.0;
-		killedFraction = totals.Killed() != 0 ? killed / totals.Killed() : 0.0;
+		earlyBiomassFraction = totals.getEarlyBiomass() != 0 ? earlyBiomass
+				/ totals.getEarlyBiomass() : 0.0;
+		killedFraction = totals.getKilled() != 0 ? killed / totals.getKilled() : 0.0;
 		if (totals.survived == 1 && survived != 0)
 			elimination = 1;
 	}
 
-	public void ReportFrame(int frame) {
+	public void reportFrame(int frame) {
 		if (seeded == 0)
 			return;
 		if (population != 0) {
@@ -114,15 +114,15 @@ public class GBSideScores extends GBScores {
 			biomassHistory.add((int) biomass);
 	}
 
-	public int ExtinctTime() {
+	public int getExtinctTime() {
 		return extinctTime;
 	}
 
-	public int SterileTime() {
+	public int getSterileTime() {
 		return sterileTime;
 	}
 
-	int GetNewRobotNumber() {
+	int getNewRobotNumber() {
 		return ++populationEver; // preincrement for 1-based numbering
 	}
 

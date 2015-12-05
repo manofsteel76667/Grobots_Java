@@ -32,65 +32,65 @@ public class GBSensorState {
 
 	public GBSensorState(SensorSpec spc) {
 		spec = spc;
-		seesFriendly = spc.Seen() == GBObjectClass.ocFood.value;
+		seesFriendly = spc.getSeen() == GBObjectClass.ocFood.value;
 		seesEnemy = true;
 		time = -1;
 		whereOverall = new FinePoint();
 
-		results = new GBSensorResult[MaxResults()];
+		results = new GBSensorResult[getMaxResults()];
 	}
 
-	public double MaxRange() {
-		return spec.Range();
+	public double getMaxRange() {
+		return spec.getRange();
 	}
 
 	// FIXME: calling SensorSpec.Set() on a spec that has a state will cause
 	// pointer
 	// problems, since maxResults is not cached locally.
-	public int MaxResults() {
-		return spec.NumResults();
+	public int getMaxResults() {
+		return spec.getNumResults();
 	}
 
-	public double FiringCost() {
-		return spec.FiringCost();
+	public double getFiringCost() {
+		return spec.getFiringCost();
 	}
 
-	public GBObjectClass Seen() {
-		return GBObjectClass.byValue(spec.Seen());
+	public GBObjectClass getSeen() {
+		return GBObjectClass.byValue(spec.getSeen());
 	}
 
-	public boolean Firing() {
+	public boolean getFiring() {
 		return firing;
 	}
 
-	public double Distance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public double Direction() {
+	public double getDirection() {
 		return direction;
 	}
 
-	public boolean SeesFriendly() {
+	public boolean getSeesFriendly() {
 		return seesFriendly;
 	}
 
-	public boolean SeesEnemy() {
+	public boolean getSeesEnemy() {
 		return seesEnemy;
 	}
 
-	public int Time() {
+	public int getTime() {
 		return time;
 	}
 
-	public int Found() {
+	public int getFound() {
 		return found;
 	}
 
 	// returns false if wraparound occured
-	public boolean NextResult() {
+	public boolean getNextResult() {
 		currentResult++;
-		if (currentResult < NumResults())
+		if (currentResult < getNumResults())
 			return true;
 		else {
 			currentResult = 0;
@@ -98,139 +98,139 @@ public class GBSensorState {
 		}
 	}
 
-	public int NumResults() {
-		return found <= MaxResults() ? found : MaxResults(); // min
+	public int getNumResults() {
+		return found <= getMaxResults() ? found : getMaxResults(); // min
 	}
 
-	public int CurrentResult() {
+	public int getCurrentResult() {
 		return currentResult;
 	}
 
-	public void SetCurrentResult(int newCurrent) {
-		if (newCurrent < 0 || newCurrent >= NumResults())
+	public void getSetCurrentResult(int newCurrent) {
+		if (newCurrent < 0 || newCurrent >= getNumResults())
 			throw new GBBrainError("sensor result out of bounds");
 		currentResult = newCurrent;
 	}
 
-	public FinePoint WhereFound() {
-		if (currentResult < NumResults())
+	public FinePoint getWhereFound() {
+		if (currentResult < getNumResults())
 			return results[currentResult].where;
 		else
 			return new FinePoint();
 	}
 
-	public FinePoint Velocity() {
-		if (currentResult < NumResults())
+	public FinePoint getVelocity() {
+		if (currentResult < getNumResults())
 			return results[currentResult].vel;
 		else
 			return new FinePoint();
 	}
 
-	public int Side() {
-		if (currentResult < NumResults())
+	public int getSide() {
+		if (currentResult < getNumResults())
 			if (results[currentResult].side == null)
 				return 0;
 			else
-				return results[currentResult].side.ID();
+				return results[currentResult].side.getID();
 		else
 			return 0;
 	}
 
-	public double Radius() {
-		if (currentResult < NumResults())
+	public double getRadius() {
+		if (currentResult < getNumResults())
 			return results[currentResult].radius;
 		else
 			return 0;
 	}
 
-	public double Mass() {
-		if (currentResult < NumResults())
+	public double getMass() {
+		if (currentResult < getNumResults())
 			return results[currentResult].mass;
 		else
 			return 0;
 	}
 
-	public double Energy() {
-		if (currentResult < NumResults())
+	public double getEnergy() {
+		if (currentResult < getNumResults())
 			return results[currentResult].energy;
 		else
 			return 0;
 	}
 
-	public int Type() {
-		if (currentResult < NumResults())
+	public int getFoundType() {
+		if (currentResult < getNumResults())
 			return results[currentResult].type;
 		else
 			return 0;
 	}
 
-	public int ID() {
-		if (currentResult < NumResults()) {
+	public int getID() {
+		if (currentResult < getNumResults()) {
 			return results[currentResult].ID;
 		} else
 			return 0;
 	}
 
-	public double ShieldFraction() {
-		if (currentResult < NumResults())
+	public double getShieldFraction() {
+		if (currentResult < getNumResults())
 			return results[currentResult].shieldFraction;
 		else
 			return 1;
 	}
 
-	public double Bomb() {
-		if (currentResult < NumResults())
+	public double getBomb() {
+		if (currentResult < getNumResults())
 			return results[currentResult].bomb;
 		else
 			return 0;
 	}
 
-	public boolean Reloading() {
-		return currentResult < NumResults() && results[currentResult].reloading;
+	public boolean getReloading() {
+		return currentResult < getNumResults() && results[currentResult].reloading;
 	}
 
-	public double Flag() {
-		if (currentResult < NumResults())
+	public double getFlag() {
+		if (currentResult < getNumResults())
 			return results[currentResult].flag;
 		else
 			return 0;
 	}
 
-	public FinePoint WhereOverall() {
+	public FinePoint getWhereOverall() {
 		if (found != 0)
 			return whereOverall.divide(found);
 		else
 			return new FinePoint(0, 0);
 	}
 
-	public void SetDistance(double dist) {
+	public void setDistance(double dist) {
 		distance = dist;
 	}
 
-	public void SetDirection(double dir) {
+	public void setDirection(double dir) {
 		direction = dir;
 	}
 
-	public void SetSeesFriendly(boolean value) {
+	public void setSeesFriendly(boolean value) {
 		seesFriendly = value;
 	}
 
-	public void SetSeesEnemy(boolean value) {
+	public void setSeesEnemy(boolean value) {
 		seesEnemy = value;
 	}
 
-	public void Fire() {
+	public void fire() {
 		firing = true;
 	}
 
-	public void Report(GBSensorResult find) {
+	public void report(GBSensorResult find) {
 		// check for same robot is in SensorShot::CollideWith(). Check for wrong
 		// type of object is in GBWorld.
 		if (!((find.side == owner) ? seesFriendly : seesEnemy))
 			return;
 		GBSensorResult temp, current = find;
 		// insert find in results
-		for (int i = 0; i < MaxResults(); i++) {
+		for (int i = 0; i < getMaxResults(); i++) {
 			if (i >= found) { // beyond end of filled part of array
 				results[i] = current;
 				break;
@@ -246,21 +246,21 @@ public class GBSensorState {
 		whereOverall = whereOverall.add(find.where);
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
-		if (firing && spec.Seen() != GBObjectClass.ocDead.value /*
+	public void act(GBRobot robot, GBWorld world) {
+		if (firing && spec.getSeen() != GBObjectClass.ocDead.value /*
 																 * if sensor
 																 * exists
 																 */) {
-			if (!robot.dead && robot.hardware.UseEnergy(FiringCost())) {
-				robot.Owner().Scores().expenditure.ReportSensors(FiringCost());
-				world.addObjectLater(new GBSensorShot(robot.Position()
+			if (!robot.dead && robot.hardware.useEnergy(getFiringCost())) {
+				robot.getOwner().getScores().expenditure.reportSensors(getFiringCost());
+				world.addObjectLater(new GBSensorShot(robot.getPosition()
 						.addPolar(distance, direction), robot, this));
 			}
 			found = 0;
 			currentResult = 0;
 			whereOverall.set(0, 0);
 			time = world.currentFrame;
-			owner = robot.Owner();
+			owner = robot.getOwner();
 		}
 		firing = false;
 	}

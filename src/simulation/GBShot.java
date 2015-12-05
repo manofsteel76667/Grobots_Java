@@ -10,6 +10,7 @@ package simulation;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import Rendering.GBProjection;
 import sides.Side;
 import support.FinePoint;
 
@@ -18,7 +19,7 @@ public abstract class GBShot extends GBObject {
 	protected Side owner;
 	protected double power;
 
-	protected void DrawTail(Graphics g, GBProjection proj,
+	protected void drawTail(Graphics g, GBProjection proj,
 			double movement, Color color) {
 	}
 
@@ -66,32 +67,32 @@ public abstract class GBShot extends GBObject {
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		return GBObjectClass.ocShot;
 	}
 
 	@Override
-	public void Act(GBWorld world) {
+	public void act(GBWorld world) {
 
 	}
 
 	@Override
-	public Side Owner() {
+	public Side getOwner() {
 		return owner;
 	}
 
-	public int Type() {
+	public int getShotType() {
 		return 0;
 	}
 
-	public double Power() {
+	public double getPower() {
 		return power;
 	}
 
 	@Override
 	public String toString() {
-		return owner != null ? "Shot from " + owner.Name() : "Shot"
-				+ " (power " + power + ", speed " + Speed() + ')';
+		return owner != null ? "Shot from " + owner.getName() : "Shot"
+				+ " (power " + power + ", speed " + getSpeed() + ')';
 	}
 
 };
@@ -116,13 +117,13 @@ abstract class GBTimedShot extends GBShot {
 	}
 
 	@Override
-	public void Act(GBWorld world) {
-		super.Act(world);
+	public void act(GBWorld world) {
+		super.act(world);
 		lifetime--;
 	}
 
 	@Override
-	public GBObjectClass Class() {
+	public GBObjectClass getObjectClass() {
 		if (lifetime > 0)
 			return GBObjectClass.ocShot;
 		else
@@ -130,7 +131,7 @@ abstract class GBTimedShot extends GBShot {
 	}
 
 	@Override
-	public double Interest() {
+	public double getInterest() {
 		return Math.abs(power) * 10 / (lifetime < 5 ? 5 : lifetime) + 1;
 	}
 

@@ -104,8 +104,8 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 							+ "<td align=left width=100><font size=4 color=%s>%s</font></td>"
 							+ "<td align=right width=100>%s</td></tr></table></html>",
 							GBColor.toHex(GBColor
-									.ContrastingTextColor(selectedSide.Color())),
-							selectedSide.Name(), selectedSide.Author());
+									.ContrastingTextColor(selectedSide.getColor())),
+							selectedSide.getName(), selectedSide.getAuthor());
 		else
 			text = "No side selected.";
 		header.setText(text);
@@ -120,7 +120,7 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				declaration);
 		String thirdColor = cost == 0 ? "lightgray" : "darkgray";
 		return String.format(hardwareFormat, firstColor, name, firstColor,
-				decl, secondColor, cost, thirdColor, cost / selectedType.Cost()
+				decl, secondColor, cost, thirdColor, cost / selectedType.getCost()
 						* 100, secondColor, mass);
 	}
 
@@ -136,9 +136,9 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				selectedType.hardware.EngineMass(),
 				selectedType.hardware.Engine()));
 		sb.append(hardwareLine(HardwareTypes.hcConstructor.tagName, "%.2f",
-				"green", selectedType.hardware.constructor.Cost(),
-				selectedType.hardware.constructor.Mass(),
-				selectedType.hardware.constructor.Rate()));
+				"green", selectedType.hardware.constructor.getCost(),
+				selectedType.hardware.constructor.getMass(),
+				selectedType.hardware.constructor.getRate()));
 		sb.append(hardwareLine(HardwareTypes.hcEnergy.tagName, "%.0f %.0f",
 				"green", selectedType.hardware.EnergyCost(),
 				selectedType.hardware.EnergyMass(),
@@ -153,25 +153,25 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				selectedType.hardware.EaterMass(),
 				selectedType.hardware.Eater()));
 		sb.append(hardwareLine(HardwareTypes.hcSyphon.tagName, "%.1f %.0f",
-				"blue", selectedType.hardware.syphon.Cost(),
-				selectedType.hardware.syphon.Mass(),
-				selectedType.hardware.syphon.Power(),
-				selectedType.hardware.syphon.Range()));
+				"blue", selectedType.hardware.syphon.getCost(),
+				selectedType.hardware.syphon.getMass(),
+				selectedType.hardware.syphon.getPower(),
+				selectedType.hardware.syphon.getRange()));
 		sb.append(hardwareLine(HardwareTypes.hcRobotSensor.tagName, "%.0f %d",
-				"blue", selectedType.hardware.sensor1.Cost(),
-				selectedType.hardware.sensor1.Mass(),
-				selectedType.hardware.sensor1.Range(),
-				selectedType.hardware.sensor1.NumResults()));
+				"blue", selectedType.hardware.sensor1.getCost(),
+				selectedType.hardware.sensor1.getMass(),
+				selectedType.hardware.sensor1.getRange(),
+				selectedType.hardware.sensor1.getNumResults()));
 		sb.append(hardwareLine(HardwareTypes.hcFoodSensor.tagName, "%.0f %d",
-				"blue", selectedType.hardware.sensor2.Cost(),
-				selectedType.hardware.sensor2.Mass(),
-				selectedType.hardware.sensor2.Range(),
-				selectedType.hardware.sensor2.NumResults()));
+				"blue", selectedType.hardware.sensor2.getCost(),
+				selectedType.hardware.sensor2.getMass(),
+				selectedType.hardware.sensor2.getRange(),
+				selectedType.hardware.sensor2.getNumResults()));
 		sb.append(hardwareLine(HardwareTypes.hcShotSensor.tagName, "%.0f %d",
-				"blue", selectedType.hardware.sensor3.Cost(),
-				selectedType.hardware.sensor3.Mass(),
-				selectedType.hardware.sensor3.Range(),
-				selectedType.hardware.sensor3.NumResults()));
+				"blue", selectedType.hardware.sensor3.getCost(),
+				selectedType.hardware.sensor3.getMass(),
+				selectedType.hardware.sensor3.getRange(),
+				selectedType.hardware.sensor3.getNumResults()));
 		sb.append(hardwareLine(HardwareTypes.hcArmor.tagName, "%.0f", "black",
 				selectedType.hardware.ArmorCost(),
 				selectedType.hardware.ArmorMass(),
@@ -185,27 +185,27 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				selectedType.hardware.ShieldMass(),
 				selectedType.hardware.Shield()));
 		sb.append(hardwareLine(HardwareTypes.hcBlaster.tagName, "%.1f %.0f %d",
-				"black", selectedType.hardware.blaster.Cost(),
-				selectedType.hardware.blaster.Mass(),
-				selectedType.hardware.blaster.Damage(),
-				selectedType.hardware.blaster.Range(),
-				selectedType.hardware.blaster.ReloadTime()));
+				"black", selectedType.hardware.blaster.getCost(),
+				selectedType.hardware.blaster.getMass(),
+				selectedType.hardware.blaster.getDamage(),
+				selectedType.hardware.blaster.getRange(),
+				selectedType.hardware.blaster.getReloadTime()));
 		sb.append(hardwareLine(HardwareTypes.hcGrenades.tagName,
-				"%.1f %.0f %d", "black", selectedType.hardware.grenades.Cost(),
-				selectedType.hardware.grenades.Mass(),
-				selectedType.hardware.grenades.Damage(),
-				selectedType.hardware.grenades.Range(),
-				selectedType.hardware.grenades.ReloadTime()));
+				"%.1f %.0f %d", "black", selectedType.hardware.grenades.getCost(),
+				selectedType.hardware.grenades.getMass(),
+				selectedType.hardware.grenades.getDamage(),
+				selectedType.hardware.grenades.getRange(),
+				selectedType.hardware.grenades.getReloadTime()));
 		sb.append(hardwareLine(HardwareTypes.hcForceField.tagName, "%.1f %.0f",
-				"blue", selectedType.hardware.forceField.Cost(),
-				selectedType.hardware.forceField.Mass(),
-				selectedType.hardware.forceField.Power(),
-				selectedType.hardware.forceField.Range()));
+				"blue", selectedType.hardware.forceField.getCost(),
+				selectedType.hardware.forceField.getMass(),
+				selectedType.hardware.forceField.getPower(),
+				selectedType.hardware.forceField.getRange()));
 		sb.append(hardwareLine(HardwareTypes.hcEnemySyphon.tagName,
-				"%.1f %.0f", "blue", selectedType.hardware.enemySyphon.Cost(),
-				selectedType.hardware.enemySyphon.Mass(),
-				selectedType.hardware.enemySyphon.Power(),
-				selectedType.hardware.enemySyphon.Range()));
+				"%.1f %.0f", "blue", selectedType.hardware.enemySyphon.getCost(),
+				selectedType.hardware.enemySyphon.getMass(),
+				selectedType.hardware.enemySyphon.getPower(),
+				selectedType.hardware.enemySyphon.getRange()));
 		sb.append(hardwareLine(
 				"Ordinary Hardware",
 				"",
@@ -224,7 +224,7 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 			sb.append(hardwareLine("No brain", "", "black", 0, 0));
 		else
 			sb.append(hardwareLine("Code", "", "black",
-					selectedType.brain.Cost(), selectedType.brain.Mass()));
+					selectedType.brain.getCost(), selectedType.brain.getMass()));
 		return sb.toString();
 	}
 
@@ -240,16 +240,16 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 	String hardwareFooter() {
 		double multi = Math
 				.max(selectedType
-						.MassiveDamageMultiplier(selectedType.Mass() * 100),
+						.getMassiveDamageMultiplier(selectedType.getMass() * 100),
 						100);
 		double pregMulti = Math
 				.max(selectedType
-						.MassiveDamageMultiplier(selectedType.Mass() * 200),
+						.getMassiveDamageMultiplier(selectedType.getMass() * 200),
 						100);
 		String color = multi > 100 ? "red" : "lightgray";
-		return String.format(footerFormat, selectedType.Cost(), selectedType
-				.Mass(), color, multi,
-				selectedType.hardware.constructor.Rate() > 0 ? pregMulti
+		return String.format(footerFormat, selectedType.getCost(), selectedType
+				.getMass(), color, multi,
+				selectedType.hardware.constructor.getRate() > 0 ? pregMulti
 						: multi);
 	}
 
@@ -359,10 +359,10 @@ public class RobotTypeView extends JPanel implements TypeSelector,
 				}
 			setText(String
 					.format(textFormat,
-							GBColor.toHex(type.Color()),
+							GBColor.toHex(type.getColor()),
 							index + 1,
 							type.name,
-							type.Cost(),
+							type.getCost(),
 							population,
 							type.hardware.GrowthCost()
 									/ type.hardware.BaseCost() * 100,

@@ -16,4 +16,8 @@ public class GBBadSymbolIndexError extends GBBrainError {
 	public String toString() {
 		return "invalid symbol index";
 	}
+	@Override
+	public String getMessage() {
+		return toString();
+	}
 }

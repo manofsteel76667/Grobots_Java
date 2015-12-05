@@ -23,80 +23,80 @@ public class GBGrenadesState {
 
 	public GBGrenadesState(GrenadesSpec spc) {
 		spec = spc;
-		cooldown = spc.ReloadTime();
+		cooldown = spc.getReloadTime();
 	}
 
-	public int ReloadTime() {
-		return spec.ReloadTime();
+	public int getReloadTime() {
+		return spec.getReloadTime();
 	}
 
-	public double Speed() {
-		return spec.Speed();
+	public double getSpeed() {
+		return spec.getSpeed();
 	}
 
-	public int MaxLifetime() {
-		return spec.Lifetime();
+	public int getMaxLifetime() {
+		return spec.getLifetime();
 	}
 
-	public double MaxRange() {
-		return spec.Range();
+	public double getMaxRange() {
+		return spec.getRange();
 	}
 
-	public double Damage() {
-		return spec.Damage();
+	public double getDamage() {
+		return spec.getDamage();
 	}
 
-	public double FiringCost() {
-		return spec.FiringCost();
+	public double getFiringCost() {
+		return spec.getFiringCost();
 	}
 
-	public int Cooldown() {
+	public int getCooldown() {
 		return cooldown;
 	}
 
-	public boolean Firing() {
+	public boolean getFiring() {
 		return firing;
 	}
 
-	public double Direction() {
+	public double getDirection() {
 		return direction;
 	}
 
-	public double Distance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public double ExplosionRadius() {
-		return GBExplosion.PowerRadius(Damage());
+	public double getExplosionRadius() {
+		return GBExplosion.PowerRadius(getDamage());
 	}
 
-	public void Fire(double dist, double dir) {
-		if (cooldown == 0 && Damage() > 0) {
-			cooldown = ReloadTime();
+	public void fire(double dist, double dir) {
+		if (cooldown == 0 && getDamage() > 0) {
+			cooldown = getReloadTime();
 			firing = true;
 			direction = dir;
-			distance = GBMath.clamp(dist, Speed(), MaxRange());
+			distance = GBMath.clamp(dist, getSpeed(), getMaxRange());
 		}
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		if (firing) {
-			double effectiveness = robot.hardware.EffectivenessFraction();
-			if (robot.hardware.ActualShield() == 0
-					&& robot.hardware.UseEnergy(FiringCost() * effectiveness)) {
-				robot.Owner().Scores().expenditure.ReportWeapons(FiringCost()
+			double effectiveness = robot.hardware.getEffectivenessFraction();
+			if (robot.hardware.getActualShield() == 0
+					&& robot.hardware.useEnergy(getFiringCost() * effectiveness)) {
+				robot.getOwner().getScores().expenditure.reportWeapons(getFiringCost()
 						* effectiveness);
 				SoundManager.playSound(SoundManager.SoundType.stGrenade, robot.position);
 				int lifetime = (int) Math.max(
-						Math.floor((distance - robot.Radius()) / Speed()), 1);
-				GBObject shot = new GBGrenade(robot.Position().addPolar(
-						robot.Radius(), direction), robot.Velocity().addPolar(
-						Speed(), direction), robot.Owner(), Damage()
+						Math.floor((distance - robot.getRadius()) / getSpeed()), 1);
+				GBObject shot = new GBGrenade(robot.getPosition().addPolar(
+						robot.getRadius(), direction), robot.getVelocity().addPolar(
+						getSpeed(), direction), robot.getOwner(), getDamage()
 						* effectiveness, lifetime);
 				world.addObjectLater(shot);
-				for (double en = FiringCost() * effectiveness; en >= GBHardwareState.kGrenadesFiringCostPerSmoke; en -= GBHardwareState.kGrenadesFiringCostPerSmoke) {
-					GBObject smoke = new GBSmoke(robot.Position().addPolar(
-							robot.Radius(), direction),
+				for (double en = getFiringCost() * effectiveness; en >= GBHardwareState.kGrenadesFiringCostPerSmoke; en -= GBHardwareState.kGrenadesFiringCostPerSmoke) {
+					GBObject smoke = new GBSmoke(robot.getPosition().addPolar(
+							robot.getRadius(), direction),
 							world.random
 									.Vector(GBTimedDecoration.kSmokeMaxSpeed),
 							world.random.intInRange(
@@ -104,7 +104,7 @@ public class GBGrenadesState {
 									GBTimedDecoration.kSmokeMaxLifetime));
 					world.addObjectLater(smoke);
 				}
-				cooldown = ReloadTime();
+				cooldown = getReloadTime();
 				// recoil
 				// robot.PushBy(- spec.Recoil() * effectiveness, direction);
 			}

@@ -1,10 +1,10 @@
 package simulation;
 
 public interface ScoreKeeper {
-	public void ReportManna(double amount);
+	public void reportManna(double amount);
 
-	public void ReportCorpse(double amount);
+	public void reportCorpse(double amount);
 
-	public void ReportRobot(double amount);
+	public void reportRobot(double amount);
 
 }

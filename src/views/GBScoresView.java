@@ -71,7 +71,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 			@Override
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				if (game.TournamentScores().rounds > rounds)
+				if (game.getTournamentScores().rounds > rounds)
 					max = new Point(0, 0);
 				drawGraph((Graphics2D) g, getVisibleRect(), false, max);
 			};
@@ -202,18 +202,18 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 
 	public void updateScores() {
 		roundLabel.setText(String.format("%s This Round:",
-				selectedSide == null ? "" : selectedSide.Name()));
+				selectedSide == null ? "" : selectedSide.getName()));
 		tournLabel.setText(String.format("%s Average over %d rounds:",
-				selectedSide == null ? "" : selectedSide.Name(),
-				game.TournamentScores().rounds));
-		GBScores scores = selectedSide == null ? game.RoundScores()
-				: selectedSide.Scores();
+				selectedSide == null ? "" : selectedSide.getName(),
+				game.getTournamentScores().rounds));
+		GBScores scores = selectedSide == null ? game.getRoundScores()
+				: selectedSide.getScores();
 		drawIncome(roundIncome, scores);
 		drawKills(roundKills, scores);
 		drawExpenditure(roundExpenditure, scores);
 		drawCounts(roundCounts, scores);
-		scores = selectedSide == null ? game.TournamentScores() : selectedSide
-				.TournamentScores();
+		scores = selectedSide == null ? game.getTournamentScores() : selectedSide
+				.getTournamentScores();
 		drawIncome(tournIncome, scores);
 		drawKills(tournKills, scores);
 		drawExpenditure(tournExpenditure, scores);
@@ -224,11 +224,11 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 		pane.setText("");
 		Document doc = pane.getDocument();
 		try {
-			double total = score.income.Total() != 0 ? score.income.Total() / 100.0
+			double total = score.income.total() != 0 ? score.income.total() / 100.0
 					: 1;
 			doc.insertString(doc.getLength(), "Income\t", bold);
 			doc.insertString(doc.getLength(),
-					String.format("%d\n", score.income.Total()), bold);
+					String.format("%d\n", score.income.total()), bold);
 			doc.insertString(doc.getLength(), "Solar\t", green);
 			doc.insertString(doc.getLength(),
 					String.format("%.1f%%\n", score.income.autotrophy / total),
@@ -259,12 +259,12 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 		try {
 			doc.insertString(doc.getLength(), "Kill Rate\t", basicAttr);
 			doc.insertString(doc.getLength(),
-					String.format("%.0f%%\n", score.KilledFraction()),
+					String.format("%.0f%%\n", score.getKilledFraction()),
 					basicAttr);
 			if (score.survived != 0) {
 				doc.insertString(doc.getLength(), "Relative\t", basicAttr);
 				doc.insertString(doc.getLength(),
-						String.format("%.0f%%\n", score.KillRate()), basicAttr);
+						String.format("%.0f%%\n", score.getKillRate()), basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "\n", basicAttr);
 			doc.insertString(doc.getLength(), "Kills\t", basicAttr);
@@ -285,11 +285,11 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 		pane.setText("");
 		Document doc = pane.getDocument();
 		try {
-			double total = score.expenditure.Total() != 0 ? score.income
-					.Total() / 100.0 : 1;
+			double total = score.expenditure.total() != 0 ? score.income
+					.total() / 100.0 : 1;
 			doc.insertString(doc.getLength(), "Spent\t", bold);
 			doc.insertString(doc.getLength(),
-					String.format("%d\n", score.expenditure.Total()), bold);
+					String.format("%d\n", score.expenditure.total()), bold);
 			doc.insertString(doc.getLength(), "Growth\t", green);
 			doc.insertString(
 					doc.getLength(),
@@ -351,13 +351,13 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 						String.format("%d\n", score.population), blue);
 				doc.insertString(doc.getLength(), "Ever\t", blue);
 				doc.insertString(doc.getLength(),
-						String.format("%d\n", score.PopulationEver()), blue);
+						String.format("%d\n", score.getPopulationEver()), blue);
 				doc.insertString(doc.getLength(), "Manna\t", green);
 				doc.insertString(doc.getLength(),
-						String.format("%d\n", game.MannaValue()), green);
+						String.format("%d\n", game.getMannaValue()), green);
 				doc.insertString(doc.getLength(), "Corpses\t", red);
 				doc.insertString(doc.getLength(),
-						String.format("%d\n", game.CorpseValue()), red);
+						String.format("%d\n", game.getCorpseValue()), red);
 			} else {
 				doc.insertString(doc.getLength(), "Biomass\t", basicAttr);
 				doc.insertString(doc.getLength(),
@@ -368,7 +368,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 						String.format("%.0f\n", score.earlyBiomass), blue);
 				doc.insertString(doc.getLength(), "Survival\t", blue);
 				doc.insertString(doc.getLength(),
-						String.format("%.1f%%\n", score.Survival() * 100), blue);
+						String.format("%.1f%%\n", score.getSurvival() * 100), blue);
 				doc.insertString(doc.getLength(), "Early Death\t", green);
 				doc.insertString(
 						doc.getLength(),
@@ -376,7 +376,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 						green);
 				doc.insertString(doc.getLength(), "Late Death\t", red);
 				doc.insertString(doc.getLength(),
-						String.format("%.1f%%\n", score.LateDeathRate() * 100),
+						String.format("%.1f%%\n", score.getLateDeathRate() * 100),
 						red);
 			}
 			doc.insertString(doc.getLength(), "Seeded\t", basicAttr);
@@ -384,9 +384,9 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 					String.format("%.0f\n", score.seeded), basicAttr);
 			doc.insertString(doc.getLength(), "Efficiency\t", basicAttr);
 			doc.insertString(doc.getLength(),
-					String.format("%.1f%%\n", score.Efficiency() * 100),
+					String.format("%.1f%%\n", score.getEfficiency() * 100),
 					basicAttr);
-			int doubletime = score.Doubletime(game.CurrentFrame());
+			int doubletime = score.getDoubletime(game.currentFrame());
 			if (selectedSide != null && doubletime != 0 && doubletime < 100000) {
 				doc.insertString(doc.getLength(), "DoubleTime\t", basicAttr);
 				doc.insertString(doc.getLength(),
@@ -396,11 +396,11 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 			if (score.population != 0) {
 				doc.insertString(doc.getLength(), "Economy\t", basicAttr);
 				doc.insertString(doc.getLength(),
-						String.format("%.1f%%\n", score.EconFraction()),
+						String.format("%.1f%%\n", score.getEconFraction()),
 						basicAttr);
 				doc.insertString(doc.getLength(), "Combat\t", basicAttr);
 				doc.insertString(doc.getLength(),
-						String.format("%.1f%%\n", score.CombatFraction()),
+						String.format("%.1f%%\n", score.getCombatFraction()),
 						basicAttr);
 			} else
 				doc.insertString(doc.getLength(), "\n\n", basicAttr);
@@ -420,7 +420,7 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 	}
 
 	void drawGraph(Graphics2D g, Rectangle rect, boolean allRounds, Point max) {
-		if (game.CountSides() == 0)
+		if (game.getSidesCount() == 0)
 			return;
 		rect.grow(-10, -5);
 		Side side = selectedSide;
@@ -428,10 +428,10 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 		if (allRounds)
 			max.y = 0;
 		for (Side s : game.sides) {
-			if ((allRounds ? s.TournamentScores().rounds : s.Scores().rounds) == 0)
+			if ((allRounds ? s.getTournamentScores().rounds : s.getScores().rounds) == 0)
 				continue;
-			List<Integer> hist = allRounds ? s.TournamentScores()
-					.BiomassHistory() : s.Scores().BiomassHistory();
+			List<Integer> hist = allRounds ? s.getTournamentScores()
+					.getBiomassHistory() : s.getScores().getBiomassHistory();
 			if (hist.size() == 0)
 				continue;
 			if (hist.size() - 1 > max.x) {
@@ -468,14 +468,14 @@ public class GBScoresView extends JPanel implements SideSelectionListener {
 		}
 		// draw curves
 		for (Side s : game.sides) {
-			if ((allRounds ? s.TournamentScores().rounds : s.Scores().rounds) == 0)
+			if ((allRounds ? s.getTournamentScores().rounds : s.getScores().rounds) == 0)
 				continue;
-			List<Integer> hist = (allRounds ? s.TournamentScores()
-					.BiomassHistory() : s.Scores().BiomassHistory());
+			List<Integer> hist = (allRounds ? s.getTournamentScores()
+					.getBiomassHistory() : s.getScores().getBiomassHistory());
 			// draw lines
 
 			for (int j = 0; j < hist.size() - 1; ++j) {
-				g.setColor(GBColor.ContrastingTextColor(s.Color()));
+				g.setColor(GBColor.ContrastingTextColor(s.getColor()));
 				g.setStroke(new BasicStroke(s == side ? 2 : 1));
 				g.drawLine(
 						(int) (rect.width * (double) j / max.x),

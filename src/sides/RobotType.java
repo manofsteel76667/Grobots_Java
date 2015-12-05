@@ -86,56 +86,56 @@ public class RobotType {
 				&& this.name.equals(((RobotType) other).name);
 	}
 
-	public void ResetSampledStatistics() {
+	public void resetSampledStatistics() {
 		population = 0;
 		biomass = 0;
 	}
 
-	public void ReportRobot(double botBiomass) {
+	public void reportRobot(double botBiomass) {
 		population++;
 		biomass += botBiomass;
 	}
 
-	public void SetName(String newname) {
+	public void setName(String newname) {
 		name = newname;
 	}
 
 	@Override
 	public String toString() {
-		return side.Name() + (side.Name().endsWith("s") ? "'" : "'s") + " "
+		return side.getName() + (side.getName().endsWith("s") ? "'" : "'s") + " "
 				+ name;
 	}
 
-	public int ID() {
+	public int getID() {
 		return id;
 	}
 
-	public void SetID(int newid) {
+	public void setID(int newid) {
 		id = newid;
 	}
 
-	public Color Color() {
+	public Color getColor() {
 		return color;
 	}
 
-	void SetColor(Color newcolor) {
+	void setColor(Color newcolor) {
 		color = newcolor;
 	}
 
-	public GBRobotDecoration Decoration() {
+	public GBRobotDecoration getDecoration() {
 		return decoration;
 	}
 
-	public Color DecorationColor() {
+	public Color getDecorationColor() {
 		return decorationColor;
 	}
 
-	void SetDecoration(GBRobotDecoration dec, Color col) {
+	void setDecoration(GBRobotDecoration dec, Color col) {
 		decoration = dec;
 		decorationColor = col;
 	}
 
-	public HardwareSpec Hardware() {
+	public HardwareSpec getHardware() {
 		return hardware;
 	}
 
@@ -143,33 +143,33 @@ public class RobotType {
 		return brain;
 	}
 
-	public void SetBrain(BrainSpec spec) {
-		spec.Check();
+	public void setBrain(BrainSpec spec) {
+		spec.check();
 		brain = spec;
 	}
 
-	public Brain MakeBrain() {
+	public Brain makeBrain() {
 		if (brain == null) {
 			return null;
 		}
-		return brain.MakeBrain();
+		return brain.makeBrain();
 	}
 
-	public void Recalculate() {
+	public void recalculate() {
 		hardware.Recalculate();
-		cost = hardware.Cost() + (brain != null ? brain.Cost() : 0);
-		mass = hardware.Mass() + (brain != null ? brain.Mass() : 0);
+		cost = hardware.Cost() + (brain != null ? brain.getCost() : 0);
+		mass = hardware.Mass() + (brain != null ? brain.getMass() : 0);
 	}
 
-	public double Cost() {
+	public double getCost() {
 		return cost;
 	}
 
-	public double Mass() {
+	public double getMass() {
 		return mass;
 	}
 
-	public double MassiveDamageMultiplier(double mass) {
+	public double getMassiveDamageMultiplier(double mass) {
 		double multiplier = 1;
 		if (mass > kStandardMass)
 			multiplier += (mass - kStandardMass) / 50;

@@ -14,12 +14,12 @@ public abstract class BrainSpec extends HardwareItem {
 	 * 
 	 * @return
 	 */
-	public abstract Brain MakeBrain();
+	public abstract Brain makeBrain();
 
 	/**
 	 * Check ok to use
 	 */
-	public abstract void Check();
+	public abstract void check();
 
 	public BrainSpec() {
 		super(0, 0);

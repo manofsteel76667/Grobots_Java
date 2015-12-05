@@ -331,18 +331,18 @@ public class HardwareSpec {
 
 	public void Recalculate() {
 		growthCost = EnergyHardwareCost() + SolarCellsCost() + EaterCost()
-				+ constructor.Cost() + syphon.Cost();
-		combatCost = ArmorCost() + RepairCost() + ShieldCost() + blaster.Cost()
-				+ grenades.Cost() + enemySyphon.Cost() + BombCost();
+				+ constructor.getCost() + syphon.getCost();
+		combatCost = ArmorCost() + RepairCost() + ShieldCost() + blaster.getCost()
+				+ grenades.getCost() + enemySyphon.getCost() + BombCost();
 		hardwareCost = ChassisCost() + ProcessorCost() + EngineCost()
-				+ sensor1.Cost() + sensor2.Cost() + sensor3.Cost()
-				+ forceField.Cost() + growthCost + combatCost;
+				+ sensor1.getCost() + sensor2.getCost() + sensor3.getCost()
+				+ forceField.getCost() + growthCost + combatCost;
 		mass = ChassisMass() + ProcessorMass() + EngineMass() + EnergyMass()
 				+ SolarCellsMass() + EaterMass() + ArmorMass() + RepairMass()
-				+ ShieldMass() + BombMass() + constructor.Mass()
-				+ sensor1.Mass() + sensor2.Mass() + sensor3.Mass()
-				+ blaster.Mass() + grenades.Mass() + forceField.Mass()
-				+ syphon.Mass() + enemySyphon.Mass();
+				+ ShieldMass() + BombMass() + constructor.getMass()
+				+ sensor1.getMass() + sensor2.getMass() + sensor3.getMass()
+				+ blaster.getMass() + grenades.getMass() + forceField.getMass()
+				+ syphon.getMass() + enemySyphon.getMass();
 		coolingCost = Math.pow(hardwareCost * kCoolingCostRatio, 2);
 		hardwareCost += coolingCost;
 		mass += CoolingMass();

@@ -25,43 +25,43 @@ public class GBConstructorState {
 		spec = spc;
 	}
 
-	public double Rate() {
+	public double getRate() {
 		return rate;
 	}
 
-	public double Progress() {
+	public double getProgress() {
 		return progress;
 	}
 
-	public double Remaining() {
+	public double getRemaining() {
 		if (type == null)
 			return 0;
-		return type.Cost() - progress;
+		return type.getCost() - progress;
 	}
 
-	public double FetusMass() {
-		return type != null ? Fraction() * type.Mass() : 0;
+	public double getFetusMass() {
+		return type != null ? getFraction() * type.getMass() : 0;
 	}
 
-	public double Fraction() {
+	public double getFraction() {
 		if (type == null)
 			return 0;
-		return progress / type.Cost();
+		return progress / type.getCost();
 	}
 
-	public double MaxRate() {
-		return spec.Rate();
+	public double getMaxRate() {
+		return spec.getRate();
 	}
 
-	public RobotType Type() {
+	public RobotType getRobotType() {
 		return type;
 	}
 
-	public int ChildID() {
+	public int getChildID() {
 		return lastChild;
 	}
 
-	public void Start(RobotType ntype, double free) {
+	public void start(RobotType ntype, double free) {
 		if (type == ntype)
 			return;
 		abortion += progress;
@@ -70,35 +70,35 @@ public class GBConstructorState {
 							// doesn't happen
 	}
 
-	public void SetRate(double nrate) {
-		rate = GBMath.clamp(nrate, 0, MaxRate());
+	public void setRate(double nrate) {
+		rate = GBMath.clamp(nrate, 0, getMaxRate());
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		if (type != null && rate != 0) {
-			double actual = robot.hardware.UseEnergyUpTo(Math.min(rate,
-					Remaining()));
-			robot.Owner().Scores().expenditure.ReportConstruction(actual);
+			double actual = robot.hardware.useEnergyUpTo(Math.min(rate,
+					getRemaining()));
+			robot.getOwner().getScores().expenditure.reportConstruction(actual);
 			progress += actual;
-			if (Remaining() <= 0 && robot.hardware.ActualShield() == 0) {
+			if (getRemaining() <= 0 && robot.hardware.getActualShield() == 0) {
 				SoundManager.playSound(SoundManager.SoundType.stBirth, robot.position);
 				double dir = world.random.Angle();
-				GBRobot child = new GBRobot(type, robot.Position().addPolar(
+				GBRobot child = new GBRobot(type, robot.getPosition().addPolar(
 						GBHardwareState.kBabyDisplacementFraction
-								* robot.Radius(), dir), robot.Velocity()
+								* robot.getRadius(), dir), robot.getVelocity()
 						.addPolar(GBHardwareState.kBabyInitialSpeed, dir),
-						robot.ID());
+						robot.getID());
 				world.addObjectLater(child);
 				progress = 0;
 				type = null;
-				lastChild = child.ID();
+				lastChild = child.getID();
 			}
-			robot.Recalculate();
+			robot.recalculate();
 		}
 		if (abortion > 0) {
-			world.addObjectLater(new GBCorpse(robot.Position(), robot
-					.Velocity(), abortion
-					* GBHardwareState.kAbortionCorpseFactor, robot.Type(), null)); // should
+			world.addObjectLater(new GBCorpse(robot.getPosition(), robot
+					.getVelocity(), abortion
+					* GBHardwareState.kAbortionCorpseFactor, robot.getRobotType(), null)); // should
 																					// really
 																					// be
 																					// child

@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+import Rendering.GBProjection;
 import support.FinePoint;
 
 public class GBBlasterSpark extends GBTimedDecoration {
@@ -20,25 +21,25 @@ public class GBBlasterSpark extends GBTimedDecoration {
 		super(where, kBlasterSparkMaxRadius, kBlasterSparkLifetime);
 		image = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = (Graphics2D) image.getGraphics();
-		g2d.setColor(Color());
+		g2d.setColor(getColor());
 		g2d.drawOval(0, 0, 20, 20);
 		g2d.dispose();
 	}
 
 	@Override
-	public void Act(GBWorld world) {
-		super.Act(world);
+	public void act(GBWorld world) {
+		super.act(world);
 		radius = kBlasterSparkMaxRadius - kBlasterSparkGrowthRate
 				* (lifetime - 1);
 	}
 
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		return Color.white;
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		drawImage(g, proj);
 	}
 

@@ -366,6 +366,10 @@ public enum StackBrainOpcode {
 	static final Map<String, StackBrainOpcode> nameLookup = new HashMap<String, StackBrainOpcode>();
 	static final Map<Integer, StackBrainOpcode> idLookup = new HashMap<Integer, StackBrainOpcode>();
 	public static final Map<OpCodeType, Set<String>> opClass = new HashMap<OpCodeType, Set<String>>();
+	private static int numPrimitives = 0;
+	private static int numHardwareVariables = 0;
+	private static int numHardwareVectors = 0;
+	private static int numCWords = 0;
 
 	static {
 		for (OpCodeType typ : OpCodeType.values())
@@ -375,25 +379,29 @@ public enum StackBrainOpcode {
 			idLookup.put(code.ID, code);
 			opClass.get(code.type).add(code.name);
 		}
+		numPrimitives = opClass.get(OpCodeType.ocPrimitive).size();
+		numHardwareVariables = opClass.get(OpCodeType.ocHardwareVariable).size();
+		numHardwareVectors = opClass.get(OpCodeType.ocHardwareVector).size();
+		numCWords = opClass.get(OpCodeType.ocCompileWord).size();
 	}
 
 	public final OpCodeType type;
 	public final int ID;
 
 	public final static int kNumPrimitives() {
-		return opClass.get(OpCodeType.ocPrimitive).size();
+		return numPrimitives;
 	}
 
 	public final static int kNumHardwareVariables() {
-		return opClass.get(OpCodeType.ocHardwareVariable).size();
+		return numHardwareVariables;
 	}
 
 	public final static int kNumHardwareVectors() {
-		return opClass.get(OpCodeType.ocHardwareVector).size();
+		return numHardwareVectors;
 	}
 
 	public final static int kNumCWords() {
-		return opClass.get(OpCodeType.ocCompileWord).size();
+		return numCWords;
 	}
 
 	public final String name;

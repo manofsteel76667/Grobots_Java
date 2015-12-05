@@ -7,7 +7,7 @@ package sides;
 public class BlasterSpec extends HardwareItem {
 
 	@Override
-	public double Mass() {
+	public double getMass() {
 		if (damage > 0)
 			return (1.0 / reloadTime + HardwareSpec.kBlasterBarrel)
 					* (damage + HardwareSpec.kBlasterDamageOverhead)
@@ -20,7 +20,7 @@ public class BlasterSpec extends HardwareItem {
 	}
 
 	@Override
-	public double Cost() {
+	public double getCost() {
 		if (damage > 0)
 			return (1.0 / reloadTime + HardwareSpec.kBlasterBarrel)
 					* (damage + HardwareSpec.kBlasterDamageOverhead)
@@ -47,27 +47,27 @@ public class BlasterSpec extends HardwareItem {
 	private int reloadTime;
 	private int lifetime;
 
-	public double Damage() {
+	public double getDamage() {
 		return damage;
 	}
 
-	public double Range() {
+	public double getRange() {
 		return range;
 	}
 
-	public double Speed() {
+	public double getSpeed() {
 		return speed;
 	}
 
-	public int Lifetime() {
+	public int getLifetime() {
 		return lifetime;
 	}
 
-	public int ReloadTime() {
+	public int getReloadTime() {
 		return reloadTime;
 	}
 
-	public void Set(double dmg, double rng, int reload) {
+	public void set(double dmg, double rng, int reload) {
 		damage = Math.max(dmg, 0);
 		range = Math.max(rng, 0);
 		speed = Math.pow(range / HardwareSpec.kBlasterLifetimeSpeedTradeoff,
@@ -76,7 +76,7 @@ public class BlasterSpec extends HardwareItem {
 		reloadTime = (reload < 1) ? 1 : reload; // limit to >= 1
 	}
 
-	public double FiringCost() {
+	public double getFiringCost() {
 		return (damage + HardwareSpec.kBlasterDamageOverhead)
 				* (HardwareSpec.kBlasterFiringCostPerDamage + range
 						* HardwareSpec.kBlasterFiringCostPerRange + Math.pow(

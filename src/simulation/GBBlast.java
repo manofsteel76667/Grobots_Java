@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+import Rendering.GBProjection;
 import sides.Side;
 import support.FinePoint;
 import support.GBColor;
@@ -39,59 +40,59 @@ public class GBBlast extends GBTimedShot {
 		int cx = size / 2;
 		int cy = size / 2;
 		int thickness = (int) (2 + Math.floor(power / 10));
-		FinePoint head = Velocity().unit().multiply(size).divide(2);
+		FinePoint head = getVelocity().unit().multiply(size).divide(2);
 		int hx = (int) Math.round(head.x);
 		int hy = (int) (-1 * Math.round(head.y));
-		FinePoint tail = Velocity().multiply(size).divide(radius * 2);
+		FinePoint tail = getVelocity().multiply(size).divide(radius * 2);
 		int tx = (int) Math.round(tail.x);
 		int ty = (int) (-1 * Math.round(tail.y));
-		g2d.setPaint(GBColor.multiply(Color(), 0.7f));
+		g2d.setPaint(GBColor.multiply(getColor(), 0.7f));
 		g2d.setStroke(new BasicStroke(thickness + 2));
 		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
-		g2d.setPaint(GBColor.add(Color(), GBColor.getGreyColor(0.2f)));
+		g2d.setPaint(GBColor.add(getColor(), GBColor.getGreyColor(0.2f)));
 		g2d.setStroke(new BasicStroke(Math.max(thickness, 2)));
 		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
-		g2d.setPaint(Color());
+		g2d.setPaint(getColor());
 		g2d.setStroke(new BasicStroke(thickness));
 		g2d.drawLine(cx + hx, cy + hy, cx - tx, cy - ty);
 		miniImage = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 		g2d = (Graphics2D)miniImage.getGraphics();
-		g2d.setPaint(Color());
+		g2d.setPaint(getColor());
 		g2d.fillRect(0, 0, 20, 20);
 		hitImage = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 		g2d = (Graphics2D)hitImage.getGraphics();
-		g2d.setPaint(Color());
+		g2d.setPaint(getColor());
 		g2d.fillOval(0, 0, 20, 20);
 		//g2d.dispose();
 	}
 
 	@Override
-	public void CollideWithWall() {
+	public void collideWithWall() {
 		lifetime = 0;
 		hit = true;
 	}
 
 	@Override
-	public void CollideWith(GBObject other) {
-		if (!hit && other.Class() == GBObjectClass.ocRobot) {
-			other.TakeDamage(power, owner);
-			Push(other, power * kBlastPushRatio);
-			other.PushBy(Velocity().multiply(power * kBlastMomentumPerPower));
+	public void collideWith(GBObject other) {
+		if (!hit && other.getObjectClass() == GBObjectClass.ocRobot) {
+			other.takeDamage(power, owner);
+			push(other, power * kBlastPushRatio);
+			other.pushBy(getVelocity().multiply(power * kBlastMomentumPerPower));
 			lifetime = 0;
 			hit = true;
 		}
 	}
 
 	@Override
-	public void Act(GBWorld world) {
-		super.Act(world);
+	public void act(GBWorld world) {
+		super.act(world);
 		if (hit) {
-			world.addObjectLater(new GBBlasterSpark(Position()));
+			world.addObjectLater(new GBBlasterSpark(getPosition()));
 		}
 	}
 
 	@Override
-	public int Type() {
+	public int getShotType() {
 		return 1;
 	}
 
@@ -99,7 +100,7 @@ public class GBBlast extends GBTimedShot {
 	// Big blasts are saturated, smaller ones are pink or white.
 	// Long-range blasts are orangish; short-range ones are magenta.
 	@Override
-	public Color Color() {
+	public Color getColor() {
 		float fadeout = hit ? 1.0f : Math.min(
 				lifetime / Math.min(originallifetime, 10.0f), 1.0f);
 		return GBColor.multiply(GBColor.Mix(
@@ -110,7 +111,7 @@ public class GBBlast extends GBTimedShot {
 	}
 
 	@Override
-	public void Draw(Graphics g, GBProjection proj, boolean detailed) {
+	public void draw(Graphics g, GBProjection proj, boolean detailed) {
 		if (Math.ceil(radius * 2 * proj.getScale()) <= 3) {
 			image = miniImage;			
 		} else if (hit) {

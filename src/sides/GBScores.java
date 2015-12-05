@@ -47,7 +47,7 @@ public class GBScores {
 		expenditure = new GBExpenditureStatistics();
 	}
 
-	public void Reset() {
+	public void reset() {
 		rounds = sides = 0;
 		survived = sterile = earlyDeaths = elimination = 0;
 		population = populationEver = 0;
@@ -56,8 +56,8 @@ public class GBScores {
 		economyHardware = combatHardware = totalHardware = 0;
 		territory = 0;
 		seeded = 0;
-		income.Reset();
-		expenditure.Reset();
+		income.reset();
+		expenditure.reset();
 		dead = killed = suicide = 0;
 		damageDone = damageTaken = friendlyFire = 0;
 		biomassFraction = earlyBiomassFraction = 0.0f;
@@ -67,7 +67,7 @@ public class GBScores {
 		biomassHistory.add(0);
 	}
 
-	public void OneRound() {
+	public void oneRound() {
 		rounds = 1;
 	}
 
@@ -110,11 +110,11 @@ public class GBScores {
 		}
 	}
 
-	public double Survival() {
+	public double getSurvival() {
 		return sides != 0 ? (double) survived / sides : 0;
 	}
 
-	public double SurvivalNotSterile() {
+	public double getSurvivalNotSterile() {
 		return sides != 0 ? 1.0f - (double) sterile / sides : 0f;
 	}
 
@@ -122,53 +122,53 @@ public class GBScores {
 		return sides != 0 ? (double) earlyDeaths / sides : 0f;
 	}
 
-	public double LateDeathRate() {
+	public double getLateDeathRate() {
 		if (sides - earlyDeaths <= 0)
 			return 0;
 		return 1.0f - (double) (sides - sterile) / (sides - earlyDeaths);
 	}
 
-	double EliminationRate() {
+	double getEliminationRate() {
 		return rounds != 0 ? (double) elimination / rounds : 0;
 	}
 
-	public int Population() {
+	public int getPopulation() {
 		return population / (rounds != 0 ? rounds : 1);
 	}
 
-	public int PopulationEver() {
+	public int getPopulationEver() {
 		return populationEver / (rounds != 0 ? rounds : 1);
 	}
 
-	public int Biomass() {
+	public int getBiomass() {
 		return (int) (biomass / rounds);
 	}
 
-	int EarlyBiomass() {
+	int getEarlyBiomass() {
 		return (int) (earlyBiomass / rounds);
 	}
 
-	int SurvivalBiomass() {
+	int getSurvivalBiomass() {
 		return (int) (biomass / survived);
 	}
 
-	int EarlySurvivalBiomass() {
+	int getEarlySurvivalBiomass() {
 		return (int) (earlyBiomass / (rounds - earlyDeaths));
 	}
 
-	public double BiomassFraction() {
+	public double getBiomassFraction() {
 		return biomassFraction / (rounds != 0 ? rounds : 1);
 	}
 
-	public double EarlyBiomassFraction() {
+	public double getEarlyBiomassFraction() {
 		return earlyBiomassFraction / (rounds != 0 ? rounds : 1);
 	}
 
-	public double SurvivalBiomassFraction() {
+	public double getSurvivalBiomassFraction() {
 		return biomassFraction / (survived != 0 ? survived : 1);
 	}
 
-	public List<Integer> BiomassHistory() {
+	public List<Integer> getBiomassHistory() {
 		if (rounds <= 1)
 			return biomassHistory;
 		List<Integer> avg = new ArrayList<Integer>();
@@ -177,63 +177,63 @@ public class GBScores {
 		return avg;
 	}
 
-	int Constructor() {
+	int getConstructor() {
 		return rounds != 0 ? (int) (constructor / rounds) : 0;
 	}
 
-	int Territory() {
+	int getTerritory() {
 		return territory;
 	}
 
-	public double EconFraction() {
+	public double getEconFraction() {
 		return economyHardware / totalHardware;
 	}
 
-	public double CombatFraction() {
+	public double getCombatFraction() {
 		return combatHardware / totalHardware;
 	}
 
-	public int Seeded() {
+	public int getSeeded() {
 		return rounds != 0 ? (int) (seeded / rounds) : 0;
 	}
 
-	int Dead() {
+	int getDead() {
 		return (int) (dead / rounds);
 	}
 
-	int Killed() {
+	int getKilled() {
 		return (int) (killed / rounds);
 	}
 
-	int Suicide() {
+	int getSuicide() {
 		return (int) (suicide / rounds);
 	}
 
-	public double KilledFraction() {
+	public double getKilledFraction() {
 		return killedFraction / (rounds != 0 ? rounds : 1);
 	}
 
-	public double KillRate() {
+	public double getKillRate() {
 		if (biomass == 0)
 			return 0.0f;
 		return killed / biomass;
 	}
 
 	// What fraction of income has ended up as growth?
-	public double Efficiency() {
-		if (income.Total() == 0)
+	public double getEfficiency() {
+		if (income.total() == 0)
 			return 0.0f;
-		return (biomass - seeded) / income.Total();
+		return (biomass - seeded) / income.total();
 	}
 
-	public int Doubletime(int currentTime) {
+	public int getDoubletime(int currentTime) {
 		if (seeded == 0 || biomass <= 1)
 			return 0;
 		return (int) (currentTime * Math.log(2.0) / Math.log(biomass) / seeded);
 	}
 
-	double BiomassFractionSD() {
-		double frac = BiomassFraction();
+	double getBiomassFractionSD() {
+		double frac = getBiomassFraction();
 		if (rounds == 0)
 			return 0.0f;
 		double variance = biomassFractionSquared / rounds - frac * frac;
@@ -249,8 +249,8 @@ public class GBScores {
 	}
 
 	// Sampling error: twice the standard deviation of the mean.
-	public double BiomassFractionError() {
-		return rounds > 1 ? BiomassFractionSD() / Math.sqrt(rounds - 1) * 2.0
+	public double getBiomassFractionError() {
+		return rounds > 1 ? getBiomassFractionSD() / Math.sqrt(rounds - 1) * 2.0
 				: 1.0;
 	}
 };

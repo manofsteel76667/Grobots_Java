@@ -85,114 +85,114 @@ public class GBHardwareState {
 		enemySyphon = new GBSyphonState(spc.enemySyphon);
 	}
 
-	public int Processor() {
+	public int getProcessor() {
 		return spec.Processor();
 	}
 
-	public int Memory() {
+	public int getMemory() {
 		return spec.Memory();
 	}
 
-	public double EnginePower() {
+	public double getEnginePower() {
 		return enginePower;
 	}
 
-	public FinePoint EngineVelocity() {
+	public FinePoint getEngineVelocity() {
 		return engineVelocity;
 	}
 
-	public double EngineMaxPower() {
+	public double getEngineMaxPower() {
 		return spec.Engine();
 	}
 
-	public double Energy() {
+	public double getEnergy() {
 		return energy;
 	}
 
-	public double MaxEnergy() {
+	public double getMaxEnergy() {
 		return spec.MaxEnergy();
 	}
 
-	public double SolarCells() {
+	public double getSolarCells() {
 		return spec.SolarCells();
 	}
 
-	public double Eater() {
+	public double getEater() {
 		return spec.Eater();
 	}
 
-	public double EaterLimit() {
-		return GBMath.clamp(eater, 0, MaxEnergy() - energy);
+	public double getEaterLimit() {
+		return GBMath.clamp(eater, 0, getMaxEnergy() - energy);
 	}
 
-	public double Eaten() {
+	public double getEaten() {
 		return spec.Eater() - eater;
 	}
 
-	public double Armor() {
+	public double getArmor() {
 		return armor;
 	}
 
-	public double MaxArmor() {
+	public double getMaxArmor() {
 		return spec.Armor();
 	}
 
-	public double ArmorFraction() {
+	public double getArmorFraction() {
 		double max = spec.Armor();
 		return max != 0 ? armor / max : 0;
 	}
 
-	public double EffectivenessFraction() {
-		return (ArmorFraction() - 1) * kEffectivenessReduction + 1;
+	public double getEffectivenessFraction() {
+		return (getArmorFraction() - 1) * kEffectivenessReduction + 1;
 	}
 
-	public double RepairRate() {
+	public double getRepairRate() {
 		return repairRate;
 	}
 
-	public double MaxRepairRate() {
+	public double getMaxRepairRate() {
 		return spec.RepairRate();
 	}
 
-	public double Shield() {
+	public double getShield() {
 		return shield;
 	}
 
-	public double ActualShield() {
+	public double getActualShield() {
 		return actualShield;
 	}
 
-	public double MaxShield() {
+	public double getMaxShield() {
 		return spec.Shield();
 	}
 
-	public double Bomb() {
+	public double getBomb() {
 		return spec.Bomb();
 	}
 
-	public void SetEnginePower(double power) {
-		enginePower = GBMath.clamp(power, 0, EngineMaxPower());
+	public void setEnginePower(double power) {
+		enginePower = GBMath.clamp(power, 0, getEngineMaxPower());
 	}
 
-	public void SetEngineVelocity(FinePoint vel) {
+	public void setEngineVelocity(FinePoint vel) {
 		engineVelocity = vel;
 	}
 
-	public void Eat(double amount) {
-		double actual = Math.min(amount, EaterLimit());
+	public void eat(double amount) {
+		double actual = Math.min(amount, getEaterLimit());
 		energy += actual;
 		eater -= actual;
 	}
 
-	public double GiveEnergy(double amount) {
+	public double giveEnergy(double amount) {
 		if (amount < 0)
 			throw new GBSimulationError("can't give negative energy'");
-		double actual = Math.min(amount, MaxEnergy() - energy);
+		double actual = Math.min(amount, getMaxEnergy() - energy);
 		energy += actual;
 		return actual;
 	}
 
-	public boolean UseEnergy(double amount) {
+	public boolean useEnergy(double amount) {
 		if (energy >= amount) {
 			energy -= amount;
 			return true;
@@ -200,87 +200,87 @@ public class GBHardwareState {
 			return false;
 	}
 
-	public double UseEnergyUpTo(double amount) {
+	public double useEnergyUpTo(double amount) {
 		double actual = Math.min(amount, energy);
 		energy -= actual;
 		return actual;
 	}
 
-	public void TakeDamage(double amount) {
+	public void takeDamage(double amount) {
 		armor -= amount;
 	}
 
-	public void SetRepairRate(double rate) {
-		repairRate = GBMath.clamp(rate, 0, MaxRepairRate());
+	public void setRepairRate(double rate) {
+		repairRate = GBMath.clamp(rate, 0, getMaxRepairRate());
 	}
 
-	public void SetShield(double power) {
-		shield = GBMath.clamp(power, 0, MaxShield());
+	public void setShield(double power) {
+		shield = GBMath.clamp(power, 0, getMaxShield());
 	}
 
-	public void Act(GBRobot robot, GBWorld world) {
+	public void act(GBRobot robot, GBWorld world) {
 		// death check
 		if (armor <= 0 || robot.dead) {
 			robot.dead = true;
-			world.addObjectLater(new GBCorpse(robot.Position(), robot
-					.Velocity(), robot.Biomass() * kCorpsePerBiomass, robot
-					.Type(), robot.LastHit()));
-			world.addObjectLater(new GBExplosion(robot.Position(), robot
-					.Owner(), (robot.Biomass()
+			world.addObjectLater(new GBCorpse(robot.getPosition(), robot
+					.getVelocity(), robot.getBiomass() * kCorpsePerBiomass, robot
+					.getRobotType(), robot.getLastHit()));
+			world.addObjectLater(new GBExplosion(robot.getPosition(), robot
+					.getOwner(), (robot.getBiomass()
 					* kDeathExplosionDamagePerBiomass + spec.Bomb())
-					* robot.ShieldFraction()));
+					* robot.getShieldFraction()));
 			return;
 		}
 		// energy intake
-		energy += SolarCells();
-		robot.Owner().ReportAutotrophy(SolarCells());
+		energy += getSolarCells();
+		robot.getOwner().reportAutotrophy(getSolarCells());
 		eater = spec.Eater();
 		// engine
 		if (enginePower > 0) {
 			double effective = Math
-					.max(robot.Speed(), kEngineMinEffectiveSpeed);
-			FinePoint delta = engineVelocity.subtract(robot.Velocity());
-			double power = delta.norm() * robot.Mass() * effective
+					.max(robot.getSpeed(), kEngineMinEffectiveSpeed);
+			FinePoint delta = engineVelocity.subtract(robot.getVelocity());
+			double power = delta.norm() * robot.getMass() * effective
 					/ kEngineEfficiency;
 			if (power != 0) {
-				power = UseEnergyUpTo(Math.min(power, enginePower));
-				robot.Owner().Scores().expenditure.ReportEngine(power);
-				robot.PushBy(delta.multiply(power * kEngineEfficiency
+				power = useEnergyUpTo(Math.min(power, enginePower));
+				robot.getOwner().getScores().expenditure.reportEngine(power);
+				robot.pushBy(delta.multiply(power * kEngineEfficiency
 						/ effective / delta.norm()));
 			}
 		}
 		// complex hardware
-		constructor.Act(robot, world);
-		sensor1.Act(robot, world);
-		sensor2.Act(robot, world);
-		sensor3.Act(robot, world);
-		radio.Act(robot, world);
-		blaster.Act(robot, world);
-		grenades.Act(robot, world);
-		forceField.Act(robot, world);
-		syphon.Act(robot, world);
-		enemySyphon.Act(robot, world);
+		constructor.act(robot, world);
+		sensor1.act(robot, world);
+		sensor2.act(robot, world);
+		sensor3.act(robot, world);
+		radio.act(robot, world);
+		blaster.act(robot, world);
+		grenades.act(robot, world);
+		forceField.act(robot, world);
+		syphon.act(robot, world);
+		enemySyphon.act(robot, world);
 		// do repairs
 		if (repairRate != 0) {
-			double repairCost = UseEnergyUpTo(Math.min(repairRate,
-					(MaxArmor() - armor) * kRunningCostPerRepair));
-			robot.Owner().Scores().expenditure.ReportRepairs(repairCost);
+			double repairCost = useEnergyUpTo(Math.min(repairRate,
+					(getMaxArmor() - armor) * kRunningCostPerRepair));
+			robot.getOwner().getScores().expenditure.reportRepairs(repairCost);
 			armor += repairCost / kRunningCostPerRepair;
 		}
 		// do shield
 		if (shield != 0) {
-			double shieldUsed = UseEnergyUpTo(shield);
-			robot.Owner().Scores().expenditure.ReportShield(shieldUsed);
+			double shieldUsed = useEnergyUpTo(shield);
+			robot.getOwner().getScores().expenditure.reportShield(shieldUsed);
 			actualShield += shieldUsed;
 		}
 		actualShield = Math.max(
-				actualShield - kShieldDecayPerMass * robot.Mass()
+				actualShield - kShieldDecayPerMass * robot.getMass()
 						- kShieldDecayPerShield * actualShield, 0);
 		// lose excess energy
-		if (energy > MaxEnergy()) {
-			robot.Owner().Scores().expenditure.ReportWasted(energy
-					- MaxEnergy());
-			energy = Math.min(energy, MaxEnergy());
+		if (energy > getMaxEnergy()) {
+			robot.getOwner().getScores().expenditure.reportWasted(energy
+					- getMaxEnergy());
+			energy = Math.min(energy, getMaxEnergy());
 		}
 	}
 }

@@ -24,18 +24,18 @@ public class GBMessageQueue {
 	}
 
 	// called by Side::Reset()
-	public void Reset() {
+	public void reset() {
 		nextNumber = 0;
 	}
 
-	public void AddMessage(GBMessage newMess) {
+	public void addMessage(GBMessage newMess) {
 		buffer[nextNumber % kMaxMessages] = newMess;
-		buffer[nextNumber % kMaxMessages].SetMessageNumber(nextNumber);
+		buffer[nextNumber % kMaxMessages].setMessageNumber(nextNumber);
 		if (++nextNumber >= kMaxMessageNumber)
 			throw new GBBrainError("Message number got too high.");
 	}
 
-	public GBMessage GetMessage(int num) {
+	public GBMessage getMessage(int num) {
 		int potential = num % kMaxMessages;
 		if (buffer[potential].sequenceNum == num)
 			return buffer[potential];
@@ -50,11 +50,11 @@ public class GBMessageQueue {
 			throw new GBBrainError("Unexpected condition in GetMessage()");
 	}
 
-	public int NextMessageNumber() {
+	public int getNextMessageNumber() {
 		return nextNumber;
 	}
 
-	public int MessagesWaiting(int next) {
+	public int getMessagesWaiting(int next) {
 		if (next >= nextNumber)
 			return 0;
 		if (next <= nextNumber - kMaxMessages)

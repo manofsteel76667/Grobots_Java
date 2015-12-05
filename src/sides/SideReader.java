@@ -80,7 +80,7 @@ public class SideReader {
 	 * @throws GBUnresolvedSymbolError
 	 * @throws java.lang.Exception
 	 */
-	void ProcessLine() throws GBReaderError {
+	void processLine() throws GBReaderError {
 		lineno++;
 		tokens = new LinkedList<String>(
 				Arrays.asList(line.trim().split("\\s+")));
@@ -93,7 +93,7 @@ public class SideReader {
 					throw new RuntimeException("# but no token - huh?");
 				GBElementType typ = GBElementType.byTag(token);
 				if (typ != null) {
-					ProcessTag(typ);
+					processTag(typ);
 					return;
 				}
 				throw new GBNoSuchElementError();
@@ -104,10 +104,10 @@ public class SideReader {
 				case etEnd:
 					throw new GBForbiddenContentError();
 				case etHardware:
-					ProcessHardwareLine();
+					processHardwareLine();
 					return;
 				case etCode:
-					ProcessCodeLine();
+					processCodeLine();
 					return;
 				case etSide:
 				case etType: // side and type act like description,
@@ -129,7 +129,7 @@ public class SideReader {
 		}
 	}
 
-	Color ParseColor(String token) throws GBElementArgumentError {
+	Color parseColor(String token) throws GBElementArgumentError {
 		// could do named colors, but not urgent
 		// check length
 		float r, g, b;
@@ -152,16 +152,16 @@ public class SideReader {
 		}
 	}
 
-	void ProcessTag(GBElementType element) throws GBReaderError {
+	void processTag(GBElementType element) throws GBReaderError {
 		// clean up type
 		if (type != null
 				&& (element == GBElementType.etType || element == GBElementType.etEnd)) {
 			if (brain != null) {
-				brain.Check();
-				type.SetBrain(brain);
+				brain.check();
+				type.setBrain(brain);
 				brain = null;
 			}
-			side.AddType(type);
+			side.addType(type);
 			type = null;
 		}
 		// legality check
@@ -186,7 +186,7 @@ public class SideReader {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());
 				}
-				side.SetName(sb.toString());
+				side.setName(sb.toString());
 				state = GBElementType.etSide;
 			} else
 				throw new GBMisplacedElementError();
@@ -200,7 +200,7 @@ public class SideReader {
 				while (tokens.size() > 0) {
 					String token = tokens.removeFirst();
 					try {
-						side.AddSeedID(StringUtilities.parseInt(token));
+						side.addSeedID(StringUtilities.parseInt(token));
 					} catch (NumberFormatException e) {
 						throw new GBElementArgumentError();
 					}
@@ -219,7 +219,7 @@ public class SideReader {
 					sb.append(" ");
 					sb.append(tokens.removeFirst());
 				}
-				side.SetAuthor(sb.toString());
+				side.getAuthor(sb.toString());
 			}
 			break;
 		case etDate:
@@ -231,11 +231,11 @@ public class SideReader {
 			String token = tokens.removeFirst();
 			if (token == null)
 				throw new GBMissingElementArgumentError();
-			Color color = ParseColor(token);
+			Color color = parseColor(token);
 			if (type != null)
-				type.SetColor(color);
+				type.setColor(color);
 			else
-				side.SetColor(color);
+				side.setColor(color);
 		}
 			break;
 		case etType:
@@ -254,7 +254,7 @@ public class SideReader {
 				sb.append(" ");
 				sb.append(tokens.removeFirst());
 			}
-			type.SetName(sb.toString());
+			type.setName(sb.toString());
 			state = GBElementType.etType;
 			break;
 		case etDecoration:
@@ -265,13 +265,13 @@ public class SideReader {
 					throw new GBMissingElementArgumentError();
 				String token = tokens.removeFirst();
 
-				Color color = ParseColor(token);
+				Color color = parseColor(token);
 				if (tokens.size() == 0)
 					throw new GBMissingElementArgumentError();
 				token = tokens.removeFirst();
 
 				GBRobotDecoration dec = GBRobotDecoration.byTag(token);
-				type.SetDecoration(dec, color);
+				type.setDecoration(dec, color);
 
 			}
 			break;
@@ -289,9 +289,9 @@ public class SideReader {
 					// of
 					// type-specific
 					// code
-					int label = brain.AddGensym("start");
-					brain.ResolveGensym(label);
-					brain.SetStartingLabel(label);
+					int label = brain.addGensym("start");
+					brain.resolveGensym(label);
+					brain.setStartingLabel(label);
 				} else
 					brain = new GBStackBrainSpec();
 			}
@@ -301,12 +301,12 @@ public class SideReader {
 		case etStart:
 			if (state == GBElementType.etCode) {
 				if (tokens.size() > 0)
-					brain.SetStartingLabel(brain.LabelReferenced(tokens
+					brain.setStartingLabel(brain.getLabelReferencedIndex(tokens
 							.removeFirst()));
 				else {
-					int label = brain.AddGensym("start");
-					brain.ResolveGensym(label);
-					brain.SetStartingLabel(label);
+					int label = brain.addGensym("start");
+					brain.resolveGensym(label);
+					brain.setStartingLabel(label);
 				}
 			} else
 				throw new GBMisplacedElementError();
@@ -329,9 +329,9 @@ public class SideReader {
 				} else if (element == GBElementType.etConstant)
 					throw new GBMissingElementArgumentError();
 				if (element == GBElementType.etVariable)
-					brain.AddVariable(name, num);
+					brain.addVariable(name, num);
 				else
-					brain.AddConstant(name, num);
+					brain.addConstant(name, num);
 
 			} else
 				throw new GBMisplacedElementError();
@@ -356,7 +356,7 @@ public class SideReader {
 						f.y = y;
 					}
 				}
-				brain.AddVectorVariable(name, f);
+				brain.addVectorVariable(name, f);
 			} else
 				throw new GBMisplacedElementError();
 			break;
@@ -373,13 +373,13 @@ public class SideReader {
 		tokens.clear();
 	}
 
-	void ProcessCodeLine() {
+	void processCodeLine() {
 		if (brain == null)
 			throw new RuntimeException("can't compile code without a brain");
-		brain.ParseLine(line, lineno);
+		brain.parseLine(line, lineno);
 	}
 
-	void ProcessHardwareLine() throws GBUnknownHardwareError,
+	void processHardwareLine() throws GBUnknownHardwareError,
 			GBMissingHardwareArgumentError, GBHardwareArgumentError,
 			GBElementArgumentError {
 		if (tokens.size() == 0)
@@ -388,92 +388,92 @@ public class SideReader {
 		HardwareTypes hc = HardwareTypes.byTag(name);
 		switch (hc) {
 		case hcProcessor: {
-			int speed = GetHardwareInteger();
-			int mem = GetHardwareInteger(0);
-			type.Hardware().SetProcessor(speed, mem);
+			int speed = getHardwareInteger();
+			int mem = getHardwareInteger(0);
+			type.getHardware().SetProcessor(speed, mem);
 		}
 			return;
 		case hcRadio:
 			return; // obsolete but remains for compatibility
 		case hcEngine:
-			type.Hardware().SetEngine(GetHardwareNumber());
+			type.getHardware().SetEngine(getHardwareNumber());
 			return;
 		case hcConstructor:
-			type.Hardware().constructor.Set(GetHardwareNumber());
+			type.getHardware().constructor.set(getHardwareNumber());
 			return;
 		case hcEnergy: {
-			double max = GetHardwareNumber();
-			double initial = GetHardwareNumber();
-			type.Hardware().SetEnergy(max, initial);
+			double max = getHardwareNumber();
+			double initial = getHardwareNumber();
+			type.getHardware().SetEnergy(max, initial);
 		}
 			return;
 		case hcSolarCells:
-			type.Hardware().SetSolarCells(GetHardwareNumber());
+			type.getHardware().SetSolarCells(getHardwareNumber());
 			return;
 		case hcEater:
-			type.Hardware().SetEater(GetHardwareNumber());
+			type.getHardware().SetEater(getHardwareNumber());
 			return;
 		case hcArmor:
-			type.Hardware().SetArmor(GetHardwareNumber());
+			type.getHardware().SetArmor(getHardwareNumber());
 			return;
 		case hcRepairRate:
-			type.Hardware().SetRepairRate(GetHardwareNumber());
+			type.getHardware().SetRepairRate(getHardwareNumber());
 			return;
 		case hcShield:
-			type.Hardware().SetShield(GetHardwareNumber());
+			type.getHardware().SetShield(getHardwareNumber());
 			return;
 		case hcRobotSensor: {
-			double range = GetHardwareNumber();
-			int maxResults = GetHardwareInteger(1);
-			type.Hardware().sensor1.Set(range, maxResults,
+			double range = getHardwareNumber();
+			int maxResults = getHardwareInteger(1);
+			type.getHardware().sensor1.set(range, maxResults,
 					GBObjectClass.ocRobot.value);
 		}
 			return;
 		case hcFoodSensor: {
-			double range = GetHardwareNumber();
-			int maxResults = GetHardwareInteger(1);
-			type.Hardware().sensor2.Set(range, maxResults,
+			double range = getHardwareNumber();
+			int maxResults = getHardwareInteger(1);
+			type.getHardware().sensor2.set(range, maxResults,
 					GBObjectClass.ocFood.value);
 		}
 			return;
 		case hcShotSensor: {
-			double range = GetHardwareNumber();
-			int maxResults = GetHardwareInteger(1);
-			type.Hardware().sensor3.Set(range, maxResults,
+			double range = getHardwareNumber();
+			int maxResults = getHardwareInteger(1);
+			type.getHardware().sensor3.set(range, maxResults,
 					GBObjectClass.ocShot.value);
 		}
 			return;
 		case hcBlaster: {
-			double damage = GetHardwareNumber();
-			double range = GetHardwareNumber();
-			int reload = GetHardwareInteger();
-			type.Hardware().blaster.Set(damage, range, reload);
+			double damage = getHardwareNumber();
+			double range = getHardwareNumber();
+			int reload = getHardwareInteger();
+			type.getHardware().blaster.set(damage, range, reload);
 		}
 			return;
 		case hcGrenades: {
-			double damage = GetHardwareNumber();
-			double range = GetHardwareNumber();
-			int reload = GetHardwareInteger();
-			type.Hardware().grenades.Set(damage, range, reload);
+			double damage = getHardwareNumber();
+			double range = getHardwareNumber();
+			int reload = getHardwareInteger();
+			type.getHardware().grenades.set(damage, range, reload);
 		}
 			return;
 		case hcForceField: {
-			double pwr = GetHardwareNumber();
-			double range = GetHardwareNumber();
-			type.Hardware().forceField.Set(pwr, range);
+			double pwr = getHardwareNumber();
+			double range = getHardwareNumber();
+			type.getHardware().forceField.set(pwr, range);
 		}
 			return;
 		case hcBomb:
-			type.Hardware().SetBomb(GetHardwareNumber());
+			type.getHardware().SetBomb(getHardwareNumber());
 			return;
 		case hcSyphon: {
-			double power = GetHardwareNumber();
-			type.Hardware().syphon.Set(power, GetHardwareNumber(1), false);
+			double power = getHardwareNumber();
+			type.getHardware().syphon.set(power, getHardwareNumber(1), false);
 		}
 			return;
 		case hcEnemySyphon: {
-			double power = GetHardwareNumber();
-			type.Hardware().enemySyphon.Set(power, GetHardwareNumber(1), true);
+			double power = getHardwareNumber();
+			type.getHardware().enemySyphon.set(power, getHardwareNumber(1), true);
 		}
 			return;
 		default:
@@ -483,7 +483,7 @@ public class SideReader {
 		throw new GBUnknownHardwareError();
 	}
 
-	int GetHardwareInteger() throws GBMissingHardwareArgumentError,
+	int getHardwareInteger() throws GBMissingHardwareArgumentError,
 			GBHardwareArgumentError {
 		if (tokens.size() == 0)
 			throw new GBMissingHardwareArgumentError();
@@ -494,7 +494,7 @@ public class SideReader {
 		return n;
 	}
 
-	int GetHardwareInteger(int defaultNum) throws GBHardwareArgumentError {
+	int getHardwareInteger(int defaultNum) throws GBHardwareArgumentError {
 		if (tokens.size() == 0)
 			return defaultNum;
 		String token = tokens.removeFirst();
@@ -504,7 +504,7 @@ public class SideReader {
 		return n;
 	}
 
-	double GetHardwareNumber() throws GBMissingHardwareArgumentError,
+	double getHardwareNumber() throws GBMissingHardwareArgumentError,
 			GBHardwareArgumentError {
 		if (tokens.size() == 0)
 			throw new GBMissingHardwareArgumentError();
@@ -515,7 +515,7 @@ public class SideReader {
 		return n;
 	}
 
-	double GetHardwareNumber(double defaultNum) throws GBHardwareArgumentError {
+	double getHardwareNumber(double defaultNum) throws GBHardwareArgumentError {
 		if (tokens.size() == 0)
 			return defaultNum;
 		String token = tokens.removeFirst();
@@ -529,7 +529,7 @@ public class SideReader {
 		fileName = _filename;
 	}
 
-	void LoadIt() {
+	void loadIt() {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(fileName));
 			while ((line = br.readLine()) != null) {
@@ -538,7 +538,7 @@ public class SideReader {
 					line = line.substring(0, line.indexOf(";"));
 				if (line.length() > 0)
 					try {
-						ProcessLine();
+						processLine();
 					} catch (Exception e) {
 						GBError.NonfatalError("Error loading side from "
 								+ fileName + ": " + e.getMessage()
@@ -552,24 +552,24 @@ public class SideReader {
 		}
 	}
 
-	Side Side() {
+	Side getSide() {
 		if (state == GBElementType.etEnd && side != null) {
-			if (side.NumSeedTypes() == 0) // auto-generate seeding
-				for (int i = 1; i <= side.CountTypes(); ++i)
-					if (side.GetType(i).Hardware().Bomb() == 0)
-						side.AddSeedID(side.GetType(i).ID());
+			if (side.getNumSeedTypes() == 0) // auto-generate seeding
+				for (int i = 1; i <= side.getTypeCount(); ++i)
+					if (side.getRobotType(i).getHardware().Bomb() == 0)
+						side.addSeedID(side.getRobotType(i).getID());
 			return side;
 		} else
 			throw new RuntimeException(
 					"tried to get unfinished side from SideReader - was #end missing?");
 	}
 
-	public static Side Load(String filename) {
+	public static Side loadFromFile(String filename) {
 		try {
 			SideReader reader = new SideReader(filename);
 			reader.state = GBElementType.etNone;
-			reader.LoadIt();
-			Side side = reader.Side();
+			reader.loadIt();
+			Side side = reader.getSide();
 			side.filename = filename;
 			for (RobotType botType : side.types) {
 				botType.sample = new GBRobot(botType, new FinePoint(0, 0));

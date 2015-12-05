@@ -4,6 +4,7 @@
  *******************************************************************************/
 package headless;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -40,12 +41,12 @@ public class Headless {
 		game.addSeeds();
 		game.running = true;
 		do {
-			if (statsPeriod != 0 && game.CurrentFrame() % statsPeriod == 0)
-				PrintStatistics(game);
+			if (statsPeriod != 0 && game.currentFrame() % statsPeriod == 0)
+				printStatistics(game);
 			game.advanceFrame();
-			if (game.RoundOver()) {
-				PrintStatistics(game);
-				totalFrames += game.CurrentFrame();
+			if (game.roundOver()) {
+				printStatistics(game);
+				totalFrames += game.currentFrame();
 				game.EndRound();
 				if (game.tournament)
 					System.out.println("#round " + ++round);
@@ -57,60 +58,65 @@ public class Headless {
 		for (int i = 0; i < sides.size(); ++i) {
 			Side s = sides.get(i);
 			System.out.println(StringUtilities.toPercentString(s
-					.TournamentScores().BiomassFraction(), 0)
+					.getTournamentScores().getBiomassFraction(), 0)
 					+ "\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.BiomassFractionError(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getBiomassFractionError(), 0)
 					+ "\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.SurvivalNotSterile(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getSurvivalNotSterile(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
+					+ StringUtilities.toPercentString(s.getTournamentScores()
 							.EarlyDeathRate(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.LateDeathRate(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getLateDeathRate(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.EarlyBiomassFraction(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getEarlyBiomassFraction(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.SurvivalBiomassFraction(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getSurvivalBiomassFraction(), 0)
 					+ "\t\t"
-					+ StringUtilities.toPercentString(s.TournamentScores()
-							.KilledFraction(), 0)
+					+ StringUtilities.toPercentString(s.getTournamentScores()
+							.getKilledFraction(), 0)
 					+ "\t"
-					+ s.TournamentScores().rounds + "\t" + s.Name() + "\n");
+					+ s.getTournamentScores().rounds + "\t" + s.getName() + "\n");
 		}
 		System.out.println("#total\t\t"
-				+ StringUtilities.toPercentString(game.TournamentScores()
-						.SurvivalNotSterile(), 0)
+				+ StringUtilities.toPercentString(game.getTournamentScores()
+						.getSurvivalNotSterile(), 0)
 				+ "\t\t"
-				+ StringUtilities.toPercentString(game.TournamentScores()
+				+ StringUtilities.toPercentString(game.getTournamentScores()
 						.EarlyDeathRate(), 0)
 				+ "\t\t"
-				+ StringUtilities.toPercentString(game.TournamentScores()
-						.LateDeathRate(), 0) + "\t\t\t\t\t\t\t"
-				+ game.TournamentScores().rounds + "\n#end");
+				+ StringUtilities.toPercentString(game.getTournamentScores()
+						.getLateDeathRate(), 0) + "\t\t\t\t\t\t\t"
+				+ game.getTournamentScores().rounds + "\n#end");
 		Date end = new Date();
 		long dt = (end.getTime() - start.getTime()) / 1000;
 		System.out.println(totalFrames + " frames");
 		if (dt != 0)
 			System.out.println(" in " + dt + " s (" + (totalFrames / dt)
 					+ " fps)");
-		// if (dumpHtml)
-		// game.DumpTournamentScores(dumpHtml);
+		if (dumpHtml)
+			try {
+				game.dumpTournamentScores(dumpHtml);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 	}
 
 	public static void main(String[] argv) {
 		if (argv.length < 2)
-			DieWithUsage("Not enough arguments");
+			dieWithUsage("Not enough arguments");
 		try {
 			Headless sim = new Headless();
 			// get args
 			for (int i = 0; i < argv.length; ++i)
-				ProcessArg(argv[i], sim, argv[0]);
+				processArg(argv[i], sim, argv[0]);
 			// run
 			sim.run();
 			// print final statistics
@@ -125,7 +131,7 @@ public class Headless {
 		System.exit(1);
 	}
 
-	static void ProcessArg(String arg, Headless sim, String name) {
+	static void processArg(String arg, Headless sim, String name) {
 		try {
 			if ('-' == arg.charAt(0)) {
 				int dimension;
@@ -151,13 +157,13 @@ public class Headless {
 					break;
 				case 'w':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					sim.game.Resize(new FinePoint(
+					sim.game.resize(new FinePoint(
 							GBObjectWorld.kBackgroundTileSize * dimension,
-							sim.game.getWorld().Top()));
+							sim.game.getWorld().getTop()));
 					break;
 				case 'h':
 					dimension = StringUtilities.parseInt(arg.substring(2));
-					sim.game.Resize(new FinePoint(sim.game.getWorld().Right(),
+					sim.game.resize(new FinePoint(sim.game.getWorld().getRight(),
 							GBObjectWorld.kBackgroundTileSize * dimension));
 					break;
 				case 's':
@@ -168,28 +174,28 @@ public class Headless {
 					dumpHtml = true;
 					break;
 				default:
-					DieWithUsage(name);
+					dieWithUsage(name);
 				}
 			} else {
-				Side side = SideReader.Load(arg);
+				Side side = SideReader.loadFromFile(arg);
 				if (side != null) {
-					sim.game.AddSide(side);
-					System.out.print("#side " + side.Name());
-					for (int i = 1; i <= side.CountTypes(); ++i) {
-						RobotType type = side.GetType(i);
+					sim.game.addSide(side);
+					System.out.print("#side " + side.getName());
+					for (int i = 1; i <= side.getTypeCount(); ++i) {
+						RobotType type = side.getRobotType(i);
 						System.out.print("\t#type " + type.name + "\tcost "
-								+ Math.round(type.Cost()) + "\tmass "
-								+ Math.round(type.Mass() * 10) / 10);
+								+ Math.round(type.getCost()) + "\tmass "
+								+ Math.round(type.getMass() * 10) / 10);
 					}
 					System.out.println("");
 				}
 			}
 		} catch (Exception e) {
-			DieWithUsage(name);
+			dieWithUsage(name);
 		}
 	}
 
-	static void DieWithUsage(String name) {
+	static void dieWithUsage(String name) {
 		System.err
 				.println("Usage: "
 						+ name
@@ -207,12 +213,12 @@ public class Headless {
 		System.exit(1);
 	}
 
-	public static void PrintStatistics(GBGame world) {
-		System.out.print(world.CurrentFrame());
+	public static void printStatistics(GBGame world) {
+		System.out.print(world.currentFrame());
 		List<Side> sides = world.sides;
 		for (int i = 0; i < sides.size(); ++i)
-			System.out.print("\t" + sides.get(i).Scores().Biomass());
-		System.out.print("\ttotal " + world.RobotValue() + "\n");
+			System.out.print("\t" + sides.get(i).getScores().getBiomass());
+		System.out.print("\ttotal " + world.getRobotValue() + "\n");
 	}
 
 }

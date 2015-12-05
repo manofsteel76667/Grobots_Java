@@ -415,9 +415,9 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 	public void setSelectedObject(GBObject _obj) {
 		selectedObject = _obj;
 		if (_obj != null)
-			setSelectedSide(_obj.Owner());
+			setSelectedSide(_obj.getOwner());
 		if (_obj instanceof GBRobot)
-			setSelectedType(((GBRobot) _obj).Type());
+			setSelectedType(((GBRobot) _obj).getRobotType());
 		else
 			setSelectedType(null);
 	}
@@ -471,7 +471,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 							.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 					break;
 				case clearMap:
-					game.Reset();
+					game.reset();
 					break;
 				case duplicateSide:
 					roster.duplicateSide();
@@ -545,7 +545,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						game.running = false;
 						Thread.sleep(100); // Let simulate thread end
 					}
-					game.Reset();
+					game.reset();
 					game.addSeeds();
 					game.running = true;
 					repaint();
@@ -567,7 +567,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 						game.running = true;
 						simulate();
 					} else {
-						game.Reset();
+						game.reset();
 						game.addSeeds();
 						game.running = true;
 						repaint();
@@ -602,10 +602,10 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					repaint();
 					break;
 				case reseedDeadSides:
-					game.ReseedDeadSides();
+					game.reseedDeadSides();
 					break;
 				case resetScores:
-					game.ResetTournamentScores();
+					game.resetTournamentScores();
 					break;
 				case rules:
 					break;
@@ -616,7 +616,7 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					}
 					break;
 				case saveScores:
-					game.DumpTournamentScores(true);
+					game.dumpTournamentScores(true);
 					break;
 				case scrollDown:
 					break;
@@ -738,18 +738,18 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					if (obj == null)
 						return;
 					if (obj instanceof GBRobot
-							&& obj.Class() != GBObjectClass.ocDead) {
+							&& obj.getObjectClass() != GBObjectClass.ocDead) {
 						if (game.running) {
 							game.running = false;
 							Thread.sleep(100);
 						}
 						GBRobot target = (GBRobot) obj;
-						Brain brain = target.Brain();
+						Brain brain = target.getBrain();
 						if (brain == null)
 							return;
-						if (!brain.Ready())
+						if (!brain.ready())
 							return;
-						brain.Step(target, game.getWorld());
+						brain.step(target, game.getWorld());
 						if (debug.isVisible())
 							debug.repaint();
 					}
@@ -758,8 +758,8 @@ public class GBApplication extends JFrame implements Runnable, ActionListener,
 					if (selectedObject == null)
 						return;
 					if (selectedObject instanceof GBRobot
-							&& selectedObject.Class() != GBObjectClass.ocDead) {
-						Brain brain = ((GBRobot) selectedObject).Brain();
+							&& selectedObject.getObjectClass() != GBObjectClass.ocDead) {
+						Brain brain = ((GBRobot) selectedObject).getBrain();
 						if (brain == null)
 							return;
 						brain.status = brain.status == BrainStatus.bsOK ? BrainStatus.bsStopped
